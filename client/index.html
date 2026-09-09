@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🏦 BANCRUPT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- PRISIJUNGIMO EKRANAS -->
+    <div id="lobby">
+        <div class="lobby-container">
+            <h1>🏦 BANCRUPT</h1>
+            <p class="subtitle">💰 Stalo žaidimas internetu</p>
+            
+            <div class="lobby-form">
+                <input type="text" id="playerName" placeholder="Įvesk savo vardą" maxlength="20">
+                
+                <div class="lobby-buttons">
+                    <button onclick="createGame()" class="btn btn-primary">🆕 Sukurti žaidimą</button>
+                    <button onclick="joinGame()" class="btn btn-secondary">🔗 Prisijungti</button>
+                </div>
+                
+                <div class="join-section">
+                    <input type="text" id="gameIdInput" placeholder="Žaidimo ID (pvz., ABC123)" maxlength="6" style="text-transform:uppercase">
+                </div>
+            </div>
+            
+            <div id="lobbyMessages"></div>
+        </div>
+    </div>
+
+    <!-- ŽAIDIMO EKRANAS -->
+    <div id="game" style="display:none">
+        <div id="gameHeader">
+            <span id="gameIdDisplay">📋 ID: ---</span>
+            <span id="playerCount">👥 0/8</span>
+            <span id="turnDisplay">🎯 Eina: ---</span>
+        </div>
+
+        <div id="board">
+            <!-- VIRŠUS -->
+            <div class="board-row row-top">
+                <div id="cell-0" class="cell corner start" data-id="0" style="width:150px;height:150px;flex:0 0 150px;min-width:150px;min-height:150px;max-width:150px;max-height:150px;">
+                    🏁<br>START
+                </div>
+                <div id="cell-1" class="cell edge property" data-id="1">1</div>
+                <div id="cell-2" class="cell edge" data-id="2">2</div>
+                <div id="cell-3" class="cell edge property" data-id="3">3</div>
+                <div id="cell-4" class="cell edge" data-id="4">4</div>
+                <div id="cell-5" class="cell edge" data-id="5">5</div>
+                <div id="cell-6" class="cell edge property" data-id="6">6</div>
+                <div id="cell-7" class="cell edge property" data-id="7">7</div>
+                <div id="cell-8" class="cell edge" data-id="8">8</div>
+                <div id="cell-9" class="cell edge property" data-id="9">9</div>
+                <div id="cell-10" class="cell edge property" data-id="10">10</div>
+                <div id="cell-11" class="cell edge property" data-id="11">11</div>
+                <div id="cell-12" class="cell edge property" data-id="12">12</div>
+                <div id="cell-13" class="cell edge" data-id="13">13</div>
+                <div id="cell-14" class="cell edge" data-id="14">14</div>
+                <div id="cell-15" class="cell edge property" data-id="15">15</div>
+                <div id="cell-16" class="cell corner jail" data-id="16" style="width:150px;height:150px;flex:0 0 150px;min-width:150px;min-height:150px;max-width:150px;max-height:150px;">
+                    ⛓️<br>KALĖJIMAS
+                </div>
+            </div>
+
+            <!-- VIDURYS -->
+            <div class="board-row row-middle">
+                <div class="row-middle-left" style="flex:0 0 150px;min-width:150px;max-width:150px;">
+                    <div id="cell-51" class="cell edge property" data-id="51">51</div>
+                    <div id="cell-50" class="cell edge" data-id="50">50</div>
+                    <div id="cell-49" class="cell edge property" data-id="49">49</div>
+                    <div id="cell-48" class="cell edge property" data-id="48">48</div>
+                    <div id="cell-47" class="cell edge" data-id="47">47</div>
+                    <div id="cell-46" class="cell edge property" data-id="46">46</div>
+                    <div id="cell-45" class="cell edge" data-id="45">45</div>
+                    <div id="cell-44" class="cell edge property" data-id="44">44</div>
+                    <div id="cell-43" class="cell edge property" data-id="43">43</div>
+                </div>
+
+                <div class="row-middle-center">
+                    <div class="center-row">
+                        <div id="center-1" class="center-cell player-info">
+                            <h4>👤 AŠ</h4>
+                            <div id="myInfo">Laukiama...</div>
+                        </div>
+                        <div id="center-2" class="center-cell controls">
+                            <!-- REŽIMAI - VIRŠUJE -->
+                            <div style="display:flex; gap:4px; justify-content:center; margin-bottom:4px; flex-wrap:wrap;">
+                                <span style="font-size:9px; color:#3d2b1f; display:flex; align-items:center;">Režimas:</span>
+                                <button onclick="setMode('adaptive')" id="modeAdaptive" class="header-btn active" style="padding:2px 8px; font-size:9px; min-width:auto;">Adaptyvus</button>
+                                <button onclick="setMode('fixed')" id="modeFixed" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">Fiksuotas</button>
+                                <button onclick="toggleSound()" id="soundBtn" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">🔊 Garsas</button>
+                            </div>
+                            
+                            <!-- IŠEITI IŠ KALĖJIMO (rodomas tik kai reikia) -->
+                            <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;">⛓️ Išeiti iš kalėjimo (€50)</button>
+                            
+                            <!-- GRIAUTI NAMUS -->
+                            <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish" style="margin-bottom:2px; width:100%;">🏚️ Griauti namus</button>
+                            
+                            <!-- BANKROTAS -->
+                            <button onclick="bankrupt()" id="bankruptBtn" class="btn-bankrupt" style="margin-bottom:4px; width:100%;">💀 BANKROTAS</button>
+                            
+                            <h4>🎲 VALDYMAS</h4>
+                            <div class="dice-container">
+                                <div class="dice" id="centerDice1">
+                                    <div class="dice-dots-container">
+                                        <span class="dice-dot dot-tl"></span>
+                                        <span class="dice-dot dot-tc"></span>
+                                        <span class="dice-dot dot-tr"></span>
+                                        <span class="dice-dot dot-cl"></span>
+                                        <span class="dice-dot dot-cc"></span>
+                                        <span class="dice-dot dot-cr"></span>
+                                        <span class="dice-dot dot-bl"></span>
+                                        <span class="dice-dot dot-bc"></span>
+                                        <span class="dice-dot dot-br"></span>
+                                    </div>
+                                </div>
+                                <div class="dice" id="centerDice2">
+                                    <div class="dice-dots-container">
+                                        <span class="dice-dot dot-tl"></span>
+                                        <span class="dice-dot dot-tc"></span>
+                                        <span class="dice-dot dot-tr"></span>
+                                        <span class="dice-dot dot-cl"></span>
+                                        <span class="dice-dot dot-cc"></span>
+                                        <span class="dice-dot dot-cr"></span>
+                                        <span class="dice-dot dot-bl"></span>
+                                        <span class="dice-dot dot-bc"></span>
+                                        <span class="dice-dot dot-br"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="control-buttons">
+                                <button onclick="rollDice()" id="rollBtn" class="btn-dice">🎲 Mesti</button>
+                                <button onclick="openTrading()" id="tradeBtn" class="btn-trade">🏪 Prekyba</button>
+                            </div>
+                            <!-- STATYTI NAMĄ - ATSKIRAI, KAI GALIMA -->
+                            <button onclick="buildHouse()" id="buildBtn" class="btn-build" style="display:none; width:100%; margin-top:4px;">🏠 Statyti namą</button>
+                        </div>
+                        <div id="center-3" class="center-cell chat">
+                            <h4>💬 CHAT</h4>
+                            <div id="chatMessages"></div>
+                            <div class="chat-input">
+                                <input type="text" id="chatInput" placeholder="Rašyk žinutę..." onkeypress="if(event.key==='Enter') sendChat()">
+                                <button onclick="sendChat()">➤</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="center-row">
+                        <div id="center-4" class="center-cell players-list">
+                            <h4>👥 ŽAIDĖJAI</h4>
+                            <div id="playersList"></div>
+                        </div>
+                        <div id="center-5" class="center-cell notifications">
+                            <h4>📢 PRANEŠIMAI</h4>
+                            
+                            <div id="buyChoice" style="display:none;">
+                                <div class="buy-choice-box">
+                                    <div class="buy-choice-header">🏠 SKLYPAS</div>
+                                    <div class="buy-choice-body">
+                                        <p><strong id="choiceFieldName">Vytauto g.</strong></p>
+                                        <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
+                                        <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
+                                    </div>
+                                    <div class="buy-choice-buttons">
+                                        <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
+                                        <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="center-6" class="center-cell journal">
+                            <h4>📜 ŽURNALAS</h4>
+                            <div id="journal"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row-middle-right" style="flex:0 0 150px;min-width:150px;max-width:150px;">
+                    <div id="cell-17" class="cell edge property" data-id="17">17</div>
+                    <div id="cell-18" class="cell edge property" data-id="18">18</div>
+                    <div id="cell-19" class="cell edge" data-id="19">19</div>
+                    <div id="cell-20" class="cell edge property" data-id="20">20</div>
+                    <div id="cell-21" class="cell edge property" data-id="21">21</div>
+                    <div id="cell-22" class="cell edge property" data-id="22">22</div>
+                    <div id="cell-23" class="cell edge" data-id="23">23</div>
+                    <div id="cell-24" class="cell edge property" data-id="24">24</div>
+                    <div id="cell-25" class="cell edge property" data-id="25">25</div>
+                </div>
+            </div>
+
+            <!-- APAČIA -->
+            <div class="board-row row-bottom">
+                <div id="cell-42" class="cell corner go-to-jail" data-id="42" style="width:150px;height:150px;flex:0 0 150px;min-width:150px;min-height:150px;max-width:150px;max-height:150px;">
+                    🚨<br>KELIAUK
+                </div>
+                <div id="cell-41" class="cell edge property" data-id="41">41</div>
+                <div id="cell-40" class="cell edge" data-id="40">40</div>
+                <div id="cell-39" class="cell edge property" data-id="39">39</div>
+                <div id="cell-38" class="cell edge property" data-id="38">38</div>
+                <div id="cell-37" class="cell edge property" data-id="37">37</div>
+                <div id="cell-36" class="cell edge property" data-id="36">36</div>
+                <div id="cell-35" class="cell edge property" data-id="35">35</div>
+                <div id="cell-34" class="cell edge property" data-id="34">34</div>
+                <div id="cell-33" class="cell edge" data-id="33">33</div>
+                <div id="cell-32" class="cell edge property" data-id="32">32</div>
+                <div id="cell-31" class="cell edge property" data-id="31">31</div>
+                <div id="cell-30" class="cell edge property" data-id="30">30</div>
+                <div id="cell-29" class="cell edge" data-id="29">29</div>
+                <div id="cell-28" class="cell edge property" data-id="28">28</div>
+                <div id="cell-27" class="cell edge property" data-id="27">27</div>
+                <div id="cell-26" class="cell corner parking" data-id="26" style="width:150px;height:150px;flex:0 0 150px;min-width:150px;min-height:150px;max-width:150px;max-height:150px;">
+                    🅿️<br>PARKINGAS
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BANKROTO MODALAS -->
+    <div id="bankruptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:40px; max-width:400px; width:90%; text-align:center; border:3px solid #dc3545; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <div style="font-size:60px; margin-bottom:10px;">💀</div>
+            <h2 style="color:#dc3545; margin-bottom:10px;">AR TIKRAI NORI BANKROTUOTI?</h2>
+            <p style="color:#3d2b1f; margin-bottom:20px; font-size:16px;">Prarasi visus pinigus ir objektus!<br>Žaidimą galėsi tik stebėti.</p>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="confirmBankrupt()" style="flex:1; padding:12px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">✅ TAIP, BANKROTUOTI</button>
+                <button onclick="cancelBankrupt()" style="flex:1; padding:12px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">❌ NE, GRĮŽTI</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BANKROTAVIMO PRANEŠIMAS -->
+    <div id="bankruptMessage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:40px; max-width:400px; width:90%; text-align:center; border:3px solid #dc3545; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <div style="font-size:80px; margin-bottom:10px;">💀</div>
+            <h2 style="color:#dc3545; margin-bottom:10px;">TU BANKROTAVAI!</h2>
+            <p style="color:#3d2b1f; margin-bottom:20px; font-size:16px;">Praradai visus pinigus ir objektus.<br>Dabar gali tik stebėti žaidimą ir rašyti chate.</p>
+            <button onclick="closeBankruptMessage()" style="padding:12px 40px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">OK, SUPRASTAU</button>
+        </div>
+    </div>
+
+    <!-- PREKYBOS MODALAS -->
+    <div id="tradingModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9998; justify-content:center; align-items:center;">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <h2 style="color:#1a6b3c; margin-bottom:15px;">🏪 PREKYBA</h2>
+            
+            <div id="tradingOptions">
+                <button onclick="showSellToBank()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                    🏦 Parduoti bankui (80%)
+                </button>
+                <button onclick="showAuctionPanel()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
+                    🔨 Skelbti aukcioną
+                </button>
+                <button onclick="showTradeToPlayer()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
+                    🤝 Siūlyti žaidėjui
+                </button>
+                <button onclick="closeTrading()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+                    ❌ Uždaryti
+                </button>
+            </div>
+
+            <div id="sellToBankPanel" style="display:none;">
+                <h3 style="color:#3d2b1f;">🏦 Parduoti bankui</h3>
+                <p style="color:#6c757d; font-size:14px;">Gauni 80% kortelės vertės</p>
+                <div id="sellableProperties" style="margin:10px 0; text-align:left;"></div>
+                <button onclick="confirmSellToBank()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                    ✅ Patvirtinti pardavimą
+                </button>
+                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                    🔙 Grįžti
+                </button>
+            </div>
+
+            <div id="auctionPanel" style="display:none;">
+                <h3 style="color:#3d2b1f;">🔨 Skelbti aukcioną</h3>
+                <p style="color:#6c757d; font-size:14px;">Pasirink kortelę aukcionui</p>
+                <div id="auctionableProperties" style="margin:10px 0; text-align:left;"></div>
+                <button onclick="confirmStartAuction()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
+                    🔨 Pradėti aukcioną
+                </button>
+                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                    🔙 Grįžti
+                </button>
+            </div>
+
+            <div id="tradeToPlayerPanel" style="display:none;">
+                <h3 style="color:#3d2b1f;">🤝 Siūlyti žaidėjui</h3>
+                <p style="color:#6c757d; font-size:13px;">Galima pasirinkti iki 3 kortelių</p>
+                <div style="margin:10px 0; text-align:left;">
+                    <label style="font-weight:600;">Pasirink žaidėją:</label>
+                    <select id="tradeTargetPlayer" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;"></select>
+                    
+                    <label style="font-weight:600; margin-top:10px; display:block;">📤 Ką siūlai (iki 3 kortelių):</label>
+                    <div id="tradeOfferFields" style="background:rgba(255,255,255,0.3); border-radius:8px; padding:5px; margin:5px 0; max-height:150px; overflow-y:auto;"></div>
+                    <input type="number" id="tradeOfferMoney" placeholder="Pridėti pinigų (€)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;">
+                    
+                    <label style="font-weight:600; margin-top:10px; display:block;">📥 Ko prašai (iki 3 kortelių):</label>
+                    <div id="tradeRequestFields" style="background:rgba(255,255,255,0.3); border-radius:8px; padding:5px; margin:5px 0; max-height:150px; overflow-y:auto;"></div>
+                    <input type="number" id="tradeRequestMoney" placeholder="Prašyti pinigų (€)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;">
+                </div>
+                <button onclick="confirmProposeTrade()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
+                    📩 Siųsti pasiūlymą
+                </button>
+                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                    🔙 Grįžti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASIŪLYMO GAVIMO MODALAS -->
+    <div id="tradeOfferModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9997; justify-content:center; align-items:center;">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; text-align:center; border:3px solid #17a2b8; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <h2 style="color:#17a2b8; margin-bottom:15px;">📩 GAUTAS PASIŪLYMAS</h2>
+            <div id="tradeOfferContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
+                <p><strong>Siūlo:</strong> <span id="offerFromPlayer"></span></p>
+                <p><strong>Siūlo kortelę:</strong> <span id="offerField"></span></p>
+                <p><strong>Prideda pinigų:</strong> €<span id="offerMoney"></span></p>
+                <hr style="border:1px solid #c9a84c;">
+                <p><strong>Prašo kortelės:</strong> <span id="requestField"></span></p>
+                <p><strong>Prašo pinigų:</strong> €<span id="requestMoney"></span></p>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="acceptTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                    ✅ PRIIMTI
+                </button>
+                <button onclick="rejectTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+                    ❌ ATMESTI
+                </button>
+                <button onclick="counterTradeOffer()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
+                    🔄 KOREGUOTI
+                </button>
+            </div>
+            <button onclick="closeTradeOffer()" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                🔙 Uždaryti
+            </button>
+        </div>
+    </div>
+
+    <!-- AUKCIONO MODALAS -->
+    <div id="auctionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9996; justify-content:center; align-items:center;">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; text-align:center; border:3px solid #ffc107; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <h2 style="color:#ffc107; margin-bottom:10px;">🔨 AUKCIONAS</h2>
+            <div id="auctionContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
+                <p><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
+                <p><strong>Kortelė:</strong> <span id="auctionFieldName"></span></p>
+                <p><strong>Dabartinė kaina:</strong> €<span id="auctionCurrentBid">0</span></p>
+                <p><strong>Liko laiko:</strong> <span id="auctionTimer">60</span> sek.</p>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                <input type="number" id="auctionBidInput" placeholder="Įvesk kainą" style="flex:1; padding:10px; border-radius:8px; border:1px solid #c9a84c; min-width:120px;">
+                <button onclick="placeBid()" class="btn-trade-option" style="padding:10px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                    💰 Siūlyti
+                </button>
+            </div>
+            <button onclick="closeAuction()" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                🔙 Uždaryti
+            </button>
+        </div>
+    </div>
+
+    <!-- GRIAUTI NAMUS MODALAS -->
+    <div id="demolishModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9995; justify-content:center; align-items:center;">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #dc3545; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <h2 style="color:#dc3545; margin-bottom:15px;">🏚️ GRIAUTI NAMUS</h2>
+            <p style="color:#6c757d; font-size:13px; margin-bottom:10px;">Pasirink kortelę iš kurios nori nugriauti vieną namą.<br>Grąžinama 75% statybos sumos.</p>
+            <div id="demolishProperties" style="margin:10px 0; text-align:left; max-height:300px; overflow-y:auto;"></div>
+            <button onclick="closeDemolish()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                ❌ Uždaryti
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="audioManager.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
