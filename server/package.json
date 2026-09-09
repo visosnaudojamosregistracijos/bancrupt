@@ -1,7 +1,7 @@
 {
   "name": "bancrupt-server",
   "version": "1.0.0",
-  "description": "Bancrupt žaidimo serveris",
+  "description": "Bancrupt game server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
