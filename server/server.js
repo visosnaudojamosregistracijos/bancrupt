@@ -3,11 +3,15 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const path = require('path'); // ← PRIDĖTI
 const Game = require('./gameLogic');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ← PRIDĖTI ŠIAS DVI EILUTES (STATINIŲ FAILŲ APTARNAVIMAS)
+app.use(express.static(path.join(__dirname, '../client')));
 
 const server = http.createServer(app);
 const io = socketIo(server, {
