@@ -34,10 +34,8 @@ io.on('connection', (socket) => {
 
     socket.on('createGame', (playerName) => {
         console.log('📥 Gauta createGame užklausa:', playerName);
-        console.log('📤 Siunčiama iš socket:', socket.id);
         
         if (!playerName || playerName.trim() === '') {
-            console.log('❌ Klaida: tuščias vardas');
             socket.emit('error', 'Įvesk vardą!');
             return;
         }
@@ -48,7 +46,6 @@ io.on('connection', (socket) => {
         const game = new Game();
         
         game.setEmitFunction((event, data, targetSocketId) => {
-            console.log('📤 Siunčiamas eventas:', event, data, 'target:', targetSocketId || 'visiems');
             if (targetSocketId) {
                 io.to(targetSocketId).emit(event, data);
             } else {
@@ -59,7 +56,6 @@ io.on('connection', (socket) => {
         const player = game.addPlayer(playerName.trim());
         
         if (player.error) {
-            console.log('❌ Klaida pridedant žaidėją:', player.error);
             socket.emit('error', player.error);
             return;
         }
@@ -68,8 +64,6 @@ io.on('connection', (socket) => {
         socket.join(gameId);
         socket.gameId = gameId;
         socket.playerId = player.id;
-        
-        console.log('✅ Žaidimas sukurtas:', { gameId, playerId: player.id, playerName: player.name });
         
         socket.emit('gameCreated', { 
             gameId, 
@@ -91,7 +85,6 @@ io.on('connection', (socket) => {
         
         const game = games.get(gameId.toUpperCase());
         if (!game) {
-            console.log('❌ Žaidimas nerastas:', gameId);
             socket.emit('error', 'Žaidimas nerastas!');
             return;
         }
@@ -193,33 +186,26 @@ io.on('connection', (socket) => {
     });
 
     socket.on('bankrupt', (playerId) => {
-        console.log('💀💀💀 SERVERIS GAUNA BANKROTA:', { playerId, socketId: socket.id, gameId: socket.gameId });
+        console.log('💀 SERVERIS GAUNA BANKROTA:', { playerId, socketId: socket.id, gameId: socket.gameId });
         
         if (!socket.gameId) {
-            console.log('❌ KLAIDA: nėra gameId');
             socket.emit('error', 'Neprisijungei prie žaidimo!');
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            console.log('❌ KLAIDA: žaidimas nerastas', socket.gameId);
             socket.emit('error', 'Žaidimas nerastas!');
             return;
         }
 
-        console.log('💀 Vykdomas bankrotas žaidėjui:', playerId);
         const result = game.bankruptPlayer(playerId);
-        console.log('💀 Bankroto rezultatas:', result);
         
         if (result.error) {
-            console.log('❌ KLAIDA bankroto metu:', result.error);
             socket.emit('error', result.error);
             return;
         }
 
-        console.log('💀 Bankrotas sėkmingas, siunčiama žaidimo būsena');
-        
         io.to(socket.gameId).emit('bankruptConfirmed', {
             playerId: playerId,
             playerName: result.playerName
@@ -227,8 +213,6 @@ io.on('connection', (socket) => {
         
         io.to(socket.gameId).emit('gameState', game.getGameState());
         io.to(socket.gameId).emit('message', `💀 ${result.playerName} bankrotavo!`);
-        
-        console.log('💀 Bankroto procesas baigtas');
     });
 
     socket.on('endTurn', () => {
@@ -295,7 +279,7 @@ io.on('connection', (socket) => {
         }
 
         const result = game.canBuildHouse(socket.playerId, fieldId);
-        const field = game.board[fieldId];
+        const field = game.board.find(f => f.id === fieldId);
         
         socket.emit('canBuildResult', {
             can: result.can,
@@ -387,8 +371,6 @@ io.on('connection', (socket) => {
     // PREKYBA - PRADĖTI AUKCIONĄ
     // ============================================
     socket.on('startAuction', ({ fieldId }) => {
-        console.log('🔨🔨🔨 GAUTA startAuction UŽKLAUSA:', { fieldId, socketId: socket.id, playerId: socket.playerId });
-        
         if (!socket.gameId || socket.playerId === undefined) {
             socket.emit('error', 'Neprisijungei prie žaidimo!');
             return;
@@ -400,24 +382,18 @@ io.on('connection', (socket) => {
             return;
         }
 
-        console.log('🔨🔨🔨 Iškviečiamas game.startAuction()');
         const result = game.startAuction(socket.playerId, fieldId);
-        console.log('🔨🔨🔨 game.startAuction() grąžino:', JSON.stringify(result, null, 2));
         
         if (result.error) {
-            console.log('🔨🔨🔨 KLAIDA:', result.error);
             socket.emit('error', result.error);
             return;
         }
-
-        console.log('🔨🔨🔨 SIUNČIAMAS auctionStarted PER emitFunction:', result);
         
         if (game.emitFunction) {
             game.emitFunction('auctionStarted', result);
             game.emitFunction('gameState', game.getGameState());
             game.emitFunction('message', `🔨 ${game.players[socket.playerId].name} paskelbė aukcioną!`);
         } else {
-            console.log('⚠️ emitFunction nėra, naudojamas io.to');
             io.to(socket.gameId).emit('auctionStarted', result);
             io.to(socket.gameId).emit('gameState', game.getGameState());
             io.to(socket.gameId).emit('message', `🔨 ${game.players[socket.playerId].name} paskelbė aukcioną!`);
@@ -453,8 +429,6 @@ io.on('connection', (socket) => {
     // PREKYBA - BAIGTI AUKCIONĄ
     // ============================================
     socket.on('endAuction', ({ auctionId }) => {
-        console.log('🔨🔨🔨 GAUTA endAuction UŽKLAUSA:', { auctionId, socketId: socket.id });
-        
         if (!socket.gameId) {
             socket.emit('error', 'Neprisijungei prie žaidimo!');
             return;
@@ -467,12 +441,8 @@ io.on('connection', (socket) => {
         }
 
         const result = game.endAuction(auctionId);
-        console.log('🔨🔨🔨 AUKCIONO PABAIGA:', result);
         
-        if (!result) {
-            console.log('⚠️ Aukcionas jau baigtas arba nerastas, ignoruojama');
-            return;
-        }
+        if (!result) return;
 
         io.to(socket.gameId).emit('auctionEnded', result);
         io.to(socket.gameId).emit('gameState', game.getGameState());
@@ -483,8 +453,6 @@ io.on('connection', (socket) => {
     // PREKYBA - SIŪLYTI ŽAIDĖJUI
     // ============================================
     socket.on('proposeTrade', (data) => {
-        console.log('🔄🔄🔄 SERVERIS GAUNA PROPOSE TRADE:', data);
-        
         const { targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney } = data;
         
         if (!socket.gameId || socket.playerId === undefined) {
@@ -497,15 +465,6 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Žaidimas nerastas!');
             return;
         }
-
-        console.log('🔄🔄🔄 Siunčiama į tradingLogic:', {
-            playerId: socket.playerId,
-            targetPlayerId,
-            offerFieldIds,
-            requestFieldIds,
-            offerMoney,
-            requestMoney
-        });
 
         const result = game.proposeTrade(socket.playerId, targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney);
         if (result.error) {
@@ -635,6 +594,60 @@ io.on('connection', (socket) => {
         io.to(socket.gameId).emit('gameState', game.getGameState());
         io.to(socket.gameId).emit('message', result.message);
         io.to(socket.gameId).emit('demolishConfirmed', result);
+    });
+
+    // ============================================
+    // PASITRAUKIMAS IŠ ŽAIDIMO (PABĖGIMAS)
+    // ============================================
+    socket.on('leaveGame', () => {
+        console.log('🏃 GAUTA leaveGame UŽKLAUSA:', { socketId: socket.id, playerId: socket.playerId });
+        
+        if (!socket.gameId || socket.playerId === undefined) {
+            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            return;
+        }
+        
+        const game = games.get(socket.gameId);
+        if (!game) {
+            socket.emit('error', 'Žaidimas nerastas!');
+            return;
+        }
+
+        const gameIdCopy = socket.gameId;
+        
+        const result = game.leaveGame(socket.playerId);
+        if (result.error) {
+            socket.emit('error', result.error);
+            return;
+        }
+
+        // Pranešimas visiems
+        io.to(gameIdCopy).emit('message', `😭 ${result.playerName} susinervino ir pabėgo į kampą!`);
+        
+        // Jei liko 1 žaidėjas – paskelbti laimėtoją
+        if (result.winner) {
+            io.to(gameIdCopy).emit('message', `🏆 ${result.winner} LAIMĖJO! Visi kiti pabėgo!`);
+            io.to(gameIdCopy).emit('gameFinished', {
+                winner: result.winner,
+                winnerId: result.winnerId
+            });
+        }
+        
+        // Atnaujinti žaidimo būseną visiems
+        io.to(gameIdCopy).emit('gameState', game.getGameState());
+        
+        // Atsijungti nuo kambario
+        socket.leave(gameIdCopy);
+        socket.gameId = null;
+        socket.playerId = undefined;
+        
+        // Pranešti pačiam žaidėjui
+        socket.emit('leftGame', {
+            playerName: result.playerName,
+            gameId: gameIdCopy
+        });
+        
+        console.log('🏃 Pasitraukimas baigtas:', result);
     });
 
     socket.on('disconnect', () => {

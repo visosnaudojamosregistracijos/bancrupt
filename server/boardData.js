@@ -15,7 +15,7 @@ const boardData = [
     { id: 10, name: 'V. Kudirkos', type: 'property', color: '#2ecc71', cost: 125, icon: '' },
     { id: 11, name: 'S. Daukanto', type: 'property', color: '#2ecc71', cost: 138, icon: '' },
     { id: 12, name: 'J. Basanavič.', type: 'property', color: '#2ecc71', cost: 151, icon: '' },
-    { id: 13, name: 'LIGONINĖ', type: 'special', color: '#6f42c1', cost: 10, icon: '🏥' },
+    { id: 13, name: 'LIGONINĖ', type: 'special', color: '#6f42c1', cost: 100, icon: '🏥' },
     { id: 14, name: 'ŠIUKŠLĖS', type: 'service1', color: null, cost: 150, icon: '🗑️' },
     { id: 15, name: 'Laisvės g.', type: 'property', color: '#e67e22', cost: 164, icon: '' },
     
@@ -29,7 +29,7 @@ const boardData = [
     { id: 20, name: 'Aušros g.', type: 'property', color: '#9b59b6', cost: 203, icon: '' },
     { id: 21, name: 'Maironio g.', type: 'property', color: '#9b59b6', cost: 216, icon: '' },
     { id: 22, name: 'V. Krėvės g.', type: 'property', color: '#9b59b6', cost: 229, icon: '' },
-    { id: 23, name: 'LATRU UŽEIGA', type: 'tax', color: '#dc3545', cost: 10, icon: '🍺' },
+    { id: 23, name: 'LATRU UŽEIGA', type: 'tax', color: '#dc3545', cost: 0, icon: '🍺' },
     { id: 24, name: 'Pilies g.', type: 'property', color: '#e74c3c', cost: 242, icon: '' },
     { id: 25, name: 'Gedimino pr.', type: 'property', color: '#e74c3c', cost: 255, icon: '' },
     

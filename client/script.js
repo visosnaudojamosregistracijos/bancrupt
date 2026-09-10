@@ -206,6 +206,10 @@ function initSocket() {
             playCelebrateSound();
             playWinSound();
         }
+        if (msg.includes('pabėgo į kampą')) {
+            playBankruptSound();
+            showPopupMessage(msg, 'rent');
+        }
         
         addJournal(msg);
     });
@@ -426,6 +430,38 @@ function initSocket() {
         playCashSound();
         if (gameState) updateUI(gameState);
     });
+
+    // ============================================
+    // PASITRAUKIMAS IŠ ŽAIDIMO
+    // ============================================
+
+    socket.on('leftGame', (data) => {
+        console.log('🏃 Pasitraukei iš žaidimo:', data);
+        addNotification(`🏃 Tu pasitraukei iš žaidimo`);
+        addJournal(`🏃 Tu pasitraukei iš žaidimo`);
+        
+        setTimeout(() => {
+            document.getElementById('game').style.display = 'none';
+            document.getElementById('lobby').style.display = 'block';
+            showLobbyMessage('🏃 Pasitraukei iš žaidimo. Gali kurti naują arba jungtis prie kito.', '#ffd700');
+            
+            playerId = null;
+            gameId = null;
+            gameState = null;
+            myPlayer = null;
+            isMyTurn = false;
+        }, 1500);
+    });
+
+    socket.on('gameFinished', (data) => {
+        console.log('🏆 Žaidimas baigtas:', data);
+        playWinSound();
+        playCelebrateSound();
+        
+        setTimeout(() => {
+            alert(`🏆 ŽAIDIMAS BAIGTAS!\n\nLaimėtojas: ${data.winner}`);
+        }, 500);
+    });
 }
 
 // ============================================
@@ -565,9 +601,38 @@ function joinGame() {
 
 function enterGame() {
     document.getElementById('lobby').style.display = 'none';
-    document.getElementById('game').style.display = 'block';
+    document.getElementById('game').style.display = 'flex';
     document.getElementById('gameIdDisplay').textContent = '📋 ID: ' + gameId;
+    
+    const gameIdLeft = document.getElementById('gameIdDisplayLeft');
+    if (gameIdLeft) gameIdLeft.textContent = gameId;
+    
     socket.emit('getGameState');
+}
+
+// ============================================
+// PASITRAUKIMAS IŠ ŽAIDIMO
+// ============================================
+
+function leaveGame() {
+    if (!isConnected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        playErrorSound();
+        return;
+    }
+    
+    if (!socket || !socket.connected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        playErrorSound();
+        return;
+    }
+    
+    if (!confirm('🏃 Ar tikrai nori pasitraukti?\n\nPrarasi visus pinigus ir korteles!\nNegalėsi grįžti į šį stalą.')) {
+        return;
+    }
+    
+    playClickSound();
+    socket.emit('leaveGame');
 }
 
 // ============================================
@@ -831,7 +896,6 @@ function updateAuctionableProperties() {
         
         hasProperties = true;
         const checked = (selectedAuctionField === fieldId) ? 'checked' : '';
-        console.log(`🔨 Kortelė ${field.name} (id: ${fieldId}), checked: ${checked}, selectedAuctionField: ${selectedAuctionField}`);
         
         html += `
             <div style="padding:8px; border-bottom:1px solid #ddd; cursor:pointer;" onclick="selectAuctionField(${fieldId})">
@@ -851,7 +915,6 @@ function updateAuctionableProperties() {
 function selectAuctionField(fieldId) {
     console.log('🔨🔨🔨 selectAuctionField iškviesta su:', fieldId);
     selectedAuctionField = fieldId;
-    console.log('🔨🔨🔨 selectedAuctionField nustatytas į:', selectedAuctionField);
     updateAuctionableProperties();
     playClickSound();
 }
@@ -873,10 +936,7 @@ function confirmStartAuction() {
         return;
     }
     
-    console.log('🔨 Pasirinkta kortelė:', field.name);
-    
     if (confirm(`🔨 Skelbti aukcioną: ${field.name}?`)) {
-        console.log('🔨 Siunčiama startAuction su:', { fieldId: selectedAuctionField });
         socket.emit('startAuction', { fieldId: selectedAuctionField });
         selectedAuctionField = null;
         closeTrading();
@@ -902,24 +962,20 @@ function updateTradePlayers() {
     const currentPlayerId = myPlayer?.id !== undefined ? myPlayer.id : playerId;
     
     console.log('🔄 Atnaujinami žaidėjai prekybai');
-    console.log('🔄 currentPlayerId (aš):', currentPlayerId);
-    console.log('🔄 gameState.players:', gameState.players.map(p => ({id: p.id, name: p.name, isActive: p.isActive, bankrupt: p.bankrupt})));
     
     select.innerHTML = '';
     let found = false;
     gameState.players.forEach(p => {
-        if (p.id !== currentPlayerId && p.isActive && !p.bankrupt) {
+        if (p.id !== currentPlayerId && p.isActive && !p.bankrupt && !p.left) {
             const option = document.createElement('option');
             option.value = p.id;
             option.textContent = `${p.name} ${p.icon || '🚗'} (€${p.money})`;
             select.appendChild(option);
             found = true;
-            console.log(`✅ Pridėtas: ${p.name} (id: ${p.id})`);
         }
     });
     
     if (!found) {
-        console.log('❌ Nerasta aktyvių žaidėjų');
         const option = document.createElement('option');
         option.value = '';
         option.textContent = '--- Nėra aktyvių žaidėjų ---';
@@ -994,9 +1050,6 @@ function updateOfferFields() {
 }
 
 function toggleOfferField(fieldId) {
-    console.log('🔄 toggleOfferField iškviesta su:', fieldId);
-    console.log('🔄 selectedOfferFields prieš:', selectedOfferFields);
-    
     const index = selectedOfferFields.indexOf(fieldId);
     if (index > -1) {
         selectedOfferFields.splice(index, 1);
@@ -1008,15 +1061,11 @@ function toggleOfferField(fieldId) {
         }
         selectedOfferFields.push(fieldId);
     }
-    console.log('🔄 selectedOfferFields po:', selectedOfferFields);
     updateOfferFields();
     playClickSound();
 }
 
 function toggleRequestField(fieldId) {
-    console.log('🔄 toggleRequestField iškviesta su:', fieldId);
-    console.log('🔄 selectedRequestFields prieš:', selectedRequestFields);
-    
     const index = selectedRequestFields.indexOf(fieldId);
     if (index > -1) {
         selectedRequestFields.splice(index, 1);
@@ -1028,7 +1077,6 @@ function toggleRequestField(fieldId) {
         }
         selectedRequestFields.push(fieldId);
     }
-    console.log('🔄 selectedRequestFields po:', selectedRequestFields);
     updateRequestFields();
     playClickSound();
 }
@@ -1037,38 +1085,26 @@ function updateRequestFields() {
     const targetSelectElem = document.getElementById('tradeTargetPlayer');
     const container = document.getElementById('tradeRequestFields');
     
-    console.log('🔄🔄🔄 updateRequestFields() iškviesta');
-    
-    if (!targetSelectElem || !container) {
-        console.log('❌ Nerasti elementai');
-        return;
-    }
+    if (!targetSelectElem || !container) return;
     
     const targetId = parseInt(targetSelectElem.value);
-    console.log('🔄 targetId:', targetId, 'iš reikšmės:', targetSelectElem.value);
     
     if (!gameState) {
-        console.log('❌ gameState nėra');
         container.innerHTML = '<p style="color:#6c757d; padding:10px;">Nėra žaidimo būsenos</p>';
         return;
     }
     
     if (isNaN(targetId) || targetSelectElem.value === '') {
-        console.log('❌ Neteisingas targetId');
         container.innerHTML = '<p style="color:#6c757d; padding:10px;">Pasirink žaidėją</p>';
         return;
     }
     
     const target = gameState.players.find(p => p.id === targetId);
-    console.log('🔄 Ieškomas žaidėjas su id', targetId, 'rastas:', target);
     
     if (!target) {
-        console.log('❌ Žaidėjas nerastas');
         container.innerHTML = '<p style="color:#dc3545; padding:10px;">Žaidėjas nerastas</p>';
         return;
     }
-    
-    console.log(`🔄 ${target.name} turi ${target.properties.length} kortelių:`, target.properties);
     
     if (target.properties.length === 0) {
         container.innerHTML = '<p style="color:#6c757d; padding:10px;">Šis žaidėjas neturi kortelių</p>';
@@ -1081,15 +1117,9 @@ function updateRequestFields() {
     
     target.properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
-        if (!field) {
-            console.log(`⚠️ Nerastas laukelis su id ${fieldId}`);
-            return;
-        }
+        if (!field) return;
         const houses = target.houses && target.houses[fieldId] ? target.houses[fieldId] : 0;
-        if (houses > 0) {
-            console.log(`⛔ ${field.name} turi namų (${houses}), praleidžiam`);
-            return;
-        }
+        if (houses > 0) return;
         if (count >= 3) return;
         
         const checked = selectedRequestFields.includes(fieldId) ? 'checked' : '';
@@ -1119,20 +1149,12 @@ function updateRequestFields() {
         html = '<p style="color:#6c757d; padding:10px;">Šis žaidėjas neturi kortelių be namų</p>';
     }
     container.innerHTML = html;
-    console.log(`✅ Atnaujintos prašomos kortelės, rasta ${count} kortelių`);
 }
 
 function confirmProposeTrade() {
     const targetId = parseInt(document.getElementById('tradeTargetPlayer').value);
     const offerMoney = parseInt(document.getElementById('tradeOfferMoney').value) || 0;
     const requestMoney = parseInt(document.getElementById('tradeRequestMoney').value) || 0;
-    
-    console.log('🔄 confirmProposeTrade() iškviesta');
-    console.log('🔄 selectedOfferFields:', selectedOfferFields);
-    console.log('🔄 selectedRequestFields:', selectedRequestFields);
-    console.log('🔄 targetId:', targetId);
-    console.log('🔄 offerMoney:', offerMoney);
-    console.log('🔄 requestMoney:', requestMoney);
     
     if (isNaN(targetId) || targetId === '' || document.getElementById('tradeTargetPlayer').value === '') {
         alert('❌ Pasirink žaidėją!');
@@ -1165,9 +1187,6 @@ function confirmProposeTrade() {
     if (offerMoney > 0) {
         msg += `  - €${offerMoney} pinigų\n`;
     }
-    if (selectedOfferFields.length === 0 && offerMoney === 0) {
-        msg += `  - (nieko)\n`;
-    }
     msg += `\n📥 PRAŠAI:\n`;
     if (selectedRequestFields.length > 0) {
         selectedRequestFields.forEach(id => {
@@ -1178,9 +1197,6 @@ function confirmProposeTrade() {
     if (requestMoney > 0) {
         msg += `  - €${requestMoney} pinigų\n`;
     }
-    if (selectedRequestFields.length === 0 && requestMoney === 0) {
-        msg += `  - (nieko)\n`;
-    }
     
     if (confirm(msg)) {
         const tradeData = {
@@ -1190,8 +1206,6 @@ function confirmProposeTrade() {
             offerMoney: offerMoney,
             requestMoney: requestMoney
         };
-        
-        console.log('🔄 Siunčiama prekyba su:', JSON.stringify(tradeData, null, 2));
         
         socket.emit('proposeTrade', tradeData);
         closeTrading();
@@ -1342,7 +1356,6 @@ function placeBid() {
         return;
     }
     
-    console.log('💰 Siunčiamas pasiūlymas:', { auctionId: currentAuctionId, bidAmount });
     socket.emit('bidAuction', { auctionId: currentAuctionId, bidAmount });
     input.value = '';
     playClickSound();
@@ -1455,7 +1468,6 @@ function buildHouse() {
         return;
     }
     
-    console.log('🏠 Tikrinama ar galima statyti ant:', currentField.id, currentField.name);
     playClickSound();
     socket.emit('canBuildHouse', { fieldId: currentField.id });
 }
@@ -1495,57 +1507,40 @@ function payJailFine() {
 // ============================================
 
 function bankrupt() {
-    console.log('💀 KLIENTAS: Bankrut() iškviesta');
-    console.log('💀 KLIENTAS: isMyTurn:', isMyTurn);
-    console.log('💀 KLIENTAS: socket connected:', socket ? socket.connected : false);
-    console.log('💀 KLIENTAS: playerId:', playerId);
-    
     if (!isMyTurn) {
         alert('⏳ Ne tavo eilė!');
         playErrorSound();
         return;
     }
     document.getElementById('bankruptModal').style.display = 'flex';
-    console.log('💀 KLIENTAS: Modalas atidarytas');
     playClickSound();
 }
 
 function confirmBankrupt() {
-    console.log('💀💀💀 KLIENTAS: confirmBankrupt() iškviesta');
-    console.log('💀💀💀 KLIENTAS: playerId:', playerId);
-    console.log('💀💀💀 KLIENTAS: socket egzistuoja:', socket ? 'TAIP' : 'NE');
-    console.log('💀💀💀 KLIENTAS: socket.connected:', socket ? socket.connected : 'N/A');
-    
     document.getElementById('bankruptModal').style.display = 'none';
     playClickSound();
     
     if (!socket) {
-        console.error('💀 KLAIDA: socket neegzistuoja!');
         alert('Klaida: nėra ryšio su serveriu!');
         playErrorSound();
         return;
     }
     
     if (!socket.connected) {
-        console.error('💀 KLAIDA: socket neprisijungęs!');
         alert('Klaida: nėra ryšio su serveriu!');
         playErrorSound();
         return;
     }
     
-    console.log('💀💀💀 KLIENTAS: Siunčiu bankrotą...');
     socket.emit('bankrupt', playerId);
-    console.log('💀💀💀 KLIENTAS: Bankroto eventas išsiųstas');
 }
 
 function cancelBankrupt() {
-    console.log('❌ KLIENTAS: Bankrotas atšauktas');
     document.getElementById('bankruptModal').style.display = 'none';
     playClickSound();
 }
 
 function closeBankruptMessage() {
-    console.log('💀 KLIENTAS: Bankroto pranešimas uždarytas');
     document.getElementById('bankruptMessage').style.display = 'none';
     playClickSound();
     if (gameState) {
@@ -1633,9 +1628,23 @@ function setMode(mode) {
 function updateUI(state) {
     if (!state) return;
     
-    document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive).length}/${state.maxPlayers}`;
+    document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left).length}/${state.maxPlayers}`;
     const currentPlayer = state.players[state.currentTurn];
     document.getElementById('turnDisplay').textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
+    
+    // Kairės panelės atnaujinimas
+    const gameIdLeft = document.getElementById('gameIdDisplayLeft');
+    if (gameIdLeft && gameId) gameIdLeft.textContent = gameId;
+
+    const playerCountLeft = document.getElementById('playerCountLeft');
+    if (playerCountLeft) {
+        playerCountLeft.textContent = `${state.players.filter(p => p.isActive && !p.bankrupt && !p.left).length}/${state.maxPlayers}`;
+    }
+
+    const turnDisplayLeft = document.getElementById('turnDisplayLeft');
+    if (turnDisplayLeft && currentPlayer) {
+        turnDisplayLeft.textContent = currentPlayer.name;
+    }
     
     const me = state.players.find(p => p.id === playerId);
     if (me) {
@@ -1691,6 +1700,7 @@ function updateUI(state) {
             <div style="font-size:11px; color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
             ${me.inJail ? '<div style="color:#dc3545; font-size:11px;">⛓️ KALĖJIME</div>' : ''}
             ${me.bankrupt ? '<div style="color:#dc3545; font-size:11px;">💀 BANKROTAS</div>' : ''}
+            ${me.left ? '<div style="color:#6c757d; font-size:11px;">😭 PASITRAUKEI</div>' : ''}
             <div style="width:100%; border-top:1px solid rgba(61,43,31,0.1); margin-top:4px; padding-top:4px;">
                 <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px;">📋 TURIMOS KORTELĖS</div>
                 ${miniCardsHtml}
@@ -1701,34 +1711,37 @@ function updateUI(state) {
     const playersList = document.getElementById('playersList');
     playersList.innerHTML = state.players.map(p => {
         const pHouses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
+        const isLeft = p.left === true;
         return `
-            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''}">
+            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''}">
                 <span class="dot" style="background:${p.color}"></span>
                 <span class="pname">${p.name} ${p.icon || '🚗'} ${p.id === playerId ? '👤' : ''}</span>
                 <span class="pmoney">€${p.money}</span>
                 ${pHouses > 0 ? `🏠${pHouses}` : ''}
                 ${p.inJail ? '⛓️' : ''}
                 ${p.bankrupt ? '💀' : ''}
-                ${state.currentTurn === p.id && p.isActive ? '🎯' : ''}
+                ${isLeft ? '😭' : ''}
+                ${state.currentTurn === p.id && p.isActive && !p.left ? '🎯' : ''}
             </div>
         `;
     }).join('');
     
     const isBankrupt = myPlayer && myPlayer.bankrupt;
-    isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt;
+    const isLeft = myPlayer && myPlayer.left;
+    isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left;
     
-    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt;
+    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft;
     
     const tradeBtn = document.getElementById('tradeBtn');
     if (tradeBtn) {
-        tradeBtn.disabled = !isMyTurn || isBankrupt;
+        tradeBtn.disabled = !isMyTurn || isBankrupt || isLeft;
     }
     
-    document.getElementById('bankruptBtn').disabled = isBankrupt || !myPlayer || !myPlayer.isActive;
+    document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || !myPlayer || !myPlayer.isActive;
 
     const jailBtn = document.getElementById('jailBtn');
     if (jailBtn) {
-        if (isMyTurn && !isBankrupt && myPlayer && myPlayer.inJail) {
+        if (isMyTurn && !isBankrupt && !isLeft && myPlayer && myPlayer.inJail) {
             jailBtn.style.display = 'block';
             jailBtn.disabled = false;
         } else {
@@ -1739,7 +1752,7 @@ function updateUI(state) {
 
     const demolishBtn = document.getElementById('demolishBtn');
     if (demolishBtn) {
-        if (isMyTurn && !isBankrupt && myPlayer) {
+        if (isMyTurn && !isBankrupt && !isLeft && myPlayer) {
             const hasHouses = myPlayer.houses && Object.keys(myPlayer.houses).length > 0;
             if (hasHouses) {
                 demolishBtn.style.display = 'block';
@@ -1756,7 +1769,7 @@ function updateUI(state) {
 
     const buildBtn = document.getElementById('buildBtn');
     if (buildBtn) {
-        if (isMyTurn && !isBankrupt && myPlayer && gameState) {
+        if (isMyTurn && !isBankrupt && !isLeft && myPlayer && gameState) {
             const currentField = gameState.board[myPlayer.position];
             if (currentField && (currentField.type === 'property' || currentField.type === 'service2') && currentField.color) {
                 const groupFields = getGroupByColor(currentField.color);
@@ -1811,7 +1824,7 @@ function updateUI(state) {
     const centerCells = document.querySelectorAll('.center-cell');
     centerCells.forEach(cell => {
         if (cell.id === 'center-3') {
-            if (isBankrupt) {
+            if (isBankrupt || isLeft) {
                 cell.style.opacity = '1';
                 cell.style.filter = 'none';
                 cell.style.background = 'linear-gradient(145deg, #d4b896, #c4a886)';
@@ -1823,7 +1836,7 @@ function updateUI(state) {
                 cell.style.pointerEvents = 'auto';
             }
         } else {
-            if (isBankrupt) {
+            if (isBankrupt || isLeft) {
                 cell.style.opacity = '0.4';
                 cell.style.filter = 'grayscale(1)';
                 cell.style.pointerEvents = 'none';
@@ -1837,7 +1850,7 @@ function updateUI(state) {
         }
     });
     
-    if (isBankrupt) {
+    if (isBankrupt || isLeft) {
         document.getElementById('board').style.opacity = '0.5';
         document.getElementById('board').style.filter = 'grayscale(0.8)';
     } else {
@@ -1859,7 +1872,7 @@ function updateBoard(state) {
         const cell = document.getElementById(`cell-${index}`);
         if (!cell) return;
         
-        const playersHere = state.players.filter(p => p.position === index && p.isActive && !p.bankrupt);
+        const playersHere = state.players.filter(p => p.position === index && p.isActive && !p.bankrupt && !p.left);
         
         let html = `<span class="cell-number">${index}</span>`;
         
@@ -1968,15 +1981,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const targetSelect = document.getElementById('tradeTargetPlayer');
     if (targetSelect) {
-        console.log('✅ Rastas tradeTargetPlayer');
         targetSelect.addEventListener('change', function() {
-            console.log('🔄 Pasikeitė žaidėjas, atnaujinamos kortelės');
-            console.log('🔄 Pasirinkta reikšmė:', this.value);
             selectedRequestFields = [];
             updateRequestFields();
         });
         targetSelect.addEventListener('input', function() {
-            console.log('🔄 Input eventas, reikšmė:', this.value);
             selectedRequestFields = [];
             updateRequestFields();
         });

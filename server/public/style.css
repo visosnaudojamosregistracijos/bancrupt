@@ -157,6 +157,89 @@ body {
     align-items: center;
 }
 
+/* ---------- KAIRĖ PANELĖ ---------- */
+#gameBody {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    gap: 6px;
+}
+
+#leftPanel {
+    width: 130px;
+    flex-shrink: 0;
+    background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+    border: 2px solid #c9a84c;
+    border-radius: 10px;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #ffd700;
+    font-weight: 700;
+    font-size: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    height: 92.5%;
+}
+
+#gameIdBox {
+    background: #0d1f0d;
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 11px;
+    word-break: break-all;
+}
+
+#gameIdBox span {
+    color: #fff;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+.left-btn {
+    width: 100%;
+    padding: 10px 8px;
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    background: #0d1f0d;
+    color: #ffd700;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.left-btn:hover {
+    background: #ffd700;
+    color: #0d1f0d;
+    transform: scale(1.03);
+}
+
+.leave-btn {
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    color: #fff;
+    border-color: #ff6b6b;
+}
+
+.leave-btn:hover {
+    background: linear-gradient(145deg, #ff6b6b, #dc3545);
+    color: #fff;
+}
+
+#leftPlayerCount, #leftTurnDisplay {
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    text-align: center;
+}
+
+#leftTurnDisplay span {
+    color: #fff;
+}
+
 /* ---------- HEADER MYGTUKAI ---------- */
 .header-controls {
     display: flex;
@@ -755,6 +838,13 @@ body {
 
 .player-item.me {
     background: rgba(40, 167, 69, 0.2);
+}
+
+.player-item.left {
+    opacity: 0.4;
+    background: rgba(108, 117, 125, 0.2);
+    border-left: 3px solid #6c757d;
+    text-decoration: line-through;
 }
 
 /* ---------- 5 LANGELIS - PRANEŠIMAI ---------- */
@@ -1532,6 +1622,16 @@ body {
         font-size: 12px;
         padding: 6px 12px;
     }
+    #leftPanel {
+        width: 80px;
+        padding: 6px 4px;
+        font-size: 9px;
+        gap: 4px;
+    }
+    #gameIdBox { font-size: 8px; padding: 4px 2px; }
+    #gameIdBox span { font-size: 9px; }
+    .left-btn { font-size: 9px; padding: 6px 4px; }
+    #leftPlayerCount, #leftTurnDisplay { font-size: 8px; padding: 3px 4px; }
 }
 
 @media (max-width: 480px) {
@@ -1754,4 +1854,9 @@ body {
         padding: 4px 10px;
         border-radius: 6px;
     }
+    #leftPanel { width: 65px; padding: 4px 3px; font-size: 7px; }
+    #gameIdBox { font-size: 7px; }
+    #gameIdBox span { font-size: 8px; }
+    .left-btn { font-size: 8px; padding: 5px 3px; }
+    #leftPlayerCount, #leftTurnDisplay { font-size: 7px; }
 }

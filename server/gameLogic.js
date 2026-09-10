@@ -33,7 +33,7 @@ class Game {
         if (this.players.length >= this.maxPlayers) {
             return { error: 'Daugiausiai 8 žaidėjai' };
         }
-        if (this.players.find(p => p.name === name)) {
+        if (this.players.find(p => p.name === name && !p.left && !p.bankrupt)) {
             return { error: 'Toks vardas jau užimtas' };
         }
 
@@ -50,6 +50,7 @@ class Game {
             jailTurns: 0,
             isActive: true,
             bankrupt: false,
+            left: false,
             socketId: null,
             icon: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑'][this.players.length % 8]
         };
@@ -62,7 +63,7 @@ class Game {
         if (this.waitingForBuy) return { error: 'Pirmiausia nusipirk sklypą!' };
         
         const player = this.players[playerId];
-        if (!player || !player.isActive || player.bankrupt) {
+        if (!player || !player.isActive || player.bankrupt || player.left) {
             return { error: 'Žaidėjas neaktyvus' };
         }
         if (this.currentTurn !== playerId) {
@@ -375,22 +376,21 @@ class Game {
             }
                 
             case 'tax':
-    // Patikrinti ar tai VMI (id: 5)
-    if (field.id === 5) {
-        player.money -= 200;
-        result.action = 'pay_tax';
-        result.message = `${player.name} sumokėjo €200 VMI mokesčių! 💰`;
-        this.addMessage(result.message);
-    } else {
-        player.money -= field.cost;
-        result.action = 'pay_tax';
-        result.message = `${player.name} sumokėjo €${field.cost} mokesčių`;
-        this.addMessage(result.message);
-    }
-    if (player.money < 0) {
-        this.bankruptPlayer(player.id);
-    }
-    break;
+                if (field.id === 5) {
+                    player.money -= 200;
+                    result.action = 'pay_tax';
+                    result.message = `${player.name} sumokėjo €200 VMI mokesčių! 💰`;
+                    this.addMessage(result.message);
+                } else {
+                    player.money -= field.cost;
+                    result.action = 'pay_tax';
+                    result.message = `${player.name} sumokėjo €${field.cost} mokesčių`;
+                    this.addMessage(result.message);
+                }
+                if (player.money < 0) {
+                    this.bankruptPlayer(player.id);
+                }
+                break;
                 
             case 'jail':
                 player.inJail = true;
@@ -416,47 +416,45 @@ class Game {
                 break;
                 
             case 'chance':
-    // SPECIALUS ATVEJIS - HORNY RP (id: 4)
-    if (field.id === 4) {
-        player.money += 200;
-        result.action = 'special';
-        result.message = `🎲 ${player.name} atsistojo ant HORNY RP ir gavo nuo Dedo €200 naujam importui! 🎉`;
-        this.addMessage(result.message);
-    } else {
-        this.handleChance(player);
-        result.action = 'chance';
-        result.message = `${player.name} gavo šansą`;
-    }
-    break;
+                if (field.id === 4) {
+                    player.money += 200;
+                    result.action = 'special';
+                    result.message = `🎲 ${player.name} atsistojo ant HORNY RP ir gavo nuo Dedo €200 naujam importui! 🎉`;
+                    this.addMessage(result.message);
+                } else {
+                    this.handleChance(player);
+                    result.action = 'chance';
+                    result.message = `${player.name} gavo šansą`;
+                }
+                break;
                 
             case 'special':
-    if (field.id === 50) {
-        player.money += 200;
-        result.message = `🎂 ${player.name} švenčia gimtadienį ir gauna €200! 🎉`;
-        this.addMessage(result.message);
-    } else if (field.id === 13) {
-        // LIGONINĖ - susimoki €50 daktarui Bubauskui
-        player.money -= 50;
-        result.action = 'pay_tax';
-        result.message = `🏥 ${player.name} apsilankė ligoninėje ir sumokėjo €50 daktarui Bubauskui! 👨‍⚕️`;
-        this.addMessage(result.message);
-        if (player.money < 0) {
-            this.bankruptPlayer(player.id);
-        }
-    } else {
-        const random = Math.random();
-        if (random < 0.3) {
-            player.money += 100;
-            result.message = `${player.name} laimėjo €100! 🎉`;
-        } else if (random < 0.6) {
-            player.money -= 100;
-            result.message = `${player.name} prarado €100! 😱`;
-        } else {
-            result.message = `${player.name} nieko neįvyko`;
-        }
-        this.addMessage(result.message);
-    }
-    break;
+                if (field.id === 50) {
+                    player.money += 200;
+                    result.message = `🎂 ${player.name} švenčia gimtadienį ir gauna €200! 🎉`;
+                    this.addMessage(result.message);
+                } else if (field.id === 13) {
+                    player.money -= 50;
+                    result.action = 'pay_tax';
+                    result.message = `🏥 ${player.name} apsilankė ligoninėje ir sumokėjo €50 daktarui Bubauskui! 👨‍⚕️`;
+                    this.addMessage(result.message);
+                    if (player.money < 0) {
+                        this.bankruptPlayer(player.id);
+                    }
+                } else {
+                    const random = Math.random();
+                    if (random < 0.3) {
+                        player.money += 100;
+                        result.message = `${player.name} laimėjo €100! 🎉`;
+                    } else if (random < 0.6) {
+                        player.money -= 100;
+                        result.message = `${player.name} prarado €100! 😱`;
+                    } else {
+                        result.message = `${player.name} nieko neįvyko`;
+                    }
+                    this.addMessage(result.message);
+                }
+                break;
         }
         
         return result;
@@ -574,7 +572,7 @@ class Game {
         player.isActive = false;
         this.addMessage(`💀 ${player.name} BANKROTAS!`);
         
-        const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt);
+        const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left);
         if (activePlayers.length <= 1) {
             this.endGame();
         }
@@ -588,6 +586,60 @@ class Game {
         };
     }
 
+    // ============================================
+    // PASITRAUKIMAS IŠ ŽAIDIMO (PABĖGIMAS)
+    // ============================================
+    leaveGame(playerId) {
+        const player = this.players[playerId];
+        if (!player) return { error: 'Žaidėjas nerastas' };
+        if (player.bankrupt) return { error: 'Jau bankrutavęs' };
+        if (player.left) return { error: 'Jau pasitraukęs' };
+
+        const playerName = player.name;
+
+        // 1. Kortelės + namai + pinigai → bankui (išnyksta)
+        player.properties = [];
+        player.houses = {};
+        player.money = 0;
+
+        // 2. Pažymėti, kad pasitraukė
+        player.left = true;
+        player.isActive = false;
+        player.leftAt = new Date().toISOString();
+
+        this.addMessage(`😭 ${playerName} susinervino ir pabėgo į kampą!`);
+
+        // 3. Jei jo ėjimas – pereiti kitam
+        if (this.currentTurn === playerId) {
+            this.endTurn();
+        }
+
+        // 4. Patikrinti ar liko 1 aktyvus žaidėjas
+        const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left);
+        
+        let winner = null;
+        let winnerId = null;
+        
+        if (activePlayers.length === 1) {
+            winner = activePlayers[0].name;
+            winnerId = activePlayers[0].id;
+            this.addMessage(`🏆 ${winner} LAIMĖJO! Visi kiti pabėgo!`);
+            this.gameStarted = false;
+        } else if (activePlayers.length === 0) {
+            this.addMessage(`🏁 Visi pabėgo – žaidimas baigtas!`);
+            this.gameStarted = false;
+        }
+
+        return {
+            success: true,
+            playerName: playerName,
+            playerId: playerId,
+            winner: winner,
+            winnerId: winnerId,
+            activePlayers: activePlayers.length
+        };
+    }
+
     endTurn() {
         let nextPlayer = this.currentTurn;
         let attempts = 0;
@@ -595,7 +647,7 @@ class Game {
             nextPlayer = (nextPlayer + 1) % this.players.length;
             attempts++;
             if (attempts > this.players.length) break;
-        } while (!this.players[nextPlayer].isActive || this.players[nextPlayer].bankrupt);
+        } while (!this.players[nextPlayer].isActive || this.players[nextPlayer].bankrupt || this.players[nextPlayer].left);
         
         if (attempts > this.players.length) {
             this.endGame();
@@ -610,7 +662,7 @@ class Game {
 
     endGame() {
         this.gameStarted = false;
-        const winner = this.players.find(p => p.isActive && !p.bankrupt);
+        const winner = this.players.find(p => p.isActive && !p.bankrupt && !p.left);
         if (winner) {
             this.addMessage(`🏆 ${winner.name} LAIMĖJO! 🎉`);
         }
