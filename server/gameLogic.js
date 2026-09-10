@@ -42,7 +42,7 @@ class Game {
             id: this.players.length,
             name: name,
             position: 0,
-            money: 5500,
+            money: 1500,
             color: colors[this.players.length % colors.length],
             properties: [],
             houses: {},
