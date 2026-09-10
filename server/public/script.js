@@ -20,7 +20,13 @@ let auctionEndedSent = false;
 function initSocket() {
     console.log('🔄 Inicijuojamas socket...');
     
-    socket = io('https://responsible-nourishment-production.up.railway.app', {
+    const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : 'https://responsible-nourishment-production.up.railway.app';
+    
+    console.log('🌐 Serverio URL:', SERVER_URL);
+    
+    socket = io(SERVER_URL, {
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 5,
@@ -32,6 +38,20 @@ function initSocket() {
         isConnected = true;
         showLobbyMessage('🟢 Prisijungta prie serverio', '#28a745');
         playStartSound();
+        
+        // Bandyti prisijungti atgal
+        setTimeout(() => {
+            const savedGameId = localStorage.getItem('bancrupt_gameId');
+            const savedToken = localStorage.getItem('bancrupt_playerToken');
+            
+            if (savedGameId && savedToken) {
+                console.log('🔄 Bandoma prisijungti atgal prie:', savedGameId);
+                socket.emit('reconnectPlayer', {
+                    gameId: savedGameId,
+                    playerToken: savedToken
+                });
+            }
+        }, 500);
     });
 
     socket.on('connect_error', (error) => {
@@ -57,6 +77,11 @@ function initSocket() {
         gameId = data.gameId;
         playerId = data.playerId;
         myPlayer = data.player;
+        
+        // IŠSAUGOTI Į LOCALSTORAGE
+        localStorage.setItem('bancrupt_gameId', gameId);
+        localStorage.setItem('bancrupt_playerToken', data.player.token);
+        
         document.getElementById('gameIdDisplay').textContent = '📋 ID: ' + gameId;
         showLobbyMessage(`✅ Žaidimas sukurtas! ID: ${gameId}`, '#28a745');
         playStartSound();
@@ -67,10 +92,37 @@ function initSocket() {
         console.log('✅ Prisijungta prie žaidimo:', data);
         playerId = data.playerId;
         myPlayer = data.player;
+        
+        // IŠSAUGOTI Į LOCALSTORAGE
+        localStorage.setItem('bancrupt_gameId', gameId);
+        localStorage.setItem('bancrupt_playerToken', data.player.token);
+        
         document.getElementById('gameIdDisplay').textContent = '📋 ID: ' + gameId;
         showLobbyMessage(`✅ Prisijungei prie žaidimo!`, '#28a745');
         playStartSound();
         enterGame();
+    });
+
+    // ============================================
+    // REKONEKCIJOS EVENTAI
+    // ============================================
+    socket.on('reconnected', (data) => {
+        console.log('✅ Sėkmingai prijungta atgal:', data);
+        gameId = data.gameId;
+        playerId = data.playerId;
+        myPlayer = data.player;
+        
+        showLobbyMessage(`🔄 Grįžai į žaidimą!`, '#28a745');
+        playStartSound();
+        enterGame();
+    });
+
+    socket.on('reconnectFailed', (msg) => {
+        console.log('❌ Reconnect nepavyko:', msg);
+        
+        // IŠTRINTI NEGALIOJANČIUS DUOMENIS
+        localStorage.removeItem('bancrupt_gameId');
+        localStorage.removeItem('bancrupt_playerToken');
     });
 
     socket.on('gameState', (state) => {
@@ -210,6 +262,9 @@ function initSocket() {
             playBankruptSound();
             showPopupMessage(msg, 'rent');
         }
+        if (msg.includes('grįžo į žaidimą')) {
+            playStartSound();
+        }
         
         addJournal(msg);
     });
@@ -287,10 +342,6 @@ function initSocket() {
         }
     });
 
-    // ============================================
-    // PREKYBOS SOCKET EVENTAI
-    // ============================================
-
     socket.on('tradeProposed', (data) => {
         console.log('📩 Gautas prekybos pasiūlymas:', data);
         playTradeSound();
@@ -324,24 +375,11 @@ function initSocket() {
         if (gameState) updateUI(gameState);
     });
 
-    // ============================================
-    // AUKCIONO SOCKET EVENTAI
-    // ============================================
-
     socket.on('auctionStarted', (data) => {
-        console.log('🔨🔨🔨 KLIENTAS GAUNA auctionStarted EVENTĄ');
-        console.log('🔨🔨🔨 Duomenys:', data);
+        console.log('🔨 KLIENTAS GAUNA auctionStarted EVENTĄ');
         playAuctionSound();
         
-        if (!data) {
-            console.error('❌❌❌ Aukciono duomenys yra undefined');
-            addJournal('❌ Klaida: gauti neteisingi aukciono duomenys');
-            playErrorSound();
-            return;
-        }
-        
-        if (!data.fieldName) {
-            console.error('❌❌❌ Trūksta fieldName');
+        if (!data || !data.fieldName) {
             addJournal('❌ Klaida: aukciono duomenys neteisingi');
             playErrorSound();
             return;
@@ -381,7 +419,7 @@ function initSocket() {
     });
 
     socket.on('auctionEnded', (data) => {
-        console.log('🔨🔨🔨 AUKCIONAS BAIGĖSI:', data);
+        console.log('🔨 AUKCIONAS BAIGĖSI:', data);
         
         auctionEndedSent = true;
         
@@ -413,10 +451,6 @@ function initSocket() {
         console.log('📩 Laukantys pasiūlymai:', data);
     });
 
-    // ============================================
-    // GRIAUTI NAMUS - SOCKET EVENTAI
-    // ============================================
-
     socket.on('demolishableProperties', (properties) => {
         updateDemolishList(properties);
     });
@@ -431,12 +465,13 @@ function initSocket() {
         if (gameState) updateUI(gameState);
     });
 
-    // ============================================
-    // PASITRAUKIMAS IŠ ŽAIDIMO
-    // ============================================
-
     socket.on('leftGame', (data) => {
         console.log('🏃 Pasitraukei iš žaidimo:', data);
+        
+        // IŠTRINTI IŠ LOCALSTORAGE
+        localStorage.removeItem('bancrupt_gameId');
+        localStorage.removeItem('bancrupt_playerToken');
+        
         addNotification(`🏃 Tu pasitraukei iš žaidimo`);
         addJournal(`🏃 Tu pasitraukei iš žaidimo`);
         
@@ -455,6 +490,11 @@ function initSocket() {
 
     socket.on('gameFinished', (data) => {
         console.log('🏆 Žaidimas baigtas:', data);
+        
+        // IŠTRINTI IŠ LOCALSTORAGE
+        localStorage.removeItem('bancrupt_gameId');
+        localStorage.removeItem('bancrupt_playerToken');
+        
         playWinSound();
         playCelebrateSound();
         
@@ -539,7 +579,7 @@ style.textContent = `
 document.head.appendChild(style);
 
 // ============================================
-// PRANEŠIMAI - 5 LANGELIS
+// PRANEŠIMAI
 // ============================================
 
 function addNotification(msg) {
@@ -570,7 +610,6 @@ function createGame() {
         playErrorSound();
         return;
     }
-    console.log('📤 Siunčiama createGame užklausa:', name);
     playClickSound();
     socket.emit('createGame', name);
 }
@@ -594,7 +633,6 @@ function joinGame() {
         return;
     }
     gameId = gid;
-    console.log('📤 Siunčiama joinGame užklausa:', { gameId: gid, playerName: name });
     playClickSound();
     socket.emit('joinGame', { gameId: gid, playerName: name });
 }
@@ -793,7 +831,6 @@ function showSellToBank() {
 }
 
 function showAuctionPanel() {
-    console.log('🔨 Atidaromas aukciono panelis');
     document.getElementById('tradingOptions').style.display = 'none';
     document.getElementById('auctionPanel').style.display = 'block';
     updateAuctionableProperties();
@@ -801,7 +838,6 @@ function showAuctionPanel() {
 }
 
 function showTradeToPlayer() {
-    console.log('🔄 Atidaromas "Siūlyti žaidėjui" panelis');
     document.getElementById('tradingOptions').style.display = 'none';
     document.getElementById('tradeToPlayerPanel').style.display = 'block';
     
@@ -878,9 +914,6 @@ function updateAuctionableProperties() {
     const container = document.getElementById('auctionableProperties');
     if (!container || !gameState || !myPlayer) return;
     
-    console.log('🔨 Atnaujinamos aukcionuojamos kortelės');
-    console.log('🔨 Dabartinis selectedAuctionField:', selectedAuctionField);
-    
     const properties = gameState.players.find(p => p.id === playerId).properties || [];
     let html = '';
     let hasProperties = false;
@@ -889,10 +922,7 @@ function updateAuctionableProperties() {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
         const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
-        if (houses > 0) {
-            console.log(`⛔ ${field.name} turi namų (${houses}), negalima aukcionuoti`);
-            return;
-        }
+        if (houses > 0) return;
         
         hasProperties = true;
         const checked = (selectedAuctionField === fieldId) ? 'checked' : '';
@@ -913,16 +943,12 @@ function updateAuctionableProperties() {
 }
 
 function selectAuctionField(fieldId) {
-    console.log('🔨🔨🔨 selectAuctionField iškviesta su:', fieldId);
     selectedAuctionField = fieldId;
     updateAuctionableProperties();
     playClickSound();
 }
 
 function confirmStartAuction() {
-    console.log('🔨🔨🔨 confirmStartAuction() iškviesta');
-    console.log('🔨🔨🔨 selectedAuctionField:', selectedAuctionField);
-    
     if (!selectedAuctionField && selectedAuctionField !== 0) {
         alert('❌ Pasirink kortelę aukcionui!');
         playErrorSound();
@@ -950,18 +976,10 @@ function confirmStartAuction() {
 
 function updateTradePlayers() {
     const select = document.getElementById('tradeTargetPlayer');
-    if (!select) {
-        console.log('❌ tradeTargetPlayer nerastas');
-        return;
-    }
-    if (!gameState) {
-        console.log('❌ gameState nėra');
-        return;
-    }
+    if (!select) return;
+    if (!gameState) return;
     
     const currentPlayerId = myPlayer?.id !== undefined ? myPlayer.id : playerId;
-    
-    console.log('🔄 Atnaujinami žaidėjai prekybai');
     
     select.innerHTML = '';
     let found = false;
@@ -1217,13 +1235,7 @@ function confirmProposeTrade() {
     }
 }
 
-// ============================================
-// PASIŪLYMO GAVIMAS
-// ============================================
-
 function showTradeOffer(data) {
-    console.log('📩 Rodomas pasiūlymo langas:', data);
-    
     document.getElementById('offerFromPlayer').textContent = data.fromPlayer;
     document.getElementById('offerField').textContent = data.offerField || 'Pinigai';
     document.getElementById('offerMoney').textContent = data.offerMoney || 0;
@@ -1267,15 +1279,8 @@ function counterTradeOffer() {
     playClickSound();
 }
 
-// ============================================
-// AUKCIONAS
-// ============================================
-
 function showAuction(data) {
-    console.log('🔨 Rodomas aukciono langas, gauti duomenys:', data);
-    
     if (!data) {
-        console.error('❌ Aukciono duomenys yra undefined');
         alert('❌ Klaida: gauti neteisingi aukciono duomenys');
         playErrorSound();
         return;
@@ -1325,7 +1330,6 @@ function startAuctionTimer(endTime) {
             document.getElementById('auctionTimer').textContent = '0';
             
             auctionEndedSent = true;
-            console.log('🔨 Aukcionas baigėsi, siunčiama endAuction');
             if (currentAuctionId) {
                 socket.emit('endAuction', { auctionId: currentAuctionId });
             }
@@ -1360,10 +1364,6 @@ function placeBid() {
     input.value = '';
     playClickSound();
 }
-
-// ============================================
-// GRIAUTI NAMUS
-// ============================================
 
 let demolishableProperties = [];
 
@@ -1432,10 +1432,6 @@ function confirmDemolish(fieldId) {
     playClickSound();
 }
 
-// ============================================
-// NAMŲ STATYMAS
-// ============================================
-
 function buildHouse() {
     if (!isMyTurn) {
         alert('⏳ Ne tavo eilė!');
@@ -1472,10 +1468,6 @@ function buildHouse() {
     socket.emit('canBuildHouse', { fieldId: currentField.id });
 }
 
-// ============================================
-// KALĖJIMAS
-// ============================================
-
 function payJailFine() {
     if (!isMyTurn) {
         alert('⏳ Ne tavo eilė!');
@@ -1502,10 +1494,6 @@ function payJailFine() {
     }
 }
 
-// ============================================
-// BANKROTAS
-// ============================================
-
 function bankrupt() {
     if (!isMyTurn) {
         alert('⏳ Ne tavo eilė!');
@@ -1520,13 +1508,7 @@ function confirmBankrupt() {
     document.getElementById('bankruptModal').style.display = 'none';
     playClickSound();
     
-    if (!socket) {
-        alert('Klaida: nėra ryšio su serveriu!');
-        playErrorSound();
-        return;
-    }
-    
-    if (!socket.connected) {
+    if (!socket || !socket.connected) {
         alert('Klaida: nėra ryšio su serveriu!');
         playErrorSound();
         return;
@@ -1548,10 +1530,6 @@ function closeBankruptMessage() {
     }
 }
 
-// ============================================
-// CHATAS
-// ============================================
-
 function sendChat() {
     const input = document.getElementById('chatInput');
     const msg = input.value.trim();
@@ -1560,10 +1538,6 @@ function sendChat() {
     input.value = '';
     playClickSound();
 }
-
-// ============================================
-// GRUPĖS PAGAL SPALVĄ
-// ============================================
 
 function getGroupByColor(color) {
     const groups = {
@@ -1583,15 +1557,10 @@ function getGroupByColor(color) {
     return groups[color] || [];
 }
 
-// ============================================
-// GARSAI
-// ============================================
-
 function toggleSound() {
     if (audioManager) {
         const enabled = audioManager.toggle();
         const status = enabled ? 'ĮJUNGTI' : 'IŠJUNGTI';
-        console.log(`🔊 Garsai: ${status}`);
         const msg = `🔊 Garsai ${status}`;
         addNotification(msg);
         addJournal(msg);
@@ -1600,10 +1569,6 @@ function toggleSound() {
     }
     return false;
 }
-
-// ============================================
-// REŽIMO PERJUNGIMAS
-// ============================================
 
 function setMode(mode) {
     const board = document.getElementById('board');
@@ -1621,10 +1586,6 @@ function setMode(mode) {
     playClickSound();
 }
 
-// ============================================
-// UI ATNAUJINIMAS
-// ============================================
-
 function updateUI(state) {
     if (!state) return;
     
@@ -1632,7 +1593,6 @@ function updateUI(state) {
     const currentPlayer = state.players[state.currentTurn];
     document.getElementById('turnDisplay').textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
     
-    // Kairės panelės atnaujinimas
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft && gameId) gameIdLeft.textContent = gameId;
 
@@ -1861,10 +1821,6 @@ function updateUI(state) {
     updateBoard(state);
 }
 
-// ============================================
-// LENTOS ATNAUJINIMAS
-// ============================================
-
 function updateBoard(state) {
     const boardData = state.board;
     
@@ -1927,20 +1883,12 @@ function updateBoard(state) {
     });
 }
 
-// ============================================
-// CHATAS
-// ============================================
-
 function addChatMessage(data) {
     const container = document.getElementById('chatMessages');
     const time = new Date(data.timestamp).toLocaleTimeString();
     container.innerHTML += `<div style="color:${data.color}"><b>${data.player}:</b> ${data.message} <span style="font-size:7px;color:rgba(61,43,31,0.4)">${time}</span></div>`;
     container.scrollTop = container.scrollHeight;
 }
-
-// ============================================
-// ŽURNALAS
-// ============================================
 
 let journalCount = 0;
 
@@ -1964,10 +1912,6 @@ function addJournal(msg) {
         container.removeChild(container.firstChild);
     }
 }
-
-// ============================================
-// INICIJAVIMAS
-// ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 Puslapis įkeltas');

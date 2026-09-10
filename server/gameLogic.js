@@ -52,6 +52,7 @@ class Game {
             bankrupt: false,
             left: false,
             socketId: null,
+            token: Math.random().toString(36).substring(2) + Date.now().toString(36),
             icon: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑'][this.players.length % 8]
         };
         this.players.push(player);
@@ -434,9 +435,10 @@ class Game {
                     result.message = `🎂 ${player.name} švenčia gimtadienį ir gauna €200! 🎉`;
                     this.addMessage(result.message);
                 } else if (field.id === 13) {
-                    player.money -= 50;
+                    const cost = field.cost || 50;
+                    player.money -= cost;
                     result.action = 'pay_tax';
-                    result.message = `🏥 ${player.name} apsilankė ligoninėje ir sumokėjo €50 daktarui Bubauskui! 👨‍⚕️`;
+                    result.message = `🏥 ${player.name} apsilankė ligoninėje ir sumokėjo €${cost} daktarui Bubauskui! 👨‍⚕️`;
                     this.addMessage(result.message);
                     if (player.money < 0) {
                         this.bankruptPlayer(player.id);
@@ -586,9 +588,6 @@ class Game {
         };
     }
 
-    // ============================================
-    // PASITRAUKIMAS IŠ ŽAIDIMO (PABĖGIMAS)
-    // ============================================
     leaveGame(playerId) {
         const player = this.players[playerId];
         if (!player) return { error: 'Žaidėjas nerastas' };
@@ -597,24 +596,20 @@ class Game {
 
         const playerName = player.name;
 
-        // 1. Kortelės + namai + pinigai → bankui (išnyksta)
         player.properties = [];
         player.houses = {};
         player.money = 0;
 
-        // 2. Pažymėti, kad pasitraukė
         player.left = true;
         player.isActive = false;
         player.leftAt = new Date().toISOString();
 
         this.addMessage(`😭 ${playerName} susinervino ir pabėgo į kampą!`);
 
-        // 3. Jei jo ėjimas – pereiti kitam
         if (this.currentTurn === playerId) {
             this.endTurn();
         }
 
-        // 4. Patikrinti ar liko 1 aktyvus žaidėjas
         const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left);
         
         let winner = null;
@@ -688,9 +683,6 @@ class Game {
         };
     }
 
-    // ============================================
-    // PREKYBOS METODAI
-    // ============================================
     sellToBank(playerId, fieldIds) {
         return this.tradingLogic.sellToBank(playerId, fieldIds);
     }
@@ -731,9 +723,6 @@ class Game {
         return this.tradingLogic.getPlayerTradableProperties(playerId);
     }
 
-    // ============================================
-    // STATYBOS METODAI
-    // ============================================
     buildHouse(playerId, fieldId) {
         return this.buildingLogic.buildHouse(playerId, fieldId);
     }
@@ -742,9 +731,6 @@ class Game {
         return this.buildingLogic.canBuildHouse(playerId, fieldId);
     }
 
-    // ============================================
-    // GRIAUTI NAMUS - METODAI
-    // ============================================
     getDemolishableProperties(playerId) {
         return this.demolishLogic.getPlayerPropertiesWithHouses(playerId);
     }
@@ -757,9 +743,6 @@ class Game {
         return this.demolishLogic.demolishHouse(playerId, fieldId);
     }
 
-    // ============================================
-    // KALĖJIMO METODAI
-    // ============================================
     payJailFine(playerId) {
         const player = this.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
