@@ -11,27 +11,18 @@ class TradingLogic {
         this.serviceIds = [8, 19, 40, 47];
     }
 
-    // ============================================
-    // PATIKRINTI AR KORTELĖ TURI NAMŲ
-    // ============================================
     hasHouses(playerId, fieldId) {
         const player = this.game.players[playerId];
         if (!player) return false;
         return player.houses && player.houses[fieldId] && player.houses[fieldId] > 0;
     }
 
-    // ============================================
-    // GAUTI KORTELĖS VERTĘ (80% PARDavimui BANKUI)
-    // ============================================
     getBankBuybackPrice(fieldId) {
         const field = this.game.board.find(f => f.id === fieldId);
         if (!field) return 0;
         return Math.floor(field.cost * 0.8);
     }
 
-    // ============================================
-    // GAUTI ŽAIDĖJO TURIMAS KORTELES (BE NAMŲ)
-    // ============================================
     getPlayerTradableProperties(playerId) {
         const player = this.game.players[playerId];
         if (!player) return [];
@@ -51,9 +42,6 @@ class TradingLogic {
         });
     }
 
-    // ============================================
-    // GAUTI VISAS ŽAIDĖJO TURIMAS KORTELES (SU NAMAIS)
-    // ============================================
     getAllPlayerProperties(playerId) {
         const player = this.game.players[playerId];
         if (!player) return [];
@@ -79,7 +67,10 @@ class TradingLogic {
     sellToBank(playerId, fieldIds) {
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-        if (this.game.currentTurn !== playerId) return { error: 'Ne tavo eilė' };
+        // Leisti parduoti net jei ne tavo eilė, kai esi skolingas
+        if (this.game.currentTurn !== playerId && !player.isDebtor) {
+            return { error: 'Ne tavo eilė' };
+        }
 
         let totalPrice = 0;
         const soldFields = [];
@@ -108,6 +99,11 @@ class TradingLogic {
         player.money += totalPrice;
         this.game.addMessage(`🏦 ${player.name} pardavė ${soldFields.length} kortelę(-es) bankui už €${totalPrice}!`);
 
+        // Patikrinti ar atsiskaitė
+        if (player.money >= 0) {
+            player.isDebtor = false;
+        }
+
         return { 
             success: true, 
             soldFields: soldFields,
@@ -120,41 +116,30 @@ class TradingLogic {
     // 2. PRADĖTI AUKCIONĄ
     // ============================================
     startAuction(playerId, fieldId) {
-        console.log('🔨🔨🔨 startAuction iškviesta:', { playerId, fieldId });
-        
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) {
-            console.log('❌ Žaidėjas neaktyvus');
             return { error: 'Žaidėjas neaktyvus' };
         }
-        if (this.game.currentTurn !== playerId) {
-            console.log('❌ Ne tavo eilė');
+        if (this.game.currentTurn !== playerId && !player.isDebtor) {
             return { error: 'Ne tavo eilė' };
         }
         if (!player.properties.includes(fieldId)) {
-            console.log('❌ Neturi šios kortelės');
             return { error: 'Neturi šios kortelės' };
         }
 
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) {
-            console.log('❌ Turi namų');
             return { error: 'Negali aukcionuoti kortelės su namais!' };
         }
 
         const field = this.game.board.find(f => f.id === fieldId);
         if (!field) {
-            console.log('❌ Kortelė nerasta');
             return { error: 'Kortelė nerasta' };
         }
-
-        console.log('🔨 Rasta kortelė:', field);
 
         const auctionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
         const endTime = Date.now() + 60000;
         const startPrice = Math.floor(field.cost * 0.5);
-        
-        console.log('🔨 Kuriamas aukcionas:', { auctionId, fieldId, sellerId: playerId, startPrice });
 
         this.auctions.set(auctionId, {
             fieldId: fieldId,
@@ -166,7 +151,6 @@ class TradingLogic {
             winner: null
         });
 
-        // Pašalinti kortelę iš pardavėjo
         player.properties = player.properties.filter(id => id !== fieldId);
         if (player.houses) {
             delete player.houses[fieldId];
@@ -174,7 +158,7 @@ class TradingLogic {
 
         this.game.addMessage(`🔨 ${player.name} paskelbė aukcioną: ${field.name}! Siūlykite!`);
 
-        const result = { 
+        return { 
             success: true, 
             auctionId: auctionId,
             fieldId: fieldId,
@@ -185,10 +169,6 @@ class TradingLogic {
             currentBid: startPrice,
             endTime: endTime
         };
-
-        console.log('🔨🔨🔨 AUKCIONAS SUKURTAS, GRAŽINAMA:', JSON.stringify(result, null, 2));
-
-        return result;
     }
 
     // ============================================
@@ -236,8 +216,6 @@ class TradingLogic {
         const auction = this.auctions.get(auctionId);
         if (!auction) return null;
         
-        console.log('🔨🔨🔨 endAuction iškviesta:', auctionId);
-        
         auction.isActive = false;
         const field = this.game.board.find(f => f.id === auction.fieldId);
         let winner = null;
@@ -249,17 +227,17 @@ class TradingLogic {
             winner = this.game.players[winnerData.playerId];
             winnerId = winnerData.playerId;
             
-            console.log('🔨🔨🔨 Aukciono laimėtojas:', winner?.name, 'už €', winnerData.bid);
-            
             if (winner) {
                 winner.properties.push(auction.fieldId);
                 winner.money -= winnerData.bid;
-                console.log(`💰 ${winner.name} sumokėjo €${winnerData.bid} ir gavo ${field ? field.name : 'kortelę'}`);
                 
                 const seller = this.game.players[auction.sellerId];
                 if (seller) {
                     seller.money += winnerData.bid;
-                    console.log(`💰 ${seller.name} gavo €${winnerData.bid} iš aukciono`);
+                    // Patikrinti ar pardavėjas atsiskaitė
+                    if (seller.money >= 0) {
+                        seller.isDebtor = false;
+                    }
                 }
                 
                 this.game.addMessage(`🔨 ${winner.name} laimėjo aukcioną: ${field ? field.name : 'kortelė'} už €${winnerData.bid}!`);
@@ -289,7 +267,7 @@ class TradingLogic {
     proposeTrade(playerId, targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney) {
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-        if (this.game.currentTurn !== playerId) return { error: 'Ne tavo eilė' };
+        if (this.game.currentTurn !== playerId && !player.isDebtor) return { error: 'Ne tavo eilė' };
         if (playerId === targetPlayerId) return { error: 'Negali siūlyti sau' };
 
         const target = this.game.players[targetPlayerId];
@@ -381,7 +359,6 @@ class TradingLogic {
     // ============================================
     respondToTrade(tradeId, playerId, accept) {
         const trade = this.trades.get(tradeId);
-        console.log('🔄🔄🔄 respondToTrade iškviesta:', { tradeId, playerId, accept });
         
         if (!trade) return { error: 'Pasiūlymas nerastas' };
         if (trade.toPlayer !== playerId) return { error: 'Ne tau skirtas šis pasiūlymas' };
@@ -462,7 +439,10 @@ class TradingLogic {
             
             this.trades.delete(tradeId);
             
-            console.log('✅ Prekyba sėkminga!');
+            // Patikrinti ar kas nors atsiskaitė
+            if (fromPlayer.money >= 0) fromPlayer.isDebtor = false;
+            if (toPlayer.money >= 0) toPlayer.isDebtor = false;
+            
             return { success: true, message: message };
         } else {
             trade.status = 'rejected';

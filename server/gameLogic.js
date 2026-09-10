@@ -51,12 +51,30 @@ class Game {
             isActive: true,
             bankrupt: false,
             left: false,
+            isDebtor: false,
             socketId: null,
             token: Math.random().toString(36).substring(2) + Date.now().toString(36),
             icon: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑'][this.players.length % 8]
         };
         this.players.push(player);
         return player;
+    }
+
+    // ============================================
+    // PATIKRINTI AR ŽAIDĖJAS SKOLINGAS
+    // ============================================
+    checkDebtor(playerId) {
+        const player = this.players[playerId];
+        if (!player) return;
+        if (player.bankrupt) return;
+        if (player.left) return;
+        
+        if (player.money < 0) {
+            player.isDebtor = true;
+            this.addMessage(`⚠️ ${player.name} skolingas €${Math.abs(player.money)}! Parduok turtą!`);
+        } else {
+            player.isDebtor = false;
+        }
     }
 
     rollDice(playerId, socketId) {
@@ -66,6 +84,9 @@ class Game {
         const player = this.players[playerId];
         if (!player || !player.isActive || player.bankrupt || player.left) {
             return { error: 'Žaidėjas neaktyvus' };
+        }
+        if (player.isDebtor) {
+            return { error: '⚠️ Tu skolingas! Parduok turtą, kad išsigelbėtum!' };
         }
         if (this.currentTurn !== playerId) {
             return { error: 'Ne tavo eilė' };
@@ -197,6 +218,9 @@ class Game {
             player.inJail = false;
             player.jailTurns = 0;
             this.addMessage(`${player.name} sumokėjo €50 ir išėjo iš kalėjimo`);
+            if (player.money < 0) {
+                this.checkDebtor(player.id);
+            }
             return this.continueAfterJail(player, dice1, dice2);
         } else {
             this.addMessage(`${player.name} kalėjime. Bandymas ${player.jailTurns}/3`);
@@ -294,7 +318,7 @@ class Game {
                         this.addMessage(result.message);
                         
                         if (player.money < 0) {
-                            this.bankruptPlayer(player.id);
+                            this.checkDebtor(player.id);
                         }
                     }
                 } else {
@@ -327,7 +351,7 @@ class Game {
                         this.addMessage(result.message);
                         
                         if (player.money < 0) {
-                            this.bankruptPlayer(player.id);
+                            this.checkDebtor(player.id);
                         }
                     }
                 } else {
@@ -359,7 +383,7 @@ class Game {
                         this.addMessage(result.message);
                         
                         if (player.money < 0) {
-                            this.bankruptPlayer(player.id);
+                            this.checkDebtor(player.id);
                         }
                     }
                 } else {
@@ -389,7 +413,7 @@ class Game {
                     this.addMessage(result.message);
                 }
                 if (player.money < 0) {
-                    this.bankruptPlayer(player.id);
+                    this.checkDebtor(player.id);
                 }
                 break;
                 
@@ -441,7 +465,7 @@ class Game {
                     result.message = `🏥 ${player.name} apsilankė ligoninėje ir sumokėjo €${cost} daktarui Bubauskui! 👨‍⚕️`;
                     this.addMessage(result.message);
                     if (player.money < 0) {
-                        this.bankruptPlayer(player.id);
+                        this.checkDebtor(player.id);
                     }
                 } else {
                     const random = Math.random();
@@ -455,6 +479,9 @@ class Game {
                         result.message = `${player.name} nieko neįvyko`;
                     }
                     this.addMessage(result.message);
+                    if (player.money < 0) {
+                        this.checkDebtor(player.id);
+                    }
                 }
                 break;
         }
@@ -477,7 +504,7 @@ class Game {
         const result = chances[Math.floor(Math.random() * chances.length)]();
         this.addMessage(`${player.name}: ${result}`);
         if (player.money < 0) {
-            this.bankruptPlayer(player.id);
+            this.checkDebtor(player.id);
         }
     }
 
@@ -572,6 +599,7 @@ class Game {
         
         player.bankrupt = true;
         player.isActive = false;
+        player.isDebtor = false;
         this.addMessage(`💀 ${player.name} BANKROTAS!`);
         
         const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left);
@@ -599,6 +627,7 @@ class Game {
         player.properties = [];
         player.houses = {};
         player.money = 0;
+        player.isDebtor = false;
 
         player.left = true;
         player.isActive = false;
@@ -670,7 +699,10 @@ class Game {
 
     getGameState() {
         return {
-            players: this.players,
+            players: this.players.map(p => ({
+                ...p,
+                isDebtor: p.isDebtor || false
+            })),
             board: this.board,
             currentTurn: this.currentTurn,
             gameStarted: this.gameStarted,

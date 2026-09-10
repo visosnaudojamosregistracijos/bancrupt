@@ -262,6 +262,10 @@ function initSocket() {
             playBankruptSound();
             showPopupMessage(msg, 'rent');
         }
+        if (msg.includes('skolingas')) {
+            playErrorSound();
+            showPopupMessage(msg, 'rent');
+        }
         if (msg.includes('grįžo į žaidimą')) {
             playStartSound();
         }
@@ -575,6 +579,10 @@ style.textContent = `
         from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
         to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0.3; }
+    }
 `;
 document.head.appendChild(style);
 
@@ -770,6 +778,13 @@ function rollDice() {
         playErrorSound();
         return;
     }
+    
+    if (myPlayer && myPlayer.isDebtor) {
+        alert('⚠️ Tu skolingas! Parduok turtą, kad išsigelbėtum!');
+        playErrorSound();
+        return;
+    }
+    
     playClickSound();
     socket.emit('rollDice');
 }
@@ -785,7 +800,8 @@ let selectedOfferFields = [];
 let selectedRequestFields = [];
 
 function openTrading() {
-    if (!isMyTurn) {
+    // Leisti atidaryti prekybą net jei skolingas (kad galėtų parduoti)
+    if (!isMyTurn && !(myPlayer && myPlayer.isDebtor)) {
         alert('⏳ Ne tavo eilė!');
         playErrorSound();
         return;
@@ -1368,7 +1384,7 @@ function placeBid() {
 let demolishableProperties = [];
 
 function openDemolish() {
-    if (!isMyTurn) {
+    if (!isMyTurn && !(myPlayer && myPlayer.isDebtor)) {
         alert('⏳ Ne tavo eilė!');
         playErrorSound();
         return;
@@ -1439,6 +1455,12 @@ function buildHouse() {
         return;
     }
     
+    if (myPlayer && myPlayer.isDebtor) {
+        alert('⚠️ Tu skolingas! Pirmiausia atsiskaityk!');
+        playErrorSound();
+        return;
+    }
+    
     if (!gameState || !myPlayer) {
         alert('❌ Nėra žaidimo būsenos!');
         playErrorSound();
@@ -1495,7 +1517,7 @@ function payJailFine() {
 }
 
 function bankrupt() {
-    if (!isMyTurn) {
+    if (!isMyTurn && !(myPlayer && myPlayer.isDebtor)) {
         alert('⏳ Ne tavo eilė!');
         playErrorSound();
         return;
@@ -1586,6 +1608,10 @@ function setMode(mode) {
     playClickSound();
 }
 
+// ============================================
+// UI ATNAUJINIMAS
+// ============================================
+
 function updateUI(state) {
     if (!state) return;
     
@@ -1655,12 +1681,13 @@ function updateUI(state) {
                 <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
                 <div class="player-name" style="font-size:16px; font-weight:600;">${me.name} ${me.icon || '🚗'}</div>
             </div>
-            <div class="player-money" style="font-size:28px; font-weight:700; color:#000000;">💰 €${me.money}</div>
+            <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};">💰 €${me.money}</div>
             <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
             <div style="font-size:11px; color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
             ${me.inJail ? '<div style="color:#dc3545; font-size:11px;">⛓️ KALĖJIME</div>' : ''}
             ${me.bankrupt ? '<div style="color:#dc3545; font-size:11px;">💀 BANKROTAS</div>' : ''}
             ${me.left ? '<div style="color:#6c757d; font-size:11px;">😭 PASITRAUKEI</div>' : ''}
+            ${me.isDebtor ? '<div style="color:#dc3545; font-size:14px; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
             <div style="width:100%; border-top:1px solid rgba(61,43,31,0.1); margin-top:4px; padding-top:4px;">
                 <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px;">📋 TURIMOS KORTELĖS</div>
                 ${miniCardsHtml}
@@ -1672,14 +1699,16 @@ function updateUI(state) {
     playersList.innerHTML = state.players.map(p => {
         const pHouses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
         const isLeft = p.left === true;
+        const isDebtor = p.isDebtor === true;
         return `
             <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''}">
                 <span class="dot" style="background:${p.color}"></span>
                 <span class="pname">${p.name} ${p.icon || '🚗'} ${p.id === playerId ? '👤' : ''}</span>
-                <span class="pmoney">€${p.money}</span>
+                <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
                 ${pHouses > 0 ? `🏠${pHouses}` : ''}
                 ${p.inJail ? '⛓️' : ''}
                 ${p.bankrupt ? '💀' : ''}
+                ${isDebtor && !p.bankrupt ? '⚠️' : ''}
                 ${isLeft ? '😭' : ''}
                 ${state.currentTurn === p.id && p.isActive && !p.left ? '🎯' : ''}
             </div>
@@ -1688,20 +1717,22 @@ function updateUI(state) {
     
     const isBankrupt = myPlayer && myPlayer.bankrupt;
     const isLeft = myPlayer && myPlayer.left;
+    const isDebtor = myPlayer && myPlayer.isDebtor;
     isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left;
     
-    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft;
+    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft || isDebtor;
     
     const tradeBtn = document.getElementById('tradeBtn');
     if (tradeBtn) {
-        tradeBtn.disabled = !isMyTurn || isBankrupt || isLeft;
+        // Prekyba leidžiama net jei skolingas (kad galėtų parduoti)
+        tradeBtn.disabled = isBankrupt || isLeft || (!isMyTurn && !isDebtor);
     }
     
     document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || !myPlayer || !myPlayer.isActive;
 
     const jailBtn = document.getElementById('jailBtn');
     if (jailBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && myPlayer && myPlayer.inJail) {
+        if (isMyTurn && !isBankrupt && !isLeft && !isDebtor && myPlayer && myPlayer.inJail) {
             jailBtn.style.display = 'block';
             jailBtn.disabled = false;
         } else {
@@ -1712,7 +1743,7 @@ function updateUI(state) {
 
     const demolishBtn = document.getElementById('demolishBtn');
     if (demolishBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && myPlayer) {
+        if ((isMyTurn || isDebtor) && !isBankrupt && !isLeft && myPlayer) {
             const hasHouses = myPlayer.houses && Object.keys(myPlayer.houses).length > 0;
             if (hasHouses) {
                 demolishBtn.style.display = 'block';
@@ -1729,7 +1760,7 @@ function updateUI(state) {
 
     const buildBtn = document.getElementById('buildBtn');
     if (buildBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && myPlayer && gameState) {
+        if (isMyTurn && !isBankrupt && !isLeft && !isDebtor && myPlayer && gameState) {
             const currentField = gameState.board[myPlayer.position];
             if (currentField && (currentField.type === 'property' || currentField.type === 'service2') && currentField.color) {
                 const groupFields = getGroupByColor(currentField.color);
@@ -1820,6 +1851,10 @@ function updateUI(state) {
     
     updateBoard(state);
 }
+
+// ============================================
+// LENTOS ATNAUJINIMAS
+// ============================================
 
 function updateBoard(state) {
     const boardData = state.board;
