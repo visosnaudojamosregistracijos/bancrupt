@@ -135,15 +135,21 @@ class Game {
         }
 
         let newPosition = (player.position + total) % this.board.length;
-        
-        if (newPosition < player.position) {
-            player.money += 200;
-            this.addMessage(`${player.name} praėjo START ir gavo €200! 💰`);
-        }
 
-        player.position = newPosition;
-        const currentField = this.board[newPosition];
-        const result = this.handleField(player, currentField);
+// Jei peržengė START (nauja pozicija mažesnė už seną)
+if (newPosition < player.position) {
+    player.money += 200;
+    this.addMessage(`${player.name} praėjo START ir gavo €200! 💰`);
+}
+// Jei TIKSLIAI atsistojo ant START (laukelis 0)
+else if (newPosition === 0 && player.position !== 0) {
+    player.money += 300;
+    this.addMessage(`🏁 ${player.name} atsistojo ant START ir gavo €300! 💰`);
+}
+
+player.position = newPosition;
+const currentField = this.board[newPosition];
+const result = this.handleField(player, currentField);
         
         if (result.action === 'can_buy') {
             this.waitingForBuy = true;
@@ -240,17 +246,21 @@ class Game {
     }
 
     continueAfterJail(player, dice1, dice2) {
-        const total = dice1 + dice2;
-        let newPosition = (player.position + total) % this.board.length;
-        
-        if (newPosition < player.position) {
-            player.money += 200;
-            this.addMessage(`${player.name} praėjo START ir gavo €200! 💰`);
-        }
+    const total = dice1 + dice2;
+    let newPosition = (player.position + total) % this.board.length;
+    
+    if (newPosition < player.position) {
+        player.money += 200;
+        this.addMessage(`${player.name} praėjo START ir gavo €200! 💰`);
+    }
+    else if (newPosition === 0 && player.position !== 0) {
+        player.money += 300;
+        this.addMessage(`🏁 ${player.name} atsistojo ant START ir gavo €300! 💰`);
+    }
 
-        player.position = newPosition;
-        const currentField = this.board[newPosition];
-        const result = this.handleField(player, currentField);
+    player.position = newPosition;
+    const currentField = this.board[newPosition];
+    const result = this.handleField(player, currentField);
 
         if (result.action === 'can_buy') {
             this.waitingForBuy = true;
@@ -693,9 +703,14 @@ class Game {
     }
 
     addMessage(message) {
-        this.lastMessage = message;
-        console.log('📢', message);
+    this.lastMessage = message;
+    console.log('📢', message);
+    
+    // Siųsti visiems žaidėjams per emitFunction
+    if (this.emitFunction) {
+        this.emitFunction('message', message);
     }
+}
 
     getGameState() {
         return {

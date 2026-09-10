@@ -161,33 +161,41 @@ io.on('connection', (socket) => {
     });
 
     socket.on('rollDice', () => {
-        if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
-            return;
-        }
-        
-        const game = games.get(socket.gameId);
-        if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
-            return;
-        }
+    if (!socket.gameId || socket.playerId === undefined) {
+        socket.emit('error', 'Neprisijungei prie žaidimo!');
+        return;
+    }
+    
+    const game = games.get(socket.gameId);
+    if (!game) {
+        socket.emit('error', 'Žaidimas nerastas!');
+        return;
+    }
 
-        const result = game.rollDice(socket.playerId, socket.id);
-        if (result.error) {
-            socket.emit('error', result.error);
-            return;
-        }
+    // Išsaugoti seną lastMessage, kad žinotume, ar pasikeitė
+    const oldLastMessage = game.lastMessage;
+    
+    const result = game.rollDice(socket.playerId, socket.id);
+    if (result.error) {
+        socket.emit('error', result.error);
+        return;
+    }
 
-        io.to(socket.gameId).emit('diceRolled', result);
-        io.to(socket.gameId).emit('gameState', game.getGameState());
-        
-        if (result.message) {
-            io.to(socket.gameId).emit('message', result.message);
-        }
-        if (result.result && result.result.message) {
-            io.to(socket.gameId).emit('message', result.result.message);
-        }
-    });
+    io.to(socket.gameId).emit('diceRolled', result);
+    io.to(socket.gameId).emit('gameState', game.getGameState());
+    
+    // Jei lastMessage pasikeitė (pvz., "praėjo START") - siųsti
+    if (game.lastMessage && game.lastMessage !== oldLastMessage) {
+        io.to(socket.gameId).emit('message', game.lastMessage);
+    }
+    
+    if (result.message) {
+        io.to(socket.gameId).emit('message', result.message);
+    }
+    if (result.result && result.result.message) {
+        io.to(socket.gameId).emit('message', result.result.message);
+    }
+});
 
     socket.on('buyProperty', () => {
         if (!socket.gameId || socket.playerId === undefined) {
