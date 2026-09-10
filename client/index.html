@@ -110,10 +110,11 @@
                                 </div>
                                 
                                 <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;">⛓️ Išeiti iš kalėjimo (€50)</button>
-                                
-                                <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish" style="margin-bottom:2px; width:100%;">🏚️ Griauti namus</button>
-                                
-                                <button onclick="bankrupt()" id="bankruptBtn" class="btn-bankrupt" style="margin-bottom:4px; width:100%;">💀 BANKROTAS</button>
+
+<div class="action-row">
+    <button onclick="bankrupt()" id="bankruptBtn" class="btn-bankrupt btn-half">💀 BANKROTAS</button>
+    <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish btn-half">🏚️ Griauti</button>
+</div>
                                 
                                 <h4>🎲 VALDYMAS</h4>
                                 <div class="dice-container">
