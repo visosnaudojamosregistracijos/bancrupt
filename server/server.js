@@ -3,15 +3,20 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const path = require('path'); // ← PRIDĖTI
+const path = require('path');
 const Game = require('./gameLogic');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ← PRIDĖTI ŠIAS DVI EILUTES (STATINIŲ FAILŲ APTARNAVIMAS)
+// STATINIŲ FAILŲ APTARNAVIMAS
 app.use(express.static(path.join(__dirname, '../client')));
+
+// Atsarginis route'as
+app.get('/', (req, res) => {
+  res.send('Bancrupt serveris veikia!');
+});
 
 const server = http.createServer(app);
 const io = socketIo(server, {
