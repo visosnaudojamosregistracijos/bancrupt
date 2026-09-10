@@ -20,7 +20,7 @@ let auctionEndedSent = false;
 function initSocket() {
     console.log('🔄 Inicijuojamas socket...');
     
-    socket = io('https://responsible-nourishment.up.railway.app', {
+    socket = io('https://responsible-nourishment-production.up.railway.app', {
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 5,
