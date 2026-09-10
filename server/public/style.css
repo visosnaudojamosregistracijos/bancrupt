@@ -1305,7 +1305,7 @@ body {
     line-height: 1.2;
 }
 
-/* ---------- ŽAIDĖJŲ IKONĖLĖS ---------- */
+/* ---------- ŽAIDĖJŲ IKONĖLĖS (PADIDINTOS) ---------- */
 .cell .players-on-cell {
     position: absolute;
     top: 0;
@@ -1323,16 +1323,16 @@ body {
 }
 
 .cell .players-on-cell .player-dot {
-    width: 32px;
-    height: 32px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
-    border: 2.5px solid rgba(255,255,255,0.95);
-    font-size: 18px;
+    border: 3px solid rgba(255,255,255,0.95);
+    font-size: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(255,255,255,0.85);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    box-shadow: 0 3px 15px rgba(0,0,0,0.4);
     flex-shrink: 0;
     pointer-events: auto;
     transition: transform 0.15s, box-shadow 0.15s;
@@ -1346,45 +1346,51 @@ body {
 }
 
 .cell.corner .players-on-cell .player-dot {
-    width: 26px;
-    height: 26px;
-    font-size: 14px;
+    width: 38px;
+    height: 38px;
+    font-size: 22px;
 }
 
 .cell .players-on-cell:has(.player-dot:nth-child(3)) .player-dot {
-    width: 28px;
-    height: 28px;
-    font-size: 15px;
+    width: 38px;
+    height: 38px;
+    font-size: 22px;
 }
 
 .cell .players-on-cell:has(.player-dot:nth-child(4)) .player-dot {
-    width: 24px;
-    height: 24px;
-    font-size: 12px;
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
 }
 
 .cell .players-on-cell:has(.player-dot:nth-child(5)) .player-dot {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(6)) .player-dot {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(7)) .player-dot {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(8)) .player-dot {
     width: 20px;
     height: 20px;
     font-size: 10px;
 }
 
-.cell .players-on-cell:has(.player-dot:nth-child(6)) .player-dot {
-    width: 18px;
-    height: 18px;
-    font-size: 8px;
-}
-
-.cell .players-on-cell:has(.player-dot:nth-child(7)) .player-dot {
-    width: 16px;
-    height: 16px;
-    font-size: 7px;
-}
-
-.cell .players-on-cell:has(.player-dot:nth-child(8)) .player-dot {
-    width: 14px;
-    height: 14px;
-    font-size: 6px;
+/* ---------- BLINK ANIMACIJA ---------- */
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
 }
 
 /* ---------- RESPONSIVE ---------- */
@@ -1435,6 +1441,11 @@ body {
         padding: 4px 10px;
         gap: 6px;
     }
+    .cell .players-on-cell .player-dot {
+        width: 38px;
+        height: 38px;
+        font-size: 22px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1466,9 +1477,15 @@ body {
         font-size: 7px;
     }
     .cell .players-on-cell .player-dot {
-        width: 10px;
-        height: 10px;
-        font-size: 6px;
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
+        border-width: 2px;
+    }
+    .cell.corner .players-on-cell .player-dot {
+        width: 14px;
+        height: 14px;
+        font-size: 9px;
     }
     .row-middle-left,
     .row-middle-right {
@@ -1663,9 +1680,15 @@ body {
         font-size: 6px;
     }
     .cell .players-on-cell .player-dot {
-        width: 8px;
-        height: 8px;
-        font-size: 5px;
+        width: 13px;
+        height: 13px;
+        font-size: 8px;
+        border-width: 1.5px;
+    }
+    .cell.corner .players-on-cell .player-dot {
+        width: 11px;
+        height: 11px;
+        font-size: 7px;
     }
     .row-middle-left,
     .row-middle-right {
@@ -1859,9 +1882,4 @@ body {
     #gameIdBox span { font-size: 8px; }
     .left-btn { font-size: 8px; padding: 5px 3px; }
     #leftPlayerCount, #leftTurnDisplay { font-size: 7px; }
-}
-
-@keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0.3; }
 }
