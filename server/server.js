@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // STATINIŲ FAILŲ APTARNAVIMAS
-app.use(express.static(path.join(__dirname, '../client')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Atsarginis route'as
 app.get('/', (req, res) => {

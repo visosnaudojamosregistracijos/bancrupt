@@ -1,0 +1,1757 @@
+/* ============================================
+   BANCRUPT - PAGRINDINIS STILIUS
+   ============================================ */
+
+/* ---------- BENDRI ---------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0d1f0d;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+}
+
+/* ---------- LOBBY ---------- */
+#lobby {
+    width: 100%;
+    max-width: 500px;
+}
+
+.lobby-container {
+    background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+    padding: 40px;
+    border-radius: 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 2px 0 rgba(255,255,255,0.1);
+    text-align: center;
+    border: 2px solid #c9a84c;
+}
+
+.lobby-container h1 {
+    color: #ffd700;
+    font-size: 3em;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    letter-spacing: 3px;
+}
+
+.lobby-container .subtitle {
+    color: #d4b896;
+    font-size: 1.1em;
+    margin-bottom: 30px;
+}
+
+.lobby-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.lobby-form input {
+    padding: 14px 20px;
+    border: 2px solid #c9a84c;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.lobby-form input:focus {
+    border-color: #ffd700;
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 0 20px rgba(255,215,0,0.2);
+}
+
+.lobby-form input::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+.lobby-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #fff;
+}
+
+.btn-primary {
+    background: linear-gradient(145deg, #ffd700, #f0c000);
+    color: #1a3b1a;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(145deg, #6c757d, #495057);
+}
+
+.btn-secondary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(108,117,125,0.4);
+}
+
+.join-section {
+    margin-top: 10px;
+}
+
+#gameIdInput {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#lobbyMessages {
+    margin-top: 20px;
+    color: #d4b896;
+    font-size: 14px;
+    min-height: 30px;
+}
+
+/* ---------- ŽAIDIMO EKRANAS ---------- */
+#game {
+    width: 100%;
+    height: 100vh;
+    max-width: 100vw;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#gameHeader {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: rgba(26, 107, 60, 0.9);
+    border-radius: 10px 10px 0 0;
+    color: #ffd700;
+    font-weight: bold;
+    border-bottom: 2px solid #c9a84c;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+/* ---------- HEADER MYGTUKAI ---------- */
+.header-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: #1a3b1a;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 2px solid #ffd700;
+}
+
+.header-btn {
+    padding: 6px 14px;
+    border: 2px solid #ffd700;
+    border-radius: 6px;
+    background: #0d1f0d;
+    color: #ffd700;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 70px;
+    text-align: center;
+}
+
+.header-btn:hover {
+    background: #ffd700;
+    color: #0d1f0d;
+}
+
+.header-btn.active {
+    background: #ffd700;
+    color: #0d1f0d;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+/* ---------- LENTA ---------- */
+#board {
+    background: radial-gradient(ellipse at center, #1a7a4a, #0f4a2a);
+    padding: 12px;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.3);
+    border: 3px solid #c9a84c;
+    border-top: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: all 0.3s ease;
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    height: 92.5%;
+}
+
+#board.adaptive {
+    width: 100%;
+    max-width: 100vw;
+}
+
+#board.fixed {
+    width: 1000px;
+    min-width: 1500px;
+    max-width: 1000px;
+    margin: 0 auto;
+    overflow: auto !important;
+    max-height: 100vh;
+}
+
+#board.fixed {
+    overflow: auto !important;
+}
+
+#board.fixed .board-row {
+    flex-shrink: 0;
+}
+
+#board.fixed::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+#board.fixed::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+
+#board.fixed::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 4px;
+}
+
+#board.fixed::-webkit-scrollbar-thumb:hover {
+    background: #ffd700;
+}
+
+.board-row {
+    display: flex;
+    gap: 2px;
+}
+
+/* ---------- LANGELIAI ---------- */
+.cell {
+    background: linear-gradient(145deg, #e8d5b5, #d4b896);
+    border: 2px solid #c9a84c;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #3d2b1f;
+    text-align: center;
+    padding: 2px;
+    transition: all 0.3s;
+    position: relative;
+    min-height: 40px;
+    font-weight: 600;
+    flex: 1;
+    overflow: visible !important;
+}
+
+.cell:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 2;
+}
+
+.cell.corner {
+    flex: 0 0 70px;
+    aspect-ratio: 1;
+    font-size: 8px;
+    border-width: 3px;
+    font-weight: 700;
+}
+
+.cell.start {
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    color: #fff;
+}
+.cell.start .cell-name,
+.cell.start .cell-cost {
+    color: #fff !important;
+}
+
+.cell.jail {
+    background: linear-gradient(145deg, #6c757d, #495057);
+    color: #fff;
+}
+.cell.jail .cell-name,
+.cell.jail .cell-cost {
+    color: #fff !important;
+}
+
+.cell.parking {
+    background: linear-gradient(145deg, #007bff, #0056b3);
+    color: #fff;
+}
+.cell.parking .cell-name,
+.cell.parking .cell-cost {
+    color: #fff !important;
+}
+
+.cell.go-to-jail {
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    color: #fff;
+}
+.cell.go-to-jail .cell-name,
+.cell.go-to-jail .cell-cost {
+    color: #fff !important;
+}
+
+.cell .cell-icon {
+    font-size: 30px;
+    line-height: 1;
+}
+
+.cell .cell-name {
+    font-size: 11px;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: center;
+    padding: 0 2px;
+    color: #000000;
+    font-weight: 700;
+}
+
+.cell .cell-cost {
+    font-size: 10px;
+    color: #000000;
+    font-weight: 700;
+}
+
+.cell .players-on-cell {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.cell .players-on-cell .player-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.8);
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---------- VIDURIO LANGELIAI ---------- */
+.row-middle {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.row-middle-left,
+.row-middle-right {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 0 0 70px;
+}
+
+.row-middle-left .cell,
+.row-middle-right .cell {
+    flex: 1;
+    min-height: 30px;
+}
+
+.row-middle-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 2px;
+    min-height: 0;
+    height: 100%;
+}
+
+.center-row {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+    min-height: 0;
+    height: 50%;
+}
+
+.center-cell {
+    background: linear-gradient(145deg, #d4b896, #c4a886);
+    border: 2px solid #b8966a;
+    border-radius: 8px;
+    padding: 6px 8px;
+    flex: 1;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.center-cell h4 {
+    font-size: 10px;
+    color: #3d2b1f;
+    text-align: center;
+    border-bottom: 1px solid rgba(61,43,31,0.2);
+    padding-bottom: 3px;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+}
+
+/* ---------- 1 LANGELIS - AŠ ---------- */
+#myInfo {
+    font-size: 11px;
+    color: #3d2b1f;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+}
+
+#myInfo .player-money {
+    font-size: 28px;
+    font-weight: 700;
+    color: #000000;
+}
+
+#myInfo .player-name {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#myInfo .player-color {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #3d2b1f;
+}
+
+/* ---------- 2 LANGELIS - VALDYMAS ---------- */
+.controls {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+}
+
+.dice-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    margin: 2px 0;
+    padding: 2px;
+}
+
+.dice {
+    width: 60px;
+    height: 60px;
+    background: #ffffff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    border: 2px solid #3d2b1f;
+    transition: transform 0.3s, box-shadow 0.3s;
+    user-select: none;
+    position: relative;
+}
+
+.dice:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.35);
+}
+
+.dice-dots-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    padding: 3px;
+}
+
+.dice-dot {
+    width: 9px;
+    height: 9px;
+    background: #2d2d2d;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.dice-dot.visible {
+    opacity: 1;
+}
+
+.dice.rolling {
+    animation: diceRoll 0.5s ease;
+}
+
+@keyframes diceRoll {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(1.2); }
+    50% { transform: rotate(180deg) scale(0.9); }
+    75% { transform: rotate(270deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.control-buttons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.control-buttons button {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #fff;
+}
+
+.control-buttons button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-dice {
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+}
+.btn-dice:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+.btn-trade {
+    background: linear-gradient(145deg, #ffd700, #f0c000);
+    color: #3d2b1f;
+}
+.btn-trade:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+.btn-bankrupt {
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    color: #fff;
+}
+.btn-bankrupt:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.btn-jail {
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    color: #fff;
+}
+.btn-jail:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.btn-build {
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    color: #fff;
+}
+.btn-build:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.btn-demolish {
+    background: linear-gradient(145deg, #ff6b35, #e55a2b);
+    color: #fff;
+    font-size: 13px;
+    padding: 6px 12px;
+    width: 100%;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.btn-demolish:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5);
+}
+
+.btn-demolish:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ---------- 3 LANGELIS - CHAT ---------- */
+.chat {
+    display: flex;
+    flex-direction: column;
+}
+
+#chatMessages {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 11px;
+    color: #3d2b1f;
+    max-height: 100%;
+    padding: 6px 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 6px;
+    margin-bottom: 3px;
+    min-height: 70px;
+}
+
+#chatMessages::-webkit-scrollbar,
+#journal::-webkit-scrollbar,
+#notifications::-webkit-scrollbar,
+#playersList::-webkit-scrollbar {
+    width: 4px;
+}
+#chatMessages::-webkit-scrollbar-track,
+#journal::-webkit-scrollbar-track,
+#notifications::-webkit-scrollbar-track,
+#playersList::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+}
+#chatMessages::-webkit-scrollbar-thumb,
+#journal::-webkit-scrollbar-thumb,
+#notifications::-webkit-scrollbar-thumb,
+#playersList::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 2px;
+}
+
+.chat-input {
+    display: flex;
+    gap: 3px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 3px 6px;
+    border: 1px solid #b8966a;
+    border-radius: 4px;
+    font-size: 9px;
+    background: rgba(255,255,255,0.5);
+    outline: none;
+}
+
+.chat-input input:focus {
+    border-color: #3d2b1f;
+}
+
+.chat-input button {
+    padding: 3px 8px;
+    background: #3d2b1f;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.chat-input button:hover {
+    background: #5a3d2b;
+}
+
+/* ---------- 4 LANGELIS - ŽAIDĖJAI ---------- */
+#playersList {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 14px;
+    max-height: 200px;
+    padding: 2px 4px;
+    min-height: 50px;
+}
+
+.player-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    background: rgba(255,255,255,0.1);
+}
+
+.player-item .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+.player-item .pname {
+    flex: 1;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.player-item .pmoney {
+    color: #000000;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.player-item.active {
+    background: rgba(255,215,0,0.2);
+    border-left: 3px solid #ffd700;
+}
+
+.player-item.bankrupt {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+
+.player-item.me {
+    background: rgba(40, 167, 69, 0.2);
+}
+
+/* ---------- 5 LANGELIS - PRANEŠIMAI ---------- */
+#notifications {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 11px;
+    color: #3d2b1f;
+    max-height: 70px;
+    padding: 6px 8px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    border: 1px solid rgba(61,43,31,0.1);
+    margin: 2px 0;
+    min-height: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.notification-item {
+    padding: 3px 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+    border-left: 2px solid #c9a84c;
+    margin-bottom: 1px;
+    font-size: 9px;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.notification-item .ntime {
+    font-size: 7px;
+    color: rgba(61,43,31,0.5);
+    margin-right: 4px;
+}
+
+/* ---------- PIRKIMO PASIRINKIMAS ---------- */
+#buyChoice {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    z-index: 10;
+    animation: choiceFadeIn 0.25s ease;
+}
+
+#buyChoice.show {
+    display: flex !important;
+}
+
+@keyframes choiceFadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.buy-choice-box {
+    background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
+    border-radius: 10px;
+    padding: 12px 14px 14px;
+    width: 85%;
+    max-width: 220px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    border: 2px solid #c9a84c;
+}
+
+.buy-choice-header {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a6b3c;
+    border-bottom: 2px solid #c9a84c;
+    padding-bottom: 5px;
+    margin-bottom: 6px;
+}
+
+.buy-choice-body {
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.buy-choice-body p {
+    font-size: 11px;
+    color: #3d2b1f;
+    margin: 2px 0;
+}
+
+.buy-choice-body #choiceFieldName {
+    font-size: 14px;
+    color: #1a6b3c;
+    font-weight: 700;
+}
+
+.buy-choice-body #choiceFieldCost {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.buy-choice-body #choicePlayerMoney {
+    color: #007bff;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.buy-choice-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.choice-btn {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.choice-btn:hover {
+    transform: scale(1.04);
+}
+
+.choice-buy {
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    color: #fff;
+}
+.choice-buy:hover {
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+.choice-cancel {
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    color: #fff;
+}
+.choice-cancel:hover {
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+#center-5 {
+    position: relative;
+    overflow: hidden;
+}
+
+/* ---------- 6 LANGELIS - ŽURNALAS ---------- */
+#journal {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 12px;
+    color: #3d2b1f;
+    max-height: 100%;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(61, 43, 31, 0.1);
+    margin: 2px 0;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.journal-item {
+    padding: 2px 4px;
+    border-bottom: 1px solid rgba(61, 43, 31, 0.06);
+    display: flex;
+    gap: 6px;
+    font-size: 11px;
+    line-height: 1.3;
+    color: #3d2b1f;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.journal-item .jnum {
+    color: rgba(61, 43, 31, 0.3);
+    font-weight: 700;
+    font-size: 10px;
+    min-width: 28px;
+}
+
+.journal-item .jtext {
+    flex: 1;
+    word-wrap: break-word;
+    font-weight: 500;
+}
+
+.journal-item .jtime {
+    font-size: 9px;
+    color: rgba(61, 43, 31, 0.35);
+    white-space: nowrap;
+}
+
+/* ---------- SPALVOTOS JUOSTELĖS ---------- */
+.cell.property {
+    position: relative;
+    overflow: hidden;
+}
+
+.row-top .cell.property::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20%;
+    background: var(--property-color, #ffd700);
+    z-index: 1;
+}
+
+.row-bottom .cell.property::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20%;
+    background: var(--property-color, #ffd700);
+    z-index: 1;
+}
+
+.row-middle-left .cell.property::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 20%;
+    background: var(--property-color, #ffd700);
+    z-index: 1;
+}
+
+.row-middle-right .cell.property::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 20%;
+    background: var(--property-color, #ffd700);
+    z-index: 1;
+}
+
+.cell.corner.property::before {
+    display: none;
+}
+
+.cell .cell-number {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.row-top .cell .cell-number {
+    top: 2px;
+    right: 4px;
+}
+
+.row-bottom .cell .cell-number {
+    bottom: 2px;
+    left: 4px;
+}
+
+.row-middle-right .cell .cell-number {
+    bottom: 2px;
+    right: 4px;
+}
+
+.row-middle-left .cell .cell-number {
+    top: 2px;
+    left: 4px;
+}
+
+.cell.corner .cell-number {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.cell.corner.row-top .cell-number {
+    top: 4px;
+    right: 6px;
+}
+
+.cell.corner.row-bottom .cell-number {
+    bottom: 4px;
+    left: 6px;
+}
+
+.cell.corner.row-middle-right .cell-number {
+    bottom: 4px;
+    right: 6px;
+}
+
+.cell.corner.row-middle-left .cell-number {
+    top: 4px;
+    left: 6px;
+}
+
+.cell .cell-owner {
+    position: absolute;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0.9;
+}
+
+.row-top .cell .cell-owner {
+    top: 2px;
+    right: 18px;
+}
+
+.row-bottom .cell .cell-owner {
+    bottom: 2px;
+    left: 18px;
+}
+
+.row-middle-right .cell .cell-owner {
+    bottom: 2px;
+    right: 18px;
+}
+
+.row-middle-left .cell .cell-owner {
+    top: 2px;
+    left: 18px;
+}
+
+.cell.corner .cell-owner {
+    font-size: 16px;
+}
+
+.mini-card {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin: 1px;
+    white-space: nowrap;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mini-card .mini-card-name {
+    font-size: 8px;
+}
+
+.mini-card .mini-card-houses {
+    font-size: 8px;
+    margin-right: 2px;
+}
+
+/* ---------- GRIAUTI NAMUS - KORTELĖS ---------- */
+.demolish-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    margin: 4px 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 8px;
+    border: 2px solid #c9a84c;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.demolish-card:hover {
+    background: rgba(255,255,255,0.5);
+    transform: scale(1.02);
+    border-color: #dc3545;
+}
+
+.demolish-card .card-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.demolish-card .card-name {
+    font-weight: 600;
+    font-size: 14px;
+    flex: 1;
+    margin-left: 8px;
+}
+
+.demolish-card .card-houses {
+    font-size: 16px;
+    margin: 0 8px;
+}
+
+.demolish-card .card-refund {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* ---------- NAMELIAI ---------- */
+.cell-houses {
+    position: absolute;
+    font-size: 14px;
+    z-index: 10;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    line-height: 1;
+    display: flex;
+    gap: 1px;
+    align-items: center;
+}
+
+.row-top .cell .cell-houses {
+    bottom: 4px;
+    left: 10px;
+    flex-direction: column;
+}
+
+.row-bottom .cell .cell-houses {
+    top: 4px;
+    right: 6px;
+    flex-direction: column;
+}
+
+.row-middle-left .cell .cell-houses {
+    bottom: 4px;
+    right: 4px;
+    flex-direction: column;
+}
+
+.row-middle-right .cell .cell-houses {
+    top: 4px;
+    left: 6px;
+    flex-direction: column;
+}
+
+.cell.corner .cell-houses {
+    font-size: 10px;
+}
+
+.cell-houses span {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1px 3px;
+    border-radius: 4px;
+    display: inline-block;
+    line-height: 1.2;
+}
+
+/* ---------- ŽAIDĖJŲ IKONĖLĖS ---------- */
+.cell .players-on-cell {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    gap: 3px;
+    z-index: 20;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    pointer-events: none;
+}
+
+.cell .players-on-cell .player-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(255,255,255,0.95);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    flex-shrink: 0;
+    pointer-events: auto;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+
+.cell .players-on-cell .player-dot:hover {
+    transform: scale(1.2);
+    z-index: 21;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.cell.corner .players-on-cell .player-dot {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(3)) .player-dot {
+    width: 28px;
+    height: 28px;
+    font-size: 15px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(4)) .player-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(5)) .player-dot {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(6)) .player-dot {
+    width: 18px;
+    height: 18px;
+    font-size: 8px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(7)) .player-dot {
+    width: 16px;
+    height: 16px;
+    font-size: 7px;
+}
+
+.cell .players-on-cell:has(.player-dot:nth-child(8)) .player-dot {
+    width: 14px;
+    height: 14px;
+    font-size: 6px;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 1200px) {
+    #board.fixed {
+        width: 100%;
+        min-width: auto;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 992px) {
+    .cell.corner {
+        flex: 0 0 55px;
+    }
+    .row-middle-left,
+    .row-middle-right {
+        flex: 0 0 55px;
+    }
+    .cell .cell-icon {
+        font-size: 24px;
+    }
+    .cell .cell-name {
+        font-size: 10px;
+    }
+    .cell .cell-cost {
+        font-size: 9px;
+    }
+    .dice {
+        width: 55px;
+        height: 55px;
+    }
+    .dice-dots-container {
+        width: 38px;
+        height: 38px;
+        gap: 4px;
+    }
+    .dice-dot {
+        width: 9px;
+        height: 9px;
+    }
+    .header-btn {
+        font-size: 11px;
+        padding: 4px 10px;
+        min-width: 60px;
+    }
+    .header-controls {
+        padding: 4px 10px;
+        gap: 6px;
+    }
+}
+
+@media (max-width: 768px) {
+    #board {
+        padding: 8px;
+        gap: 1px;
+    }
+    .board-row {
+        gap: 1px;
+    }
+    .cell {
+        font-size: 6px;
+        min-height: 30px;
+        padding: 1px;
+        border-width: 1px;
+    }
+    .cell.corner {
+        flex: 0 0 45px;
+        font-size: 6px;
+        border-width: 2px;
+    }
+    .cell .cell-icon {
+        font-size: 18px;
+    }
+    .cell .cell-name {
+        font-size: 8px;
+    }
+    .cell .cell-cost {
+        font-size: 7px;
+    }
+    .cell .players-on-cell .player-dot {
+        width: 10px;
+        height: 10px;
+        font-size: 6px;
+    }
+    .row-middle-left,
+    .row-middle-right {
+        flex: 0 0 45px;
+    }
+    .row-middle {
+        gap: 1px;
+    }
+    .row-middle-center {
+        gap: 1px;
+        padding: 0 1px;
+    }
+    .center-row {
+        gap: 1px;
+    }
+    .center-cell {
+        padding: 3px 4px;
+        min-height: 50px;
+        border-width: 1px;
+    }
+    .center-cell h4 {
+        font-size: 8px;
+        padding-bottom: 2px;
+        margin-bottom: 2px;
+    }
+    .dice {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        border-width: 1.5px;
+    }
+    .dice-dots-container {
+        width: 30px;
+        height: 30px;
+        gap: 3px;
+        padding: 2px;
+    }
+    .dice-dot {
+        width: 7px;
+        height: 7px;
+    }
+    .dice-container {
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+    }
+    .control-buttons button {
+        font-size: 8px;
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+    #myInfo .player-money {
+        font-size: 24px;
+    }
+    #myInfo .player-name {
+        font-size: 11px;
+    }
+    #myInfo .player-color {
+        width: 18px;
+        height: 18px;
+    }
+    #myInfo {
+        font-size: 9px;
+        gap: 1px;
+    }
+    #chatMessages {
+        font-size: 9px;
+        padding: 4px 6px;
+        min-height: 40px;
+    }
+    .chat-input input {
+        font-size: 8px;
+        padding: 2px 4px;
+    }
+    .chat-input button {
+        font-size: 8px;
+        padding: 2px 6px;
+    }
+    #playersList {
+        font-size: 9px;
+        max-height: 50px;
+        min-height: 30px;
+        padding: 1px 3px;
+    }
+    .player-item {
+        padding: 1px 3px;
+        font-size: 8px;
+    }
+    .player-item .dot {
+        width: 8px;
+        height: 8px;
+    }
+    #notifications {
+        font-size: 9px;
+        max-height: 50px;
+        min-height: 30px;
+        padding: 4px 6px;
+    }
+    .notification-item {
+        font-size: 8px;
+        padding: 2px 6px;
+    }
+    #journal {
+        font-size: 10px;
+        max-height: 80px;
+        min-height: 50px;
+        padding: 4px 6px;
+    }
+    .journal-item {
+        font-size: 9px;
+        padding: 3px 5px;
+        gap: 4px;
+    }
+    .journal-item .jnum {
+        font-size: 8px;
+        min-width: 22px;
+    }
+    .journal-item .jtime {
+        font-size: 7px;
+    }
+    #gameHeader {
+        font-size: 10px;
+        padding: 4px 10px;
+        gap: 4px;
+    }
+    .header-btn {
+        font-size: 10px;
+        padding: 3px 8px;
+        min-width: 50px;
+    }
+    .header-controls {
+        padding: 4px 8px;
+        gap: 4px;
+    }
+    .buy-choice-box {
+        padding: 12px 14px 14px;
+        max-width: 220px;
+    }
+    .buy-choice-header {
+        font-size: 14px;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+    }
+    .buy-choice-body p {
+        font-size: 12px;
+    }
+    .buy-choice-body #choiceFieldName {
+        font-size: 15px;
+    }
+    .choice-btn {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    #board {
+        padding: 4px;
+        gap: 1px;
+        border-width: 2px;
+    }
+    .board-row {
+        gap: 1px;
+    }
+    .cell {
+        min-height: 20px;
+        border-radius: 3px;
+        padding: 1px;
+        border-width: 1px;
+    }
+    .cell.corner {
+        flex: 0 0 32px;
+        border-width: 1.5px;
+    }
+    .cell .cell-icon {
+        font-size: 14px;
+    }
+    .cell .cell-name {
+        font-size: 6px;
+    }
+    .cell .cell-cost {
+        font-size: 6px;
+    }
+    .cell .players-on-cell .player-dot {
+        width: 8px;
+        height: 8px;
+        font-size: 5px;
+    }
+    .row-middle-left,
+    .row-middle-right {
+        flex: 0 0 32px;
+    }
+    .row-middle {
+        gap: 1px;
+    }
+    .row-middle-center {
+        gap: 1px;
+        padding: 0 1px;
+    }
+    .center-row {
+        gap: 1px;
+    }
+    .center-cell {
+        min-height: 35px;
+        padding: 2px 3px;
+        border-radius: 4px;
+        border-width: 1px;
+    }
+    .center-cell h4 {
+        font-size: 6px;
+        padding-bottom: 1px;
+        margin-bottom: 1px;
+    }
+    .dice {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border-width: 1.5px;
+    }
+    .dice-dots-container {
+        width: 24px;
+        height: 24px;
+        gap: 2px;
+        padding: 2px;
+    }
+    .dice-dot {
+        width: 5px;
+        height: 5px;
+    }
+    .dice-container {
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+    }
+    .control-buttons button {
+        font-size: 7px;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+    #myInfo .player-money {
+        font-size: 11px;
+    }
+    #myInfo .player-name {
+        font-size: 9px;
+    }
+    #myInfo .player-color {
+        width: 14px;
+        height: 14px;
+        border-width: 1.5px;
+    }
+    #myInfo {
+        font-size: 7px;
+        gap: 0px;
+    }
+    #chatMessages {
+        font-size: 8px;
+        padding: 3px 4px;
+        min-height: 30px;
+        border-radius: 4px;
+    }
+    .chat-input input {
+        font-size: 7px;
+        padding: 2px 4px;
+    }
+    .chat-input button {
+        font-size: 7px;
+        padding: 2px 5px;
+    }
+    #playersList {
+        font-size: 7px;
+        max-height: 40px;
+        min-height: 25px;
+        padding: 1px 2px;
+    }
+    .player-item {
+        padding: 1px 2px;
+        font-size: 7px;
+        gap: 2px;
+    }
+    .player-item .dot {
+        width: 6px;
+        height: 6px;
+    }
+    #notifications {
+        font-size: 7px;
+        max-height: 40px;
+        min-height: 25px;
+        padding: 3px 4px;
+        border-radius: 4px;
+    }
+    .notification-item {
+        font-size: 7px;
+        padding: 2px 4px;
+        border-left-width: 2px;
+    }
+    #journal {
+        font-size: 8px;
+        max-height: 60px;
+        min-height: 35px;
+        padding: 3px 4px;
+        border-radius: 4px;
+        margin: 1px 0;
+    }
+    .journal-item {
+        font-size: 7px;
+        padding: 2px 4px;
+        gap: 3px;
+        border-radius: 3px;
+    }
+    .journal-item .jnum {
+        font-size: 7px;
+        min-width: 18px;
+    }
+    .journal-item .jtime {
+        font-size: 6px;
+    }
+    #gameHeader {
+        font-size: 8px;
+        padding: 3px 6px;
+        gap: 3px;
+        border-radius: 6px 6px 0 0;
+    }
+    .header-btn {
+        font-size: 8px;
+        padding: 2px 6px;
+        min-width: 40px;
+        border-width: 1px;
+    }
+    .header-controls {
+        padding: 3px 6px;
+        gap: 3px;
+        border-width: 1px;
+    }
+    .lobby-container {
+        padding: 16px 20px;
+        border-radius: 20px;
+    }
+    .lobby-container h1 {
+        font-size: 1.8em;
+    }
+    .lobby-container .subtitle {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+    }
+    .lobby-form input {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    .btn {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+    .buy-choice-box {
+        padding: 10px 12px 12px;
+        max-width: 180px;
+        border-radius: 8px;
+    }
+    .buy-choice-header {
+        font-size: 12px;
+        padding-bottom: 4px;
+        margin-bottom: 6px;
+    }
+    .buy-choice-body p {
+        font-size: 10px;
+        margin: 2px 0;
+    }
+    .buy-choice-body #choiceFieldName {
+        font-size: 13px;
+    }
+    .choice-btn {
+        font-size: 10px;
+        padding: 4px 10px;
+        border-radius: 6px;
+    }
+}
