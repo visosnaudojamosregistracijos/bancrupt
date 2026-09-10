@@ -20,7 +20,7 @@ const boardData = [
     { id: 15, name: 'Jonava', type: 'property', color: '#e67e22', cost: 164, icon: '' },
     
     // KAMPAS 2: KALĖJIMAS
-    { id: 16, name: 'KALĖJIMAS', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
+    { id: 16, name: 'GAIDYNAS', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
     
     // DEŠINĖ
     { id: 17, name: 'Rukla', type: 'property', color: '#e67e22', cost: 177, icon: '' },
@@ -54,7 +54,7 @@ const boardData = [
     { id: 41, name: 'Palanga', type: 'property', color: '#2c3e50', cost: 411, icon: '' },
     
     // KAMPAS 4: KELIAUK Į KALĖJIMĄ
-    { id: 42, name: 'KELIAUK Į KALĖJIMĄ', type: 'go-to-jail', color: '#dc3545', cost: 0, icon: '🚨' },
+    { id: 42, name: 'KELIAUK Į GAIDYNĄ', type: 'go-to-jail', color: '#dc3545', cost: 0, icon: '🚨' },
     
     // KAIRĖ
     { id: 43, name: 'Gargždai', type: 'property', color: '#2c3e50', cost: 424, icon: '' },
