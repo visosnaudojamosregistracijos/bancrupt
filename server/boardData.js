@@ -3,9 +3,9 @@ const boardData = [
     { id: 0, name: 'START', type: 'start', color: '#28a745', cost: 0, icon: '🏁' },
     
     // VIRŠUS
-    { id: 1, name: 'Telšiai.', type: 'property', color: '#ffd700', cost: 60, icon: '' },
+    { id: 1, name: 'Telšiai', type: 'property', color: '#ffd700', cost: 60, icon: '' },
     { id: 2, name: 'DUJOS', type: 'service1', color: null, cost: 150, icon: '⚡' },
-    { id: 3, name: 'Plungė.', type: 'property', color: '#ffd700', cost: 73, icon: '' },
+    { id: 3, name: 'Plungė', type: 'property', color: '#ffd700', cost: 73, icon: '' },
     { id: 4, name: 'HORNY RP', type: 'special', color: '#fd7e14', cost: 0, icon: '🎲' },
     { id: 5, name: 'VMI', type: 'tax', color: '#dc3545', cost: 200, icon: '💰' },
     { id: 6, name: 'Kėdainiai', type: 'property', color: '#4a90d9', cost: 86, icon: '' },
@@ -40,7 +40,7 @@ const boardData = [
     { id: 27, name: 'Kalvarija', type: 'property', color: '#e74c3c', cost: 268, icon: '' },
     { id: 28, name: 'Alytus', type: 'property', color: '#8B6914', cost: 281, icon: '' },
     { id: 29, name: 'ELEKTRA', type: 'service1', color: null, cost: 150, icon: '💡' },
-    { id: 30, name: 'Lazdija', type: 'property', color: '#8B6914', cost: 294, icon: '' },
+    { id: 30, name: 'Lazdijai', type: 'property', color: '#8B6914', cost: 294, icon: '' },
     { id: 31, name: 'Druskininkai', type: 'property', color: '#8B6914', cost: 307, icon: '' },
     { id: 32, name: 'Panevėžys', type: 'property', color: '#1abc9c', cost: 320, icon: '' },
     { id: 33, name: 'VLADUKO PIRTIS', type: 'tax', color: '#dc3545', cost: 25, icon: '🧖' },
