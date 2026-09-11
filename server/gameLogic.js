@@ -346,37 +346,47 @@ const result = this.handleField(player, currentField);
             }
                 
             case 'service1': {
-                const utilOwner = this.players.find(p => p.properties.includes(field.id));
-                if (utilOwner) {
-                    if (utilOwner.id === player.id) {
-                        result.message = `${player.name} stovi ant savo ${field.name}`;
-                        this.addMessage(result.message);
-                    } else {
-                        const utilityCount = utilOwner.properties.filter(id => utilityIds.includes(id)).length;
-                        const rent = this.calculateUtilityRent(utilityCount, this.diceValues);
-                        player.money -= rent;
-                        utilOwner.money += rent;
-                        result.action = 'pay_rent';
-                        result.message = `${player.name} sumokėjo €${rent} nuomos ${utilOwner.name} už ${field.name}`;
-                        this.addMessage(result.message);
-                        
-                        if (player.money < 0) {
-                            this.checkDebtor(player.id);
-                        }
-                    }
-                } else {
-                    if (player.money >= field.cost) {
-                        result.action = 'can_buy';
-                        result.message = `${player.name} gali nusipirkti ${field.name} už €${field.cost}`;
-                        result.field = field;
-                        this.addMessage(result.message);
-                    } else {
-                        result.message = `${player.name} neturi pakankamai pinigų ${field.name} pirkti`;
-                        this.addMessage(result.message);
-                    }
-                }
-                break;
+    const utilOwner = this.players.find(p => p.properties.includes(field.id));
+    
+    // Nustatyti specialų action pagal langelio ID
+    let specialAction = 'service1';
+    if (field.id === 2) specialAction = 'dujos';
+    else if (field.id === 14) specialAction = 'siuksles';
+    else if (field.id === 29) specialAction = 'elektra';
+    else if (field.id === 45) specialAction = 'vanduo';
+    
+    if (utilOwner) {
+        if (utilOwner.id === player.id) {
+            result.message = `${player.name} stovi ant savo ${field.name}`;
+            this.addMessage(result.message);
+            result.action = specialAction;   // ← VISADA groti
+        } else {
+            const utilityCount = utilOwner.properties.filter(id => utilityIds.includes(id)).length;
+            const rent = this.calculateUtilityRent(utilityCount, this.diceValues);
+            player.money -= rent;
+            utilOwner.money += rent;
+            result.action = specialAction;   // ← VISADA groti
+            result.message = `${player.name} sumokėjo €${rent} nuomos ${utilOwner.name} už ${field.name}`;
+            this.addMessage(result.message);
+            
+            if (player.money < 0) {
+                this.checkDebtor(player.id);
             }
+        }
+    } else {
+        if (player.money >= field.cost) {
+            result.action = specialAction;   // ← VISADA groti
+            result.message = `${player.name} gali nusipirkti ${field.name} už €${field.cost}`;
+            result.field = field;
+            this.addMessage(result.message);
+        } else {
+            result.action = specialAction;   // ← VISADA groti
+            result.message = `${player.name} neturi pakankamai pinigų ${field.name} pirkti`;
+            this.addMessage(result.message);
+        }
+    }
+    break;
+}
                 
             case 'service2': {
                 const serviceOwner = this.players.find(p => p.properties.includes(field.id));
@@ -464,36 +474,45 @@ const result = this.handleField(player, currentField);
                 break;
                 
             case 'special':
-                if (field.id === 50) {
-                    player.money += 200;
-                    result.message = `🎂 ${player.name} švenčia gimtadienį ir gauna €200! 🎉`;
-                    this.addMessage(result.message);
-                } else if (field.id === 13) {
-                    const cost = field.cost || 50;
-                    player.money -= cost;
-                    result.action = 'pay_tax';
-                    result.message = `🏥 ${player.name} apsilankė ligoninėje ir sumokėjo €${cost} daktarui Bubauskui! 👨‍⚕️`;
-                    this.addMessage(result.message);
-                    if (player.money < 0) {
-                        this.checkDebtor(player.id);
-                    }
-                } else {
-                    const random = Math.random();
-                    if (random < 0.3) {
-                        player.money += 100;
-                        result.message = `${player.name} laimėjo €100! 🎉`;
-                    } else if (random < 0.6) {
-                        player.money -= 100;
-                        result.message = `${player.name} prarado €100! 😱`;
-                    } else {
-                        result.message = `${player.name} nieko neįvyko`;
-                    }
-                    this.addMessage(result.message);
-                    if (player.money < 0) {
-                        this.checkDebtor(player.id);
-                    }
-                }
-                break;
+    if (field.id === 50) {
+        // GIMTADIENIS
+        player.money += 200;
+        result.action = 'special';
+        result.message = `🎂 ${player.name} švenčia gimtadienį ir gauna €200! 🎉`;
+        this.addMessage(result.message);
+    } else if (field.id === 13) {
+    const cost = field.cost || 50;
+    player.money -= cost;
+    result.action = 'hospital';   // ← PAKEISTA
+    result.message = `🏥 ${player.name} apsilankė ligoninėje ir sumokėjo €${cost} daktarui Bubauskui! 👨‍⚕️`;
+    this.addMessage(result.message);
+    if (player.money < 0) {
+        this.checkDebtor(player.id);
+    }
+    } else if (field.id === 4) {
+        // HORNY RP - +€200 nuo Dedo su Juanu
+        player.money += 200;
+        result.action = 'special';
+        result.message = `🎲 ${player.name} atsistojo ant HORNY RP ir gavai €200 nuo Dedo su Juanu! 🎉`;
+        this.addMessage(result.message);
+    } else {
+        // KITI SPECIALŪS
+        const random = Math.random();
+        if (random < 0.3) {
+            player.money += 100;
+            result.message = `${player.name} laimėjo €100! 🎉`;
+        } else if (random < 0.6) {
+            player.money -= 100;
+            result.message = `${player.name} prarado €100! 😱`;
+        } else {
+            result.message = `${player.name} nieko neįvyko`;
+        }
+        this.addMessage(result.message);
+        if (player.money < 0) {
+            this.checkDebtor(player.id);
+        }
+    }
+    break;
         }
         
         return result;

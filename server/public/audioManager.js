@@ -12,6 +12,20 @@ class AudioManager {
 
     loadSounds() {
         const soundFiles = {
+            'air-port': 'sounds/air-port.mp3',
+            'air-in': 'sounds/air-in.mp3',
+            'hospital': 'sounds/hospital.mp3',
+            'dujos': 'sounds/dujos.mp3',
+            'dujos1': 'sounds/dujos1.mp3',
+            'siuksles': 'sounds/siuksles.mp3',
+            'elektra': 'sounds/elektra.mp3',
+            'vanduo': 'sounds/vanduo.mp3',
+            'train': 'sounds/train.mp3',
+            'port': 'sounds/port.mp3',
+            'bus': 'sounds/bus.mp3',
+            'latras': 'sounds/latras.mp3',
+            'pirtis': 'sounds/pirtis.mp3',
+            'birthday': 'sounds/birthday.mp3',
             auction: 'sounds/auction.mp3',
             bankrupt: 'sounds/bankrupt.mp3',
             build: 'sounds/build.mp3',
@@ -90,7 +104,80 @@ function playSound(soundName) {
     audioManager.play(soundName);
 }
 
+// ============================================
+// SERVICE1 GARSAI (DUJOS, ŠIUKŠLĖS, ELEKTRA, VANDUO)
+// ============================================
+
+function playDujosSound() {
+    audioManager.play('dujos');
+    setTimeout(() => audioManager.play('dujos1'), 100);
+}
+
+function playSiukslesSound() {
+    audioManager.play('siuksles');
+    setTimeout(() => audioManager.play('siuksles'), 300);
+}
+
+function playElektraSound() {
+    audioManager.play('elektra');
+}
+
+function playVanduoSound() {
+    audioManager.play('vanduo');
+}
+
+// ============================================
+// SERVICE2 GARSAI (ORO UOSTAS, TRAUKINIŲ STOTIS, UOSTAS, AUTOBUSŲ STOTIS)
+// ============================================
+
+function playAirPortSound() {
+    audioManager.play('air-port');
+}
+
+function playAirInSound() {
+    audioManager.play('air-in');
+}
+
+function playTrainSound() {
+    audioManager.play('train');
+}
+
+function playPortSound() {
+    audioManager.play('port');
+}
+
+function playBusSound() {
+    audioManager.play('bus');
+}
+
+// ============================================
+// LIGONINĖS GARSAS
+// ============================================
+
+function playHospitalSound() {
+    audioManager.play('hospital');
+}
+
+// ============================================
+// SPECIALŪS GARSAI (LATRŲ UŽEIGA, PIRTIS, GIMTADIENIS)
+// ============================================
+
+function playLatrasSound() {
+    audioManager.play('latras');
+}
+
+function playPirtisSound() {
+    audioManager.play('pirtis');
+}
+
+function playBirthdaySound() {
+    audioManager.play('birthday');
+}
+
+// ============================================
 // PAGRINDINIAI GARSAI
+// ============================================
+
 function playDiceSound() {
     audioManager.play('dice');
 }
@@ -135,7 +222,10 @@ function playWinSound() {
     audioManager.play('win');
 }
 
-// NAUJI GARSAI
+// ============================================
+// KITI GARSAI
+// ============================================
+
 function playCashSound() {
     audioManager.play('cash');
 }

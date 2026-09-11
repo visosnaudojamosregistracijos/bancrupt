@@ -39,7 +39,6 @@ function initSocket() {
         showLobbyMessage('🟢 Prisijungta prie serverio', '#28a745');
         playStartSound();
         
-        // Bandyti prisijungti atgal
         setTimeout(() => {
             const savedGameId = localStorage.getItem('bancrupt_gameId');
             const savedToken = localStorage.getItem('bancrupt_playerToken');
@@ -78,7 +77,6 @@ function initSocket() {
         playerId = data.playerId;
         myPlayer = data.player;
         
-        // IŠSAUGOTI Į LOCALSTORAGE
         localStorage.setItem('bancrupt_gameId', gameId);
         localStorage.setItem('bancrupt_playerToken', data.player.token);
         
@@ -93,7 +91,6 @@ function initSocket() {
         playerId = data.playerId;
         myPlayer = data.player;
         
-        // IŠSAUGOTI Į LOCALSTORAGE
         localStorage.setItem('bancrupt_gameId', gameId);
         localStorage.setItem('bancrupt_playerToken', data.player.token);
         
@@ -103,9 +100,6 @@ function initSocket() {
         enterGame();
     });
 
-    // ============================================
-    // REKONEKCIJOS EVENTAI
-    // ============================================
     socket.on('reconnected', (data) => {
         console.log('✅ Sėkmingai prijungta atgal:', data);
         gameId = data.gameId;
@@ -119,8 +113,6 @@ function initSocket() {
 
     socket.on('reconnectFailed', (msg) => {
         console.log('❌ Reconnect nepavyko:', msg);
-        
-        // IŠTRINTI NEGALIOJANČIUS DUOMENIS
         localStorage.removeItem('bancrupt_gameId');
         localStorage.removeItem('bancrupt_playerToken');
     });
@@ -145,6 +137,47 @@ function initSocket() {
             notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
             popupMsg += ` ir atsistojo ant "${data.field.name}"`;
             
+            // ============================================
+            // SERVICE1 GARSAI (DUJOS, ŠIUKŠLĖS, ELEKTRA, VANDUO)
+            // ============================================
+            if (data.field.id === 2) {
+                playDujosSound();
+            } else if (data.field.id === 14) {
+                playSiukslesSound();
+            } else if (data.field.id === 29) {
+                playElektraSound();
+            } else if (data.field.id === 45) {
+                playVanduoSound();
+            }
+            // ============================================
+            // SERVICE2 GARSAI (ORO UOSTAS, TRAUKINIŲ STOTIS, UOSTAS, AUTOBUSŲ STOTIS)
+            // ============================================
+            else if (data.field.id === 8) {
+                playAirPortSound();
+            } else if (data.field.id === 19) {
+                playTrainSound();
+            } else if (data.field.id === 40) {
+                playPortSound();
+            } else if (data.field.id === 47) {
+                playBusSound();
+            }
+            // ============================================
+            // LIGONINĖS GARSAS
+            // ============================================
+            else if (data.field.id === 13) {
+                playHospitalSound();
+            }
+            // ============================================
+            // SPECIALŪS GARSAI (LATRŲ UŽEIGA, VLADUKO PIRTIS, GIMTADIENIS)
+            // ============================================
+            else if (data.field.id === 23) {
+                playLatrasSound();
+            } else if (data.field.id === 33) {
+                playPirtisSound();
+            } else if (data.field.id === 50) {
+                playBirthdaySound();
+            }
+            
             if (data.result) {
                 if (data.result.action === 'can_buy') {
                     const buyMsg = ` 🏠 Gali nusipirkti už €${data.field.cost}!`;
@@ -156,13 +189,32 @@ function initSocket() {
                     notificationMsg += rentMsg;
                     popupMsg += rentMsg;
                     popupType = 'rent';
-                    playPaySound();
+                    
+                    // ORO UOSTO NUOMOS GARSAS (air-in)
+                    if (data.field.id === 8) {
+                        setTimeout(() => playAirInSound(), 800);
+                    } else {
+                        // SERVICE1 ir SERVICE2 - jau groja
+                        const isService1 = (data.field.id === 2 || data.field.id === 14 || 
+                                          data.field.id === 29 || data.field.id === 45);
+                        const isService2 = (data.field.id === 19 || data.field.id === 40 || 
+                                          data.field.id === 47);
+                        if (!isService1 && !isService2) {
+                            playPaySound();
+                        }
+                    }
                 } else if (data.result.action === 'pay_tax') {
                     const taxMsg = ` 💸 Sumokėjo mokesčius!`;
                     notificationMsg += taxMsg;
                     popupMsg += taxMsg;
                     popupType = 'tax';
                     playTaxSound();
+                } else if (data.result.action === 'hospital') {
+                    const hospitalMsg = ` 🏥 Ligoninė!`;
+                    notificationMsg += hospitalMsg;
+                    popupMsg += hospitalMsg;
+                    popupType = 'tax';
+                    playHospitalSound();
                 } else if (data.result.action === 'go_to_jail') {
                     const jailMsg = ` ⛓️ Keliauja į kalėjimą!`;
                     notificationMsg += jailMsg;
@@ -173,6 +225,12 @@ function initSocket() {
                     const chanceMsg = ` 🎲 Gavosi šansas!`;
                     notificationMsg += chanceMsg;
                     popupMsg += chanceMsg;
+                    popupType = 'chance';
+                    playChanceSound();
+                } else if (data.result.action === 'special') {
+                    const specialMsg = ` 🎲 HORNY RP!`;
+                    notificationMsg += specialMsg;
+                    popupMsg += specialMsg;
                     popupType = 'chance';
                     playChanceSound();
                 }
@@ -207,6 +265,10 @@ function initSocket() {
         
         addNotification(msg);
         
+        if (msg.includes('HORNY RP') || msg.includes('gavai €200 nuo Dedo')) {
+            playChanceSound();
+        }
+
         if (msg.includes('pastatė namą')) {
             playBuildSound();
             showPopupMessage(msg, 'buy');
@@ -238,14 +300,32 @@ function initSocket() {
             showPopupMessage(msg, 'move');
         }
         if (msg.includes('sumokėjo €') && msg.includes('nuomos')) {
-            playPaySound();
+            // APSAUGA: NEgros pay.mp3, jei jau groja service1/service2 garsas
+            const isService1 = msg.includes('DUJOS') || msg.includes('ŠIUKŠLĖS') || 
+                               msg.includes('ELEKTRA') || msg.includes('VANDUO');
+            const isOroUostas = msg.includes('ORO UOSTAS') || msg.includes('ORO UOSTO');
+            const isService2 = msg.includes('TRAUKINIŲ STOTIS') || 
+                               (msg.includes('UOSTAS') && !isOroUostas) || 
+                               msg.includes('AUTOBUSŲ STOTIS');
+            
+            if (!isService1 && !isOroUostas && !isService2) {
+                playPaySound();
+            }
             showPopupMessage(msg, 'rent');
         }
         if (msg.includes('sumokėjo') && msg.includes('mokesčių')) {
-            playTaxSound();
+            // APSAUGA: NEgros tax.mp3, jei jau groja latras/pirtis
+            const isLatras = msg.includes('LATRŲ') || msg.includes('LATRU');
+            const isPirtis = msg.includes('PIRTIS') || msg.includes('PIRTIES');
+            
+            if (!isLatras && !isPirtis) {
+                playTaxSound();
+            }
             showPopupMessage(msg, 'tax');
         }
-        if (msg.includes('gavo €') || msg.includes('laimėjo')) {
+        if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
+            !msg.includes('GIMTADIENIS') && 
+            !msg.includes('gimtadienį')) {
             playCashSound();
         }
         if (msg.includes('prarado')) {
@@ -472,7 +552,6 @@ function initSocket() {
     socket.on('leftGame', (data) => {
         console.log('🏃 Pasitraukei iš žaidimo:', data);
         
-        // IŠTRINTI IŠ LOCALSTORAGE
         localStorage.removeItem('bancrupt_gameId');
         localStorage.removeItem('bancrupt_playerToken');
         
@@ -495,7 +574,6 @@ function initSocket() {
     socket.on('gameFinished', (data) => {
         console.log('🏆 Žaidimas baigtas:', data);
         
-        // IŠTRINTI IŠ LOCALSTORAGE
         localStorage.removeItem('bancrupt_gameId');
         localStorage.removeItem('bancrupt_playerToken');
         
@@ -800,7 +878,6 @@ let selectedOfferFields = [];
 let selectedRequestFields = [];
 
 function openTrading() {
-    // Leisti atidaryti prekybą net jei skolingas (kad galėtų parduoti)
     if (!isMyTurn && !(myPlayer && myPlayer.isDebtor)) {
         alert('⏳ Ne tavo eilė!');
         playErrorSound();
@@ -1724,7 +1801,6 @@ function updateUI(state) {
     
     const tradeBtn = document.getElementById('tradeBtn');
     if (tradeBtn) {
-        // Prekyba leidžiama net jei skolingas (kad galėtų parduoti)
         tradeBtn.disabled = isBankrupt || isLeft || (!isMyTurn && !isDebtor);
     }
     
