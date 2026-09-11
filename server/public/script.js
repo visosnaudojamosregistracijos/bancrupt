@@ -162,13 +162,13 @@ function initSocket() {
                 playBusSound();
             }
             // ============================================
-            // LIGONINĖS GARSAS
+            // LIGONINĖ
             // ============================================
             else if (data.field.id === 13) {
                 playHospitalSound();
             }
             // ============================================
-            // SPECIALŪS GARSAI (LATRŲ UŽEIGA, VLADUKO PIRTIS, GIMTADIENIS)
+            // LATRŲ UŽEIGA (#23), VLADUKO PIRTIS (#33), GIMTADIENIS (#50)
             // ============================================
             else if (data.field.id === 23) {
                 playLatrasSound();
@@ -190,11 +190,9 @@ function initSocket() {
                     popupMsg += rentMsg;
                     popupType = 'rent';
                     
-                    // ORO UOSTO NUOMOS GARSAS (air-in)
                     if (data.field.id === 8) {
                         setTimeout(() => playAirInSound(), 800);
                     } else {
-                        // SERVICE1 ir SERVICE2 - jau groja
                         const isService1 = (data.field.id === 2 || data.field.id === 14 || 
                                           data.field.id === 29 || data.field.id === 45);
                         const isService2 = (data.field.id === 19 || data.field.id === 40 || 
@@ -215,6 +213,24 @@ function initSocket() {
                     popupMsg += hospitalMsg;
                     popupType = 'tax';
                     playHospitalSound();
+                } else if (data.result.action === 'birthday') {
+                    const birthdayMsg = ` 🎂 Gimtadienis!`;
+                    notificationMsg += birthdayMsg;
+                    popupMsg += birthdayMsg;
+                    popupType = 'chance';
+                    playBirthdaySound();
+                } else if (data.result.action === 'latras') {
+                    const latrasMsg = ` 🍺 Latrų užeiga!`;
+                    notificationMsg += latrasMsg;
+                    popupMsg += latrasMsg;
+                    popupType = 'tax';
+                    playLatrasSound();
+                } else if (data.result.action === 'pirtis') {
+                    const pirtisMsg = ` 🧖 Pirtis!`;
+                    notificationMsg += pirtisMsg;
+                    popupMsg += pirtisMsg;
+                    popupType = 'tax';
+                    playPirtisSound();
                 } else if (data.result.action === 'go_to_jail') {
                     const jailMsg = ` ⛓️ Keliauja į kalėjimą!`;
                     notificationMsg += jailMsg;
@@ -300,7 +316,6 @@ function initSocket() {
             showPopupMessage(msg, 'move');
         }
         if (msg.includes('sumokėjo €') && msg.includes('nuomos')) {
-            // APSAUGA: NEgros pay.mp3, jei jau groja service1/service2 garsas
             const isService1 = msg.includes('DUJOS') || msg.includes('ŠIUKŠLĖS') || 
                                msg.includes('ELEKTRA') || msg.includes('VANDUO');
             const isOroUostas = msg.includes('ORO UOSTAS') || msg.includes('ORO UOSTO');
@@ -313,17 +328,27 @@ function initSocket() {
             }
             showPopupMessage(msg, 'rent');
         }
-        if (msg.includes('sumokėjo') && msg.includes('mokesčių')) {
-            // APSAUGA: NEgros tax.mp3, jei jau groja latras/pirtis
-            const isLatras = msg.includes('LATRŲ') || msg.includes('LATRU');
-            const isPirtis = msg.includes('PIRTIS') || msg.includes('PIRTIES');
-            
-            if (!isLatras && !isPirtis) {
-                playTaxSound();
-            }
+        if (msg.includes('LATRŲ UŽEIGĄ') || msg.includes('LATRU UŽEIGĄ')) {
+            playLatrasSound();
             showPopupMessage(msg, 'tax');
         }
-        if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
+        else if (msg.includes('VLADUKO PIRTĮ') || msg.includes('PIRTĮ')) {
+            playPirtisSound();
+            showPopupMessage(msg, 'tax');
+        }
+        else if (msg.includes('švenčia gimtadienį') || msg.includes('GIMTADIENIS')) {
+            playBirthdaySound();
+            showPopupMessage(msg, 'chance');
+        }
+        else if (msg.includes('sumokėjo') && msg.includes('mokesčių')) {
+            playTaxSound();
+            showPopupMessage(msg, 'tax');
+        }
+        else if (msg.includes('LIGONINĖ') || msg.includes('ligoninėje')) {
+            playHospitalSound();
+            showPopupMessage(msg, 'tax');
+        }
+        else if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
             !msg.includes('GIMTADIENIS') && 
             !msg.includes('gimtadienį')) {
             playCashSound();
