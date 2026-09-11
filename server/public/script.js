@@ -328,24 +328,35 @@ function initSocket() {
             }
             showPopupMessage(msg, 'rent');
         }
+        // ============================================
+        // LATRŲ UŽEIGA - garsas groja TIK diceRolled, čia tik popup
+        // ============================================
         if (msg.includes('LATRŲ UŽEIGĄ') || msg.includes('LATRU UŽEIGĄ')) {
-            playLatrasSound();
             showPopupMessage(msg, 'tax');
         }
+        // ============================================
+        // VLADUKO PIRTIS - garsas groja TIK diceRolled
+        // ============================================
         else if (msg.includes('VLADUKO PIRTĮ') || msg.includes('PIRTĮ')) {
-            playPirtisSound();
             showPopupMessage(msg, 'tax');
         }
+        // ============================================
+        // GIMTADIENIS - garsas groja TIK diceRolled
+        // ============================================
         else if (msg.includes('švenčia gimtadienį') || msg.includes('GIMTADIENIS')) {
-            playBirthdaySound();
             showPopupMessage(msg, 'chance');
         }
+        // ============================================
+        // VMI ir kiti mokesčiai
+        // ============================================
         else if (msg.includes('sumokėjo') && msg.includes('mokesčių')) {
             playTaxSound();
             showPopupMessage(msg, 'tax');
         }
+        // ============================================
+        // LIGONINĖ - garsas groja TIK diceRolled
+        // ============================================
         else if (msg.includes('LIGONINĖ') || msg.includes('ligoninėje')) {
-            playHospitalSound();
             showPopupMessage(msg, 'tax');
         }
         else if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
