@@ -12,6 +12,8 @@ let isConnected = false;
 let currentAuctionId = null;
 let auctionTimerInterval = null;
 let auctionEndedSent = false;
+let isMuted = false;
+let lastVolume = 50;
 
 // ============================================
 // PRISIJUNGIMAS
@@ -137,9 +139,7 @@ function initSocket() {
             notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
             popupMsg += ` ir atsistojo ant "${data.field.name}"`;
             
-            // ============================================
-            // SERVICE1 GARSAI (DUJOS, ŠIUKŠLĖS, ELEKTRA, VANDUO)
-            // ============================================
+            // SERVICE1 GARSAI
             if (data.field.id === 2) {
                 playDujosSound();
             } else if (data.field.id === 14) {
@@ -149,9 +149,7 @@ function initSocket() {
             } else if (data.field.id === 45) {
                 playVanduoSound();
             }
-            // ============================================
-            // SERVICE2 GARSAI (ORO UOSTAS, TRAUKINIŲ STOTIS, UOSTAS, AUTOBUSŲ STOTIS)
-            // ============================================
+            // SERVICE2 GARSAI
             else if (data.field.id === 8) {
                 playAirPortSound();
             } else if (data.field.id === 19) {
@@ -161,15 +159,11 @@ function initSocket() {
             } else if (data.field.id === 47) {
                 playBusSound();
             }
-            // ============================================
             // LIGONINĖ
-            // ============================================
             else if (data.field.id === 13) {
                 playHospitalSound();
             }
-            // ============================================
-            // LATRŲ UŽEIGA (#23), VLADUKO PIRTIS (#33), GIMTADIENIS (#50)
-            // ============================================
+            // LATRŲ UŽEIGA, PIRTIS, GIMTADIENIS
             else if (data.field.id === 23) {
                 playLatrasSound();
             } else if (data.field.id === 33) {
@@ -231,6 +225,11 @@ function initSocket() {
                     popupMsg += pirtisMsg;
                     popupType = 'tax';
                     playPirtisSound();
+                } else if (data.result.action === 'visiting_jail') {
+                    const visitMsg = ` 🚔 Svečiuose pas kalinius!`;
+                    notificationMsg += visitMsg;
+                    popupMsg += visitMsg;
+                    popupType = 'move';
                 } else if (data.result.action === 'go_to_jail') {
                     const jailMsg = ` ⛓️ Keliauja į kalėjimą!`;
                     notificationMsg += jailMsg;
@@ -329,15 +328,12 @@ function initSocket() {
             showPopupMessage(msg, 'rent');
         }
         if (msg.includes('LATRŲ UŽEIGĄ') || msg.includes('LATRU UŽEIGĄ')) {
-            playLatrasSound();
             showPopupMessage(msg, 'tax');
         }
         else if (msg.includes('VLADUKO PIRTĮ') || msg.includes('PIRTĮ')) {
-            playPirtisSound();
             showPopupMessage(msg, 'tax');
         }
         else if (msg.includes('švenčia gimtadienį') || msg.includes('GIMTADIENIS')) {
-            playBirthdaySound();
             showPopupMessage(msg, 'chance');
         }
         else if (msg.includes('sumokėjo') && msg.includes('mokesčių')) {
@@ -345,8 +341,10 @@ function initSocket() {
             showPopupMessage(msg, 'tax');
         }
         else if (msg.includes('LIGONINĖ') || msg.includes('ligoninėje')) {
-            playHospitalSound();
             showPopupMessage(msg, 'tax');
+        }
+        else if (msg.includes('užsuko į svečius pas kalinius')) {
+            showPopupMessage(msg, 'move');
         }
         else if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
             !msg.includes('GIMTADIENIS') && 
@@ -612,6 +610,67 @@ function initSocket() {
 }
 
 // ============================================
+// GARSO KONTROLĖ
+// ============================================
+
+function toggleSoundPanel() {
+    const panel = document.getElementById('soundPanel');
+    if (!panel) return;
+    
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+    playClickSound();
+}
+
+function changeVolume(value) {
+    const volume = parseInt(value) / 100;
+    
+    if (audioManager) {
+        audioManager.setVolume(volume);
+        audioManager.isEnabled = volume > 0;
+    }
+    
+    const valueDisplay = document.getElementById('volumeValue');
+    if (valueDisplay) valueDisplay.textContent = value;
+    
+    localStorage.setItem('bancrupt_volume', value);
+    
+    const muteBtn = document.getElementById('muteBtn');
+    if (muteBtn) {
+        if (volume === 0) {
+            muteBtn.textContent = '🔊 Įjungti garsą';
+        } else {
+            muteBtn.textContent = '🔇 Išjungti garsą';
+        }
+    }
+}
+
+function toggleMute() {
+    const slider = document.getElementById('volumeSlider');
+    const muteBtn = document.getElementById('muteBtn');
+    
+    if (!slider || !muteBtn) return;
+    
+    if (isMuted) {
+        isMuted = false;
+        const volume = lastVolume || 50;
+        slider.value = volume;
+        changeVolume(volume);
+        muteBtn.textContent = '🔇 Išjungti garsą';
+    } else {
+        isMuted = true;
+        lastVolume = parseInt(slider.value) || 50;
+        slider.value = 0;
+        changeVolume(0);
+        muteBtn.textContent = '🔊 Įjungti garsą';
+    }
+    playClickSound();
+}
+
+// ============================================
 // IŠŠOKANTYS PRANEŠIMAI
 // ============================================
 
@@ -755,6 +814,13 @@ function enterGame() {
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
+    
+    const savedVolume = localStorage.getItem('bancrupt_volume') || 50;
+    const slider = document.getElementById('volumeSlider');
+    const valueDisplay = document.getElementById('volumeValue');
+    if (slider) slider.value = savedVolume;
+    if (valueDisplay) valueDisplay.textContent = savedVolume;
+    changeVolume(savedVolume);
     
     socket.emit('getGameState');
 }
@@ -1105,7 +1171,7 @@ function updateTradePlayers() {
         if (p.id !== currentPlayerId && p.isActive && !p.bankrupt && !p.left) {
             const option = document.createElement('option');
             option.value = p.id;
-            option.textContent = `${p.name} ${p.icon || '🚗'} (€${p.money})`;
+            option.textContent = `${p.name} (€${p.money})`;
             select.appendChild(option);
             found = true;
         }
@@ -1154,22 +1220,14 @@ function updateOfferFields() {
         if (!field) return;
         const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
         if (houses > 0) return;
-        if (count >= 3) return;
         
         const checked = selectedOfferFields.includes(fieldId) ? 'checked' : '';
         const color = field.color || '#c9a84c';
-        
-        let houseIcon = '';
-        if (houses >= 5) houseIcon = '🏨';
-        else if (houses > 0) {
-            for (let i = 0; i < houses; i++) houseIcon += '🏠';
-        }
         
         html += `
             <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; box-shadow: ${checked ? '0 0 10px rgba(40,167,69,0.4)' : 'none'};" 
                  onclick="document.getElementById('offer_${fieldId}').click()">
                 <input type="checkbox" ${checked} onchange="toggleOfferField(${fieldId})" id="offer_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:12px;">${houseIcon}</span>
                 <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
                 <span style="font-size:8px; color:rgba(255,255,255,0.7);">€${field.cost}</span>
             </div>
@@ -1190,11 +1248,6 @@ function toggleOfferField(fieldId) {
     if (index > -1) {
         selectedOfferFields.splice(index, 1);
     } else {
-        if (selectedOfferFields.length >= 3) {
-            alert('❌ Galima pasirinkti ne daugiau kaip 3 korteles!');
-            playErrorSound();
-            return;
-        }
         selectedOfferFields.push(fieldId);
     }
     updateOfferFields();
@@ -1206,11 +1259,6 @@ function toggleRequestField(fieldId) {
     if (index > -1) {
         selectedRequestFields.splice(index, 1);
     } else {
-        if (selectedRequestFields.length >= 3) {
-            alert('❌ Galima pasirinkti ne daugiau kaip 3 korteles!');
-            playErrorSound();
-            return;
-        }
         selectedRequestFields.push(fieldId);
     }
     updateRequestFields();
@@ -1256,22 +1304,14 @@ function updateRequestFields() {
         if (!field) return;
         const houses = target.houses && target.houses[fieldId] ? target.houses[fieldId] : 0;
         if (houses > 0) return;
-        if (count >= 3) return;
         
         const checked = selectedRequestFields.includes(fieldId) ? 'checked' : '';
         const color = field.color || '#c9a84c';
-        
-        let houseIcon = '';
-        if (houses >= 5) houseIcon = '🏨';
-        else if (houses > 0) {
-            for (let i = 0; i < houses; i++) houseIcon += '🏠';
-        }
         
         html += `
             <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; box-shadow: ${checked ? '0 0 10px rgba(40,167,69,0.4)' : 'none'};" 
                  onclick="document.getElementById('request_${fieldId}').click()">
                 <input type="checkbox" ${checked} onchange="toggleRequestField(${fieldId})" id="request_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:12px;">${houseIcon}</span>
                 <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
                 <span style="font-size:8px; color:rgba(255,255,255,0.7);">€${field.cost}</span>
             </div>
@@ -1681,19 +1721,6 @@ function getGroupByColor(color) {
     return groups[color] || [];
 }
 
-function toggleSound() {
-    if (audioManager) {
-        const enabled = audioManager.toggle();
-        const status = enabled ? 'ĮJUNGTI' : 'IŠJUNGTI';
-        const msg = `🔊 Garsai ${status}`;
-        addNotification(msg);
-        addJournal(msg);
-        playClickSound();
-        return enabled;
-    }
-    return false;
-}
-
 function setMode(mode) {
     const board = document.getElementById('board');
     board.className = mode;
@@ -1781,7 +1808,7 @@ function updateUI(state) {
         document.getElementById('myInfo').innerHTML = `
             <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
                 <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
-                <div class="player-name" style="font-size:16px; font-weight:600;">${me.name} ${me.icon || '🚗'}</div>
+                <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
             </div>
             <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};">💰 €${me.money}</div>
             <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
@@ -1805,7 +1832,7 @@ function updateUI(state) {
         return `
             <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''}">
                 <span class="dot" style="background:${p.color}"></span>
-                <span class="pname">${p.name} ${p.icon || '🚗'} ${p.id === playerId ? '👤' : ''}</span>
+                <span class="pname">${p.name} ${p.id === playerId ? '👤' : ''}</span>
                 <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
                 ${pHouses > 0 ? `🏠${pHouses}` : ''}
                 ${p.inJail ? '⛓️' : ''}
@@ -1968,9 +1995,10 @@ function updateBoard(state) {
         
         let html = `<span class="cell-number">${index}</span>`;
         
+        // SAVININKO APSKRITIMAS (spalva)
         const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt);
         if (owner) {
-            html += `<span class="cell-owner">${owner.icon || '🚗'}</span>`;
+            html += `<span class="cell-owner" style="background:${owner.color}"></span>`;
         }
         
         html += `<span class="cell-icon">${field.icon || ''}</span>`;
@@ -1993,10 +2021,11 @@ function updateBoard(state) {
             }
         }
         
+        // ŽAIDĖJŲ FIGŪRĖLĖS (spalvos)
         if (playersHere.length > 0) {
             html += `<div class="players-on-cell">`;
             playersHere.forEach(p => {
-                html += `<span class="player-dot" style="background:${p.color}">${p.icon || '🚗'}</span>`;
+                html += `<span class="player-dot" style="background:${p.color}"></span>`;
             });
             html += `</div>`;
         }
@@ -2068,6 +2097,14 @@ document.addEventListener('DOMContentLoaded', () => {
         targetSelect.addEventListener('input', function() {
             selectedRequestFields = [];
             updateRequestFields();
+        });
+    }
+    
+    // Garso slider
+    const volumeSlider = document.getElementById('volumeSlider');
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', function() {
+            changeVolume(this.value);
         });
     }
     

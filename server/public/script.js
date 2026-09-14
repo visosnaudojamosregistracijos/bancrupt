@@ -636,10 +636,8 @@ function changeVolume(value) {
     const valueDisplay = document.getElementById('volumeValue');
     if (valueDisplay) valueDisplay.textContent = value;
     
-    // Išsaugoti localStorage
     localStorage.setItem('bancrupt_volume', value);
     
-    // Atnaujinti mute mygtuką
     const muteBtn = document.getElementById('muteBtn');
     if (muteBtn) {
         if (volume === 0) {
@@ -657,14 +655,12 @@ function toggleMute() {
     if (!slider || !muteBtn) return;
     
     if (isMuted) {
-        // Įjungti
         isMuted = false;
         const volume = lastVolume || 50;
         slider.value = volume;
         changeVolume(volume);
         muteBtn.textContent = '🔇 Išjungti garsą';
     } else {
-        // Išjungti
         isMuted = true;
         lastVolume = parseInt(slider.value) || 50;
         slider.value = 0;
@@ -819,7 +815,6 @@ function enterGame() {
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
     
-    // Įkelti išsaugotą garsumą
     const savedVolume = localStorage.getItem('bancrupt_volume') || 50;
     const slider = document.getElementById('volumeSlider');
     const valueDisplay = document.getElementById('volumeValue');
@@ -1176,7 +1171,7 @@ function updateTradePlayers() {
         if (p.id !== currentPlayerId && p.isActive && !p.bankrupt && !p.left) {
             const option = document.createElement('option');
             option.value = p.id;
-            option.textContent = `${p.name} ${p.icon || '🚗'} (€${p.money})`;
+            option.textContent = `${p.name} (€${p.money})`;
             select.appendChild(option);
             found = true;
         }
@@ -1225,22 +1220,14 @@ function updateOfferFields() {
         if (!field) return;
         const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
         if (houses > 0) return;
-        // NEBĖRA LIMITO count >= 3
         
         const checked = selectedOfferFields.includes(fieldId) ? 'checked' : '';
         const color = field.color || '#c9a84c';
-        
-        let houseIcon = '';
-        if (houses >= 5) houseIcon = '🏨';
-        else if (houses > 0) {
-            for (let i = 0; i < houses; i++) houseIcon += '🏠';
-        }
         
         html += `
             <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; box-shadow: ${checked ? '0 0 10px rgba(40,167,69,0.4)' : 'none'};" 
                  onclick="document.getElementById('offer_${fieldId}').click()">
                 <input type="checkbox" ${checked} onchange="toggleOfferField(${fieldId})" id="offer_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:12px;">${houseIcon}</span>
                 <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
                 <span style="font-size:8px; color:rgba(255,255,255,0.7);">€${field.cost}</span>
             </div>
@@ -1261,7 +1248,6 @@ function toggleOfferField(fieldId) {
     if (index > -1) {
         selectedOfferFields.splice(index, 1);
     } else {
-        // NEBĖRA LIMITO
         selectedOfferFields.push(fieldId);
     }
     updateOfferFields();
@@ -1273,7 +1259,6 @@ function toggleRequestField(fieldId) {
     if (index > -1) {
         selectedRequestFields.splice(index, 1);
     } else {
-        // NEBĖRA LIMITO
         selectedRequestFields.push(fieldId);
     }
     updateRequestFields();
@@ -1319,22 +1304,14 @@ function updateRequestFields() {
         if (!field) return;
         const houses = target.houses && target.houses[fieldId] ? target.houses[fieldId] : 0;
         if (houses > 0) return;
-        // NEBĖRA LIMITO count >= 3
         
         const checked = selectedRequestFields.includes(fieldId) ? 'checked' : '';
         const color = field.color || '#c9a84c';
-        
-        let houseIcon = '';
-        if (houses >= 5) houseIcon = '🏨';
-        else if (houses > 0) {
-            for (let i = 0; i < houses; i++) houseIcon += '🏠';
-        }
         
         html += `
             <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; box-shadow: ${checked ? '0 0 10px rgba(40,167,69,0.4)' : 'none'};" 
                  onclick="document.getElementById('request_${fieldId}').click()">
                 <input type="checkbox" ${checked} onchange="toggleRequestField(${fieldId})" id="request_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:12px;">${houseIcon}</span>
                 <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
                 <span style="font-size:8px; color:rgba(255,255,255,0.7);">€${field.cost}</span>
             </div>
@@ -1831,7 +1808,7 @@ function updateUI(state) {
         document.getElementById('myInfo').innerHTML = `
             <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
                 <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
-                <div class="player-name" style="font-size:16px; font-weight:600;">${me.name} ${me.icon || '🚗'}</div>
+                <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
             </div>
             <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};">💰 €${me.money}</div>
             <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
@@ -1855,7 +1832,7 @@ function updateUI(state) {
         return `
             <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''}">
                 <span class="dot" style="background:${p.color}"></span>
-                <span class="pname">${p.name} ${p.icon || '🚗'} ${p.id === playerId ? '👤' : ''}</span>
+                <span class="pname">${p.name} ${p.id === playerId ? '👤' : ''}</span>
                 <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
                 ${pHouses > 0 ? `🏠${pHouses}` : ''}
                 ${p.inJail ? '⛓️' : ''}
@@ -2018,13 +1995,11 @@ function updateBoard(state) {
         
         let html = `<span class="cell-number">${index}</span>`;
         
-        if (playersHere.length > 0) {
-    html += `<div class="players-on-cell">`;
-    playersHere.forEach(p => {
-        html += `<span class="player-dot" style="background:${p.color}">${p.icon || '🚗'}</span>`;
-    });
-    html += `</div>`;
-}
+        // SAVININKO APSKRITIMAS (spalva)
+        const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt);
+        if (owner) {
+            html += `<span class="cell-owner" style="background:${owner.color}"></span>`;
+        }
         
         html += `<span class="cell-icon">${field.icon || ''}</span>`;
         html += `<span class="cell-name">${field.name || index}</span>`;
@@ -2046,11 +2021,12 @@ function updateBoard(state) {
             }
         }
         
+        // ŽAIDĖJŲ FIGŪRĖLĖS (spalvos)
         if (playersHere.length > 0) {
             html += `<div class="players-on-cell">`;
             playersHere.forEach(p => {
-    html += `<span class="player-dot" style="background:${p.color}"></span>`;
-});
+                html += `<span class="player-dot" style="background:${p.color}"></span>`;
+            });
             html += `</div>`;
         }
         
