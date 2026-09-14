@@ -1,3 +1,4 @@
+js
 // ============================================
 // script.js
 // ============================================
@@ -12,6 +13,8 @@ let isConnected = false;
 let currentAuctionId = null;
 let auctionTimerInterval = null;
 let auctionEndedSent = false;
+let isMuted = false;
+let lastVolume = 50;
 
 // ============================================
 // PRISIJUNGIMAS
@@ -137,9 +140,7 @@ function initSocket() {
             notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
             popupMsg += ` ir atsistojo ant "${data.field.name}"`;
             
-            // ============================================
-            // SERVICE1 GARSAI (DUJOS, ŠIUKŠLĖS, ELEKTRA, VANDUO)
-            // ============================================
+            // SERVICE1 GARSAI
             if (data.field.id === 2) {
                 playDujosSound();
             } else if (data.field.id === 14) {
@@ -149,9 +150,7 @@ function initSocket() {
             } else if (data.field.id === 45) {
                 playVanduoSound();
             }
-            // ============================================
-            // SERVICE2 GARSAI (ORO UOSTAS, TRAUKINIŲ STOTIS, UOSTAS, AUTOBUSŲ STOTIS)
-            // ============================================
+            // SERVICE2 GARSAI
             else if (data.field.id === 8) {
                 playAirPortSound();
             } else if (data.field.id === 19) {
@@ -161,15 +160,11 @@ function initSocket() {
             } else if (data.field.id === 47) {
                 playBusSound();
             }
-            // ============================================
             // LIGONINĖ
-            // ============================================
             else if (data.field.id === 13) {
                 playHospitalSound();
             }
-            // ============================================
-            // LATRŲ UŽEIGA (#23), VLADUKO PIRTIS (#33), GIMTADIENIS (#50)
-            // ============================================
+            // LATRŲ UŽEIGA, PIRTIS, GIMTADIENIS
             else if (data.field.id === 23) {
                 playLatrasSound();
             } else if (data.field.id === 33) {
@@ -231,6 +226,11 @@ function initSocket() {
                     popupMsg += pirtisMsg;
                     popupType = 'tax';
                     playPirtisSound();
+                } else if (data.result.action === 'visiting_jail') {
+                    const visitMsg = ` 🚔 Svečiuose pas kalinius!`;
+                    notificationMsg += visitMsg;
+                    popupMsg += visitMsg;
+                    popupType = 'move';
                 } else if (data.result.action === 'go_to_jail') {
                     const jailMsg = ` ⛓️ Keliauja į kalėjimą!`;
                     notificationMsg += jailMsg;
@@ -328,36 +328,24 @@ function initSocket() {
             }
             showPopupMessage(msg, 'rent');
         }
-        // ============================================
-        // LATRŲ UŽEIGA - garsas groja TIK diceRolled, čia tik popup
-        // ============================================
         if (msg.includes('LATRŲ UŽEIGĄ') || msg.includes('LATRU UŽEIGĄ')) {
             showPopupMessage(msg, 'tax');
         }
-        // ============================================
-        // VLADUKO PIRTIS - garsas groja TIK diceRolled
-        // ============================================
         else if (msg.includes('VLADUKO PIRTĮ') || msg.includes('PIRTĮ')) {
             showPopupMessage(msg, 'tax');
         }
-        // ============================================
-        // GIMTADIENIS - garsas groja TIK diceRolled
-        // ============================================
         else if (msg.includes('švenčia gimtadienį') || msg.includes('GIMTADIENIS')) {
             showPopupMessage(msg, 'chance');
         }
-        // ============================================
-        // VMI ir kiti mokesčiai
-        // ============================================
         else if (msg.includes('sumokėjo') && msg.includes('mokesčių')) {
             playTaxSound();
             showPopupMessage(msg, 'tax');
         }
-        // ============================================
-        // LIGONINĖ - garsas groja TIK diceRolled
-        // ============================================
         else if (msg.includes('LIGONINĖ') || msg.includes('ligoninėje')) {
             showPopupMessage(msg, 'tax');
+        }
+        else if (msg.includes('užsuko į svečius pas kalinius')) {
+            showPopupMessage(msg, 'move');
         }
         else if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
             !msg.includes('GIMTADIENIS') && 
@@ -623,6 +611,71 @@ function initSocket() {
 }
 
 // ============================================
+// GARSO KONTROLĖ
+// ============================================
+
+function toggleSoundPanel() {
+    const panel = document.getElementById('soundPanel');
+    if (!panel) return;
+    
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+    playClickSound();
+}
+
+function changeVolume(value) {
+    const volume = parseInt(value) / 100;
+    
+    if (audioManager) {
+        audioManager.setVolume(volume);
+        audioManager.isEnabled = volume > 0;
+    }
+    
+    const valueDisplay = document.getElementById('volumeValue');
+    if (valueDisplay) valueDisplay.textContent = value;
+    
+    // Išsaugoti localStorage
+    localStorage.setItem('bancrupt_volume', value);
+    
+    // Atnaujinti mute mygtuką
+    const muteBtn = document.getElementById('muteBtn');
+    if (muteBtn) {
+        if (volume === 0) {
+            muteBtn.textContent = '🔊 Įjungti garsą';
+        } else {
+            muteBtn.textContent = '🔇 Išjungti garsą';
+        }
+    }
+}
+
+function toggleMute() {
+    const slider = document.getElementById('volumeSlider');
+    const muteBtn = document.getElementById('muteBtn');
+    
+    if (!slider || !muteBtn) return;
+    
+    if (isMuted) {
+        // Įjungti
+        isMuted = false;
+        const volume = lastVolume || 50;
+        slider.value = volume;
+        changeVolume(volume);
+        muteBtn.textContent = '🔇 Išjungti garsą';
+    } else {
+        // Išjungti
+        isMuted = true;
+        lastVolume = parseInt(slider.value) || 50;
+        slider.value = 0;
+        changeVolume(0);
+        muteBtn.textContent = '🔊 Įjungti garsą';
+    }
+    playClickSound();
+}
+
+// ============================================
 // IŠŠOKANTYS PRANEŠIMAI
 // ============================================
 
@@ -766,6 +819,14 @@ function enterGame() {
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
+    
+    // Įkelti išsaugotą garsumą
+    const savedVolume = localStorage.getItem('bancrupt_volume') || 50;
+    const slider = document.getElementById('volumeSlider');
+    const valueDisplay = document.getElementById('volumeValue');
+    if (slider) slider.value = savedVolume;
+    if (valueDisplay) valueDisplay.textContent = savedVolume;
+    changeVolume(savedVolume);
     
     socket.emit('getGameState');
 }
@@ -1165,7 +1226,7 @@ function updateOfferFields() {
         if (!field) return;
         const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
         if (houses > 0) return;
-        if (count >= 3) return;
+        // NEBĖRA LIMITO count >= 3
         
         const checked = selectedOfferFields.includes(fieldId) ? 'checked' : '';
         const color = field.color || '#c9a84c';
@@ -1201,11 +1262,7 @@ function toggleOfferField(fieldId) {
     if (index > -1) {
         selectedOfferFields.splice(index, 1);
     } else {
-        if (selectedOfferFields.length >= 3) {
-            alert('❌ Galima pasirinkti ne daugiau kaip 3 korteles!');
-            playErrorSound();
-            return;
-        }
+        // NEBĖRA LIMITO
         selectedOfferFields.push(fieldId);
     }
     updateOfferFields();
@@ -1217,11 +1274,7 @@ function toggleRequestField(fieldId) {
     if (index > -1) {
         selectedRequestFields.splice(index, 1);
     } else {
-        if (selectedRequestFields.length >= 3) {
-            alert('❌ Galima pasirinkti ne daugiau kaip 3 korteles!');
-            playErrorSound();
-            return;
-        }
+        // NEBĖRA LIMITO
         selectedRequestFields.push(fieldId);
     }
     updateRequestFields();
@@ -1267,7 +1320,7 @@ function updateRequestFields() {
         if (!field) return;
         const houses = target.houses && target.houses[fieldId] ? target.houses[fieldId] : 0;
         if (houses > 0) return;
-        if (count >= 3) return;
+        // NEBĖRA LIMITO count >= 3
         
         const checked = selectedRequestFields.includes(fieldId) ? 'checked' : '';
         const color = field.color || '#c9a84c';
@@ -1692,19 +1745,6 @@ function getGroupByColor(color) {
     return groups[color] || [];
 }
 
-function toggleSound() {
-    if (audioManager) {
-        const enabled = audioManager.toggle();
-        const status = enabled ? 'ĮJUNGTI' : 'IŠJUNGTI';
-        const msg = `🔊 Garsai ${status}`;
-        addNotification(msg);
-        addJournal(msg);
-        playClickSound();
-        return enabled;
-    }
-    return false;
-}
-
 function setMode(mode) {
     const board = document.getElementById('board');
     board.className = mode;
@@ -2079,6 +2119,14 @@ document.addEventListener('DOMContentLoaded', () => {
         targetSelect.addEventListener('input', function() {
             selectedRequestFields = [];
             updateRequestFields();
+        });
+    }
+    
+    // Garso slider
+    const volumeSlider = document.getElementById('volumeSlider');
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', function() {
+            changeVolume(this.value);
         });
     }
     

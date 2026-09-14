@@ -10,7 +10,7 @@ const boardData = [
     { id: 5, name: 'VMI', type: 'tax', color: '#dc3545', cost: 200, icon: '💰' },
     { id: 6, name: 'Kėdainiai', type: 'property', color: '#4a90d9', cost: 86, icon: '' },
     { id: 7, name: 'Ariogala', type: 'property', color: '#4a90d9', cost: 99, icon: '' },
-    { id: 8, name: 'ORO UOSTAS', type: 'service2', color: null, cost: 200, icon: '✈️' },
+    { id: 8, name: 'Oro uostas', type: 'service2', color: null, cost: 200, icon: '✈️' },
     { id: 9, name: 'Ramygala', type: 'property', color: '#4a90d9', cost: 112, icon: '' },
     { id: 10, name: 'Utena', type: 'property', color: '#2ecc71', cost: 125, icon: '' },
     { id: 11, name: 'Anykščiai', type: 'property', color: '#2ecc71', cost: 138, icon: '' },
@@ -20,16 +20,16 @@ const boardData = [
     { id: 15, name: 'Jonava', type: 'property', color: '#e67e22', cost: 164, icon: '' },
     
     // KAMPAS 2: KALĖJIMAS
-    { id: 16, name: 'GAIDYNAS', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
+    { id: 16, name: 'Kaleimas', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
     
     // DEŠINĖ
     { id: 17, name: 'Rukla', type: 'property', color: '#e67e22', cost: 177, icon: '' },
     { id: 18, name: 'Karmėlava', type: 'property', color: '#e67e22', cost: 190, icon: '' },
-    { id: 19, name: 'TRAUKINIŲ STOTIS', type: 'service2', color: null, cost: 200, icon: '🚂' },
+    { id: 19, name: 'Geležinkelio stotis', type: 'service2', color: null, cost: 200, icon: '🚂' },
     { id: 20, name: 'Mažeikiai', type: 'property', color: '#9b59b6', cost: 203, icon: '' },
     { id: 21, name: 'Skuodas', type: 'property', color: '#9b59b6', cost: 216, icon: '' },
     { id: 22, name: 'N.Akmenė', type: 'property', color: '#9b59b6', cost: 229, icon: '' },
-    { id: 23, name: 'LATRU UŽEIGA', type: 'tax', color: '#dc3545', cost: 0, icon: '🍺' },
+    { id: 23, name: 'Latrų užeiga', type: 'tax', color: '#dc3545', cost: 0, icon: '🍺' },
     { id: 24, name: 'Marijampolė', type: 'property', color: '#e74c3c', cost: 242, icon: '' },
     { id: 25, name: 'Vilkaviškis', type: 'property', color: '#e74c3c', cost: 255, icon: '' },
     
@@ -54,14 +54,14 @@ const boardData = [
     { id: 41, name: 'Palanga', type: 'property', color: '#2c3e50', cost: 411, icon: '' },
     
     // KAMPAS 4: KELIAUK Į KALĖJIMĄ
-    { id: 42, name: 'KELIAUK Į GAIDYNĄ', type: 'go-to-jail', color: '#dc3545', cost: 0, icon: '🚨' },
+    { id: 42, name: 'Keliauk i kaleimą', type: 'go-to-jail', color: '#dc3545', cost: 0, icon: '🚨' },
     
     // KAIRĖ
     { id: 43, name: 'Gargždai', type: 'property', color: '#2c3e50', cost: 424, icon: '' },
     { id: 44, name: 'Kaunas', type: 'property', color: '#1a237e', cost: 437, icon: '' },
     { id: 45, name: 'VANDUO', type: 'service1', color: null, cost: 150, icon: '💧' },
     { id: 46, name: 'Garliava', type: 'property', color: '#1a237e', cost: 450, icon: '' },
-    { id: 47, name: 'AUTOBUSŲ STOTIS', type: 'service2', color: null, cost: 200, icon: '🚌' },
+    { id: 47, name: 'Atobusų stotis', type: 'service2', color: null, cost: 200, icon: '🚌' },
     { id: 48, name: 'Raudondvaris', type: 'property', color: '#1a237e', cost: 463, icon: '' },
     { id: 49, name: 'Trakai', type: 'property', color: '#bdc3c7', cost: 476, icon: '' },
     { id: 50, name: 'Gimtadienis', type: 'special', color: '#dc3545', cost: 0, icon: '🎂' },  // ← PAKEISTA: 'tax' → 'special'

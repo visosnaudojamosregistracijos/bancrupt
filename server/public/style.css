@@ -1921,3 +1921,49 @@ body {
     .left-btn { font-size: 8px; padding: 5px 3px; }
     #leftPlayerCount, #leftTurnDisplay { font-size: 7px; }
 }
+
+/* ---------- GARSO SLIDER ---------- */
+#volumeSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: linear-gradient(to right, #dc3545, #ffc107, #28a745);
+    border-radius: 3px;
+    outline: none;
+}
+
+#volumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #ffd700;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #0d1f0d;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+#volumeSlider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #ffd700;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #0d1f0d;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+#soundPanel {
+    animation: soundPanelFadeIn 0.2s ease;
+}
+
+@keyframes soundPanelFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#muteBtn:hover {
+    background: #ffd700 !important;
+    color: #0d1f0d !important;
+}
