@@ -37,7 +37,7 @@ class Game {
             return { error: 'Toks vardas jau užimtas' };
         }
 
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF8A5C', '#A29BFE'];
+        const colors = ['#ec0505', '#001aac', '#008116', '#e8eceb', '#000000', '#f4f800', '#5701b9', '#e400e4'];
         const player = {
             id: this.players.length,
             name: name,
