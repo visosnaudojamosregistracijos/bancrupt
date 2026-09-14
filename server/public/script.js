@@ -2018,10 +2018,13 @@ function updateBoard(state) {
         
         let html = `<span class="cell-number">${index}</span>`;
         
-        const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt);
-        if (owner) {
-            html += `<span class="cell-owner">${owner.icon || '🚗'}</span>`;
-        }
+        if (playersHere.length > 0) {
+    html += `<div class="players-on-cell">`;
+    playersHere.forEach(p => {
+        html += `<span class="player-dot" style="background:${p.color}">${p.icon || '🚗'}</span>`;
+    });
+    html += `</div>`;
+}
         
         html += `<span class="cell-icon">${field.icon || ''}</span>`;
         html += `<span class="cell-name">${field.name || index}</span>`;
@@ -2046,8 +2049,8 @@ function updateBoard(state) {
         if (playersHere.length > 0) {
             html += `<div class="players-on-cell">`;
             playersHere.forEach(p => {
-                html += `<span class="player-dot" style="background:${p.color}">${p.icon || '🚗'}</span>`;
-            });
+    html += `<span class="player-dot" style="background:${p.color}"></span>`;
+});
             html += `</div>`;
         }
         
