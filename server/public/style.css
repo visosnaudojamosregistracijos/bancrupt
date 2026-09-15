@@ -1132,46 +1132,10 @@ body {
 }
 
 /* ---------- PAPRASTŲ LANGELIŲ NUMERIŲ POZICIJOS ---------- */
-.row-top .cell .cell-number {
-    top: 4px;
-    right: 4px;
-}
 
-.row-bottom .cell .cell-number {
-    bottom: 4px;
-    left: 4px;
-}
-
-.row-middle-right .cell .cell-number {
-    bottom: 4px;
-    right: 4px;
-}
-
-.row-middle-left .cell .cell-number {
-    top: 4px;
-    left: 4px;
-}
 
 /* ---------- SAVININKŲ RUTULIUKŲ POZICIJOS ---------- */
-.row-top .cell .cell-owner {
-    top: 4px;
-    right: 20px;
-}
 
-.row-bottom .cell .cell-owner {
-    bottom: 4px;
-    left: 20px;
-}
-
-.row-middle-right .cell .cell-owner {
-    bottom: 4px;
-    right: 20px;
-}
-
-.row-middle-left .cell .cell-owner {
-    top: 4px;
-    left: 20px;
-}
 
 /* ---------- KAMPŲ NUMERIŲ POZICIJOS ---------- */
 .cell.corner .cell-number {
@@ -2348,4 +2312,40 @@ body {
     .cell.corner .cell-bg-icon {
         font-size: 4em;
     }
+}
+
+.cell-top-bar {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.row-top .cell-top-bar {
+    top: 2px;
+    right: 4px;
+}
+
+.row-bottom .cell-top-bar {
+    bottom: 2px;
+    left: 4px;
+    top: auto;
+    right: auto;
+}
+
+.row-middle-right .cell-top-bar {
+    bottom: 2px;
+    right: 4px;
+    top: auto;
+    left: auto;
+}
+
+.row-middle-left .cell-top-bar {
+    top: 2px;
+    left: 4px;
+    right: auto;
 }

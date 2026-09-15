@@ -2208,12 +2208,12 @@ function updateBoard(state) {
         
         const playersHere = state.players.filter(p => p.position === index && p.isActive && !p.bankrupt && !p.left);
         
-        let html = `<span class="cell-number">${index}</span>`;
-        
         const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt);
-        if (owner) {
-            html += `<span class="cell-owner" style="background:${owner.color}"></span>`;
-        }
+let topBarHtml = '';
+if (owner) {
+    topBarHtml = `<span class="cell-owner" style="background:${owner.color}"></span>`;
+}
+let html = `<div class="cell-top-bar">${topBarHtml}<span class="cell-number">${index}</span></div>`;
         
         // Fono ikona (emoji per visą langelį)
 if (field.icon) {
