@@ -1131,6 +1131,28 @@ body {
     z-index: 2;
 }
 
+/* ---------- PAPRASTŲ LANGELIŲ NUMERIŲ POZICIJOS ---------- */
+.row-top .cell .cell-number {
+    top: 2px;
+    right: 4px;
+}
+
+.row-bottom .cell .cell-number {
+    bottom: 2px;
+    left: 4px;
+}
+
+.row-middle-right .cell .cell-number {
+    bottom: 2px;
+    right: 4px;
+}
+
+.row-middle-left .cell .cell-number {
+    top: 2px;
+    left: 4px;
+}
+
+/* ---------- SAVININKŲ RUTULIUKŲ POZICIJOS ---------- */
 .row-top .cell .cell-owner {
     top: 4px;
     right: 20px;
@@ -1151,6 +1173,7 @@ body {
     left: 20px;
 }
 
+/* ---------- KAMPŲ NUMERIŲ POZICIJOS ---------- */
 .cell.corner .cell-number {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.4);
@@ -1176,6 +1199,7 @@ body {
     left: 6px;
 }
 
+/* ---------- SAVININKŲ RUTULIUKŲ IŠVAIZDA ---------- */
 .cell .cell-owner {
     position: absolute;
     width: 16px;
