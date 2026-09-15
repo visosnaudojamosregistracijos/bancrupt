@@ -969,8 +969,10 @@ let selectedOfferFields = [];
 let selectedRequestFields = [];
 
 function openTrading() {
-    if (!isMyTurn && !(myPlayer && myPlayer.isDebtor)) {
-        alert('⏳ Ne tavo eilė!');
+    // Leisti atidaryti prekybą BET KADA (kad galėtų koreguoti pasiūlymus)
+    // Apribojimas tik: jei bankrutavęs arba pasitraukęs
+    if (myPlayer && (myPlayer.bankrupt || myPlayer.left)) {
+        alert('❌ Tu nebegali prekiauti!');
         playErrorSound();
         return;
     }

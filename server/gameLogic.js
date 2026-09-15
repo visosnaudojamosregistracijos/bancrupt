@@ -33,11 +33,17 @@ class Game {
         if (this.players.length >= this.maxPlayers) {
             return { error: 'Daugiausiai 8 žaidėjai' };
         }
+        
+        // ⚠️ PATIKRINIMAS - ar žaidimas prasidėjęs
+        if (this.gameStarted) {
+            return { error: 'Žaidimas jau prasidėjo! Negalima prisijungti.' };
+        }
+        
         if (this.players.find(p => p.name === name && !p.left && !p.bankrupt)) {
             return { error: 'Toks vardas jau užimtas' };
         }
 
-        const colors = ['#ec0505', '#001aac', '#008116', '#e8eceb', '#000000', '#f4f800', '#5701b9', '#e400e4'];
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF8A5C', '#A29BFE'];
         const player = {
             id: this.players.length,
             name: name,
@@ -88,6 +94,9 @@ class Game {
         if (this.currentTurn !== playerId) {
             return { error: 'Ne tavo eilė' };
         }
+
+        // ⚠️ PRASIDEDA ŽAIDIMAS - pirmas metimas
+        this.gameStarted = true;
 
         if (socketId) {
             player.socketId = socketId;
@@ -297,6 +306,24 @@ class Game {
         };
     }
 
+    getServiceRent(owner, serviceType) {
+        if (!owner || !owner.properties) return 0;
+        
+        let ids;
+        if (serviceType === 'service1') {
+            ids = [2, 14, 29, 45];
+        } else if (serviceType === 'service2') {
+            ids = [8, 19, 40, 47];
+        } else {
+            return 0;
+        }
+        
+        const count = owner.properties.filter(id => ids.includes(id)).length;
+        
+        // 1 → 50, 2 → 100, 3 → 150, 4 → 200
+        return count * 50;
+    }
+
     calculateUtilityRent(utilityCount, diceValues) {
         const diceTotal = diceValues[0] + diceValues[1];
         return diceTotal * utilityCount;
@@ -304,7 +331,6 @@ class Game {
 
     handleField(player, field) {
         const result = { action: 'stand', message: '' };
-        const utilityIds = [2, 14, 29, 45];
         
         switch(field.type) {
             case 'property': {
@@ -355,8 +381,7 @@ class Game {
                         this.addMessage(result.message);
                         result.action = specialAction;
                     } else {
-                        const utilityCount = utilOwner.properties.filter(id => utilityIds.includes(id)).length;
-                        const rent = this.calculateUtilityRent(utilityCount, this.diceValues);
+                        const rent = this.getServiceRent(utilOwner, 'service1');
                         player.money -= rent;
                         utilOwner.money += rent;
                         result.action = specialAction;
@@ -369,7 +394,7 @@ class Game {
                     }
                 } else {
                     if (player.money >= field.cost) {
-                        result.action = specialAction;
+                        result.action = 'can_buy';
                         result.message = `${player.name} gali nusipirkti ${field.name} už €${field.cost}`;
                         result.field = field;
                         this.addMessage(result.message);
@@ -397,7 +422,7 @@ class Game {
                         this.addMessage(result.message);
                         result.action = specialAction;
                     } else {
-                        const rent = this.buildingLogic.getRentWithHouses(serviceOwner.id, field.id);
+                        const rent = this.getServiceRent(serviceOwner, 'service2');
                         player.money -= rent;
                         serviceOwner.money += rent;
                         result.action = specialAction;
@@ -424,28 +449,24 @@ class Game {
             }
                 
             case 'tax': {
-                // VMI (#5) - fiksuota €200
                 if (field.id === 5) {
                     player.money -= 200;
                     result.action = 'pay_tax';
                     result.message = `${player.name} sumokėjo €200 VMI mokesčių! 💰`;
                     this.addMessage(result.message);
                 }
-                // LATRŲ UŽEIGA (#23)
                 else if (field.id === 23) {
                     player.money -= 10;
                     result.action = 'latras';
                     result.message = `${player.name} užsuko į LATRŲ UŽEIGĄ ir išleido €10! 🍺`;
                     this.addMessage(result.message);
                 }
-                // VLADUKO PIRTIS (#33)
                 else if (field.id === 33) {
                     player.money -= 25;
                     result.action = 'pirtis';
                     result.message = `${player.name} nuėjo į VLADUKO PIRTĮ ir sumokėjo €25! 🧖`;
                     this.addMessage(result.message);
                 }
-                // KITA
                 else {
                     player.money -= field.cost;
                     result.action = 'pay_tax';
@@ -459,9 +480,9 @@ class Game {
             }
                 
             case 'jail':
-                player.inJail = true;
-                result.action = 'go_to_jail';
-                result.message = `${player.name} pateko į kalėjimą! ⛓️`;
+                // TIK SVEČIAS
+                result.action = 'visiting_jail';
+                result.message = `${player.name} užsuko į svečius pas kalinius! 🚔`;
                 this.addMessage(result.message);
                 break;
                 
@@ -647,7 +668,13 @@ class Game {
         player.bankrupt = true;
         player.isActive = false;
         player.isDebtor = false;
-        this.addMessage(`💀 ${player.name} BANKROTAS!`);
+        
+        // ⚠️ IŠVALYTI KORTELES IR NAMUS - GRĮŽTA Į BANKĄ
+        player.properties = [];
+        player.houses = {};
+        player.money = 0;
+        
+        this.addMessage(`💀 ${player.name} BANKROTAS! Kortelės grąžintos bankui.`);
         
         const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left);
         if (activePlayers.length <= 1) {

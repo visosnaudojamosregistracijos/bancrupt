@@ -67,10 +67,8 @@ class TradingLogic {
     sellToBank(playerId, fieldIds) {
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-        // Leisti parduoti net jei ne tavo eilė, kai esi skolingas
-        if (this.game.currentTurn !== playerId && !player.isDebtor) {
-            return { error: 'Ne tavo eilė' };
-        }
+        if (player.left) return { error: 'Žaidėjas pasitraukęs' };
+        // ⚠️ IŠIMTA: currentTurn patikrinimas - leidžiama bet kada
 
         let totalPrice = 0;
         const soldFields = [];
@@ -99,7 +97,6 @@ class TradingLogic {
         player.money += totalPrice;
         this.game.addMessage(`🏦 ${player.name} pardavė ${soldFields.length} kortelę(-es) bankui už €${totalPrice}!`);
 
-        // Patikrinti ar atsiskaitė
         if (player.money >= 0) {
             player.isDebtor = false;
         }
@@ -120,9 +117,11 @@ class TradingLogic {
         if (!player || player.bankrupt) {
             return { error: 'Žaidėjas neaktyvus' };
         }
-        if (this.game.currentTurn !== playerId && !player.isDebtor) {
-            return { error: 'Ne tavo eilė' };
+        if (player.left) {
+            return { error: 'Žaidėjas pasitraukęs' };
         }
+        // ⚠️ IŠIMTA: currentTurn patikrinimas - leidžiama bet kada
+
         if (!player.properties.includes(fieldId)) {
             return { error: 'Neturi šios kortelės' };
         }
@@ -184,6 +183,7 @@ class TradingLogic {
 
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
+        if (player.left) return { error: 'Žaidėjas pasitraukęs' };
         if (player.money < bidAmount) return { error: 'Neturi tiek pinigų' };
         if (bidAmount <= auction.currentBid) return { error: 'Pasiūlyk daugiau nei dabartinė kaina' };
 
@@ -234,7 +234,6 @@ class TradingLogic {
                 const seller = this.game.players[auction.sellerId];
                 if (seller) {
                     seller.money += winnerData.bid;
-                    // Patikrinti ar pardavėjas atsiskaitė
                     if (seller.money >= 0) {
                         seller.isDebtor = false;
                     }
@@ -267,11 +266,14 @@ class TradingLogic {
     proposeTrade(playerId, targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney) {
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-        if (this.game.currentTurn !== playerId && !player.isDebtor) return { error: 'Ne tavo eilė' };
+        if (player.left) return { error: 'Žaidėjas pasitraukęs' };
+        // ⚠️ IŠIMTA: currentTurn patikrinimas - leidžiama bet kada
+        
         if (playerId === targetPlayerId) return { error: 'Negali siūlyti sau' };
 
         const target = this.game.players[targetPlayerId];
         if (!target || target.bankrupt) return { error: 'Žaidėjas neaktyvus' };
+        if (target.left) return { error: 'Žaidėjas pasitraukęs' };
 
         if (offerFieldIds && offerFieldIds.length > 0) {
             for (const fieldId of offerFieldIds) {
@@ -439,7 +441,6 @@ class TradingLogic {
             
             this.trades.delete(tradeId);
             
-            // Patikrinti ar kas nors atsiskaitė
             if (fromPlayer.money >= 0) fromPlayer.isDebtor = false;
             if (toPlayer.money >= 0) toPlayer.isDebtor = false;
             
