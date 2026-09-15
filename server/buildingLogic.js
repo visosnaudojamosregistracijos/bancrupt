@@ -257,9 +257,11 @@ class BuildingLogic {
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         
         if (houses >= 5) {
-            // Viezbutis - 3x nuoma (bazinė + 2x)
-            rent = rent * 3;
-        } else {
+    // Viežbutis - 4 namų nuoma + 50% (arba fiksuota)
+    const houseRent = 4 * Math.floor(field.cost * 0.3);
+    rent += houseRent;
+    rent = Math.floor(rent * 1.5);  // +50% nuo 4 namų
+} else {
             // Paprasti namai - kiekvienas namas prideda 30% sklypo vertės
             const houseRent = houses * Math.floor(field.cost * 0.3);
             rent += houseRent;
