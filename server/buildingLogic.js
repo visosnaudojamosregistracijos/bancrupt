@@ -13,22 +13,22 @@ class BuildingLogic {
 
     // Gauti grupės sklypus pagal spalvą
     getGroupByColor(color) {
-    const groups = {
-        '#ffd700': [1, 3],
-        '#4a90d9': [6, 7, 9],
-        '#2ecc71': [10, 11, 12],
-        '#e67e22': [15, 17, 18],
-        '#9b59b6': [20, 21, 22],
-        '#e74c3c': [24, 25, 27],
-        '#8B6914': [28, 30, 31],
-        '#1abc9c': [32, 34, 35],
-        '#ff69b4': [36, 37, 38],
-        '#2c3e50': [39, 41, 43],
-        '#1a237e': [44, 46, 48],
-        '#bdc3c7': [49, 51]
-    };
-    return groups[color] || [];
-}
+        const groups = {
+            '#ffd700': [1, 3],
+            '#4a90d9': [6, 7, 9],
+            '#2ecc71': [10, 11, 12],
+            '#e67e22': [15, 17, 18],
+            '#9b59b6': [20, 21, 22],
+            '#e74c3c': [24, 25, 27],
+            '#8B6914': [28, 30, 31],
+            '#1abc9c': [32, 34, 35],
+            '#ff69b4': [36, 37, 38],
+            '#2c3e50': [39, 41, 43],
+            '#1a237e': [44, 46, 48],
+            '#bdc3c7': [49, 51]
+        };
+        return groups[color] || [];
+    }
 
     // Patikrinti ar žaidėjas turi VISUS grupės sklypus
     hasFullGroup(playerId, fieldId) {
@@ -240,35 +240,54 @@ class BuildingLogic {
         return result;
     }
 
-    // Gauti nuomą su namais ir viezbučiais
+    // ============================================
+    // NUOMOS SKAIČIAVIMAS
+    // ============================================
+    // Bazinė nuoma = 10% sklypo vertės
+    // Daugiklis pagal namų skaičių:
+    //   0 namų → × 1
+    //   1 namas → × 10
+    //   2 namai → × 20
+    //   3 namai → × 30
+    //   4 namai → × 40
+    //   Viežbutis → × 50
+    // ============================================
     getRentWithHouses(playerId, fieldId) {
         const player = this.game.players[playerId];
         const field = this.game.board[fieldId];
         if (!player || !field) return 0;
 
-        // Bazinė nuoma (10% sklypo vertės)
-        let rent = Math.floor(field.cost * 0.1);
+        // Bazinė nuoma = 10% sklypo vertės
+        let baseRent = field.cost * 0.1;
         
-        // Jei turi visą grupę - nuoma padvigubėja
-        if (this.hasFullGroup(playerId, fieldId)) {
-            rent = rent * 2;
-        }
-
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         
-        if (houses >= 5) {
-    // Viežbutis - 4 namų nuoma + 50% (arba fiksuota)
-    const houseRent = 4 * Math.floor(field.cost * 0.3);
-    rent += houseRent;
-    rent = Math.floor(rent * 1.5);  // +50% nuo 4 namų
-} else {
-            // Paprasti namai - kiekvienas namas prideda 30% sklypo vertės
-            const houseRent = houses * Math.floor(field.cost * 0.3);
-            rent += houseRent;
-        }
-
+        // Daugiklis pagal namų skaičių
+        let multiplier = 1;
+        if (houses === 1) multiplier = 10;
+        else if (houses === 2) multiplier = 20;
+        else if (houses === 3) multiplier = 30;
+        else if (houses === 4) multiplier = 40;
+        else if (houses >= 5) multiplier = 50;  // Viežbutis
+        
+        const rent = Math.floor(baseRent * multiplier);
+        
         return rent;
     }
 }
 
 module.exports = BuildingLogic;
+Ką pakeičiau
+getRentWithHouses() funkciją – dabar:
+
+javascript
+let baseRent = field.cost * 0.1;   // 10% sklypo vertės
+
+let multiplier = 1;
+if (houses === 1) multiplier = 10;
+else if (houses === 2) multiplier = 20;
+else if (houses === 3) multiplier = 30;
+else if (houses === 4) multiplier = 40;
+else if (houses >= 5) multiplier = 50;  // Viežbutis
+
+const rent = Math.floor(baseRent * multiplier);
