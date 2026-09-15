@@ -368,7 +368,7 @@ body {
 }
 
 .cell.corner {
-    flex: 0 0 150px;
+    flex: 0 0 175px;
     aspect-ratio: 1;
     font-size: 8px;
     border-width: 3px;
@@ -469,7 +469,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    flex: 0 0 70px;
+    flex: 0 0 175px;
 }
 
 .row-middle-left .cell,
