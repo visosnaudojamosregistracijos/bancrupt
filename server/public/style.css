@@ -2320,9 +2320,10 @@ body {
     right: 4px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     z-index: 5;
     pointer-events: none;
+    flex-direction: row-reverse;
 }
 
 .row-top .cell-top-bar {
