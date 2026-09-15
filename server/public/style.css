@@ -368,7 +368,7 @@ body {
 }
 
 .cell.corner {
-    flex: 0 0 90px;
+    flex: 0 0 150px;
     aspect-ratio: 1;
     font-size: 8px;
     border-width: 3px;
