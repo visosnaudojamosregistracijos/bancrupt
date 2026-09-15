@@ -47,8 +47,9 @@
                 <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
                     🏃 Pasitraukti
                 </button>
-                <button onclick="toggleInfoMode()" id="infoBtn" class="left-btn info-btn">
-                    ℹ️ Info: 🔴 IŠJ.
+                <button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">ℹ️ Info: 🔴 IŠJ.</button>
+                <button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn">
+                    🗳️ Balsuoti
                 </button>
                 <div id="leftPlayerCount">
                     👥 <span id="playerCountLeft">0/8</span>
@@ -61,7 +62,7 @@
             <div id="board">
                 <!-- VIRŠUS -->
                 <div class="board-row row-top">
-                    <div id="cell-0" class="cell corner start" data-id="0" style="width:150px;height:150px;flex:0 0 150px;min-width:150px;min-height:150px;max-width:150px;max-height:150px;">
+                    <div id="cell-0" class="cell corner start" data-id="0" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
                         🏁<br>START
                     </div>
                     <div id="cell-1" class="cell edge property" data-id="1">1</div>
@@ -79,14 +80,14 @@
                     <div id="cell-13" class="cell edge" data-id="13">13</div>
                     <div id="cell-14" class="cell edge" data-id="14">14</div>
                     <div id="cell-15" class="cell edge property" data-id="15">15</div>
-                    <div id="cell-16" class="cell corner jail" data-id="16" style="width:150px;height:150px;flex:0 0 150px;min-width:150px;min-height:150px;max-width:150px;max-height:150px;">
+                    <div id="cell-16" class="cell corner jail" data-id="16" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
                         ⛓️<br>KALĖJIMAS
                     </div>
                 </div>
 
                 <!-- VIDURYS -->
                 <div class="board-row row-middle">
-                    <div class="row-middle-left" style="flex:0 0 150px;min-width:150px;max-width:150px;">
+                    <div class="row-middle-left" style="flex:0 0 175px;min-width:175px;max-width:175px;">
                         <div id="cell-51" class="cell edge property" data-id="51">51</div>
                         <div id="cell-50" class="cell edge" data-id="50">50</div>
                         <div id="cell-49" class="cell edge property" data-id="49">49</div>
@@ -109,26 +110,17 @@
                                     <span style="font-size:9px; color:#3d2b1f; display:flex; align-items:center;">Režimas:</span>
                                     <button onclick="setMode('adaptive')" id="modeAdaptive" class="header-btn active" style="padding:2px 8px; font-size:9px; min-width:auto;">Adaptyvus</button>
                                     <button onclick="setMode('fixed')" id="modeFixed" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">Fiksuotas</button>
-                                </div>
-                                
-                                <!-- GARSO KONTROLĖ -->
-                                <div id="soundControl" style="position:relative; margin-bottom:4px;">
-                                    <button onclick="toggleSoundPanel()" id="soundBtn" class="header-btn" style="padding:4px 10px; font-size:10px; width:100%;">
-                                        🔊 Garsas
-                                    </button>
-                                    <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; right:0; background:#0d1f0d; border:2px solid #ffd700; border-radius:8px; padding:8px; margin-top:4px; z-index:100; box-shadow:0 4px 15px rgba(0,0,0,0.6);">
-                                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                                            <span style="font-size:12px;">🔇</span>
-                                            <input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1; cursor:pointer;">
-                                            <span style="font-size:12px;">🔊</span>
-                                        </div>
-                                        <div style="font-size:10px; color:#ffd700; text-align:center;">
-                                            Garsumas: <span id="volumeValue">50</span>%
-                                        </div>
-                                        <button onclick="toggleMute()" id="muteBtn" style="width:100%; margin-top:6px; padding:4px; border:1px solid #ffd700; border-radius:4px; background:#0d1f0d; color:#ffd700; font-size:10px; font-weight:700; cursor:pointer;">
-                                            🔇 Išjungti garsą
-                                        </button>
+                                    <button onclick="toggleSoundPanel()" id="soundBtn" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">🔊 Garsas</button>
+                                                                                               </div>
+
+                                <!-- GARSO PANELĖ -->
+                                <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.15); border-radius:8px; padding:8px; margin-bottom:4px;">
+                                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                                        <span style="font-size:14px;">🔊</span>
+                                        <input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1; cursor:pointer;">
+                                        <span id="volumeValue" style="font-size:11px; font-weight:700; color:#3d2b1f; min-width:30px; text-align:right;">50</span>
                                     </div>
+                                    <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti garsą</button>
                                 </div>
                                 
                                 <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;">⛓️ Išeiti iš kalėjimo (€50)</button>
@@ -190,11 +182,6 @@
                             <div id="center-5" class="center-cell notifications">
                                 <h4>📢 PRANEŠIMAI</h4>
                                 
-                                <div id="notifications"></div>
-                                
-                                <!-- INFO BLOKAS -->
-                                <div id="cellInfoPanel"></div>
-                                
                                 <div id="buyChoice" style="display:none;">
                                     <div class="buy-choice-box">
                                         <div class="buy-choice-header">🏠 SKLYPAS</div>
@@ -209,6 +196,11 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- INFO PANELAS -->
+                                <div id="cellInfoPanel">
+                                    <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
+                                </div>
                             </div>
                             <div id="center-6" class="center-cell journal">
                                 <h4>📜 ŽURNALAS</h4>
@@ -217,7 +209,7 @@
                         </div>
                     </div>
 
-                    <div class="row-middle-right" style="flex:0 0 150px;min-width:150px;max-width:150px;">
+                    <div class="row-middle-right" style="flex:0 0 175px;min-width:175px;max-width:175px;">
                         <div id="cell-17" class="cell edge property" data-id="17">17</div>
                         <div id="cell-18" class="cell edge property" data-id="18">18</div>
                         <div id="cell-19" class="cell edge" data-id="19">19</div>
@@ -232,7 +224,7 @@
 
                 <!-- APAČIA -->
                 <div class="board-row row-bottom">
-                    <div id="cell-42" class="cell corner go-to-jail" data-id="42" style="width:150px;height:150px;flex:0 0 150px;min-width:150px;min-height:150px;max-width:150px;max-height:150px;">
+                    <div id="cell-42" class="cell corner go-to-jail" data-id="42" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
                         🚨<br>KELIAUK
                     </div>
                     <div id="cell-41" class="cell edge property" data-id="41">41</div>
@@ -250,7 +242,7 @@
                     <div id="cell-29" class="cell edge" data-id="29">29</div>
                     <div id="cell-28" class="cell edge property" data-id="28">28</div>
                     <div id="cell-27" class="cell edge property" data-id="27">27</div>
-                    <div id="cell-26" class="cell corner parking" data-id="26" style="width:150px;height:150px;flex:0 0 150px;min-width:150px;min-height:150px;max-width:150px;max-height:150px;">
+                    <div id="cell-26" class="cell corner parking" data-id="26" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
                         🅿️<br>PARKINGAS
                     </div>
                 </div>
@@ -283,7 +275,7 @@
 
     <!-- PREKYBOS MODALAS -->
     <div id="tradingModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9998; justify-content:center; align-items:center;">
-        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:600px; width:95%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             <h2 style="color:#1a6b3c; margin-bottom:15px;">🏪 PREKYBA</h2>
             
             <div id="tradingOptions">
@@ -327,17 +319,17 @@
 
             <div id="tradeToPlayerPanel" style="display:none;">
                 <h3 style="color:#3d2b1f;">🤝 Siūlyti žaidėjui</h3>
-                <p style="color:#6c757d; font-size:13px;">Pasirink korteles iš sąrašo</p>
+                <p style="color:#6c757d; font-size:13px;">Galima pasirinkti iki 3 kortelių</p>
                 <div style="margin:10px 0; text-align:left;">
                     <label style="font-weight:600;">Pasirink žaidėją:</label>
                     <select id="tradeTargetPlayer" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;"></select>
                     
-                    <label style="font-weight:600; margin-top:10px; display:block;">📤 Ką siūlai:</label>
-                    <div id="tradeOfferFields" style="background:rgba(255,255,255,0.3); border-radius:8px; padding:5px; margin:5px 0; max-height:200px; overflow-y:auto;"></div>
+                    <label style="font-weight:600; margin-top:10px; display:block;">📤 Ką siūlai (iki 3 kortelių):</label>
+                    <div id="tradeOfferFields" style="background:rgba(255,255,255,0.3); border-radius:8px; padding:5px; margin:5px 0; max-height:150px; overflow-y:auto;"></div>
                     <input type="number" id="tradeOfferMoney" placeholder="Pridėti pinigų (€)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;">
                     
-                    <label style="font-weight:600; margin-top:10px; display:block;">📥 Ko prašai:</label>
-                    <div id="tradeRequestFields" style="background:rgba(255,255,255,0.3); border-radius:8px; padding:5px; margin:5px 0; max-height:200px; overflow-y:auto;"></div>
+                    <label style="font-weight:600; margin-top:10px; display:block;">📥 Ko prašai (iki 3 kortelių):</label>
+                    <div id="tradeRequestFields" style="background:rgba(255,255,255,0.3); border-radius:8px; padding:5px; margin:5px 0; max-height:150px; overflow-y:auto;"></div>
                     <input type="number" id="tradeRequestMoney" placeholder="Prašyti pinigų (€)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;">
                 </div>
                 <button onclick="confirmProposeTrade()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
@@ -408,6 +400,19 @@
             <p style="color:#6c757d; font-size:13px; margin-bottom:10px;">Pasirink kortelę iš kurios nori nugriauti vieną namą.<br>Grąžinama 75% statybos sumos.</p>
             <div id="demolishProperties" style="margin:10px 0; text-align:left; max-height:300px; overflow-y:auto;"></div>
             <button onclick="closeDemolish()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                ❌ Uždaryti
+            </button>
+        </div>
+    </div>
+
+    <!-- BALSAVIMO MODALAS -->
+    <div id="voteKickModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9994; justify-content:center; align-items:center;">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #dc3545; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <h2 style="color:#dc3545; margin-bottom:15px;">🗳️ BALSAVIMAS</h2>
+            <p style="color:#6c757d; font-size:13px; margin-bottom:15px;">Pasirink žaidėją, kurį nori pašalinti nuo stalo.</p>
+            <div id="voteKickPlayers" style="margin:10px 0; text-align:left;"></div>
+            <div id="voteKickStatus" style="margin:15px 0; padding:10px; background:rgba(255,255,255,0.3); border-radius:8px; font-size:14px; color:#3d2b1f;"></div>
+            <button onclick="closeVoteKick()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
                 ❌ Uždaryti
             </button>
         </div>

@@ -2244,11 +2244,16 @@ body {
 .cell .cell-icon,
 .cell .cell-name,
 .cell .cell-cost,
-.cell .cell-owner,
 .cell .cell-houses,
 .cell .players-on-cell {
     position: relative;
     z-index: 1;
+}
+
+/* Savininko rutuliukas - turi likti absolute */
+.cell .cell-owner {
+    position: absolute;
+    z-index: 3;
 }
 
 
