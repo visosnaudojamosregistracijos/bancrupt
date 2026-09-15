@@ -2326,8 +2326,8 @@ body {
 }
 
 .row-top .cell-top-bar {
-    top: 4px;
-    right: 4px;
+    top: 6px;
+    right: 8px;
 }
 
 .row-bottom .cell-top-bar {
@@ -2345,7 +2345,7 @@ body {
 }
 
 .row-middle-left .cell-top-bar {
-    top: 4px;
+    top: 6px;
     left: 4px;
     right: auto;
 }
