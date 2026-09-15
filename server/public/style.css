@@ -2270,14 +2270,15 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 55px;
-    opacity: 0.5;
+    font-size: 8em;
+    opacity: 0.8;
     z-index: 0;
     pointer-events: none;
     line-height: 1;
     user-select: none;
 }
 
+/* Visi kiti elementai - virš fono */
 .cell .cell-icon,
 .cell .cell-name,
 .cell .cell-cost,
@@ -2297,51 +2298,60 @@ body {
 /* Šoniniuose langeliuose - mažesnė fono ikona */
 .row-middle-left .cell-bg-icon,
 .row-middle-right .cell-bg-icon {
-    font-size: 40px;
+    font-size: 5em;
 }
 
 /* Kampusose - didesnė fono ikona */
 .cell.corner .cell-bg-icon {
-    font-size: 70px;
-    opacity: 0.6;
+    font-size: 8em;
+    opacity: 0.8;
 }
 
 /* Responsive - mažesni ekranai */
 @media (max-width: 992px) {
+    .cell {
+        font-size: 8px;
+    }
     .cell-bg-icon {
-        font-size: 40px;
+        font-size: 5em;
     }
     .row-middle-left .cell-bg-icon,
     .row-middle-right .cell-bg-icon {
-        font-size: 30px;
+        font-size: 4em;
     }
     .cell.corner .cell-bg-icon {
-        font-size: 50px;
+        font-size: 6em;
     }
 }
 
 @media (max-width: 768px) {
+    .cell {
+        font-size: 6px;
+    }
     .cell-bg-icon {
-        font-size: 30px;
+        font-size: 4em;
     }
     .row-middle-left .cell-bg-icon,
     .row-middle-right .cell-bg-icon {
-        font-size: 22px;
+        font-size: 3em;
     }
     .cell.corner .cell-bg-icon {
-        font-size: 36px;
+        font-size: 5em;
     }
 }
 
 @media (max-width: 480px) {
+    .cell {
+        font-size: 5px;
+    }
     .cell-bg-icon {
-        font-size: 22px;
+        font-size: 3.5em;
     }
     .row-middle-left .cell-bg-icon,
     .row-middle-right .cell-bg-icon {
-        font-size: 16px;
+        font-size: 2.5em;
     }
     .cell.corner .cell-bg-icon {
-        font-size: 26px;
+        font-size: 4em;
     }
 }
