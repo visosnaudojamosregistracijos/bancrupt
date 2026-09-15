@@ -2220,7 +2220,7 @@ if (field.icon) {
     html += `<span class="cell-bg-icon">${field.icon}</span>`;
 }
 // Priekinė ikona (maža, viršuje)
-html += `<span class="cell-icon">${field.icon || ''}</span>`;
+
 html += `<span class="cell-name">${field.name || index}</span>`;
         
         if (field.cost > 0) {
