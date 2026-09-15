@@ -47,6 +47,9 @@
                 <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
                     🏃 Pasitraukti
                 </button>
+                <button onclick="toggleInfoMode()" id="infoBtn" class="left-btn info-btn">
+                    ℹ️ Info: 🔴 IŠJ.
+                </button>
                 <div id="leftPlayerCount">
                     👥 <span id="playerCountLeft">0/8</span>
                 </div>
@@ -186,6 +189,11 @@
                             </div>
                             <div id="center-5" class="center-cell notifications">
                                 <h4>📢 PRANEŠIMAI</h4>
+                                
+                                <div id="notifications"></div>
+                                
+                                <!-- INFO BLOKAS -->
+                                <div id="cellInfoPanel"></div>
                                 
                                 <div id="buyChoice" style="display:none;">
                                     <div class="buy-choice-box">

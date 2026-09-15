@@ -14,6 +14,8 @@ let auctionTimerInterval = null;
 let auctionEndedSent = false;
 let isMuted = false;
 let lastVolume = 50;
+let infoMode = false;
+let lastHoveredField = null;
 
 // ============================================
 // PRISIJUNGIMAS
@@ -671,6 +673,201 @@ function toggleMute() {
 }
 
 // ============================================
+// INFO REŽIMAS
+// ============================================
+
+function toggleInfoMode() {
+    infoMode = !infoMode;
+    
+    const btn = document.getElementById('infoBtn');
+    const infoPanel = document.getElementById('cellInfoPanel');
+    
+    if (infoMode) {
+        btn.classList.add('active');
+        btn.innerHTML = 'ℹ️ Info: 🟢 ĮJ.';
+        localStorage.setItem('bancrupt_infoMode', 'true');
+        
+        if (infoPanel) infoPanel.classList.add('show');
+        
+        // Jei buvo hover'intas langelis - parodyti
+        if (lastHoveredField !== null) {
+            showCellInfo(lastHoveredField);
+        } else {
+            hideCellInfo();
+        }
+    } else {
+        btn.classList.remove('active');
+        btn.innerHTML = 'ℹ️ Info: 🔴 IŠJ.';
+        localStorage.setItem('bancrupt_infoMode', 'false');
+        
+        if (infoPanel) infoPanel.classList.remove('show');
+        hideCellInfo();
+    }
+    
+    playClickSound();
+}
+
+function showCellInfo(fieldId) {
+    if (!infoMode) return;
+    if (!gameState) return;
+    
+    lastHoveredField = fieldId;
+    
+    const panel = document.getElementById('cellInfoPanel');
+    if (!panel) return;
+    
+    const field = gameState.board.find(f => f.id === fieldId);
+    if (!field) {
+        hideCellInfo();
+        return;
+    }
+    
+    const owner = gameState.players.find(p => p.properties.includes(fieldId) && !p.bankrupt && !p.left);
+    
+    let html = `<div class="info-header">${field.icon || ''} ${field.name} (#${fieldId})</div>`;
+    
+    // Savininkas
+    if (owner) {
+        html += `
+            <div class="info-row">
+                <span class="label">👤 Savininkas:</span>
+                <span class="value" style="color:${owner.color};">${owner.name}</span>
+            </div>
+        `;
+    } else if (field.cost > 0) {
+        html += `
+            <div class="info-row">
+                <span class="label">👤 Savininkas:</span>
+                <span class="value green">Laisvas</span>
+            </div>
+        `;
+    }
+    
+    // Kaina
+    if (field.cost > 0) {
+        html += `
+            <div class="info-row">
+                <span class="label">💰 Kaina:</span>
+                <span class="value">€${field.cost}</span>
+            </div>
+        `;
+    }
+    
+    // Sklypams (property)
+    if (field.type === 'property' && field.color) {
+        const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
+        const baseRent = Math.floor(field.cost * 0.1);
+        const hasFullGroup = owner && gameState.board.filter(f => f.color === field.color).every(f => owner.properties.includes(f.id));
+        
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        
+        let baseRentValue = baseRent;
+        if (hasFullGroup) baseRentValue = baseRent * 2;
+        
+        html += `
+            <div class="info-row">
+                <span class="label">Bazinė:</span>
+                <span class="value">€${baseRentValue}</span>
+            </div>
+        `;
+        
+        // Namai
+        for (let i = 1; i <= 4; i++) {
+            const rent = baseRentValue + i * Math.floor(field.cost * 0.3);
+            html += `
+                <div class="info-row">
+                    <span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span>
+                    <span class="value">€${rent}</span>
+                </div>
+            `;
+        }
+        
+        // Viešbutis
+        const hotelRent = baseRentValue * 3;
+        html += `
+            <div class="info-row">
+                <span class="label">🏨 Viešbutis:</span>
+                <span class="value">€${hotelRent}</span>
+            </div>
+        `;
+        html += `</div>`;
+        
+        // Statyba
+        const buildCost = Math.floor(field.cost * 0.5);
+        const hotelCost = field.cost;
+        html += `
+            <div class="info-section">
+                <div class="info-section-title">🏗️ STATYBA</div>
+                <div class="info-row">
+                    <span class="label">Namas:</span>
+                    <span class="value">€${buildCost}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Viešbutis:</span>
+                    <span class="value">€${hotelCost}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // SERVICE1
+    if (field.type === 'service1') {
+        const ids = [2, 14, 29, 45];
+        const count = owner ? owner.properties.filter(id => ids.includes(id)).length : 0;
+        
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
+        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
+        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
+        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+        html += `</div>`;
+    }
+    
+    // SERVICE2
+    if (field.type === 'service2') {
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
+        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
+        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
+        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+        html += `</div>`;
+    }
+    
+    // TAX
+    if (field.type === 'tax') {
+        if (field.id === 5) {
+            html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€200</span></div></div>`;
+        } else if (field.id === 23) {
+            html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€10</span></div></div>`;
+        } else if (field.id === 33) {
+            html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€25</span></div></div>`;
+        } else if (field.id === 50) {
+            html += `<div class="info-section"><div class="info-row"><span class="label">🎁 Gausi:</span><span class="value green">€200</span></div></div>`;
+        } else {
+            html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€${field.cost}</span></div></div>`;
+        }
+    }
+    
+    // SPECIAL
+    if (field.type === 'special') {
+        if (field.id === 13) {
+            html += `<div class="info-section"><div class="info-row"><span class="label">🏥 Sumokėsi:</span><span class="value red">€100</span></div></div>`;
+        } else if (field.id === 4) {
+            html += `<div class="info-section"><div class="info-row"><span class="label">🎲 Gausi:</span><span class="value green">€200</span></div></div>`;
+        }
+    }
+    
+    panel.innerHTML = html;
+}
+
+function hideCellInfo() {
+    lastHoveredField = null;
+    const panel = document.getElementById('cellInfoPanel');
+    if (!panel) return;
+    panel.innerHTML = '';
+}
+
+// ============================================
 // IŠŠOKANTYS PRANEŠIMAI
 // ============================================
 
@@ -822,6 +1019,19 @@ function enterGame() {
     if (valueDisplay) valueDisplay.textContent = savedVolume;
     changeVolume(savedVolume);
     
+    // Įkelti info režimo būseną
+    const savedInfoMode = localStorage.getItem('bancrupt_infoMode');
+    if (savedInfoMode === 'true') {
+        infoMode = true;
+        const btn = document.getElementById('infoBtn');
+        const infoPanel = document.getElementById('cellInfoPanel');
+        if (btn) {
+            btn.classList.add('active');
+            btn.innerHTML = 'ℹ️ Info: 🟢 ĮJ.';
+        }
+        if (infoPanel) infoPanel.classList.add('show');
+    }
+    
     socket.emit('getGameState');
 }
 
@@ -969,8 +1179,9 @@ let selectedOfferFields = [];
 let selectedRequestFields = [];
 
 function openTrading() {
-    if (!isMyTurn && !(myPlayer && myPlayer.isDebtor)) {
-        alert('⏳ Ne tavo eilė!');
+    // Leisti atidaryti prekybą BET KADA
+    if (myPlayer && (myPlayer.bankrupt || myPlayer.left)) {
+        alert('❌ Tu nebegali prekiauti!');
         playErrorSound();
         return;
     }
@@ -1853,7 +2064,7 @@ function updateUI(state) {
     
     const tradeBtn = document.getElementById('tradeBtn');
     if (tradeBtn) {
-        tradeBtn.disabled = isBankrupt || isLeft || (!isMyTurn && !isDebtor);
+        tradeBtn.disabled = isBankrupt || isLeft;
     }
     
     document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || !myPlayer || !myPlayer.isActive;
@@ -1995,7 +2206,6 @@ function updateBoard(state) {
         
         let html = `<span class="cell-number">${index}</span>`;
         
-        // SAVININKO APSKRITIMAS (spalva)
         const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt);
         if (owner) {
             html += `<span class="cell-owner" style="background:${owner.color}"></span>`;
@@ -2021,7 +2231,6 @@ function updateBoard(state) {
             }
         }
         
-        // ŽAIDĖJŲ FIGŪRĖLĖS (spalvos)
         if (playersHere.length > 0) {
             html += `<div class="players-on-cell">`;
             playersHere.forEach(p => {
@@ -2107,6 +2316,23 @@ document.addEventListener('DOMContentLoaded', () => {
             changeVolume(this.value);
         });
     }
+    
+    // INFO - hover ant langelių
+    document.querySelectorAll('.cell').forEach(cell => {
+        const fieldId = parseInt(cell.dataset.id);
+        
+        cell.addEventListener('mouseenter', () => {
+            if (infoMode) {
+                showCellInfo(fieldId);
+            }
+        });
+        
+        cell.addEventListener('mouseleave', () => {
+            if (infoMode) {
+                hideCellInfo();
+            }
+        });
+    });
     
     const savedMode = localStorage.getItem('boardMode') || 'adaptive';
     setMode(savedMode);

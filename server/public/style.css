@@ -1970,3 +1970,110 @@ body {
     background: #ffd700 !important;
     color: #0d1f0d !important;
 }
+
+/* ---------- INFO MYGTUKAS ---------- */
+.info-btn {
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    color: #fff;
+    border-color: #ff6b6b;
+    transition: all 0.3s;
+}
+
+.info-btn.active {
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    border-color: #4ade80;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+}
+
+.info-btn:hover {
+    transform: scale(1.03);
+}
+
+/* ---------- INFO PANELĖ (5 LANGELYJE) ---------- */
+#cellInfoPanel {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    border: 1px solid rgba(61, 43, 31, 0.1);
+    margin-top: 4px;
+    min-height: 30px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 10px;
+    color: #3d2b1f;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+#cellInfoPanel.show {
+    display: flex;
+}
+
+#cellInfoPanel::-webkit-scrollbar {
+    width: 4px;
+}
+
+#cellInfoPanel::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 2px;
+}
+
+.info-header {
+    font-weight: 700;
+    font-size: 12px;
+    color: #1a6b3c;
+    border-bottom: 1px solid #c9a84c;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
+    text-align: center;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 1px 0;
+    font-size: 10px;
+}
+
+.info-row .label {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.info-row .value {
+    color: #3d2b1f;
+    font-weight: 700;
+}
+
+.info-row .value.green {
+    color: #28a745;
+}
+
+.info-row .value.red {
+    color: #dc3545;
+}
+
+.info-section {
+    margin-top: 3px;
+    padding-top: 3px;
+    border-top: 1px dashed rgba(61, 43, 31, 0.2);
+}
+
+.info-section-title {
+    font-weight: 700;
+    font-size: 10px;
+    color: #1a6b3c;
+    margin-bottom: 2px;
+}
+
+.info-placeholder {
+    text-align: center;
+    color: #6c757d;
+    font-size: 10px;
+    padding: 8px;
+    font-style: italic;
+}
