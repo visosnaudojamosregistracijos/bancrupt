@@ -2345,3 +2345,171 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('✅ Inicijavimas baigtas');
 });
+
+// ============================================
+// BALSAVIMO SISTEMA (VOTE KICK)
+// ============================================
+
+function openVoteKick() {
+    if (!socket || !isConnected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        return;
+    }
+    
+    if (!gameState || !gameState.players) {
+        alert('❌ Žaidimas dar neprasidėjęs!');
+        return;
+    }
+    
+    const modal = document.getElementById('voteKickModal');
+    const playersDiv = document.getElementById('voteKickPlayers');
+    const statusDiv = document.getElementById('voteKickStatus');
+    
+    playersDiv.innerHTML = '';
+    statusDiv.innerHTML = 'Pasirink žaidėją, kurį nori pašalinti.';
+    
+    // Filtruojam žaidėjus - nerodom savęs ir jau pašalintų
+    const otherPlayers = gameState.players.filter(p => 
+        p.id !== playerId && 
+        !p.bankrupt && 
+        !p.kicked
+    );
+    
+    if (otherPlayers.length === 0) {
+        statusDiv.innerHTML = '❌ Nėra žaidėjų, kuriuos būtų galima pašalinti.';
+    } else {
+        otherPlayers.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'vote-kick-card';
+            card.innerHTML = `
+                <div class="card-color" style="background:${p.color || '#888'}"></div>
+                <div class="card-name">${p.name}</div>
+                <div class="card-votes">🗳️ Balsuoti</div>
+            `;
+            card.onclick = () => startVoteKick(p.id, p.name);
+            playersDiv.appendChild(card);
+        });
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeVoteKick() {
+    document.getElementById('voteKickModal').style.display = 'none';
+}
+
+function startVoteKick(targetPlayerId, targetName) {
+    if (!confirm(`Ar tikrai nori pradėti balsavimą dėl "${targetName}" pašalinimo?`)) {
+        return;
+    }
+    
+    socket.emit('startVoteKick', {
+        gameId: gameId,
+        targetPlayerId: targetPlayerId
+    });
+    
+    closeVoteKick();
+}
+
+function voteKick(targetPlayerId, vote) {
+    socket.emit('voteKick', {
+        gameId: gameId,
+        targetPlayerId: targetPlayerId,
+        vote: vote // true = už pašalinimą, false = prieš
+    });
+    
+    closeVoteKick();
+}
+
+// ============================================
+// SOCKET.IO KLAUSYMAI BALSAVIMUI
+// ============================================
+
+socket.on('voteKickStarted', (data) => {
+    console.log('🗳️ Balsavimas pradėtas:', data);
+    
+    // Parodyk pranešimą visiems
+    addNotification(`🗳️ ${data.initiatorName} pradėjo balsavimą dėl "${data.targetName}" pašalinimo!`);
+    playNotificationSound();
+    
+    // Jei aš nesu nei iniciatorius, nei taikinys - parodyk balsavimo modalą
+    if (playerId !== data.initiatorId && playerId !== data.targetPlayerId) {
+        showVoteKickPrompt(data);
+    }
+});
+
+socket.on('voteKickUpdate', (data) => {
+    console.log('🗳️ Balsavimo atnaujinimas:', data);
+    
+    // Atnaujink pranešimą
+    addNotification(`🗳️ Balsai: ${data.currentVotes}/${data.requiredVotes} (liko ${data.timeLeft}s)`);
+    
+    // Jei modalas atidarytas - atnaujink
+    const modal = document.getElementById('voteKickModal');
+    if (modal.style.display === 'flex') {
+        const statusDiv = document.getElementById('voteKickStatus');
+        statusDiv.innerHTML = `
+            <div class="vote-kick-timer">⏱️ ${data.timeLeft}s</div>
+            <div>Balsai: <strong>${data.currentVotes}/${data.requiredVotes}</strong></div>
+            <div style="margin-top:5px; font-size:12px;">Balsavo: ${data.votedPlayers.join(', ') || 'niekas'}</div>
+        `;
+    }
+});
+
+socket.on('voteKickResult', (data) => {
+    console.log('🗳️ Balsavimo rezultatas:', data);
+    
+    closeVoteKick();
+    
+    if (data.kicked) {
+        addNotification(`✅ ${data.targetName} buvo pašalintas nuo stalo! (${data.votes}/${data.requiredVotes})`);
+        playNotificationSound();
+        
+        if (playerId === data.targetPlayerId) {
+            alert('⚠️ Tu buvai pašalintas nuo stalo! Dabar gali tik stebėti žaidimą.');
+        }
+    } else {
+        addNotification(`❌ Balsavimas dėl "${data.targetName}" nepavyko. (${data.votes}/${data.requiredVotes})`);
+    }
+});
+
+socket.on('voteKickCancelled', (data) => {
+    console.log('🗳️ Balsavimas atšauktas:', data);
+    closeVoteKick();
+    addNotification(`🗳️ Balsavimas atšauktas: ${data.reason}`);
+});
+
+// Balsavimo prompt modalas
+function showVoteKickPrompt(data) {
+    const modal = document.getElementById('voteKickModal');
+    const playersDiv = document.getElementById('voteKickPlayers');
+    const statusDiv = document.getElementById('voteKickStatus');
+    
+    playersDiv.innerHTML = `
+        <div style="padding:15px; background:rgba(255,255,255,0.3); border-radius:8px; margin:10px 0; text-align:center;">
+            <div style="font-size:16px; font-weight:700; color:#3d2b1f; margin-bottom:10px;">
+                Ar pašalinti "${data.targetName}"?
+            </div>
+            <div style="font-size:13px; color:#6c757d; margin-bottom:15px;">
+                Balsavimą pradėjo: ${data.initiatorName}
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="voteKick('${data.targetPlayerId}', true)" 
+                        style="flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+                    ✅ TAIP, ŠALINTI
+                </button>
+                <button onclick="voteKick('${data.targetPlayerId}', false)" 
+                        style="flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                    ❌ NE, PALIKTI
+                </button>
+            </div>
+        </div>
+    `;
+    
+    statusDiv.innerHTML = `
+        <div class="vote-kick-timer">⏱️ ${data.timeLeft || 60}s</div>
+        <div>Reikia balsų: <strong>${data.requiredVotes}</strong></div>
+    `;
+    
+    modal.style.display = 'flex';
+}

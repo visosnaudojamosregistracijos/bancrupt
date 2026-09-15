@@ -147,9 +147,9 @@ class Game {
             this.addMessage(`${player.name} praėjo START ir gavo €200! 💰`);
         }
         else if (newPosition === 0 && player.position !== 0) {
-            player.money += 300;
-            this.addMessage(`🏁 ${player.name} atsistojo ant START ir gavo €300! 💰`);
-        }
+    player.money += 300;
+    this.addMessage(`🏁 ${player.name} atsistojo ant START ir gavo €300! 💰`);
+}
 
         player.position = newPosition;
         const currentField = this.board[newPosition];
@@ -495,8 +495,10 @@ class Game {
                 break;
                 
             case 'start':
-                result.message = `${player.name} atsistojo ant START`;
-                break;
+    player.money += 300;
+    result.message = `🏁 ${player.name} atsistojo ant START ir gavo €300! 💰`;
+    this.addMessage(result.message);
+    break;
                 
             case 'parking':
                 result.message = `${player.name} atsistojo ant PARKINGO`;

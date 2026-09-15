@@ -2077,3 +2077,82 @@ body {
     padding: 8px;
     font-style: italic;
 }
+
+/* ---------- BALSAVIMO MYGTUKAS ---------- */
+.vote-kick-btn {
+    background: linear-gradient(145deg, #6f42c1, #5a32a3);
+    color: #fff;
+    border-color: #8b5cf6;
+    font-size: 11px;
+    padding: 8px 6px;
+}
+
+.vote-kick-btn:hover {
+    background: linear-gradient(145deg, #8b5cf6, #6f42c1);
+    color: #fff;
+}
+
+/* ---------- BALSAVIMO MODALAS ---------- */
+.vote-kick-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    margin: 4px 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 8px;
+    border: 2px solid #c9a84c;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vote-kick-card:hover {
+    background: rgba(255,255,255,0.5);
+    transform: scale(1.02);
+    border-color: #dc3545;
+}
+
+.vote-kick-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.vote-kick-card .card-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.vote-kick-card .card-name {
+    font-weight: 600;
+    font-size: 14px;
+    flex: 1;
+    margin-left: 8px;
+    color: #3d2b1f;
+}
+
+.vote-kick-card .card-votes {
+    font-size: 13px;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+.vote-kick-status {
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #3d2b1f;
+    text-align: center;
+    border: 1px solid #c9a84c;
+}
+
+.vote-kick-timer {
+    font-size: 18px;
+    font-weight: 700;
+    color: #dc3545;
+    margin: 5px 0;
+}
