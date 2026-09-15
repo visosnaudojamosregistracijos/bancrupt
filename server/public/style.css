@@ -2258,3 +2258,86 @@ body {
     color: #dc3545;
     margin: 5px 0;
 }
+
+/* ---------- FONO IKONA (EMOJI PER VISĄ LANGELĮ) ---------- */
+.cell {
+    position: relative;
+    overflow: hidden;
+}
+
+.cell-bg-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 55px;
+    opacity: 0.12;
+    z-index: 0;
+    pointer-events: none;
+    line-height: 1;
+    user-select: none;
+}
+
+/* Visi kiti elementai - virš fono */
+.cell .cell-icon,
+.cell .cell-name,
+.cell .cell-cost,
+.cell .cell-number,
+.cell .cell-owner,
+.cell .cell-houses,
+.cell .players-on-cell {
+    position: relative;
+    z-index: 1;
+}
+
+/* Šoniniuose langeliuose - mažesnė fono ikona */
+.row-middle-left .cell-bg-icon,
+.row-middle-right .cell-bg-icon {
+    font-size: 40px;
+}
+
+/* Kampusose - didesnė fono ikona */
+.cell.corner .cell-bg-icon {
+    font-size: 70px;
+    opacity: 0.15;
+}
+
+/* Responsive - mažesni ekranai */
+@media (max-width: 992px) {
+    .cell-bg-icon {
+        font-size: 40px;
+    }
+    .row-middle-left .cell-bg-icon,
+    .row-middle-right .cell-bg-icon {
+        font-size: 30px;
+    }
+    .cell.corner .cell-bg-icon {
+        font-size: 50px;
+    }
+}
+
+@media (max-width: 768px) {
+    .cell-bg-icon {
+        font-size: 30px;
+    }
+    .row-middle-left .cell-bg-icon,
+    .row-middle-right .cell-bg-icon {
+        font-size: 22px;
+    }
+    .cell.corner .cell-bg-icon {
+        font-size: 36px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cell-bg-icon {
+        font-size: 22px;
+    }
+    .row-middle-left .cell-bg-icon,
+    .row-middle-right .cell-bg-icon {
+        font-size: 16px;
+    }
+    .cell.corner .cell-bg-icon {
+        font-size: 26px;
+    }
+}

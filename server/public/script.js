@@ -2215,8 +2215,13 @@ function updateBoard(state) {
             html += `<span class="cell-owner" style="background:${owner.color}"></span>`;
         }
         
-        html += `<span class="cell-icon">${field.icon || ''}</span>`;
-        html += `<span class="cell-name">${field.name || index}</span>`;
+        // Fono ikona (emoji per visą langelį)
+if (field.icon) {
+    html += `<span class="cell-bg-icon">${field.icon}</span>`;
+}
+// Priekinė ikona (maža, viršuje)
+html += `<span class="cell-icon">${field.icon || ''}</span>`;
+html += `<span class="cell-name">${field.name || index}</span>`;
         
         if (field.cost > 0) {
             if (owner && owner.houses && owner.houses[index] && owner.houses[index] > 0) {
