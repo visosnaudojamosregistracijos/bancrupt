@@ -1133,22 +1133,22 @@ body {
 
 /* ---------- PAPRASTŲ LANGELIŲ NUMERIŲ POZICIJOS ---------- */
 .row-top .cell .cell-number {
-    top: 2px;
+    top: 4px;
     right: 4px;
 }
 
 .row-bottom .cell .cell-number {
-    bottom: 2px;
+    bottom: 4px;
     left: 4px;
 }
 
 .row-middle-right .cell .cell-number {
-    bottom: 2px;
+    bottom: 4px;
     right: 4px;
 }
 
 .row-middle-left .cell .cell-number {
-    top: 2px;
+    top: 4px;
     left: 4px;
 }
 
