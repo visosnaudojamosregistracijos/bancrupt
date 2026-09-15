@@ -2323,7 +2323,6 @@ body {
     gap: 6px;
     z-index: 5;
     pointer-events: none;
-    flex-direction: row-reverse;
 }
 
 .row-top .cell-top-bar {
