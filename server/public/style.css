@@ -2316,7 +2316,7 @@ body {
 
 .cell-top-bar {
     position: absolute;
-    top: 4px;
+    top: 2px;
     right: 4px;
     display: flex;
     align-items: center;
@@ -2331,7 +2331,7 @@ body {
 }
 
 .row-bottom .cell-top-bar {
-    bottom: 4px;
+    bottom: 6px;
     left: 4px;
     top: auto;
     right: auto;
