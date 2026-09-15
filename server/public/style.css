@@ -179,7 +179,7 @@ body {
     font-weight: 700;
     font-size: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    height: 92.5%;
+    height: 99%;
 }
 
 #gameIdBox {
@@ -291,7 +291,7 @@ body {
     position: relative;
     flex: 1;
     min-height: 0;
-    height: 98%;
+    height: 99%;
 }
 
 #board.adaptive {
