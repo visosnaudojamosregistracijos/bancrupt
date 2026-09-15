@@ -1977,9 +1977,9 @@ function updateUI(state) {
         myPlayer = me;
         const housesInfo = me.houses ? Object.values(me.houses).reduce((a, b) => a + b, 0) : 0;
         
-        let miniCardsHtml = '';
+       let miniCardsHtml = '';
         if (me.properties.length > 0) {
-            miniCardsHtml = '<div style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center; margin-top:4px; max-height:60px; overflow-y:auto;">';
+            miniCardsHtml = '<div class="mini-cards-container">';
             
             let cardsWithPrice = [];
             me.properties.forEach(fieldId => {
@@ -2002,11 +2002,15 @@ function updateUI(state) {
                     for (let i = 0; i < houses; i++) houseIcon += '🏠';
                 }
                 const color = field.color || '#c9a84c';
+                const tooltip = `${field.name} (#${fieldId}) • €${field.cost}`;
                 miniCardsHtml += `
-                    <div style="background:${color}; padding:2px 6px; border-radius:4px; font-size:9px; color:#fff; font-weight:600; border:1px solid rgba(255,255,255,0.3); display:flex; align-items:center; gap:3px;">
-                        ${houseIcon}
-                        <span style="font-size:8px;">${field.name}</span>
-                        <span style="font-size:7px; opacity:0.7;">€${field.cost}</span>
+                    <div class="mini-card" style="--card-color:${color};" title="${tooltip}" data-field-id="${fieldId}">
+                        <div class="mini-card-color"></div>
+                        <div class="mini-card-body">
+                            <div class="mini-card-name">${field.name}</div>
+                            <div class="mini-card-info">€${field.cost} • #${fieldId}</div>
+                            ${houseIcon ? `<div class="mini-card-houses">${houseIcon}</div>` : ''}
+                        </div>
                     </div>
                 `;
             });
