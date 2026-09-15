@@ -2266,11 +2266,7 @@ body {
     z-index: 1;
 }
 
-/* Langelio numeris - išimtis, turi likti absolute */
-.cell .cell-number {
-    position: absolute;
-    z-index: 5;
-}
+
 
 /* Šoniniuose langeliuose - mažesnė fono ikona */
 .row-middle-left .cell-bg-icon,
