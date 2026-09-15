@@ -277,17 +277,3 @@ class BuildingLogic {
 }
 
 module.exports = BuildingLogic;
-Ką pakeičiau
-getRentWithHouses() funkciją – dabar:
-
-javascript
-let baseRent = field.cost * 0.1;   // 10% sklypo vertės
-
-let multiplier = 1;
-if (houses === 1) multiplier = 10;
-else if (houses === 2) multiplier = 20;
-else if (houses === 3) multiplier = 30;
-else if (houses === 4) multiplier = 40;
-else if (houses >= 5) multiplier = 50;  // Viežbutis
-
-const rent = Math.floor(baseRent * multiplier);
