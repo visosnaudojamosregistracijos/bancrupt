@@ -2271,7 +2271,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 55px;
-    opacity: 0.3;
+    opacity: 0.5;
     z-index: 0;
     pointer-events: none;
     line-height: 1;
@@ -2303,7 +2303,7 @@ body {
 /* Kampusose - didesnė fono ikona */
 .cell.corner .cell-bg-icon {
     font-size: 70px;
-    opacity: 0.15;
+    opacity: 0.6;
 }
 
 /* Responsive - mažesni ekranai */
