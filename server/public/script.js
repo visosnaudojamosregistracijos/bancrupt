@@ -2208,7 +2208,7 @@ function updateBoard(state) {
         
         const playersHere = state.players.filter(p => p.position === index && p.isActive && !p.bankrupt && !p.left);
         
-        let html = `<span class="cell-number" style="z-index:5; position:absolute;">${index}</span>`;
+        let html = `<span class="cell-number">${index}</span>`;
         
         const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt);
         if (owner) {
