@@ -1123,12 +1123,12 @@ body {
 }
 
 .cell .cell-number {
-    position: absolute;
+    position: relative;
     font-size: 10px;
     font-weight: 700;
     color: rgba(0, 0, 0, 0.3);
     pointer-events: none;
-    z-index: 2;
+    z-index: 5;
 }
 
 /* ---------- PAPRASTŲ LANGELIŲ NUMERIŲ POZICIJOS ---------- */
@@ -2252,8 +2252,8 @@ body {
 
 /* Savininko rutuliukas - turi likti absolute */
 .cell .cell-owner {
-    position: absolute;
-    z-index: 3;
+    position: relative;
+    z-index: 5;
 }
 
 
