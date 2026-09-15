@@ -1131,24 +1131,24 @@ body {
     z-index: 2;
 }
 
-.row-top .cell .cell-number {
-    top: 2px;
-    right: 4px;      /* ← viršuje dešinėje */
+.row-top .cell .cell-owner {
+    top: 4px;
+    right: 20px;
 }
 
-.row-bottom .cell .cell-number {
-    bottom: 2px;
-    left: 4px;       /* ← apačioje kairėje */
+.row-bottom .cell .cell-owner {
+    bottom: 4px;
+    left: 20px;
 }
 
-.row-middle-right .cell .cell-number {
-    bottom: 2px;
-    right: 4px;      /* ← apačioje dešinėje */
+.row-middle-right .cell .cell-owner {
+    bottom: 4px;
+    right: 20px;
 }
 
-.row-middle-left .cell .cell-number {
-    top: 2px;
-    left: 4px;       /* ← viršuje kairėje */
+.row-middle-left .cell .cell-owner {
+    top: 4px;
+    left: 20px;
 }
 
 .cell.corner .cell-number {
@@ -1178,8 +1178,8 @@ body {
 
 .cell .cell-owner {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     border: 2px solid rgba(255,255,255,0.9);
     pointer-events: none;
