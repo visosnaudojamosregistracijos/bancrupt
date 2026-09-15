@@ -368,7 +368,7 @@ body {
 }
 
 .cell.corner {
-    flex: 0 0 70px;
+    flex: 0 0 90px;
     aspect-ratio: 1;
     font-size: 8px;
     border-width: 3px;
@@ -1188,30 +1188,7 @@ body {
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
-.row-top .cell .cell-owner {
-    top: 2px;
-    right: 22px;
-}
 
-.row-bottom .cell .cell-owner {
-    bottom: 2px;
-    left: 22px;
-}
-
-.row-middle-right .cell .cell-owner {
-    bottom: 2px;
-    right: 22px;
-}
-
-.row-middle-left .cell .cell-owner {
-    top: 2px;
-    left: 22px;
-}
-
-.cell.corner .cell-owner {
-    width: 24px;
-    height: 24px;
-}
 
 /* ---------- MINI KORTELĖS (TIKROS KORTELĖS) ---------- */
 .mini-cards-container {
