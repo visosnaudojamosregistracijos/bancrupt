@@ -753,27 +753,26 @@ function showCellInfo(fieldId) {
         `;
     }
     
-    // Sklypams (property)
+       // Sklypams (property)
     if (field.type === 'property' && field.color) {
         const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
+        
+        // Bazinė nuoma = 10% sklypo vertės
         const baseRent = Math.floor(field.cost * 0.1);
-        const hasFullGroup = owner && gameState.board.filter(f => f.color === field.color).every(f => owner.properties.includes(f.id));
         
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
-        
-        let baseRentValue = baseRent;
-        if (hasFullGroup) baseRentValue = baseRent * 2;
         
         html += `
             <div class="info-row">
                 <span class="label">Bazinė:</span>
-                <span class="value">€${baseRentValue}</span>
+                <span class="value">€${baseRent}</span>
             </div>
         `;
         
-        // Namai
+        // Namai - daugikliai: 1→10, 2→20, 3→30, 4→40
+        const multipliers = [10, 20, 30, 40];
         for (let i = 1; i <= 4; i++) {
-            const rent = baseRentValue + i * Math.floor(field.cost * 0.3);
+            const rent = Math.floor(baseRent * multipliers[i - 1]);
             html += `
                 <div class="info-row">
                     <span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span>
@@ -782,8 +781,8 @@ function showCellInfo(fieldId) {
             `;
         }
         
-        // Viešbutis
-        const hotelRent = baseRentValue * 3;
+        // Viešbutis - daugiklis 50
+        const hotelRent = Math.floor(baseRent * 50);
         html += `
             <div class="info-row">
                 <span class="label">🏨 Viešbutis:</span>
@@ -791,23 +790,6 @@ function showCellInfo(fieldId) {
             </div>
         `;
         html += `</div>`;
-        
-        // Statyba
-        const buildCost = Math.floor(field.cost * 0.5);
-        const hotelCost = field.cost;
-        html += `
-            <div class="info-section">
-                <div class="info-section-title">🏗️ STATYBA</div>
-                <div class="info-row">
-                    <span class="label">Namas:</span>
-                    <span class="value">€${buildCost}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Viešbutis:</span>
-                    <span class="value">€${hotelCost}</span>
-                </div>
-            </div>
-        `;
     }
     
     // SERVICE1
