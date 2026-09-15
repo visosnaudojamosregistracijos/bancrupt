@@ -2237,10 +2237,7 @@ body {
 }
 
 /* ---------- FONO IKONA (EMOJI PER VISĄ LANGELĮ) ---------- */
-.cell {
-    position: relative;
-    overflow: hidden;
-}
+
 
 .cell-bg-icon {
     position: absolute;
