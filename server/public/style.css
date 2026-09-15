@@ -291,7 +291,7 @@ body {
     position: relative;
     flex: 1;
     min-height: 0;
-    height: 92.5%;
+    height: 95.5%;
 }
 
 #board.adaptive {
