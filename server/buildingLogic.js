@@ -181,14 +181,14 @@ class BuildingLogic {
     getBuildCost(fieldId) {
         const field = this.game.board[fieldId];
         if (!field) return 0;
-        return Math.floor(field.cost * 0.5);
+        return Math.floor(field.cost * C.BUILD_COST_RATIO);
     }
 
     // Gauti viezbučio kainą (100% sklypo vertės)
     getHotelCost(fieldId) {
         const field = this.game.board[fieldId];
         if (!field) return 0;
-        return field.cost;  // 100% sklypo vertės
+        return Math.floor(field.cost * C.HOTEL_COST_RATIO);
     }
 
     // Gauti informaciją apie visus žaidėjo sklypus su namais
@@ -246,17 +246,17 @@ class BuildingLogic {
         if (!player || !field) return 0;
 
         // Bazinė nuoma = 10% sklypo vertės
-        let baseRent = field.cost * 0.1;
+        let baseRent = field.cost * C.RENT_BASE_RATIO;
         
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         
         // Daugiklis pagal namų skaičių
         let multiplier = 1;
-        if (houses === 1) multiplier = 10;
-        else if (houses === 2) multiplier = 20;
-        else if (houses === 3) multiplier = 30;
-        else if (houses === 4) multiplier = 40;
-        else if (houses >= 5) multiplier = 50;  // Viežbutis
+        if (houses >= 1 && houses <= 4) {
+            multiplier = C.RENT_MULTIPLIERS[houses - 1];
+        } else if (houses >= 5) {
+            multiplier = C.RENT_MULTIPLIERS[4];  // Viežbutis
+        }
         
         const rent = Math.floor(baseRent * multiplier);
         

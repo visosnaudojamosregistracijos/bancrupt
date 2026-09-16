@@ -84,7 +84,7 @@ class DemolishLogic {
         return result;
     }
 
-    // Gauti grąžos sumą (75% statybos/viezbučio kainos)
+    // Gauti grąžos sumą
     getRefundAmount(fieldId, playerId) {
         const player = this.game.players[playerId || this.game.currentTurn];
         if (!player) return 0;
@@ -94,11 +94,11 @@ class DemolishLogic {
         if (!field) return 0;
 
         if (houses >= 5) {
-            // Viezbutis - grąža 75% nuo sklypo vertės
-            return Math.floor(field.cost * 0.75);
+            // Viežbutis - 75% sklypo vertės
+            return Math.floor(field.cost * C.HOTEL_DEMOLISH_REFUND);
         } else {
-            // Namas - grąža 75% nuo 50% sklypo vertės (t.y. 37.5% sklypo vertės)
-            return Math.floor(field.cost * 0.375);
+            // Namas - 37.5% sklypo vertės
+            return Math.floor(field.cost * C.DEMOLISH_REFUND_RATIO);
         }
     }
 

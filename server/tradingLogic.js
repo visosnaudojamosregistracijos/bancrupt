@@ -22,7 +22,7 @@ class TradingLogic {
     getBankBuybackPrice(fieldId) {
         const field = this.game.board.find(f => f.id === fieldId);
         if (!field) return 0;
-        return Math.floor(field.cost * 0.8);
+        return Math.floor(field.cost * C.BANK_BUYBACK_RATIO);
     }
 
     getPlayerTradableProperties(playerId) {
@@ -143,8 +143,8 @@ class TradingLogic {
         const auctionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
         const endTime = Date.now() + 60000;
         
-        // 🆕 BANKAS SIŪLO 70% STARTINĘ KAINĄ
-        const startPrice = Math.floor(field.cost * 0.7);
+        // BANKAS SIŪLO 70% STARTINĘ KAINĄ
+        const startPrice = Math.floor(field.cost * C.AUCTION_START_RATIO);
 
         // 🆕 BANKAS KAIP BIDDER
         const bankBid = {
