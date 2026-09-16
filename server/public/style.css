@@ -1,5 +1,6 @@
 /* ============================================
    BANCRUPT - PAGRINDINIS STILIUS
+   SU AUTOMATINIAIS DYDŽIAIS (clamp)
    ============================================ */
 
 /* ---------- BENDRI ---------- */
@@ -726,7 +727,7 @@ body {
     box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
 }
 
-/* ---------- ACTION ROW (BANKROTAS + GRIAUTI) ---------- */
+/* ---------- ACTION ROW ---------- */
 .action-row {
     display: flex;
     gap: 4px;
@@ -798,7 +799,7 @@ body {
     cursor: not-allowed;
 }
 
-/* ---------- 3 LANGELIS - CHAT ---------- */
+/* ---------- 3 LANGELIS - CHAT (AUTO DYDIS) ---------- */
 .chat {
     display: flex;
     flex-direction: column;
@@ -807,13 +808,13 @@ body {
 #chatMessages {
     flex: 1;
     overflow-y: auto;
-    font-size: 14px;
+    font-size: clamp(11px, 1vw, 15px);
     color: #3d2b1f;
     max-height: 100%;
-    padding: 6px 8px;
+    padding: clamp(5px, 0.6vw, 10px) clamp(8px, 1vw, 12px);
     background: rgba(255,255,255,0.2);
     border-radius: 6px;
-    margin-bottom: 3px;
+    margin-bottom: clamp(3px, 0.4vw, 6px);
     min-height: 70px;
 }
 
@@ -840,31 +841,33 @@ body {
 
 .chat-input {
     display: flex;
-    gap: 3px;
+    gap: clamp(3px, 0.4vw, 6px);
 }
 
 .chat-input input {
     flex: 1;
-    padding: 3px 6px;
+    padding: clamp(3px, 0.4vw, 6px) clamp(6px, 0.7vw, 10px);
     border: 1px solid #b8966a;
-    border-radius: 4px;
-    font-size: 9px;
+    border-radius: 5px;
+    font-size: clamp(10px, 0.9vw, 13px);
     background: rgba(255,255,255,0.5);
     outline: none;
 }
 
 .chat-input input:focus {
     border-color: #3d2b1f;
+    background: rgba(255,255,255,0.7);
 }
 
 .chat-input button {
-    padding: 3px 8px;
+    padding: clamp(3px, 0.4vw, 6px) clamp(8px, 1vw, 14px);
     background: #3d2b1f;
     color: #fff;
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 10px;
+    font-size: clamp(11px, 1vw, 14px);
+    font-weight: 700;
 }
 
 .chat-input button:hover {
@@ -1083,14 +1086,14 @@ body {
     overflow: hidden;
 }
 
-/* ---------- 6 LANGELIS - ŽURNALAS ---------- */
+/* ---------- 6 LANGELIS - ŽURNALAS (AUTO DYDIS) ---------- */
 #journal {
     flex: 1;
     overflow-y: auto;
-    font-size: 16px;
+    font-size: clamp(12px, 1.1vw, 16px);
     color: #3d2b1f;
     max-height: 100%;
-    padding: 6px 8px;
+    padding: clamp(5px, 0.6vw, 10px) clamp(8px, 1vw, 12px);
     background: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     border: 1px solid rgba(61, 43, 31, 0.1);
@@ -1098,25 +1101,25 @@ body {
     min-height: 70px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: clamp(2px, 0.3vw, 4px);
 }
 
 .journal-item {
-    padding: 2px 4px;
+    padding: clamp(2px, 0.3vw, 5px) clamp(4px, 0.5vw, 8px);
     border-bottom: 1px solid rgba(61, 43, 31, 0.06);
     display: flex;
-    gap: 6px;
-    font-size: 12px;
-    line-height: 1.3;
+    gap: clamp(4px, 0.5vw, 8px);
+    font-size: clamp(11px, 1vw, 14px);
+    line-height: 1.4;
     color: #3d2b1f;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 4px;
 }
 
 .journal-item .jnum {
-    color: rgba(61, 43, 31, 0.3);
+    color: rgba(61, 43, 31, 0.4);
     font-weight: 700;
-    font-size: 12px;
+    font-size: clamp(10px, 0.9vw, 13px);
     min-width: 28px;
 }
 
@@ -1124,11 +1127,12 @@ body {
     flex: 1;
     word-wrap: break-word;
     font-weight: 500;
+    font-size: clamp(11px, 1vw, 14px);
 }
 
 .journal-item .jtime {
-    font-size: 12px;
-    color: rgba(61, 43, 31, 0.35);
+    font-size: clamp(9px, 0.8vw, 12px);
+    color: rgba(61, 43, 31, 0.4);
     white-space: nowrap;
 }
 
@@ -1706,19 +1710,6 @@ body {
         font-size: 9px;
         gap: 1px;
     }
-    #chatMessages {
-        font-size: 12px;
-        padding: 4px 6px;
-        min-height: 40px;
-    }
-    .chat-input input {
-        font-size: 12px;
-        padding: 2px 4px;
-    }
-    .chat-input button {
-        font-size: 12px;
-        padding: 2px 6px;
-    }
     #playersList {
         font-size: 9px;
         max-height: 50px;
@@ -1742,24 +1733,6 @@ body {
     .notification-item {
         font-size: 8px;
         padding: 2px 6px;
-    }
-    #journal {
-        font-size: 10px;
-        max-height: 80px;
-        min-height: 50px;
-        padding: 4px 6px;
-    }
-    .journal-item {
-        font-size: 9px;
-        padding: 3px 5px;
-        gap: 4px;
-    }
-    .journal-item .jnum {
-        font-size: 8px;
-        min-width: 22px;
-    }
-    .journal-item .jtime {
-        font-size: 7px;
     }
     #gameHeader {
         font-size: 10px;
@@ -1919,20 +1892,6 @@ body {
         font-size: 7px;
         gap: 0px;
     }
-    #chatMessages {
-        font-size: 8px;
-        padding: 3px 4px;
-        min-height: 30px;
-        border-radius: 4px;
-    }
-    .chat-input input {
-        font-size: 7px;
-        padding: 2px 4px;
-    }
-    .chat-input button {
-        font-size: 7px;
-        padding: 2px 5px;
-    }
     #playersList {
         font-size: 7px;
         max-height: 40px;
@@ -1959,27 +1918,6 @@ body {
         font-size: 7px;
         padding: 2px 4px;
         border-left-width: 2px;
-    }
-    #journal {
-        font-size: 8px;
-        max-height: 60px;
-        min-height: 35px;
-        padding: 3px 4px;
-        border-radius: 4px;
-        margin: 1px 0;
-    }
-    .journal-item {
-        font-size: 7px;
-        padding: 2px 4px;
-        gap: 3px;
-        border-radius: 3px;
-    }
-    .journal-item .jnum {
-        font-size: 7px;
-        min-width: 18px;
-    }
-    .journal-item .jtime {
-        font-size: 6px;
     }
     #gameHeader {
         font-size: 8px;
@@ -2059,6 +1997,15 @@ body {
         gap: 8px;
         padding: 8px;
     }
+    
+    .cell .cell-name {
+        font-size: 5px;
+    }
+    
+    .cell .players-on-cell .player-dot {
+        width: 10px;
+        height: 10px;
+    }
 }
 
 /* ---------- GARSO SLIDER ---------- */
@@ -2126,23 +2073,23 @@ body {
 }
 
 /* ============================================ */
-/* ---------- INFO PANELĖ (PADIDINTI ŠRIFTAI) ---------- */
+/* ---------- INFO PANELĖ (AUTOMATINIS DYDIS) ---------- */
 /* ============================================ */
 #cellInfoPanel {
     display: none;
     flex-direction: column;
-    gap: 4px;
-    padding: 10px 14px;
+    gap: 3px;
+    padding: clamp(5px, 0.6vw, 10px) clamp(8px, 1vw, 14px);
     background: rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     border: 1px solid rgba(61, 43, 31, 0.1);
-    margin-top: 6px;
+    margin-top: 4px;
     min-height: 30px;
-    max-height: 400px;
+    max-height: clamp(200px, 40vh, 500px);
     overflow-y: auto;
-    font-size: 12px;
+    font-size: clamp(11px, 1.1vw, 16px);
     color: #3d2b1f;
-    line-height: 1.5;
+    line-height: 1.4;
     flex-shrink: 0;
 }
 
@@ -2151,7 +2098,7 @@ body {
 }
 
 #cellInfoPanel::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
 }
 
 #cellInfoPanel::-webkit-scrollbar-thumb {
@@ -2161,32 +2108,32 @@ body {
 
 .info-header {
     font-weight: 700;
-    font-size: 15px;
+    font-size: clamp(13px, 1.4vw, 20px);
     color: #1a6b3c;
     border-bottom: 2px solid #c9a84c;
-    padding-bottom: 6px;
-    margin-bottom: 6px;
+    padding-bottom: clamp(3px, 0.4vw, 6px);
+    margin-bottom: clamp(3px, 0.4vw, 6px);
     text-align: center;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    gap: 8px;
-    padding: 3px 0;
-    font-size: 12px;
+    gap: clamp(4px, 0.6vw, 8px);
+    padding: 2px 0;
+    font-size: clamp(11px, 1.1vw, 16px);
 }
 
 .info-row .label {
     color: #6c757d;
     font-weight: 600;
-    font-size: 12px;
+    font-size: clamp(11px, 1.1vw, 16px);
 }
 
 .info-row .value {
     color: #3d2b1f;
     font-weight: 700;
-    font-size: 12px;
+    font-size: clamp(11px, 1.1vw, 16px);
 }
 
 .info-row .value.green {
@@ -2198,22 +2145,22 @@ body {
 }
 
 .info-section {
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: clamp(4px, 0.6vw, 8px);
+    padding-top: clamp(4px, 0.6vw, 8px);
     border-top: 1px dashed rgba(61, 43, 31, 0.2);
 }
 
 .info-section-title {
     font-weight: 700;
-    font-size: 12px;
+    font-size: clamp(12px, 1.2vw, 18px);
     color: #1a6b3c;
-    margin-bottom: 4px;
+    margin-bottom: clamp(2px, 0.3vw, 4px);
 }
 
 .info-placeholder {
     text-align: center;
     color: #6c757d;
-    font-size: 14px;
+    font-size: clamp(10px, 1vw, 14px);
     padding: 8px;
     font-style: italic;
 }
@@ -2410,46 +2357,6 @@ body {
 .row-middle-left .cell-top-bar {
     top: 4px;
     left: 6px;
-}
-
-/* ---------- INFO PANELĖ TELEFONE ---------- */
-@media (max-width: 480px) {
-    #cellInfoPanel {
-        font-size: 12px;
-        padding: 6px 8px;
-        max-height: 250px;
-    }
-    
-    .info-header {
-        font-size: 14px;
-        padding-bottom: 3px;
-        margin-bottom: 3px;
-    }
-    
-    .info-row {
-        font-size: 12px;
-    }
-    
-    .info-row .label {
-        font-size: 12px;
-    }
-    
-    .info-row .value {
-        font-size: 12px;
-    }
-    
-    .info-section-title {
-        font-size: 13px;
-    }
-    
-    .cell .cell-name {
-        font-size: 5px;
-    }
-    
-    .cell .players-on-cell .player-dot {
-        width: 10px;
-        height: 10px;
-    }
 }
 
 /* ============================================ */
