@@ -5,248 +5,654 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🏦 BANCRUPT</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ============================================ */
+        /* SPA PUSLAPIŲ VALDYMAS */
+        /* ============================================ */
+        .page {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+        }
+        .page.active {
+            display: flex;
+        }
+        
+        /* ============================================ */
+        /* LANDING PUSLAPIS */
+        /* ============================================ */
+        #page-landing {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .landing-container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 3px solid #c9a84c;
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        
+        .landing-container h1 {
+            color: #ffd700;
+            font-size: 3.5em;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .landing-subtitle {
+            color: #d4b896;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+        }
+        
+        .landing-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .landing-btn {
+            padding: 18px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #fff;
+        }
+        
+        .landing-btn-primary {
+            background: linear-gradient(145deg, #ffd700, #f0c000);
+            color: #1a3b1a;
+        }
+        
+        .landing-btn-primary:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 25px rgba(255,215,0,0.5);
+        }
+        
+        .landing-btn-secondary {
+            background: linear-gradient(145deg, #17a2b8, #138496);
+        }
+        
+        .landing-btn-secondary:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 25px rgba(23,162,184,0.5);
+        }
+        
+        /* ============================================ */
+        /* MENU PUSLAPIS */
+        /* ============================================ */
+        #page-menu {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .menu-container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 3px solid #c9a84c;
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        
+        .menu-container h1 {
+            color: #ffd700;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .menu-container p {
+            color: #d4b896;
+            margin-bottom: 30px;
+        }
+        
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .menu-btn {
+            padding: 16px 24px;
+            border: 2px solid #c9a84c;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.1);
+            color: #ffd700;
+        }
+        
+        .menu-btn:hover {
+            background: #ffd700;
+            color: #0d1f0d;
+            transform: scale(1.02);
+        }
+        
+        .menu-btn-back {
+            background: rgba(108, 117, 125, 0.3);
+            color: #d4b896;
+            border-color: #6c757d;
+            margin-top: 15px;
+        }
+        
+        .menu-btn-back:hover {
+            background: #6c757d;
+            color: #fff;
+        }
+        
+        /* ============================================ */
+        /* TAISYKLIŲ MODALAS */
+        /* ============================================ */
+        #rulesModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        #rulesModal.active {
+            display: flex;
+        }
+        
+        .rules-content {
+            background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 3px solid #c9a84c;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        
+        .rules-content h2 {
+            color: #1a6b3c;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #c9a84c;
+            padding-bottom: 10px;
+        }
+        
+        .rules-content h3 {
+            color: #1a6b3c;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .rules-content p {
+            color: #3d2b1f;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        
+        .rules-content ul {
+            color: #3d2b1f;
+            padding-left: 25px;
+            margin-bottom: 10px;
+        }
+        
+        .rules-content li {
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        
+        .rules-close {
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .rules-close:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(26,107,60,0.4);
+        }
+        
+        .rules-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .rules-content::-webkit-scrollbar-thumb {
+            background: #c9a84c;
+            border-radius: 3px;
+        }
+        
+        /* ============================================ */
+        /* RESPONSIVE */
+        /* ============================================ */
+        @media (max-width: 480px) {
+            .landing-container h1 {
+                font-size: 2.5em;
+            }
+            
+            .landing-container {
+                padding: 30px 20px;
+            }
+            
+            .landing-btn {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+            
+            .menu-container h1 {
+                font-size: 2em;
+            }
+            
+            .rules-content {
+                padding: 20px 15px;
+            }
+            
+            .rules-content h2 {
+                font-size: 1.4em;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- PRISIJUNGIMO EKRANAS -->
-    <div id="lobby">
-        <div class="lobby-container">
+
+    <!-- ============================================ -->
+    <!-- PUSLAPIS 1: LANDING (Pradinis su taisyklėmis) -->
+    <!-- ============================================ -->
+    <div id="page-landing" class="page active">
+        <div class="landing-container">
             <h1>🏦 BANCRUPT</h1>
-            <p class="subtitle">💰 Stalo žaidimas internetu</p>
+            <p class="landing-subtitle">💰 Stalo žaidimas internetu</p>
             
-            <div class="lobby-form">
-                <input type="text" id="playerName" placeholder="Įvesk savo vardą" maxlength="20">
-                
-                <div class="lobby-buttons">
-                    <button onclick="createGame()" class="btn btn-primary">🆕 Sukurti žaidimą</button>
-                    <button onclick="joinGame()" class="btn btn-secondary">🔗 Prisijungti</button>
-                </div>
-                
-                <div class="join-section">
-                    <input type="text" id="gameIdInput" placeholder="Žaidimo ID (pvz., ABC123)" maxlength="6" style="text-transform:uppercase">
-                </div>
+            <div class="landing-buttons">
+                <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
+                    📖 Taisyklės
+                </button>
+                <button class="landing-btn landing-btn-primary" onclick="goToMenu()">
+                    🎮 Eiti prie žaidimo
+                </button>
             </div>
-            
-            <div id="lobbyMessages"></div>
         </div>
     </div>
 
-    <!-- ŽAIDIMO EKRANAS -->
-    <div id="game" style="display:none; flex-direction: column;">
-        <div id="gameHeader">
-            <span id="gameIdDisplay">📋 ID: ---</span>
-            <span id="playerCount">👥 0/8</span>
-            <span id="turnDisplay">🎯 Eina: ---</span>
+    <!-- ============================================ -->
+    <!-- PUSLAPIS 2: MENU (Kurti/Prisijungti/Vieši) -->
+    <!-- ============================================ -->
+    <div id="page-menu" class="page">
+        <div class="menu-container">
+            <h1>🎮 ŽAIDIMAS</h1>
+            <p>Pasirink veiksmą</p>
+            
+            <div class="menu-buttons">
+                <button class="menu-btn" onclick="menuCreate()">
+                    🆕 Sukurti žaidimą
+                </button>
+                <button class="menu-btn" onclick="menuJoin()">
+                    🔗 Prisijungti prie žaidimo
+                </button>
+                <button class="menu-btn" onclick="menuPublic()">
+                    🌐 Vieši stalai
+                </button>
+                <button class="menu-btn menu-btn-back" onclick="goToLanding()">
+                    🔙 Atgal
+                </button>
+            </div>
         </div>
+    </div>
 
-        <div id="gameBody">
-            <!-- KAIRĖ PANELĖ -->
-            <aside id="leftPanel">
-                <div id="gameIdBox">
-                    📋 ID:<br><span id="gameIdDisplayLeft">---</span>
-                </div>
-                <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
-                    🏃 Pasitraukti
-                </button>
-                <button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">ℹ️ Info: 🔴 IŠJ.</button>
-                <button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn">
-                    🗳️ Balsuoti
-                </button>
-                <div id="leftPlayerCount">
-                    👥 <span id="playerCountLeft">0/8</span>
-                </div>
-                <div id="leftTurnDisplay">
-                    🎯 <span id="turnDisplayLeft">---</span>
-                </div>
-            </aside>
-
-            <div id="board">
-                <!-- VIRŠUS -->
-                <div class="board-row row-top">
-                    <div id="cell-0" class="cell corner start" data-id="0" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
-                        🏁<br>START
+    <!-- ============================================ -->
+    <!-- PUSLAPIS 3: LOBBY (Senas create/join) -->
+    <!-- ============================================ -->
+    <div id="page-lobby" class="page" style="display:none;">
+        <div id="lobby" style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>🏦 BANCRUPT</h1>
+                <p class="subtitle">💰 Stalo žaidimas internetu</p>
+                
+                <div class="lobby-form">
+                    <input type="text" id="playerName" placeholder="Įvesk savo vardą" maxlength="20">
+                    
+                    <div class="lobby-buttons">
+                        <button onclick="createGame()" class="btn btn-primary">🆕 Sukurti žaidimą</button>
+                        <button onclick="joinGame()" class="btn btn-secondary">🔗 Prisijungti</button>
                     </div>
-                    <div id="cell-1" class="cell edge property" data-id="1">1</div>
-                    <div id="cell-2" class="cell edge" data-id="2">2</div>
-                    <div id="cell-3" class="cell edge property" data-id="3">3</div>
-                    <div id="cell-4" class="cell edge" data-id="4">4</div>
-                    <div id="cell-5" class="cell edge" data-id="5">5</div>
-                    <div id="cell-6" class="cell edge property" data-id="6">6</div>
-                    <div id="cell-7" class="cell edge property" data-id="7">7</div>
-                    <div id="cell-8" class="cell edge" data-id="8">8</div>
-                    <div id="cell-9" class="cell edge property" data-id="9">9</div>
-                    <div id="cell-10" class="cell edge property" data-id="10">10</div>
-                    <div id="cell-11" class="cell edge property" data-id="11">11</div>
-                    <div id="cell-12" class="cell edge property" data-id="12">12</div>
-                    <div id="cell-13" class="cell edge" data-id="13">13</div>
-                    <div id="cell-14" class="cell edge" data-id="14">14</div>
-                    <div id="cell-15" class="cell edge property" data-id="15">15</div>
-                    <div id="cell-16" class="cell corner jail" data-id="16" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
-                        ⛓️<br>KALĖJIMAS
+                    
+                    <div class="join-section">
+                        <input type="text" id="gameIdInput" placeholder="Žaidimo ID (pvz., ABC123)" maxlength="6" style="text-transform:uppercase">
                     </div>
+                    
+                    <button onclick="goToMenu()" style="margin-top:10px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer;">🔙 Atgal</button>
                 </div>
+                
+                <div id="lobbyMessages"></div>
+            </div>
+        </div>
+    </div>
 
-                <!-- VIDURYS -->
-                <div class="board-row row-middle">
-                    <div class="row-middle-left" style="flex:0 0 175px;min-width:175px;max-width:175px;">
-                        <div id="cell-51" class="cell edge property" data-id="51">51</div>
-                        <div id="cell-50" class="cell edge" data-id="50">50</div>
-                        <div id="cell-49" class="cell edge property" data-id="49">49</div>
-                        <div id="cell-48" class="cell edge property" data-id="48">48</div>
-                        <div id="cell-47" class="cell edge" data-id="47">47</div>
-                        <div id="cell-46" class="cell edge property" data-id="46">46</div>
-                        <div id="cell-45" class="cell edge" data-id="45">45</div>
-                        <div id="cell-44" class="cell edge property" data-id="44">44</div>
-                        <div id="cell-43" class="cell edge property" data-id="43">43</div>
+    <!-- ============================================ -->
+    <!-- PUSLAPIS 4: ŽAIDIMAS (Senas game) -->
+    <!-- ============================================ -->
+    <div id="page-game" class="page" style="display:none; flex-direction: column;">
+        <div id="game" style="display:flex; flex-direction: column;">
+            <div id="gameHeader">
+                <span id="gameIdDisplay">📋 ID: ---</span>
+                <span id="playerCount">👥 0/8</span>
+                <span id="turnDisplay">🎯 Eina: ---</span>
+            </div>
+
+            <div id="gameBody">
+                <!-- KAIRĖ PANELĖ -->
+                <aside id="leftPanel">
+                    <div id="gameIdBox">
+                        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
                     </div>
+                    <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
+                        🏃 Pasitraukti
+                    </button>
+                    <button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">ℹ️ Info: 🔴 IŠJ.</button>
+                    <button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn">
+                        🗳️ Balsuoti
+                    </button>
+                    <div id="leftPlayerCount">
+                        👥 <span id="playerCountLeft">0/8</span>
+                    </div>
+                    <div id="leftTurnDisplay">
+                        🎯 <span id="turnDisplayLeft">---</span>
+                    </div>
+                </aside>
 
-                    <div class="row-middle-center">
-                        <div class="center-row">
-                            <div id="center-1" class="center-cell player-info">
-                                <h4>👤 AŠ</h4>
-                                <div id="myInfo">Laukiama...</div>
-                            </div>
-                            <div id="center-2" class="center-cell controls">
-                                <div style="display:flex; gap:4px; justify-content:center; margin-bottom:4px; flex-wrap:wrap;">
-                                    <span style="font-size:9px; color:#3d2b1f; display:flex; align-items:center;">Režimas:</span>
-                                    <button onclick="setMode('adaptive')" id="modeAdaptive" class="header-btn active" style="padding:2px 8px; font-size:9px; min-width:auto;">Adaptyvus</button>
-                                    <button onclick="setMode('fixed')" id="modeFixed" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">Fiksuotas</button>
-                                    <button onclick="toggleSoundPanel()" id="soundBtn" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">🔊 Garsas</button>
-                                                                                               </div>
-
-                                <!-- GARSO PANELĖ -->
-                                <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.15); border-radius:8px; padding:8px; margin-bottom:4px;">
-                                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                                        <span style="font-size:14px;">🔊</span>
-                                        <input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1; cursor:pointer;">
-                                        <span id="volumeValue" style="font-size:11px; font-weight:700; color:#3d2b1f; min-width:30px; text-align:right;">50</span>
-                                    </div>
-                                    <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti garsą</button>
-                                </div>
-                                
-                                <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;">⛓️ Išeiti iš kalėjimo (€50)</button>
-
-                                <div class="action-row">
-                                    <button onclick="bankrupt()" id="bankruptBtn" class="btn-bankrupt btn-half">💀 BANKROTAS</button>
-                                    <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish btn-half">🏚️ Griauti</button>
-                                </div>
-                                
-                                <h4>🎲 VALDYMAS</h4>
-                                <div class="dice-container">
-                                    <div class="dice" id="centerDice1">
-                                        <div class="dice-dots-container">
-                                            <span class="dice-dot dot-tl"></span>
-                                            <span class="dice-dot dot-tc"></span>
-                                            <span class="dice-dot dot-tr"></span>
-                                            <span class="dice-dot dot-cl"></span>
-                                            <span class="dice-dot dot-cc"></span>
-                                            <span class="dice-dot dot-cr"></span>
-                                            <span class="dice-dot dot-bl"></span>
-                                            <span class="dice-dot dot-bc"></span>
-                                            <span class="dice-dot dot-br"></span>
-                                        </div>
-                                    </div>
-                                    <div class="dice" id="centerDice2">
-                                        <div class="dice-dots-container">
-                                            <span class="dice-dot dot-tl"></span>
-                                            <span class="dice-dot dot-tc"></span>
-                                            <span class="dice-dot dot-tr"></span>
-                                            <span class="dice-dot dot-cl"></span>
-                                            <span class="dice-dot dot-cc"></span>
-                                            <span class="dice-dot dot-cr"></span>
-                                            <span class="dice-dot dot-bl"></span>
-                                            <span class="dice-dot dot-bc"></span>
-                                            <span class="dice-dot dot-br"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="control-buttons">
-                                    <button onclick="rollDice()" id="rollBtn" class="btn-dice">🎲 Mesti</button>
-                                    <button onclick="openTrading()" id="tradeBtn" class="btn-trade">🏪 Prekyba</button>
-                                </div>
-                                <button onclick="buildHouse()" id="buildBtn" class="btn-build" style="display:none; width:100%; margin-top:4px;">🏠 Statyti namą</button>
-                            </div>
-                            <div id="center-3" class="center-cell chat">
-                                <h4>💬 CHAT</h4>
-                                <div id="chatMessages"></div>
-                                <div class="chat-input">
-                                    <input type="text" id="chatInput" placeholder="Rašyk žinutę..." onkeypress="if(event.key==='Enter') sendChat()">
-                                    <button onclick="sendChat()">➤</button>
-                                </div>
-                            </div>
+                <div id="board">
+                    <!-- VIRŠUS -->
+                    <div class="board-row row-top">
+                        <div id="cell-0" class="cell corner start" data-id="0" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
+                            🏁<br>START
                         </div>
-                        <div class="center-row">
-                            <div id="center-4" class="center-cell players-list">
-                                <h4>👥 ŽAIDĖJAI</h4>
-                                <div id="playersList"></div>
-                            </div>
-                            <div id="center-5" class="center-cell notifications">
-                                <h4>📢 PRANEŠIMAI</h4>
-                                
-                                <div id="buyChoice" style="display:none;">
-                                    <div class="buy-choice-box">
-                                        <div class="buy-choice-header">🏠 SKLYPAS</div>
-                                        <div class="buy-choice-body">
-                                            <p><strong id="choiceFieldName">Vytauto g.</strong></p>
-                                            <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
-                                            <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
-                                        </div>
-                                        <div class="buy-choice-buttons">
-                                            <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
-                                            <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- INFO PANELAS -->
-                                <div id="cellInfoPanel">
-                                    <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
-                                </div>
-                            </div>
-                            <div id="center-6" class="center-cell journal">
-                                <h4>📜 ŽURNALAS</h4>
-                                <div id="journal"></div>
-                            </div>
+                        <div id="cell-1" class="cell edge property" data-id="1">1</div>
+                        <div id="cell-2" class="cell edge" data-id="2">2</div>
+                        <div id="cell-3" class="cell edge property" data-id="3">3</div>
+                        <div id="cell-4" class="cell edge" data-id="4">4</div>
+                        <div id="cell-5" class="cell edge" data-id="5">5</div>
+                        <div id="cell-6" class="cell edge property" data-id="6">6</div>
+                        <div id="cell-7" class="cell edge property" data-id="7">7</div>
+                        <div id="cell-8" class="cell edge" data-id="8">8</div>
+                        <div id="cell-9" class="cell edge property" data-id="9">9</div>
+                        <div id="cell-10" class="cell edge property" data-id="10">10</div>
+                        <div id="cell-11" class="cell edge" data-id="11">11</div>
+                        <div id="cell-12" class="cell edge property" data-id="12">12</div>
+                        <div id="cell-13" class="cell edge" data-id="13">13</div>
+                        <div id="cell-14" class="cell edge" data-id="14">14</div>
+                        <div id="cell-15" class="cell edge property" data-id="15">15</div>
+                        <div id="cell-16" class="cell corner jail" data-id="16" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
+                            ⛓️<br>KALĖJIMAS
                         </div>
                     </div>
 
-                    <div class="row-middle-right" style="flex:0 0 175px;min-width:175px;max-width:175px;">
-                        <div id="cell-17" class="cell edge property" data-id="17">17</div>
-                        <div id="cell-18" class="cell edge property" data-id="18">18</div>
-                        <div id="cell-19" class="cell edge" data-id="19">19</div>
-                        <div id="cell-20" class="cell edge property" data-id="20">20</div>
-                        <div id="cell-21" class="cell edge property" data-id="21">21</div>
-                        <div id="cell-22" class="cell edge property" data-id="22">22</div>
-                        <div id="cell-23" class="cell edge" data-id="23">23</div>
-                        <div id="cell-24" class="cell edge property" data-id="24">24</div>
-                        <div id="cell-25" class="cell edge property" data-id="25">25</div>
-                    </div>
-                </div>
+                    <!-- VIDURYS -->
+                    <div class="board-row row-middle">
+                        <div class="row-middle-left" style="flex:0 0 175px;min-width:175px;max-width:175px;">
+                            <div id="cell-51" class="cell edge property" data-id="51">51</div>
+                            <div id="cell-50" class="cell edge" data-id="50">50</div>
+                            <div id="cell-49" class="cell edge property" data-id="49">49</div>
+                            <div id="cell-48" class="cell edge" data-id="48">48</div>
+                            <div id="cell-47" class="cell edge property" data-id="47">47</div>
+                            <div id="cell-46" class="cell edge" data-id="46">46</div>
+                            <div id="cell-45" class="cell edge property" data-id="45">45</div>
+                            <div id="cell-44" class="cell edge" data-id="44">44</div>
+                            <div id="cell-43" class="cell edge property" data-id="43">43</div>
+                        </div>
 
-                <!-- APAČIA -->
-                <div class="board-row row-bottom">
-                    <div id="cell-42" class="cell corner go-to-jail" data-id="42" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
-                        🚨<br>KELIAUK
+                        <div class="row-middle-center">
+                            <div class="center-row">
+                                <div id="center-1" class="center-cell player-info">
+                                    <h4>👤 AŠ</h4>
+                                    <div id="myInfo">Laukiama...</div>
+                                </div>
+                                <div id="center-2" class="center-cell controls">
+                                    <div style="display:flex; gap:4px; justify-content:center; margin-bottom:4px; flex-wrap:wrap;">
+                                        <span style="font-size:9px; color:#3d2b1f; display:flex; align-items:center;">Režimas:</span>
+                                        <button onclick="setMode('adaptive')" id="modeAdaptive" class="header-btn active" style="padding:2px 8px; font-size:9px; min-width:auto;">Adaptyvus</button>
+                                        <button onclick="setMode('fixed')" id="modeFixed" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">Fiksuotas</button>
+                                        <button onclick="toggleSoundPanel()" id="soundBtn" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">🔊 Garsas</button>
+                                    </div>
+
+                                    <!-- GARSO PANELĖ -->
+                                    <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.15); border-radius:8px; padding:8px; margin-bottom:4px;">
+                                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                                            <span style="font-size:14px;">🔊</span>
+                                            <input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1; cursor:pointer;">
+                                            <span id="volumeValue" style="font-size:11px; font-weight:700; color:#3d2b1f; min-width:30px; text-align:right;">50</span>
+                                        </div>
+                                        <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti garsą</button>
+                                    </div>
+                                    
+                                    <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;">⛓️ Išeiti iš kalėjimo (€50)</button>
+
+                                    <div class="action-row">
+                                        <button onclick="bankrupt()" id="bankruptBtn" class="btn-bankrupt btn-half">💀 BANKROTAS</button>
+                                        <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish btn-half">🏚️ Griauti</button>
+                                    </div>
+                                    
+                                    <h4>🎲 VALDYMAS</h4>
+                                    <div class="dice-container">
+                                        <div class="dice" id="centerDice1">
+                                            <div class="dice-dots-container">
+                                                <span class="dice-dot dot-tl"></span>
+                                                <span class="dice-dot dot-tc"></span>
+                                                <span class="dice-dot dot-tr"></span>
+                                                <span class="dice-dot dot-cl"></span>
+                                                <span class="dice-dot dot-cc"></span>
+                                                <span class="dice-dot dot-cr"></span>
+                                                <span class="dice-dot dot-bl"></span>
+                                                <span class="dice-dot dot-bc"></span>
+                                                <span class="dice-dot dot-br"></span>
+                                            </div>
+                                        </div>
+                                        <div class="dice" id="centerDice2">
+                                            <div class="dice-dots-container">
+                                                <span class="dice-dot dot-tl"></span>
+                                                <span class="dice-dot dot-tc"></span>
+                                                <span class="dice-dot dot-tr"></span>
+                                                <span class="dice-dot dot-cl"></span>
+                                                <span class="dice-dot dot-cc"></span>
+                                                <span class="dice-dot dot-cr"></span>
+                                                <span class="dice-dot dot-bl"></span>
+                                                <span class="dice-dot dot-bc"></span>
+                                                <span class="dice-dot dot-br"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="control-buttons">
+                                        <button onclick="rollDice()" id="rollBtn" class="btn-dice">🎲 Mesti</button>
+                                        <button onclick="openTrading()" id="tradeBtn" class="btn-trade">🏪 Prekyba</button>
+                                    </div>
+                                    <button onclick="buildHouse()" id="buildBtn" class="btn-build" style="display:none; width:100%; margin-top:4px;">🏠 Statyti namą</button>
+                                </div>
+                                <div id="center-3" class="center-cell chat">
+                                    <h4>💬 CHAT</h4>
+                                    <div id="chatMessages"></div>
+                                    <div class="chat-input">
+                                        <input type="text" id="chatInput" placeholder="Rašyk žinutę..." onkeypress="if(event.key==='Enter') sendChat()">
+                                        <button onclick="sendChat()">➤</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="center-row">
+                                <div id="center-4" class="center-cell players-list">
+                                    <h4>👥 ŽAIDĖJAI</h4>
+                                    <div id="playersList"></div>
+                                </div>
+                                <div id="center-5" class="center-cell notifications">
+                                    <h4>📢 PRANEŠIMAI</h4>
+                                    
+                                    <div id="buyChoice" style="display:none;">
+                                        <div class="buy-choice-box">
+                                            <div class="buy-choice-header">🏠 SKLYPAS</div>
+                                            <div class="buy-choice-body">
+                                                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
+                                                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
+                                                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
+                                            </div>
+                                            <div class="buy-choice-buttons">
+                                                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
+                                                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="cellInfoPanel">
+                                        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
+                                    </div>
+                                </div>
+                                <div id="center-6" class="center-cell journal">
+                                    <h4>📜 ŽURNALAS</h4>
+                                    <div id="journal"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row-middle-right" style="flex:0 0 175px;min-width:175px;max-width:175px;">
+                            <div id="cell-17" class="cell edge property" data-id="17">17</div>
+                            <div id="cell-18" class="cell edge property" data-id="18">18</div>
+                            <div id="cell-19" class="cell edge" data-id="19">19</div>
+                            <div id="cell-20" class="cell edge property" data-id="20">20</div>
+                            <div id="cell-21" class="cell edge" data-id="21">21</div>
+                            <div id="cell-22" class="cell edge property" data-id="22">22</div>
+                            <div id="cell-23" class="cell edge property" data-id="23">23</div>
+                            <div id="cell-24" class="cell edge" data-id="24">24</div>
+                            <div id="cell-25" class="cell edge property" data-id="25">25</div>
+                        </div>
                     </div>
-                    <div id="cell-41" class="cell edge property" data-id="41">41</div>
-                    <div id="cell-40" class="cell edge" data-id="40">40</div>
-                    <div id="cell-39" class="cell edge property" data-id="39">39</div>
-                    <div id="cell-38" class="cell edge property" data-id="38">38</div>
-                    <div id="cell-37" class="cell edge property" data-id="37">37</div>
-                    <div id="cell-36" class="cell edge property" data-id="36">36</div>
-                    <div id="cell-35" class="cell edge property" data-id="35">35</div>
-                    <div id="cell-34" class="cell edge property" data-id="34">34</div>
-                    <div id="cell-33" class="cell edge" data-id="33">33</div>
-                    <div id="cell-32" class="cell edge property" data-id="32">32</div>
-                    <div id="cell-31" class="cell edge property" data-id="31">31</div>
-                    <div id="cell-30" class="cell edge property" data-id="30">30</div>
-                    <div id="cell-29" class="cell edge" data-id="29">29</div>
-                    <div id="cell-28" class="cell edge property" data-id="28">28</div>
-                    <div id="cell-27" class="cell edge property" data-id="27">27</div>
-                    <div id="cell-26" class="cell corner parking" data-id="26" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
-                        🅿️<br>PARKINGAS
+
+                    <!-- APAČIA -->
+                    <div class="board-row row-bottom">
+                        <div id="cell-42" class="cell corner go-to-jail" data-id="42" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
+                            🚨<br>KELIAUK
+                        </div>
+                        <div id="cell-41" class="cell edge property" data-id="41">41</div>
+                        <div id="cell-40" class="cell edge property" data-id="40">40</div>
+                        <div id="cell-39" class="cell edge property" data-id="39">39</div>
+                        <div id="cell-38" class="cell edge property" data-id="38">38</div>
+                        <div id="cell-37" class="cell edge" data-id="37">37</div>
+                        <div id="cell-36" class="cell edge property" data-id="36">36</div>
+                        <div id="cell-35" class="cell edge property" data-id="35">35</div>
+                        <div id="cell-34" class="cell edge property" data-id="34">34</div>
+                        <div id="cell-33" class="cell edge property" data-id="33">33</div>
+                        <div id="cell-32" class="cell edge" data-id="32">32</div>
+                        <div id="cell-31" class="cell edge property" data-id="31">31</div>
+                        <div id="cell-30" class="cell edge property" data-id="30">30</div>
+                        <div id="cell-29" class="cell edge property" data-id="29">29</div>
+                        <div id="cell-28" class="cell edge" data-id="28">28</div>
+                        <div id="cell-27" class="cell edge property" data-id="27">27</div>
+                        <div id="cell-26" class="cell corner parking" data-id="26" style="width:175px;height:175px;flex:0 0 175px;min-width:175px;min-height:175px;max-width:175px;max-height:175px;">
+                            🅿️<br>PARKINGAS
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TAISYKLIŲ MODALAS -->
+    <!-- ============================================ -->
+    <div id="rulesModal">
+        <div class="rules-content">
+            <h2>📖 ŽAIDIMO TAISYKLĖS</h2>
+            
+            <h3>🎯 TIKSLAS</h3>
+            <p>Likti vieninteliam nemokiam žaidėjui. Kiti bankrutuoja arba pasitraukia.</p>
+            
+            <h3>🎲 KAIP ŽAISTI</h3>
+            <ul>
+                <li>Mesti kauliukus (2×)</li>
+                <li>Judėti per langelius</li>
+                <li>Pirkti sklypus, statyti namus</li>
+                <li>Rinkti nuomą iš kitų žaidėjų</li>
+            </ul>
+            
+            <h3>🏠 SKLYPAI IR NAMAI</h3>
+            <ul>
+                <li>Nusipirkęs sklypą gali statyti namus (iki 4)</li>
+                <li>Surinkęs visą spalvų grupę – gali statyti</li>
+                <li>4 namai + viešbutis = didžiausia nuoma</li>
+            </ul>
+            
+            <h3>💰 NUOMA</h3>
+            <p>Atsistojęs ant svetimo sklypo – moki nuomą. Kuo daugiau namų – tuo didesnė nuoma.</p>
+            
+            <h3>🚫 KALĖJIMAS</h3>
+            <ul>
+                <li>3 bandymai išmesti dubliką</li>
+                <li>Arba sumokėti €50</li>
+                <li>3 dubliukai iš eilės → į kalėjimą</li>
+            </ul>
+            
+            <h3>💸 MOKESČIAI IR SPECIALŪS LANGELIAI</h3>
+            <ul>
+                <li>VMI – €200</li>
+                <li>Latrų baras – €10</li>
+                <li>Vladuko pirtis – €25</li>
+                <li>Ligoninė – €100</li>
+                <li>Gimtadienis – +€200</li>
+                <li>HORNY RP – +€200</li>
+            </ul>
+            
+            <h3>🏦 BANKROTAS</h3>
+            <p>Kai nebegali sumokėti – parduok turtą bankui (80%). Jei vis tiek nepakanka – bankrutuoji.</p>
+            
+            <h3>🔨 AUKCIONAS</h3>
+            <p>Gali parduoti sklypą aukcione. Bankas siūlo 70% startinę. Kiti žaidėjai gali persiūlyti.</p>
+            
+            <h3>💱 PREKYBA</h3>
+            <p>Siūlyti kitam žaidėjui sklypus + pinigus. Keistis, derėtis.</p>
+            
+            <h3>🗳️ BALSAVIMAS (VOTE-KICK)</h3>
+            <p>Jei žaidėjas trukdo – galima balsuoti. Reikia daugumos balsų. Pašalintas – praranda viską.</p>
+            
+            <h3>🏆 LAIMĖJIMAS</h3>
+            <p>Paskutinis likęs žaidėjas laimi!</p>
+            
+            <button class="rules-close" onclick="closeRulesModal()">OK, SUPRASTAU</button>
         </div>
     </div>
 
@@ -307,7 +713,7 @@
 
             <div id="auctionPanel" style="display:none;">
                 <h3 style="color:#3d2b1f;">🔨 Skelbti aukcioną</h3>
-                <p style="color:#6c757d; font-size:14px;">Pasirink kortelę aukcionui</p>
+                <p style="color:#6c757d; font-size:13px;">Bankas siūlys 70% startinę kainą.<br>Kiti žaidėjai gali siūlyti daugiau.</p>
                 <div id="auctionableProperties" style="margin:10px 0; text-align:left;"></div>
                 <button onclick="confirmStartAuction()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
                     🔨 Pradėti aukcioną
@@ -373,21 +779,46 @@
 
     <!-- AUKCIONO MODALAS -->
     <div id="auctionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9996; justify-content:center; align-items:center;">
-        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; text-align:center; border:3px solid #ffc107; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:90%; text-align:center; border:3px solid #ffc107; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             <h2 style="color:#ffc107; margin-bottom:10px;">🔨 AUKCIONAS</h2>
+            
             <div id="auctionContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
-                <p><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
-                <p><strong>Kortelė:</strong> <span id="auctionFieldName"></span></p>
-                <p><strong>Dabartinė kaina:</strong> €<span id="auctionCurrentBid">0</span></p>
-                <p><strong>Liko laiko:</strong> <span id="auctionTimer">60</span> sek.</p>
+                <p style="margin:5px 0;"><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
+                <p style="margin:5px 0;"><strong>Kortelė:</strong> <span id="auctionFieldName"></span></p>
+                <p style="margin:5px 0;"><strong>Kortelės vertė:</strong> <span id="auctionFieldCost">€0</span></p>
+                
+                <hr style="border:1px solid #c9a84c; margin:10px 0;">
+                
+                <p style="margin:5px 0; color:#6c757d;"><strong>🏦 Banko pradinė:</strong> <span id="auctionBankBid">€0</span></p>
+                <p style="margin:5px 0; font-size:18px;"><strong>💰 Dabartinė kaina:</strong> <span id="auctionCurrentBid" style="color:#28a745; font-weight:700;">€0</span></p>
+                <p style="margin:5px 0;"><strong>👤 Siūlo:</strong> <span id="auctionCurrentBidder">🏦 Bankas</span></p>
+                
+                <hr style="border:1px solid #c9a84c; margin:10px 0;">
+                
+                <p style="margin:5px 0; text-align:center; font-size:16px;"><strong>⏱️ Liko laiko:</strong> <span id="auctionTimer" style="color:#dc3545; font-weight:700;">60</span> s</p>
             </div>
-            <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
-                <input type="number" id="auctionBidInput" placeholder="Įvesk kainą" style="flex:1; padding:10px; border-radius:8px; border:1px solid #c9a84c; min-width:120px;">
-                <button onclick="placeBid()" class="btn-trade-option" style="padding:10px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
-                    💰 Siūlyti
-                </button>
+            
+            <div id="auctionSellerNotice" style="display:none; padding:12px; background:rgba(255,193,7,0.2); border-radius:8px; margin:10px 0; border:2px solid #ffc107;">
+                📢 <strong>Tu esi pardavėjas!</strong><br>
+                <span style="font-size:13px;">Stebėk aukcioną. Kiti žaidėjai siūlo kainas.</span>
             </div>
-            <button onclick="closeAuction()" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+            
+            <div id="auctionBidControls" style="display:flex; flex-direction:column; gap:8px; margin:10px 0;">
+                <div style="display:flex; gap:8px;">
+                    <button onclick="placeBidPlus10()" id="auctionPlus10Btn" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                        ➕ +10%
+                    </button>
+                </div>
+                
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="auctionBidInput" placeholder="Įvesk savo sumą (€)" style="flex:1; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; font-weight:600;">
+                    <button onclick="placeBid()" class="btn-trade-option" style="padding:10px 20px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
+                        💰 Siūlyti
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="closeAuction()" id="auctionCloseBtn" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
                 🔙 Uždaryti
             </button>
         </div>
@@ -421,5 +852,99 @@
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="audioManager.js"></script>
     <script src="script.js"></script>
+    <script>
+        // ============================================
+        // SPA PUSLAPIŲ VALDYMAS
+        // ============================================
+        
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+                page.style.display = 'none';
+            });
+            
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                if (pageId === 'page-landing' || pageId === 'page-menu') {
+                    targetPage.style.display = 'flex';
+                } else if (pageId === 'page-game') {
+                    targetPage.style.display = 'flex';
+                } else {
+                    targetPage.style.display = 'block';
+                }
+            }
+        }
+        
+        function goToLanding() {
+            showPage('page-landing');
+            console.log('📍 Landing puslapis');
+        }
+        
+        function goToMenu() {
+            showPage('page-menu');
+            console.log('📍 Menu puslapis');
+        }
+        
+        function goToLobby() {
+            showPage('page-lobby');
+            console.log('📍 Lobby puslapis');
+        }
+        
+        function goToGame() {
+            showPage('page-game');
+            console.log('📍 Game puslapis');
+        }
+        
+        // ============================================
+        // TAISYKLIŲ MODALAS
+        // ============================================
+        
+        function openRulesModal() {
+            document.getElementById('rulesModal').classList.add('active');
+        }
+        
+        function closeRulesModal() {
+            document.getElementById('rulesModal').classList.remove('active');
+        }
+        
+        // Uždaryti modalą paspaudus fone
+        document.getElementById('rulesModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRulesModal();
+            }
+        });
+        
+        // ============================================
+        // MENU MYGTUKAI (laikini - Etapas 2 pridės funkcionalumą)
+        // ============================================
+        
+        function menuCreate() {
+            console.log('🆕 Kurti žaidimą (Etapas 2)');
+            // Laikinai - perjungiam į seną lobby
+            goToLobby();
+        }
+        
+        function menuJoin() {
+            console.log('🔗 Prisijungti (Etapas 2)');
+            // Laikinai - perjungiam į seną lobby
+            goToLobby();
+        }
+        
+        function menuPublic() {
+            console.log('🌐 Vieši stalai (Etapas 6)');
+            alert('🌐 Vieši stalai bus pridėti vėliau!');
+        }
+        
+        // ============================================
+        // INICIJAVIMAS
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 SPA pradėtas');
+            // Numatytasis puslapis - landing
+            goToLanding();
+        });
+    </script>
 </body>
 </html>

@@ -576,9 +576,11 @@ function initSocket() {
         addJournal(`🏃 Tu pasitraukei iš žaidimo`);
         
         setTimeout(() => {
-            document.getElementById('game').style.display = 'none';
-            document.getElementById('lobby').style.display = 'block';
-            showLobbyMessage('🏃 Pasitraukei iš žaidimo. Gali kurti naują arba jungtis prie kito.', '#ffd700');
+            // SPA - grįžtam į menu
+            if (typeof goToMenu === 'function') {
+                goToMenu();
+            }
+            showLobbyMessage('🏃 Pasitraukei iš žaidimo.', '#ffd700');
             
             playerId = null;
             gameId = null;
@@ -1407,8 +1409,11 @@ function joinGame() {
 }
 
 function enterGame() {
-    document.getElementById('lobby').style.display = 'none';
-    document.getElementById('game').style.display = 'flex';
+    // SPA - perjungiam į žaidimo puslapį
+    if (typeof goToGame === 'function') {
+        goToGame();
+    }
+    
     document.getElementById('gameIdDisplay').textContent = '📋 ID: ' + gameId;
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
