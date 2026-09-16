@@ -2139,7 +2139,7 @@ body {
     min-height: 30px;
     max-height: 200px;
     overflow-y: auto;
-    font-size: 10px;
+    font-size: 20px;
     color: #3d2b1f;
     line-height: 1.4;
     flex-shrink: 0;
