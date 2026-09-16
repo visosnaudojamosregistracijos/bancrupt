@@ -370,8 +370,8 @@ class Game {
                 let specialAction = 'service1';
                 if (field.id === 2) specialAction = 'dujos';
                 else if (field.id === 14) specialAction = 'siuksles';
-                else if (field.id === 29) specialAction = 'elektra';
-                else if (field.id === 45) specialAction = 'vanduo';
+                else if (field.id === 28) specialAction = 'elektra';
+                else if (field.id === 44) specialAction = 'vanduo';
                 
                 if (utilOwner) {
                     if (utilOwner.id === player.id) {
@@ -411,8 +411,8 @@ class Game {
                 let specialAction = 'service2';
                 if (field.id === 8) specialAction = 'airport';
                 else if (field.id === 19) specialAction = 'train';
-                else if (field.id === 40) specialAction = 'port';
-                else if (field.id === 47) specialAction = 'bus';
+                else if (field.id === 37) specialAction = 'port';
+                else if (field.id === 46) specialAction = 'bus';
                 
                 if (serviceOwner) {
                     if (serviceOwner.id === player.id) {
@@ -453,13 +453,13 @@ class Game {
                     result.message = `${player.name} sumokėjo €200 VMI mokesčių! 💰`;
                     this.addMessage(result.message);
                 }
-                else if (field.id === 23) {
+                else if (field.id === 21) {
                     player.money -= 10;
                     result.action = 'latras';
-                    result.message = `${player.name} užsuko į LATRŲ UŽEIGĄ ir išleido €10! 🍺`;
+                    result.message = `${player.name} užsuko į LATRŲ BARĄ ir išleido €10! 🍺`;
                     this.addMessage(result.message);
                 }
-                else if (field.id === 33) {
+                else if (field.id === 32) {
                     player.money -= 25;
                     result.action = 'pirtis';
                     result.message = `${player.name} nuėjo į VLADUKO PIRTĮ ir sumokėjo €25! 🧖`;

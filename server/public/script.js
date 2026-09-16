@@ -312,7 +312,7 @@ function initSocket() {
             }
             showPopupMessage(msg, 'rent');
         }
-        if (msg.includes('LATRŲ UŽEIGĄ') || msg.includes('LATRU UŽEIGĄ')) {
+        if (msg.includes('LATRŲ BARĄ') || msg.includes('LATRŲ BARAS') || msg.includes('LATRŲ UŽEIGĄ')) {
             showPopupMessage(msg, 'tax');
         }
         else if (msg.includes('VLADUKO PIRTĮ') || msg.includes('PIRTĮ')) {
