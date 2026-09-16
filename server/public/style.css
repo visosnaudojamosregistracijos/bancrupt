@@ -2347,3 +2347,14 @@ body {
     top: 4px;
     left: 6px;
 }
+
+@media (max-width: 480px) {
+    .cell .cell-name {
+        font-size: 5px;  /* dar mažesnis */
+    }
+    
+    .cell .players-on-cell .player-dot {
+        width: 10px;
+        height: 10px;
+    }
+}

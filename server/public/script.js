@@ -147,15 +147,15 @@ function initSocket() {
             
             if (data.field.id === 2) playDujosSound();
             else if (data.field.id === 14) playSiukslesSound();
-            else if (data.field.id === 28) playElektraSound();      // ← pakeista 29 → 28
-            else if (data.field.id === 44) playVanduoSound();       // ← pakeista 45 → 44
+            else if (data.field.id === 28) playElektraSound();
+            else if (data.field.id === 44) playVanduoSound();
             else if (data.field.id === 8) playAirPortSound();
             else if (data.field.id === 19) playTrainSound();
-            else if (data.field.id === 37) playPortSound();         // ← pakeista 40 → 37
-            else if (data.field.id === 46) playBusSound();          // ← pakeista 47 → 46
+            else if (data.field.id === 37) playPortSound();
+            else if (data.field.id === 46) playBusSound();
             else if (data.field.id === 13) playHospitalSound();
-            else if (data.field.id === 21) playLatrasSound();       // ← pakeista 23 → 21
-            else if (data.field.id === 32) playPirtisSound();       // ← pakeista 33 → 32
+            else if (data.field.id === 21) playLatrasSound();
+            else if (data.field.id === 32) playPirtisSound();
             else if (data.field.id === 50) playBirthdaySound();
             
             if (data.result) {
@@ -200,7 +200,7 @@ function initSocket() {
                     popupType = 'chance';
                     playBirthdaySound();
                 } else if (data.result.action === 'latras') {
-                    const latrasMsg = ` 🍺 Latrų užeiga!`;
+                    const latrasMsg = ` 🍺 Latrų baras!`;
                     notificationMsg += latrasMsg;
                     popupMsg += latrasMsg;
                     popupType = 'tax';
@@ -468,7 +468,7 @@ function initSocket() {
     });
 
     // ============================================
-    // 🆕 AUKCIONO KLAUSYMAI
+    // AUKCIONO KLAUSYMAI
     // ============================================
 
     socket.on('auctionStarted', (data) => {
@@ -485,7 +485,6 @@ function initSocket() {
         addNotification(msg);
         addJournal(msg);
         
-        // Rodyti modalą VISIEMS (įskaitant pardavėją)
         showAuction(data);
         
         if (gameState) updateUI(gameState);
@@ -503,7 +502,6 @@ function initSocket() {
             document.getElementById('auctionCurrentBidder').textContent = data.currentBidderName;
         }
         
-        // Atnaujinti +10% sumą
         if (data.currentBid !== undefined) {
             const plus10 = Math.ceil(data.currentBid * 1.10);
             const plus10Btn = document.getElementById('auctionPlus10Btn');
@@ -711,30 +709,24 @@ function showAuction(data) {
     auctionEndedSent = false;
     currentAuctionId = data.auctionId;
     
-    // Ar aš pardavėjas?
     const isSeller = data.sellerId === playerId;
     
-    // Užpildyti info
     document.getElementById('auctionSeller').textContent = data.sellerName || 'Nežinomas';
     document.getElementById('auctionFieldName').textContent = data.fieldName || 'Nežinoma kortelė';
     document.getElementById('auctionFieldCost').textContent = '€' + (data.fieldCost || 0);
     
-    // Rodyti banko pasiūlymą
     const bankBid = data.currentBid;
     document.getElementById('auctionBankBid').textContent = '€' + bankBid;
     
-    // Dabartinė kaina
     document.getElementById('auctionCurrentBid').textContent = '€' + bankBid;
     document.getElementById('auctionCurrentBidder').textContent = '🏦 Bankas';
     
-    // Skaičiuoti +10% sumą
     const plus10 = Math.ceil(bankBid * 1.10);
     const plus10Btn = document.getElementById('auctionPlus10Btn');
     if (plus10Btn) {
         plus10Btn.textContent = `➕ +10% (€${plus10})`;
     }
     
-    // Pardavėjo režimas
     const sellerNotice = document.getElementById('auctionSellerNotice');
     const bidControls = document.getElementById('auctionBidControls');
     const closeBtn = document.getElementById('auctionCloseBtn');
@@ -749,7 +741,6 @@ function showAuction(data) {
         if (closeBtn) closeBtn.style.display = 'block';
     }
     
-    // Timer'is
     const endTime = data.endTime || (Date.now() + 60000);
     startAuctionTimer(endTime);
     
@@ -787,7 +778,6 @@ function startAuctionTimer(endTime) {
             if (timerEl) timerEl.textContent = '0';
             
             auctionEndedSent = true;
-            // Serveris pats baigs per savo timer'į
         }
     }, 1000);
 }
@@ -1250,9 +1240,9 @@ function showCellInfo(fieldId) {
     if (field.type === 'tax') {
         if (field.id === 5) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€200</span></div></div>`;
-        } else if (field.id === 21) {  // ← pakeista 23 → 21
+        } else if (field.id === 21) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€10</span></div></div>`;
-        } else if (field.id === 32) {  // ← pakeista 33 → 32
+        } else if (field.id === 32) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€25</span></div></div>`;
         } else if (field.id === 50) {
             html += `<div class="info-section"><div class="info-row"><span class="label">🎁 Gausi:</span><span class="value green">€200</span></div></div>`;
@@ -2246,17 +2236,17 @@ function sendChat() {
 
 function getGroupByColor(color) {
     const groups = {
-        '#ffd700': [1, 3],        // Telšiai, Plungė
-        '#4a90d9': [6, 7, 9],     // Kėdainiai, Ariogala, Ramygala
-        '#2ecc71': [10, 12, 15],  // Utena, Anykščiai, Zarasai
-        '#9b59b6': [17, 18, 20],  // Mažeikiai, Skuodas, N.Akmenė
-        '#e74c3c': [22, 23, 25],  // Marijampolė, Vilkaviškis, Kalvarija
-        '#8B6914': [27, 29, 30],  // Alytus, Lazdijai, Druskininkai
-        '#1abc9c': [31, 33, 34],  // Panevėžys, Pasvalys, Kupiškis
-        '#ff69b4': [35, 36, 38],  // Šiauliai, Kuršėnai, Radviliškis
-        '#2c3e50': [39, 40, 41],  // Klaipėda, Palanga, Gargždai
-        '#1a237e': [43, 45, 47],  // Kaunas, Garliava, Raudondvaris
-        '#bdc3c7': [49, 51]       // Trakai, Vilnius
+        '#ffd700': [1, 3],
+        '#4a90d9': [6, 7, 9],
+        '#2ecc71': [10, 12, 15],
+        '#9b59b6': [17, 18, 20],
+        '#e74c3c': [22, 23, 25],
+        '#8B6914': [27, 29, 30],
+        '#1abc9c': [31, 33, 34],
+        '#ff69b4': [35, 36, 38],
+        '#2c3e50': [39, 40, 41],
+        '#1a237e': [43, 45, 47],
+        '#bdc3c7': [49, 51]
     };
     return groups[color] || [];
 }
@@ -2661,9 +2651,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // ============================================
+    // LANGELIŲ INFO REŽIMAS (PC + TELEFONAS)
+    // ============================================
     document.querySelectorAll('.cell').forEach(cell => {
         const fieldId = parseInt(cell.dataset.id);
         
+        // 🖱️ KOMPIUTERIUI - mouse
         cell.addEventListener('mouseenter', () => {
             if (infoMode) {
                 showCellInfo(fieldId);
@@ -2673,6 +2667,20 @@ document.addEventListener('DOMContentLoaded', () => {
         cell.addEventListener('mouseleave', () => {
             if (infoMode) {
                 hideCellInfo();
+            }
+        });
+        
+        // 📱 TELEFONUI - touch
+        cell.addEventListener('touchstart', (e) => {
+            if (infoMode) {
+                e.preventDefault();
+                showCellInfo(fieldId);
+            }
+        }, { passive: false });
+        
+        cell.addEventListener('touchend', (e) => {
+            if (infoMode) {
+                setTimeout(() => hideCellInfo(), 3000);
             }
         });
     });
