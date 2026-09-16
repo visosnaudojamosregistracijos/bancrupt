@@ -818,18 +818,18 @@ function autoFitInfoFont() {
     // 🆕 Bazinis šriftas pagal panelės plotį - PADIDINTAS
     let fontSize = 14;
     
-    if (width < 200) fontSize = 10;
-    else if (width < 250) fontSize = 11;
-    else if (width < 300) fontSize = 12;
-    else if (width < 350) fontSize = 13;
-    else if (width < 400) fontSize = 14;
-    else if (width < 500) fontSize = 15;
-    else if (width < 650) fontSize = 16;
-    else fontSize = 18;
+    if (width < 200) fontSize = 9;
+    else if (width < 250) fontSize = 10;
+    else if (width < 300) fontSize = 11;
+    else if (width < 350) fontSize = 12;
+    else if (width < 400) fontSize = 13;
+    else if (width < 500) fontSize = 14;
+    else if (width < 650) fontSize = 15;
+    else fontSize = 16;
     
     // Nustatyti CSS kintamuosius
     panel.style.setProperty('--info-font-size', fontSize + 'px');
-    panel.style.setProperty('--info-header-size', (fontSize + 3) + 'px');
+    panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
     panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
     
     // 🆕 Jei turinys netelpa – MAŽINTI (iki min)
@@ -837,29 +837,26 @@ function autoFitInfoFont() {
     while (panel.scrollHeight > panel.clientHeight && fontSize > 9 && attempts < 15) {
         fontSize--;
         panel.style.setProperty('--info-font-size', fontSize + 'px');
-        panel.style.setProperty('--info-header-size', (fontSize + 3) + 'px');
+        panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
         panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
         attempts++;
     }
     
     // 🆕 Jei turinys TELPA ir yra daug vietos – DIDINTI (iki max)
-    // Tik jei šriftas dar nepasiekė maximumo
     if (panel.scrollHeight <= panel.clientHeight) {
-        let maxFontSize = 24;
+        let maxFontSize = 20;
         let testFontSize = fontSize;
         
-        // Bandom didinti po 1px, kol netelpa arba pasieks max
         while (testFontSize < maxFontSize) {
             testFontSize++;
             panel.style.setProperty('--info-font-size', testFontSize + 'px');
-            panel.style.setProperty('--info-header-size', (testFontSize + 3) + 'px');
+            panel.style.setProperty('--info-header-size', (testFontSize + 2) + 'px');
             panel.style.setProperty('--info-section-size', (testFontSize + 1) + 'px');
             
-            // Jei nebetelpa – grąžinam per 1px atgal
             if (panel.scrollHeight > panel.clientHeight) {
                 testFontSize--;
                 panel.style.setProperty('--info-font-size', testFontSize + 'px');
-                panel.style.setProperty('--info-header-size', (testFontSize + 3) + 'px');
+                panel.style.setProperty('--info-header-size', (testFontSize + 2) + 'px');
                 panel.style.setProperty('--info-section-size', (testFontSize + 1) + 'px');
                 break;
             }
