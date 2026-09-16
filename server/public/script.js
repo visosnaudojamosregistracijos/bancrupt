@@ -818,14 +818,14 @@ function autoFitInfoFont() {
     // 🆕 Bazinis šriftas pagal panelės plotį - PADIDINTAS
     let fontSize = 14;
     
-    if (width < 200) fontSize = 11;
-    else if (width < 250) fontSize = 12;
-    else if (width < 300) fontSize = 13;
-    else if (width < 350) fontSize = 14;
-    else if (width < 400) fontSize = 15;
-    else if (width < 500) fontSize = 16;
-    else if (width < 650) fontSize = 18;
-    else fontSize = 20;
+    if (width < 200) fontSize = 10;
+    else if (width < 250) fontSize = 11;
+    else if (width < 300) fontSize = 12;
+    else if (width < 350) fontSize = 13;
+    else if (width < 400) fontSize = 14;
+    else if (width < 500) fontSize = 15;
+    else if (width < 650) fontSize = 16;
+    else fontSize = 18;
     
     // Nustatyti CSS kintamuosius
     panel.style.setProperty('--info-font-size', fontSize + 'px');
