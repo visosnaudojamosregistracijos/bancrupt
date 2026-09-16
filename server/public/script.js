@@ -147,15 +147,15 @@ function initSocket() {
             
             if (data.field.id === 2) playDujosSound();
             else if (data.field.id === 14) playSiukslesSound();
-            else if (data.field.id === 29) playElektraSound();
-            else if (data.field.id === 45) playVanduoSound();
+            else if (data.field.id === 28) playElektraSound();      // ← pakeista 29 → 28
+            else if (data.field.id === 44) playVanduoSound();       // ← pakeista 45 → 44
             else if (data.field.id === 8) playAirPortSound();
             else if (data.field.id === 19) playTrainSound();
-            else if (data.field.id === 40) playPortSound();
-            else if (data.field.id === 47) playBusSound();
+            else if (data.field.id === 37) playPortSound();         // ← pakeista 40 → 37
+            else if (data.field.id === 46) playBusSound();          // ← pakeista 47 → 46
             else if (data.field.id === 13) playHospitalSound();
-            else if (data.field.id === 23) playLatrasSound();
-            else if (data.field.id === 33) playPirtisSound();
+            else if (data.field.id === 21) playLatrasSound();       // ← pakeista 23 → 21
+            else if (data.field.id === 32) playPirtisSound();       // ← pakeista 33 → 32
             else if (data.field.id === 50) playBirthdaySound();
             
             if (data.result) {
@@ -174,9 +174,9 @@ function initSocket() {
                         setTimeout(() => playAirInSound(), 800);
                     } else {
                         const isService1 = (data.field.id === 2 || data.field.id === 14 || 
-                                          data.field.id === 29 || data.field.id === 45);
-                        const isService2 = (data.field.id === 19 || data.field.id === 40 || 
-                                          data.field.id === 47);
+                                          data.field.id === 28 || data.field.id === 44);
+                        const isService2 = (data.field.id === 19 || data.field.id === 37 || 
+                                          data.field.id === 46);
                         if (!isService1 && !isService2) {
                             playPaySound();
                         }
@@ -1250,9 +1250,9 @@ function showCellInfo(fieldId) {
     if (field.type === 'tax') {
         if (field.id === 5) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€200</span></div></div>`;
-        } else if (field.id === 23) {
+        } else if (field.id === 21) {  // ← pakeista 23 → 21
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€10</span></div></div>`;
-        } else if (field.id === 33) {
+        } else if (field.id === 32) {  // ← pakeista 33 → 32
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€25</span></div></div>`;
         } else if (field.id === 50) {
             html += `<div class="info-section"><div class="info-row"><span class="label">🎁 Gausi:</span><span class="value green">€200</span></div></div>`;
