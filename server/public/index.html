@@ -382,9 +382,7 @@
 </head>
 <body>
 
-    <!-- ============================================ -->
     <!-- PUSLAPIS 1: LANDING -->
-    <!-- ============================================ -->
     <div id="page-landing" class="page active">
         <div class="landing-container">
             <h1>🏦 BANCRUPT</h1>
@@ -401,9 +399,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
     <!-- PUSLAPIS 2: MENU -->
-    <!-- ============================================ -->
     <div id="page-menu" class="page">
         <div class="menu-container">
             <h1>🎮 ŽAIDIMAS</h1>
@@ -426,9 +422,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
     <!-- PUSLAPIS 3A: SUKURTI ŽAIDIMĄ -->
-    <!-- ============================================ -->
     <div id="page-create" class="page" style="display:none;">
         <div style="width: 100%; max-width: 550px; margin: 0 auto; padding: 40px 20px;">
             <div class="lobby-container">
@@ -438,7 +432,6 @@
                 <div class="lobby-form">
                     <input type="text" id="createPlayerName" placeholder="Įvesk savo vardą" maxlength="20">
                     
-                    <!-- SUKŪRIMO SPALVOS -->
                     <div style="margin-top:15px;">
                         <label style="color:#d4b896; font-size:13px; font-weight:600; display:block; margin-bottom:8px;">
                             🎨 Pasirink savo spalvą:
@@ -446,7 +439,6 @@
                         <div id="createColorPicker" class="color-picker"></div>
                     </div>
                     
-                    <!-- 🆕 VIEŠAS STALAS (Etapas 6) -->
                     <div style="margin-top:15px; display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:10px;">
                         <input type="checkbox" id="createIsPublic" style="width:20px; height:20px; cursor:pointer;">
                         <label for="createIsPublic" style="color:#d4b896; font-size:14px; font-weight:600; cursor:pointer;">
@@ -466,9 +458,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
     <!-- PUSLAPIS 3B: PRISIJUNGTI -->
-    <!-- ============================================ -->
     <div id="page-join" class="page" style="display:none;">
         <div style="width: 100%; max-width: 550px; margin: 0 auto; padding: 40px 20px;">
             <div class="lobby-container">
@@ -480,7 +470,6 @@
                     
                     <input type="text" id="joinPlayerName" placeholder="Įvesk savo vardą" maxlength="20">
                     
-                    <!-- PRISIJUNGIMO SPALVOS -->
                     <div style="margin-top:15px;">
                         <label style="color:#d4b896; font-size:13px; font-weight:600; display:block; margin-bottom:8px;">
                             🎨 Pasirink laisvą spalvą:
@@ -501,9 +490,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
     <!-- PUSLAPIS 4: ŽAIDIMAS -->
-    <!-- ============================================ -->
     <div id="page-game" class="page" style="display:none; flex-direction: column;">
         <div id="game" style="display:flex; flex-direction: column;">
             <div id="gameHeader">
@@ -513,7 +500,6 @@
             </div>
 
             <div id="gameBody">
-                <!-- KAIRĖ PANELĖ -->
                 <aside id="leftPanel">
                     <div id="gameIdBox">
                         📋 ID:<br><span id="gameIdDisplayLeft">---</span>
@@ -565,8 +551,8 @@
                             <div id="cell-51" class="cell edge property" data-id="51">51</div>
                             <div id="cell-50" class="cell edge" data-id="50">50</div>
                             <div id="cell-49" class="cell edge property" data-id="49">49</div>
-                            <div id="cell-48" class="cell edge" data-id="48">48</div>
-                            <div id="cell-47" class="cell edge property" data-id="47">47</div>
+                            <div id="cell-48" class="cell edge property" data-id="48">48</div>
+                            <div id="cell-47" class="cell edge" data-id="47">47</div>
                             <div id="cell-46" class="cell edge" data-id="46">46</div>
                             <div id="cell-45" class="cell edge property" data-id="45">45</div>
                             <div id="cell-44" class="cell edge" data-id="44">44</div>
@@ -587,7 +573,6 @@
                                         <button onclick="toggleSoundPanel()" id="soundBtn" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">🔊 Garsas</button>
                                     </div>
 
-                                    <!-- GARSO PANELĖ -->
                                     <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.15); border-radius:8px; padding:8px; margin-bottom:4px;">
                                         <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
                                             <span style="font-size:14px;">🔊</span>
@@ -724,9 +709,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- WAITING ROOM OVERLAY (Etapas 3) -->
-    <!-- ============================================ -->
+    <!-- WAITING ROOM OVERLAY -->
     <div id="waitingRoomOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(145deg, rgba(26,107,60,0.98), rgba(15,74,42,0.98)); z-index:9993; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
         <div style="background:rgba(0,0,0,0.4); border:3px solid #c9a84c; border-radius:20px; padding:30px; max-width:600px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             
@@ -774,7 +757,6 @@
                     🚀 Pradėti žaidimą
                 </button>
                 
-                <!-- 🆕 VIEŠUMO KEIČIAMASIS (Etapas 6) -->
                 <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;">
                     <input type="checkbox" id="waitingIsPublic" onchange="togglePublic()" style="width:18px; height:18px; cursor:pointer;">
                     <label for="waitingIsPublic" style="color:#d4b896; font-size:13px; font-weight:600; cursor:pointer;">
@@ -782,6 +764,11 @@
                     </label>
                 </div>
             </div>
+            
+            <!-- 🆕 PASITRAUKIMO MYGTUKAS -->
+            <button onclick="leaveGameFromWaiting()" style="width:100%; padding:12px; margin-bottom:20px; border:2px solid #ff6b6b; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
+                🏃 Pasitraukti iš stalo
+            </button>
             
             <!-- CHAT -->
             <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:12px;">
@@ -798,9 +785,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
     <!-- TAISYKLIŲ MODALAS -->
-    <!-- ============================================ -->
     <div id="rulesModal">
         <div class="rules-content">
             <h2>📖 ŽAIDIMO TAISYKLĖS</h2>
@@ -862,9 +847,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- VIEŠŲ STALŲ MODALAS (Etapas 6) -->
-    <!-- ============================================ -->
+    <!-- VIEŠŲ STALŲ MODALAS -->
     <div id="publicGamesModal">
         <div class="public-games-content">
             <h2>🌐 VIEŠI STALAI</h2>
@@ -1189,7 +1172,7 @@
         }
         
         // ============================================
-        // URL PARAMETRŲ APDOROJIMAS (Etapas 5)
+        // URL PARAMETRŲ APDOROJIMAS
         // ============================================
         
         function checkUrlParams() {
@@ -1199,7 +1182,6 @@
             if (gameParam) {
                 console.log('🔗 URL kodas aptiktas:', gameParam);
                 
-                // Perjungiam į join puslapį
                 setTimeout(() => {
                     showPage('page-join');
                     
@@ -1207,7 +1189,6 @@
                     if (gameIdInput) {
                         gameIdInput.value = gameParam.toUpperCase();
                         
-                        // Paleisti spalvų tikrinimą
                         if (typeof checkGameColors === 'function') {
                             setTimeout(() => checkGameColors(), 200);
                         }
@@ -1223,10 +1204,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🚀 SPA pradėtas');
             
-            // Numatytasis puslapis - landing
             goToLanding();
-            
-            // Patikrinti URL parametrus
             checkUrlParams();
         });
     </script>

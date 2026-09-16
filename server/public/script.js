@@ -1082,6 +1082,32 @@ function startGame() {
     socket.emit('startGame');
 }
 
+function leaveGameFromWaiting() {
+    if (!isConnected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        playErrorSound();
+        return;
+    }
+    
+    if (!socket || !socket.connected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        playErrorSound();
+        return;
+    }
+    
+    if (!confirm('🏃 Ar tikrai nori pasitraukti iš stalo?\n\nPrarasi savo vietą!\nGalėsi kurti naują arba jungtis prie kito.')) {
+        return;
+    }
+    
+    playClickSound();
+    
+    // Paslėpti waiting room
+    hideWaitingRoom();
+    
+    // Iškviesti leaveGame (serveris apdoros)
+    socket.emit('leaveGame');
+}
+
 function kickPlayer(targetId) {
     if (!confirm('❌ Ar tikrai nori išmesti šį žaidėją?')) return;
     
