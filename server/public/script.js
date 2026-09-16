@@ -816,7 +816,7 @@ function autoFitInfoFont() {
     if (width === 0 || height === 0) return;
     
     // 🆕 Bazinis šriftas pagal panelės plotį - PADIDINTAS
-    let fontSize = 10;
+    let fontSize = 9;
     
     if (width < 200) fontSize = 9;
     else if (width < 250) fontSize = 10;
