@@ -87,5 +87,13 @@ module.exports = {
     AUCTION_DURATION: 60000,
     
     // Pratęsimas po kiekvieno bid'o (ms)
-    AUCTION_EXTENSION: 10000
+    AUCTION_EXTENSION: 10000,
+
+    // ============================================
+    // ŽAIDĖJŲ SPALVOS
+    // ============================================
+    PLAYER_COLORS: [
+        '#9c0505', '#e2de00', '#5506d3', '#05b130',
+        '#000000', '#00adc4', '#e6d1c9', '#7edf00'
+    ]
 };

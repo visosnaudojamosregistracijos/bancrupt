@@ -46,13 +46,12 @@ class Game {
             return { error: 'Toks vardas jau užimtas' };
         }
 
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF8A5C', '#A29BFE'];
         const player = {
             id: this.players.length,
             name: name,
             position: 0,
             money: C.START_MONEY,
-            color: colors[this.players.length % colors.length],
+            color: C.PLAYER_COLORS[this.players.length % C.PLAYER_COLORS.length],
             properties: [],
             houses: {},
             inJail: false,
@@ -63,8 +62,7 @@ class Game {
             kicked: false,
             isDebtor: false,
             socketId: null,
-            token: Math.random().toString(36).substring(2) + Date.now().toString(36),
-            icon: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑'][this.players.length % 8]
+            token: Math.random().toString(36).substring(2) + Date.now().toString(36)
         };
         this.players.push(player);
         return player;
