@@ -133,13 +133,15 @@ body {
 
 /* ---------- SPALVŲ PASIRINKIMAS ---------- */
 .color-picker {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
+    justify-items: center;
     padding: 10px;
     background: rgba(0,0,0,0.2);
     border-radius: 10px;
+    max-width: 280px;
+    margin: 0 auto;
 }
 
 .color-circle {

@@ -152,6 +152,8 @@ function initSocket() {
     // SPALVŲ GAVIMAS
     socket.on('gameColors', (data) => {
         console.log('🎨 Gautos spalvos:', data);
+        console.log('   Available:', data.available);
+        console.log('   Used:', data.used);
         
         if (data.error) {
             availableJoinColors = [...PLAYER_COLORS];
@@ -163,17 +165,20 @@ function initSocket() {
             return;
         }
         
-        if (!data.available || data.available.length === 0) {
+        // 🆕 Jei serveris atsiuntė used sąrašą - naudojam jį
+        if (data.used && Array.isArray(data.used)) {
+            // Apskaičiuojam available iš PLAYER_COLORS minus used
+            availableJoinColors = PLAYER_COLORS.filter(c => !data.used.includes(c));
+        } else if (data.available && Array.isArray(data.available)) {
+            availableJoinColors = data.available;
+        } else {
             availableJoinColors = [...PLAYER_COLORS];
-            selectedJoinColor = null;
-            renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
-            
-            const status = document.getElementById('joinColorStatus');
-            if (status) status.textContent = '⚠️ Nėra laisvų spalvų!';
-            return;
         }
         
-        availableJoinColors = data.available;
+        // Jei available tuščias - rodom visas (kad galėtų rinktis, bet įspėjam)
+        if (availableJoinColors.length === 0) {
+            availableJoinColors = [...PLAYER_COLORS];
+        }
         
         if (selectedJoinColor && !availableJoinColors.includes(selectedJoinColor)) {
             selectedJoinColor = null;
@@ -184,8 +189,19 @@ function initSocket() {
         const status = document.getElementById('joinColorStatus');
         if (status) {
             const totalColors = PLAYER_COLORS.length;
-            const takenCount = data.used.length;
-            status.textContent = `👥 Žaidėjai: ${takenCount}/${totalColors} • Laisvos: ${availableJoinColors.length}`;
+            const takenCount = data.used ? data.used.length : (totalColors - availableJoinColors.length);
+            const freeCount = availableJoinColors.length;
+            
+            if (freeCount === 0) {
+                status.textContent = '⚠️ Nėra laisvų spalvų!';
+                status.style.color = '#dc3545';
+            } else if (takenCount === 0) {
+                status.textContent = '✨ Visos spalvos laisvos!';
+                status.style.color = '#28a745';
+            } else {
+                status.textContent = `👥 Užimta: ${takenCount}/${totalColors} • Laisvos: ${freeCount}`;
+                status.style.color = '#d4b896';
+            }
         }
     });
 

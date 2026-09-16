@@ -887,6 +887,45 @@ io.on('connection', (socket) => {
     });
 
     // ============================================
+    // SPALVŲ GAVIMAS (Etapas 2)
+    // ============================================
+    socket.on('getGameColors', ({ gameId }) => {
+        console.log('🎨 Gauta getGameColors užklausa:', gameId);
+        
+        if (!gameId) {
+            socket.emit('gameColors', { error: 'Nėra stalo kodo', available: [], used: [] });
+            return;
+        }
+        
+        const game = games.get(gameId.toUpperCase());
+        
+        if (!game) {
+            socket.emit('gameColors', { 
+                error: 'Žaidimas nerastas', 
+                available: [], 
+                used: [] 
+            });
+            return;
+        }
+        
+        const used = game.getUsedColors();
+        const available = game.getAvailableColors();
+        
+        console.log('🎨 Used:', used);
+        console.log('🎨 Available:', available);
+        
+        socket.emit('gameColors', {
+            gameId: gameId.toUpperCase(),
+            available: available,
+            used: used,
+            players: game.players.filter(p => !p.left && !p.bankrupt && !p.kicked).map(p => ({
+                name: p.name,
+                color: p.color
+            }))
+        });
+    });
+
+    // ============================================
     // VIEŠI STALAI (Etapas 6)
     // ============================================
     socket.on('getPublicGames', () => {
