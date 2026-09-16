@@ -815,8 +815,7 @@ function autoFitInfoFont() {
     
     if (width === 0 || height === 0) return;
     
-    // 🆕 Bazinis šriftas pagal panelės plotį - PADIDINTAS
-    let fontSize = 9;
+    let fontSize = 14;
     
     if (width < 200) fontSize = 9;
     else if (width < 250) fontSize = 10;
@@ -827,14 +826,12 @@ function autoFitInfoFont() {
     else if (width < 650) fontSize = 15;
     else fontSize = 16;
     
-    // Nustatyti CSS kintamuosius
     panel.style.setProperty('--info-font-size', fontSize + 'px');
     panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
     panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
     
-    // 🆕 Jei turinys netelpa – MAŽINTI (iki min)
     let attempts = 0;
-    while (panel.scrollHeight > panel.clientHeight && fontSize > 8 && attempts < 15) {
+    while (panel.scrollHeight > panel.clientHeight && fontSize > 6 && attempts < 30) {
         fontSize--;
         panel.style.setProperty('--info-font-size', fontSize + 'px');
         panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
@@ -842,30 +839,7 @@ function autoFitInfoFont() {
         attempts++;
     }
     
-    // 🆕 Jei turinys TELPA ir yra daug vietos – DIDINTI (iki max)
-    if (panel.scrollHeight <= panel.clientHeight) {
-        let maxFontSize = 20;
-        let testFontSize = fontSize;
-        
-        while (testFontSize < maxFontSize) {
-            testFontSize++;
-            panel.style.setProperty('--info-font-size', testFontSize + 'px');
-            panel.style.setProperty('--info-header-size', (testFontSize + 2) + 'px');
-            panel.style.setProperty('--info-section-size', (testFontSize + 1) + 'px');
-            
-            if (panel.scrollHeight > panel.clientHeight) {
-                testFontSize--;
-                panel.style.setProperty('--info-font-size', testFontSize + 'px');
-                panel.style.setProperty('--info-header-size', (testFontSize + 2) + 'px');
-                panel.style.setProperty('--info-section-size', (testFontSize + 1) + 'px');
-                break;
-            }
-        }
-        
-        fontSize = testFontSize;
-    }
-    
-    console.log(`📏 Info panel: ${width}×${height}px → ${fontSize}px`);
+    console.log(`📏 Info panel: ${width}×${height}px → ${fontSize}px (${attempts} mažinimai)`);
 }
 
 function initInfoResizeObserver() {

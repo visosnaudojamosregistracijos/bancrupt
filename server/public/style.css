@@ -2073,24 +2073,21 @@ body {
     transform: scale(1.03);
 }
 
-/* ============================================ */
-/* ---------- INFO PANELĖ (DINAMINIS DYDIS) ---------- */
-/* ============================================ */
 #cellInfoPanel {
     display: none;
     flex-direction: column;
-    gap: 3px;
-    padding: 6px 10px;
+    gap: 2px;
+    padding: 4px 8px;
     background: rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     border: 1px solid rgba(61, 43, 31, 0.1);
-    margin-top: 4px;
+    margin-top: 3px;
     min-height: 30px;
     max-height: 95%;
-    overflow-y: auto;
-    font-size: var(--info-font-size, 9px);
+    overflow: hidden;
+    font-size: var(--info-font-size, 11px);
     color: #3d2b1f;
-    line-height: 1.4;
+    line-height: 1.25;
     flex-shrink: 0;
 }
 
@@ -2098,14 +2095,7 @@ body {
     display: flex;
 }
 
-#cellInfoPanel::-webkit-scrollbar {
-    width: 5px;
-}
 
-#cellInfoPanel::-webkit-scrollbar-thumb {
-    background: #c9a84c;
-    border-radius: 3px;
-}
 
 .info-header {
     font-weight: 700;
