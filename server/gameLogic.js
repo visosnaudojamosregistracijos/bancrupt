@@ -27,11 +27,24 @@ class Game {
         // VOTE-KICK
         this.activeVoteKick = null;
         this.voteKickTimer = null;
+        // VIEŠI STALAI (Etapas 6)
+        this.isPublic = false;
+        this.lastActivity = Date.now();
+        // URBAN KODAS (Etapas 5)
+        this.gameId = null;
     }
 
     setEmitFunction(emitFn) {
         this.emitFunction = emitFn;
     }
+
+    setGameId(id) {
+        this.gameId = id;
+    }
+
+    // ============================================
+    // ŽAIDĖJŲ PRIDĖJIMAS
+    // ============================================
 
     addPlayer(name, color = null) {
         if (this.players.length >= C.MAX_PLAYERS) {
@@ -39,18 +52,17 @@ class Game {
         }
         
         if (this.gameStarted) {
-            return { error: 'Žaidimas jau prasėjo! Negalima prisijungti.' };
+            return { error: 'Žaidimas jau prasidėjo! Negalima prisijungti.' };
         }
         
         if (this.players.find(p => p.name === name && !p.left && !p.bankrupt && !p.kicked)) {
             return { error: 'Toks vardas jau užimtas' };
         }
 
-        // 🆕 SPALVOS PATIKRINIMAS
+        // SPALVOS PATIKRINIMAS
         let finalColor;
         
         if (color) {
-            // Žaidėjas pasirinko spalvą - tikrinam ar laisva
             const isTaken = this.players.some(p => 
                 p.color === color && !p.left && !p.bankrupt && !p.kicked
             );
@@ -59,14 +71,12 @@ class Game {
                 return { error: 'Ši spalva jau užimta!' };
             }
             
-            // Ar spalva iš viso leidžiama?
             if (!C.PLAYER_COLORS.includes(color)) {
                 return { error: 'Neteisinga spalva!' };
             }
             
             finalColor = color;
         } else {
-            // Automatiškai - pirma laisva spalva
             const usedColors = this.players
                 .filter(p => !p.left && !p.bankrupt && !p.kicked)
                 .map(p => p.color);
@@ -95,26 +105,220 @@ class Game {
             left: false,
             kicked: false,
             isDebtor: false,
+            ready: false,
             socketId: null,
             token: Math.random().toString(36).substring(2) + Date.now().toString(36),
-            ready: false  // 🆕 Pasiruošęs žaidimui (Etapas 3)
+            joinedAt: Date.now()
         };
         this.players.push(player);
+        
+        this.lastActivity = Date.now();
+        
         return player;
     }
 
-    // 🆕 GAUTI UŽIMTAS SPALVAS
+    // ============================================
+    // SPALVŲ FUNKCIJOS
+    // ============================================
+
     getUsedColors() {
         return this.players
             .filter(p => !p.left && !p.bankrupt && !p.kicked)
             .map(p => p.color);
     }
 
-    // 🆕 GAUTI LAISVAS SPALVAS
     getAvailableColors() {
         const used = this.getUsedColors();
         return C.PLAYER_COLORS.filter(c => !used.includes(c));
     }
+
+    // ============================================
+    // WAITING ROOM (Etapas 3)
+    // ============================================
+
+    setPlayerReady(playerId, ready) {
+        const player = this.players[playerId];
+        if (!player || player.bankrupt || player.left || player.kicked) {
+            return { error: 'Žaidėjas neaktyvus' };
+        }
+        
+        if (this.gameStarted) {
+            return { error: 'Žaidimas jau prasidėjo' };
+        }
+        
+        player.ready = ready === true;
+        
+        this.lastActivity = Date.now();
+        
+        this.addMessage(`✋ ${player.name} ${player.ready ? 'pasiruošęs' : 'atšaukė pasiruošimą'}`);
+        
+        return {
+            success: true,
+            playerId: playerId,
+            playerName: player.name,
+            ready: player.ready
+        };
+    }
+
+    canStartGame() {
+        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        
+        if (activePlayers.length < 2) {
+            return { can: false, reason: 'Reikia bent 2 žaidėjų' };
+        }
+        
+        const allReady = activePlayers.every(p => p.ready === true);
+        if (!allReady) {
+            return { can: false, reason: 'Ne visi žaidėjai pasiruošę' };
+        }
+        
+        return { can: true };
+    }
+
+    startGame(playerId) {
+        // Tik kūrėjas (pirmas žaidėjas) gali pradėti
+        if (playerId !== 0) {
+            return { error: 'Tik žaidimo kūrėjas gali pradėti' };
+        }
+        
+        if (this.gameStarted) {
+            return { error: 'Žaidimas jau prasidėjo' };
+        }
+        
+        const canStart = this.canStartGame();
+        if (!canStart.can) {
+            return { error: canStart.reason };
+        }
+        
+        // 🎲 ATSITIKTINIS RIKIAVIMAS (Etapas 4)
+        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        
+        // Fisher-Yates shuffle
+        const shuffled = [...activePlayers];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        
+        // Nustatyti currentTurn į pirmą atsitiktinį žaidėją
+        this.currentTurn = shuffled[0].id;
+        
+        this.gameStarted = true;
+        this.lastActivity = Date.now();
+        
+        this.addMessage(`🎮 Žaidimas pradėtas! Pirmas eina: ${this.players[this.currentTurn].name}`);
+        
+        return {
+            success: true,
+            order: shuffled.map(p => ({
+                id: p.id,
+                name: p.name,
+                color: p.color
+            })),
+            firstPlayerId: this.currentTurn,
+            firstPlayerName: this.players[this.currentTurn].name
+        };
+    }
+
+    kickPlayer(kickerId, targetId) {
+        // Tik kūrėjas gali išmesti
+        if (kickerId !== 0) {
+            return { error: 'Tik žaidimo kūrėjas gali išmesti žaidėjus' };
+        }
+        
+        if (this.gameStarted) {
+            return { error: 'Žaidimas jau prasidėjo' };
+        }
+        
+        if (targetId === 0) {
+            return { error: 'Negali išmesti savęs' };
+        }
+        
+        const target = this.players[targetId];
+        if (!target || target.left || target.kicked) {
+            return { error: 'Žaidėjas jau neaktyvus' };
+        }
+        
+        const targetName = target.name;
+        const socketId = target.socketId;
+        
+        // Pašalinam
+        target.kicked = true;
+        target.isActive = false;
+        target.ready = false;
+        
+        this.lastActivity = Date.now();
+        
+        this.addMessage(`❌ ${targetName} buvo išmestas iš žaidimo`);
+        
+        return {
+            success: true,
+            targetId: targetId,
+            targetName: targetName,
+            socketId: socketId
+        };
+    }
+
+    getWaitingRoomState() {
+        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        
+        return {
+            gameStarted: this.gameStarted,
+            players: activePlayers.map(p => ({
+                id: p.id,
+                name: p.name,
+                color: p.color,
+                ready: p.ready === true,
+                isHost: p.id === 0,
+                isActive: p.isActive
+            })),
+            totalPlayers: activePlayers.length,
+            readyCount: activePlayers.filter(p => p.ready).length,
+            canStart: this.canStartGame().can,
+            hostId: 0,
+            isPublic: this.isPublic,
+            gameId: this.gameId
+        };
+    }
+
+    // ============================================
+    // VIEŠI STALAI (Etapas 6)
+    // ============================================
+
+    setPublic(isPublic) {
+        this.isPublic = isPublic === true;
+        this.lastActivity = Date.now();
+        return { success: true, isPublic: this.isPublic };
+    }
+
+    isAlive() {
+        // Stalas gyvas, jei:
+        // 1. Yra aktyvių žaidėjų
+        // 2. Praėjo mažiau nei 5 min nuo paskutinės veiklos
+        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        const fiveMinutes = 5 * 60 * 1000;
+        const timeSinceActivity = Date.now() - this.lastActivity;
+        
+        return activePlayers.length > 0 || timeSinceActivity < fiveMinutes;
+    }
+
+    getPublicInfo() {
+        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        
+        return {
+            gameId: this.gameId,
+            hostName: this.players[0] ? this.players[0].name : 'Nežinomas',
+            playerCount: activePlayers.length,
+            maxPlayers: C.MAX_PLAYERS,
+            canJoin: !this.gameStarted && activePlayers.length < C.MAX_PLAYERS,
+            gameStarted: this.gameStarted,
+            lastActivity: this.lastActivity
+        };
+    }
+
+    // ============================================
+    // ĖJIMAI IR KAULIUKAI
+    // ============================================
 
     checkDebtor(playerId) {
         const player = this.players[playerId];
@@ -130,6 +334,10 @@ class Game {
     }
 
     rollDice(playerId, socketId) {
+        if (!this.gameStarted) {
+            return { error: 'Žaidimas dar neprasidėjęs!' };
+        }
+        
         if (this.isRolling) return { error: 'Palaukite, kauliukai metami...' };
         if (this.waitingForBuy) return { error: 'Pirmiausia nusipirk sklypą!' };
         
@@ -144,14 +352,13 @@ class Game {
             return { error: 'Ne tavo eilė' };
         }
 
-        this.gameStarted = true;
-
         if (socketId) {
             player.socketId = socketId;
         }
 
         this.isRolling = true;
         this.currentPlayerId = playerId;
+        this.lastActivity = Date.now();
         
         const dice1 = Math.floor(Math.random() * 6) + 1;
         const dice2 = Math.floor(Math.random() * 6) + 1;
@@ -656,6 +863,7 @@ class Game {
         this.addMessage(`${player.name} nusipirko ${field.name} už €${field.cost}! 🏠`);
         
         this.waitingForBuy = false;
+        this.lastActivity = Date.now();
         
         if (this.emitFunction) {
             this.emitFunction('buyConfirmed', {
@@ -684,6 +892,8 @@ class Game {
         const field = this.board[player.position];
         this.waitingForBuy = false;
         this.addMessage(`${player.name} atsisakė pirkti ${field.name}`);
+        
+        this.lastActivity = Date.now();
         
         if (this.emitFunction) {
             this.emitFunction('buyCancelled', {
@@ -759,6 +969,8 @@ class Game {
         player.leftAt = new Date().toISOString();
 
         this.addMessage(`😭 ${playerName} susinervino ir pabėgo į kampą!`);
+        
+        this.lastActivity = Date.now();
 
         if (this.activeVoteKick) {
             if (this.activeVoteKick.targetId === playerId) {
@@ -835,7 +1047,8 @@ class Game {
             players: this.players.map(p => ({
                 ...p,
                 isDebtor: p.isDebtor || false,
-                kicked: p.kicked || false
+                kicked: p.kicked || false,
+                ready: p.ready || false
             })),
             board: this.board,
             currentTurn: this.currentTurn,
@@ -846,7 +1059,9 @@ class Game {
             waitingForBuy: this.waitingForBuy,
             consecutiveDoubles: this.consecutiveDoubles,
             doubleRoll: this.doubleRoll,
-            activeVoteKick: this.activeVoteKick ? this.getVoteKickState() : null
+            activeVoteKick: this.activeVoteKick ? this.getVoteKickState() : null,
+            isPublic: this.isPublic,
+            gameId: this.gameId
         };
     }
 
@@ -1093,7 +1308,7 @@ class Game {
     }
 
     // ============================================
-    // KITI METODAI
+    // KITI METODAI (perduodami kitiems moduliams)
     // ============================================
 
     sellToBank(playerId, fieldIds) {

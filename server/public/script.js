@@ -1,5 +1,5 @@
 // ============================================
-// script.js
+// script.js - 1 DALIS
 // ============================================
 
 let socket;
@@ -17,11 +17,11 @@ let lastVolume = 50;
 let infoMode = false;
 let lastHoveredField = null;
 
-// 🆕 VOTE-KICK
+// VOTE-KICK
 let voteKickTimerInterval = null;
 let amIKicked = false;
 
-// 🆕 SPALVŲ PASIRINKIMAS
+// SPALVŲ PASIRINKIMAS
 const PLAYER_COLORS = [
     '#9c0505', '#e2de00', '#5506d3', '#05b130',
     '#000000', '#00adc4', '#492b1f', '#7edf00'
@@ -31,6 +31,12 @@ let selectedCreateColor = null;
 let selectedJoinColor = null;
 let availableJoinColors = [];
 let joinColorCheckTimeout = null;
+
+// WAITING ROOM
+let waitingRoomState = null;
+
+// VIEŠI STALAI
+let publicGamesCheckInterval = null;
 
 // ============================================
 // PRISIJUNGIMAS
@@ -143,12 +149,11 @@ function initSocket() {
         document.getElementById('bankruptModal').style.display = 'none';
     });
 
-    // 🆕 SPALVŲ GAVIMAS
+    // SPALVŲ GAVIMAS
     socket.on('gameColors', (data) => {
         console.log('🎨 Gautos spalvos:', data);
         
         if (data.error) {
-            // Klaida - rodom VISAS spalvas (kad galėtų rinktis, bet įspėjam)
             availableJoinColors = [...PLAYER_COLORS];
             selectedJoinColor = null;
             renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
@@ -158,7 +163,6 @@ function initSocket() {
             return;
         }
         
-        // Jei available yra tuščias - rodom visas (bet bus klaida bandant prisijungti)
         if (!data.available || data.available.length === 0) {
             availableJoinColors = [...PLAYER_COLORS];
             selectedJoinColor = null;
@@ -171,7 +175,6 @@ function initSocket() {
         
         availableJoinColors = data.available;
         
-        // Jei pasirinkta spalva nebe laisva - išvalom
         if (selectedJoinColor && !availableJoinColors.includes(selectedJoinColor)) {
             selectedJoinColor = null;
         }
@@ -184,6 +187,56 @@ function initSocket() {
             const takenCount = data.used.length;
             status.textContent = `👥 Žaidėjai: ${takenCount}/${totalColors} • Laisvos: ${availableJoinColors.length}`;
         }
+    });
+
+    // WAITING ROOM (Etapas 3)
+    socket.on('waitingRoomUpdate', (state) => {
+        console.log('⏳ Waiting room update:', state);
+        updateWaitingRoom(state);
+    });
+
+    socket.on('gameStarted', (data) => {
+        console.log('🎮 Žaidimas pradėtas:', data);
+        playStartSound();
+        
+        const msg = `🎮 Žaidimas pradėtas! Pirmas eina: ${data.firstPlayerName}`;
+        addNotification(msg);
+        addJournal(msg);
+        
+        hideWaitingRoom();
+        
+        if (gameState) updateUI(gameState);
+    });
+
+    socket.on('youWereKicked', () => {
+        console.log('❌ Buvau išmestas iš waiting room');
+        playErrorSound();
+        alert('❌ Tave išmetė kūrėjas!');
+        
+        if (typeof goToMenu === 'function') {
+            goToMenu();
+        }
+        
+        playerId = null;
+        gameId = null;
+        gameState = null;
+        myPlayer = null;
+        localStorage.removeItem('bancrupt_gameId');
+        localStorage.removeItem('bancrupt_playerToken');
+    });
+
+    socket.on('publicStatusChanged', (data) => {
+        console.log('🌐 Viešumo statusas pakeistas:', data);
+        if (data.isPublic) {
+            addNotification('🌐 Stalas dabar viešas!');
+        } else {
+            addNotification('🔒 Stalas dabar privatus');
+        }
+    });
+
+    socket.on('publicGamesList', (games) => {
+        console.log('🌐 Viešų stalų sąrašas:', games);
+        renderPublicGames(games);
     });
 
     socket.on('diceRolled', (data) => {
@@ -751,7 +804,7 @@ function initSocket() {
 }
 
 // ============================================
-// 🆕 SPALVŲ PASIRINKIMO FUNKCIJOS
+// SPALVŲ PASIRINKIMO FUNKCIJOS
 // ============================================
 
 function renderColorPicker(containerId, availableColors, selectedColor, onSelect) {
@@ -793,7 +846,6 @@ function selectCreateColor(color) {
 }
 
 function selectJoinColor(color) {
-    // Jei available tuščias - leidžiam bet kokią (serveris patikrins)
     if (availableJoinColors.length === 0) {
         selectedJoinColor = color;
         renderColorPicker('joinColorPicker', PLAYER_COLORS, selectedJoinColor, selectJoinColor);
@@ -813,7 +865,6 @@ function selectJoinColor(color) {
 function checkGameColors() {
     const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
     if (!gid || gid.length < 4) {
-        // Kol kodas per trumpas - rodom VISAS spalvas
         availableJoinColors = [...PLAYER_COLORS];
         selectedJoinColor = null;
         renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
@@ -823,6 +874,220 @@ function checkGameColors() {
     }
     
     socket.emit('getGameColors', { gameId: gid });
+}
+
+// ============================================
+// WAITING ROOM FUNKCIJOS
+// ============================================
+
+function showWaitingRoom() {
+    const overlay = document.getElementById('waitingRoomOverlay');
+    if (overlay) overlay.style.display = 'flex';
+    
+    const codeEl = document.getElementById('waitingGameCode');
+    if (codeEl && gameId) codeEl.textContent = gameId;
+    
+    const linkEl = document.getElementById('waitingGameLink');
+    if (linkEl && gameId) {
+        linkEl.textContent = window.location.origin + '/?game=' + gameId;
+    }
+}
+
+function hideWaitingRoom() {
+    const overlay = document.getElementById('waitingRoomOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function updateWaitingRoom(state) {
+    waitingRoomState = state;
+    
+    console.log('🔄 Atnaujinu waiting room:', state);
+    
+    const countEl = document.getElementById('waitingPlayerCount');
+    if (countEl) countEl.textContent = `${state.totalPlayers}/8`;
+    
+    const listEl = document.getElementById('waitingPlayersList');
+    if (listEl) {
+        if (state.players.length === 0) {
+            listEl.innerHTML = '<p style="color:#d4b896; text-align:center;">Nėra žaidėjų</p>';
+        } else {
+            listEl.innerHTML = state.players.map(p => `
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'}">
+                    <span style="width:20px; height:20px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
+                    <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' (tu)' : ''}</span>
+                    <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅ Pasiruošęs' : '⏳ Laukia'}</span>
+                    ${state.hostId === playerId && p.id !== playerId && !p.ready ? `
+                        <button onclick="kickPlayer(${p.id})" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">❌</button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+    }
+    
+    const statusEl = document.getElementById('waitingStatusText');
+    if (statusEl) {
+        if (state.canStart) {
+            statusEl.innerHTML = '🎉 <strong style="color:#28a745;">Visi pasiruošę!</strong> Galima pradėti žaidimą.';
+        } else if (state.totalPlayers < 2) {
+            statusEl.innerHTML = `👥 Reikia bent <strong>2 žaidėjų</strong> • Turim: ${state.totalPlayers}`;
+        } else {
+            const notReady = state.totalPlayers - state.readyCount;
+            statusEl.innerHTML = `✋ Dar <strong>${notReady} žaidėjas(-ai)</strong> nepasiruošęs(-ę)`;
+        }
+    }
+    
+    const readyBtn = document.getElementById('readyBtn');
+    const startBtn = document.getElementById('startGameBtn');
+    
+    if (readyBtn) {
+        const me = state.players.find(p => p.id === playerId);
+        if (me && me.ready) {
+            readyBtn.innerHTML = '✅ Pasiruošęs (spausk atšaukti)';
+            readyBtn.style.background = 'linear-gradient(145deg, #6c757d, #495057)';
+        } else {
+            readyBtn.innerHTML = '✋ Aš pasiruošęs';
+            readyBtn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';
+        }
+    }
+    
+    if (startBtn) {
+        if (playerId === state.hostId) {
+            startBtn.style.display = 'block';
+            if (state.canStart) {
+                startBtn.disabled = false;
+                startBtn.style.opacity = '1';
+                startBtn.innerHTML = '🚀 Pradėti žaidimą';
+            } else {
+                startBtn.disabled = true;
+                startBtn.style.opacity = '0.5';
+                startBtn.innerHTML = '🚀 Pradėti žaidimą (ne visi pasiruošę)';
+            }
+        } else {
+            startBtn.style.display = 'none';
+        }
+    }
+    
+    const publicCheckbox = document.getElementById('waitingIsPublic');
+    if (publicCheckbox) {
+        publicCheckbox.checked = state.isPublic === true;
+        if (playerId !== state.hostId) {
+            publicCheckbox.disabled = true;
+        } else {
+            publicCheckbox.disabled = false;
+        }
+    }
+}
+
+function toggleReady() {
+    if (!waitingRoomState) return;
+    
+    const me = waitingRoomState.players.find(p => p.id === playerId);
+    const newReady = !(me && me.ready);
+    
+    playClickSound();
+    socket.emit('playerReady', { ready: newReady });
+}
+
+function startGame() {
+    playClickSound();
+    socket.emit('startGame');
+}
+
+function kickPlayer(targetId) {
+    if (!confirm('❌ Ar tikrai nori išmesti šį žaidėją?')) return;
+    
+    playClickSound();
+    socket.emit('kickPlayer', { targetId: targetId });
+}
+
+function copyGameCode() {
+    if (!gameId) return;
+    
+    navigator.clipboard.writeText(gameId).then(() => {
+        playNotificationSound();
+        alert('📋 Kodas nukopijuotas: ' + gameId);
+    }).catch(() => {
+        prompt('Nukopijuok kodą:', gameId);
+    });
+}
+
+function copyGameLink() {
+    if (!gameId) return;
+    
+    const link = window.location.origin + '/?game=' + gameId;
+    
+    navigator.clipboard.writeText(link).then(() => {
+        playNotificationSound();
+        alert('🔗 Nuoroda nukopijuota!');
+    }).catch(() => {
+        prompt('Nukopijuok nuorodą:', link);
+    });
+}
+
+function sendWaitingChat() {
+    const input = document.getElementById('waitingChatInput');
+    if (!input) return;
+    
+    const msg = input.value.trim();
+    if (!msg) return;
+    
+    socket.emit('chatMessage', msg);
+    input.value = '';
+}
+
+function togglePublic() {
+    const checkbox = document.getElementById('waitingIsPublic');
+    if (!checkbox) return;
+    
+    playClickSound();
+    socket.emit('setGamePublic', { isPublic: checkbox.checked });
+}
+
+// ============================================
+// VIEŠI STALAI
+// ============================================
+
+function refreshPublicGames() {
+    if (!socket || !isConnected) return;
+    socket.emit('getPublicGames');
+}
+
+function renderPublicGames(games) {
+    const listEl = document.getElementById('publicGamesList');
+    if (!listEl) return;
+    
+    if (!games || games.length === 0) {
+        listEl.innerHTML = '<div class="public-games-empty">Nėra viešų stalų<br><br>Galite sukurti savo viešą stalą</div>';
+        return;
+    }
+    
+    listEl.innerHTML = games.map(g => `
+        <div class="public-game-item" onclick="joinPublicGame('${g.gameId}')">
+            <span style="font-size:24px;">🌐</span>
+            <div style="flex:1;">
+                <div class="game-host">👑 ${g.hostName}</div>
+                <div class="game-count">👥 ${g.playerCount}/${g.maxPlayers} žaidėjai</div>
+            </div>
+            <div class="game-code">${g.gameId}</div>
+        </div>
+    `).join('');
+}
+
+function joinPublicGame(gid) {
+    closePublicGamesModal();
+    
+    // Perjungiam į join puslapį su užpildytu kodu
+    if (typeof showPage === 'function') {
+        showPage('page-join');
+    }
+    
+    setTimeout(() => {
+        const input = document.getElementById('gameIdInput');
+        if (input) {
+            input.value = gid;
+            checkGameColors();
+        }
+    }, 200);
 }
 
 // ============================================
@@ -1493,7 +1758,6 @@ function addNotification(msg) {
 }
 
 function showLobbyMessage(msg, color) {
-    // Bandom abu
     const el1 = document.getElementById('createMessages');
     const el2 = document.getElementById('joinMessages');
     if (el1) el1.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
@@ -1514,9 +1778,13 @@ function createGame() {
     }
     playClickSound();
     
+    const isPublicCheckbox = document.getElementById('createIsPublic');
+    const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
+    
     socket.emit('createGame', {
         name: name,
-        color: selectedCreateColor
+        color: selectedCreateColor,
+        isPublic: isPublic
     });
 }
 
@@ -1584,6 +1852,11 @@ function enterGame() {
     }
     
     socket.emit('getGameState');
+    
+    setTimeout(() => {
+        socket.emit('getWaitingRoom');
+        showWaitingRoom();
+    }, 300);
 }
 
 // ============================================
@@ -2743,16 +3016,29 @@ function updateBoard(state) {
 }
 
 function addChatMessage(data) {
+    // Pagrindinis chat
     const container = document.getElementById('chatMessages');
-    const time = new Date(data.timestamp).toLocaleTimeString();
-    container.innerHTML += `<div style="color:${data.color}"><b>${data.player}:</b> ${data.message} <span style="font-size:7px;color:rgba(61,43,31,0.4)">${time}</span></div>`;
-    container.scrollTop = container.scrollHeight;
+    if (container) {
+        const time = new Date(data.timestamp).toLocaleTimeString();
+        container.innerHTML += `<div style="color:${data.color}"><b>${data.player}:</b> ${data.message} <span style="font-size:7px;color:rgba(61,43,31,0.4)">${time}</span></div>`;
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    // Waiting room chat
+    const waitingContainer = document.getElementById('waitingChatMessages');
+    if (waitingContainer) {
+        const time = new Date(data.timestamp).toLocaleTimeString();
+        waitingContainer.innerHTML += `<div style="color:${data.color}; margin-bottom:4px;"><b>${data.player}:</b> ${data.message} <span style="font-size:9px; color:rgba(212,184,150,0.5);">${time}</span></div>`;
+        waitingContainer.scrollTop = waitingContainer.scrollHeight;
+    }
 }
 
 let journalCount = 0;
 
 function addJournal(msg) {
     const container = document.getElementById('journal');
+    if (!container) return;
+    
     journalCount++;
     const time = new Date().toLocaleTimeString();
     
@@ -2772,9 +3058,14 @@ function addJournal(msg) {
     }
 }
 
+// ============================================
+// INICIJAVIMAS
+// ============================================
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 Puslapis įkeltas');
     
+    // Create formos name input
     const createNameInput = document.getElementById('createPlayerName');
     if (createNameInput) {
         createNameInput.addEventListener('keypress', (e) => {
@@ -2782,6 +3073,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Join formos name input
     const joinNameInput = document.getElementById('joinPlayerName');
     if (joinNameInput) {
         joinNameInput.addEventListener('keypress', (e) => {
@@ -2789,6 +3081,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Join formos game ID input
     const gameIdInputEl = document.getElementById('gameIdInput');
     if (gameIdInputEl) {
         gameIdInputEl.addEventListener('keypress', (e) => {
@@ -2815,17 +3108,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // 🆕 Inicializuoti spalvų ratukus
+    // SPALVŲ RATUKAI
     renderColorPicker('createColorPicker', null, null, selectCreateColor);
     
-    // Prisijungimo picker - inicializuojam su VISOMIS spalvomis (kol kas)
     availableJoinColors = [...PLAYER_COLORS];
     renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
     
-    // 🆕 Stalo kodo input - kai pasikeičia, tikrinti spalvas
-    const gameIdInput = document.getElementById('gameIdInput');
-    if (gameIdInput) {
-        gameIdInput.addEventListener('input', function() {
+    // STALO KODO INPUT (tikrina spalvas)
+    if (gameIdInputEl) {
+        gameIdInputEl.addEventListener('input', function() {
             if (joinColorCheckTimeout) clearTimeout(joinColorCheckTimeout);
             joinColorCheckTimeout = setTimeout(() => {
                 checkGameColors();

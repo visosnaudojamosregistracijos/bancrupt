@@ -1232,7 +1232,7 @@ body {
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
-/* ---------- MINI KORTELĖS (TIKROS KORTELĖS) ---------- */
+/* ---------- MINI KORTELĖS ---------- */
 .mini-cards-container {
     display: flex;
     flex-wrap: wrap;
@@ -1451,7 +1451,7 @@ body {
     line-height: 1.2;
 }
 
-/* ---------- ŽAIDĖJŲ IKONĖLĖS (PADIDINTOS) ---------- */
+/* ---------- ŽAIDĖJŲ IKONĖLĖS ---------- */
 .cell .players-on-cell {
     position: absolute;
     top: 0;
@@ -2044,7 +2044,7 @@ body {
     .left-btn { font-size: 8px; padding: 5px 3px; }
     #leftPlayerCount, #leftTurnDisplay { font-size: 7px; }
     
-    /* 🆕 Spalvų pasirinkimas telefone */
+    /* Spalvų pasirinkimas telefone */
     .color-circle {
         width: 38px;
         height: 38px;
@@ -2124,7 +2124,7 @@ body {
     transform: scale(1.03);
 }
 
-/* ---------- INFO PANELĖ (5 LANGELYJE) ---------- */
+/* ---------- INFO PANELĖ ---------- */
 #cellInfoPanel {
     display: none;
     flex-direction: column;
@@ -2292,7 +2292,7 @@ body {
     margin: 5px 0;
 }
 
-/* ---------- FONO IKONA (EMOJI PER VISĄ LANGELĮ) ---------- */
+/* ---------- FONO IKONA ---------- */
 .cell-bg-icon {
     position: absolute;
     top: 50%;
@@ -2416,4 +2416,94 @@ body {
         width: 10px;
         height: 10px;
     }
+}
+
+/* ============================================ */
+/* VIEŠI STALAI (Etapas 6) */
+/* ============================================ */
+.public-game-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    border: 2px solid #c9a84c;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.public-game-item:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.02);
+    border-color: #ffd700;
+}
+
+.public-game-item .game-host {
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.public-game-item .game-code {
+    color: #ffd700;
+    font-weight: 900;
+    letter-spacing: 2px;
+    font-size: 16px;
+}
+
+.public-game-item .game-count {
+    color: #d4b896;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.public-games-empty {
+    text-align: center;
+    padding: 30px;
+    color: #d4b896;
+    font-style: italic;
+}
+
+/* ============================================ */
+/* WAITING ROOM OVERLAY (papildymas) */
+/* ============================================ */
+#waitingRoomOverlay {
+    animation: waitingFadeIn 0.3s ease;
+}
+
+@keyframes waitingFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#waitingPlayersList::-webkit-scrollbar,
+#waitingChatMessages::-webkit-scrollbar {
+    width: 4px;
+}
+
+#waitingPlayersList::-webkit-scrollbar-thumb,
+#waitingChatMessages::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 2px;
+}
+
+#waitingPlayersList::-webkit-scrollbar-track,
+#waitingChatMessages::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+}
+
+#readyBtn:disabled,
+#startGameBtn:disabled {
+    cursor: not-allowed;
+}
+
+#waitingIsPublic {
+    accent-color: #ffd700;
+}
+
+#createIsPublic {
+    accent-color: #ffd700;
 }
