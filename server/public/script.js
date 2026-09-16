@@ -834,7 +834,7 @@ function autoFitInfoFont() {
     
     // 🆕 Jei turinys netelpa – MAŽINTI (iki min)
     let attempts = 0;
-    while (panel.scrollHeight > panel.clientHeight && fontSize > 9 && attempts < 15) {
+    while (panel.scrollHeight > panel.clientHeight && fontSize > 8 && attempts < 15) {
         fontSize--;
         panel.style.setProperty('--info-font-size', fontSize + 'px');
         panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
