@@ -2,13 +2,15 @@
 // PREKYBOS LOGIKA
 // ============================================
 
+const C = require('./gameConstants');
+
 class TradingLogic {
     constructor(game) {
         this.game = game;
         this.auctions = new Map();
         this.trades = new Map();
-        this.utilityIds = [2, 14, 29, 45];
-        this.serviceIds = [8, 19, 40, 47];
+        this.utilityIds = C.SERVICE1_IDS;
+        this.serviceIds = C.SERVICE2_IDS;
     }
 
     hasHouses(playerId, fieldId) {

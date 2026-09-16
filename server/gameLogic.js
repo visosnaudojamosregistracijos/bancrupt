@@ -3,6 +3,7 @@ const boardData = require('./boardData');
 const BuildingLogic = require('./buildingLogic');
 const TradingLogic = require('./tradingLogic');
 const DemolishLogic = require('./demolishLogic');
+const C = require('./gameConstants');
 
 class Game {
     constructor() {
@@ -312,9 +313,9 @@ class Game {
         
         let ids;
         if (serviceType === 'service1') {
-            ids = [2, 14, 29, 45];
+            ids = C.SERVICE1_IDS;
         } else if (serviceType === 'service2') {
-            ids = [8, 19, 40, 47];
+            ids = C.SERVICE2_IDS;
         } else {
             return 0;
         }
