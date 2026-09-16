@@ -2046,7 +2046,6 @@ body {
     .left-btn { font-size: 8px; padding: 5px 3px; }
     #leftPlayerCount, #leftTurnDisplay { font-size: 7px; }
     
-    /* Spalvų pasirinkimas telefone */
     .color-circle {
         width: 38px;
         height: 38px;
@@ -2126,22 +2125,24 @@ body {
     transform: scale(1.03);
 }
 
-/* ---------- INFO PANELĖ ---------- */
+/* ============================================ */
+/* ---------- INFO PANELĖ (PADIDINTI ŠRIFTAI) ---------- */
+/* ============================================ */
 #cellInfoPanel {
     display: none;
     flex-direction: column;
-    gap: 2px;
-    padding: 6px 8px;
+    gap: 4px;
+    padding: 10px 14px;
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid rgba(61, 43, 31, 0.1);
-    margin-top: 4px;
+    margin-top: 6px;
     min-height: 30px;
-    max-height: 200px;
+    max-height: 400px;
     overflow-y: auto;
-    font-size: 20px;
+    font-size: 16px;
     color: #3d2b1f;
-    line-height: 1.4;
+    line-height: 1.5;
     flex-shrink: 0;
 }
 
@@ -2150,40 +2151,42 @@ body {
 }
 
 #cellInfoPanel::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
 }
 
 #cellInfoPanel::-webkit-scrollbar-thumb {
     background: #c9a84c;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 
 .info-header {
     font-weight: 700;
-    font-size: 12px;
+    font-size: 20px;
     color: #1a6b3c;
-    border-bottom: 1px solid #c9a84c;
-    padding-bottom: 3px;
-    margin-bottom: 3px;
+    border-bottom: 2px solid #c9a84c;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
     text-align: center;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    gap: 4px;
-    padding: 1px 0;
-    font-size: 10px;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 16px;
 }
 
 .info-row .label {
     color: #6c757d;
     font-weight: 600;
+    font-size: 16px;
 }
 
 .info-row .value {
     color: #3d2b1f;
     font-weight: 700;
+    font-size: 16px;
 }
 
 .info-row .value.green {
@@ -2195,22 +2198,22 @@ body {
 }
 
 .info-section {
-    margin-top: 3px;
-    padding-top: 3px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px dashed rgba(61, 43, 31, 0.2);
 }
 
 .info-section-title {
     font-weight: 700;
-    font-size: 10px;
+    font-size: 17px;
     color: #1a6b3c;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .info-placeholder {
     text-align: center;
     color: #6c757d;
-    font-size: 10px;
+    font-size: 14px;
     padding: 8px;
     font-style: italic;
 }
@@ -2409,7 +2412,36 @@ body {
     left: 6px;
 }
 
+/* ---------- INFO PANELĖ TELEFONE ---------- */
 @media (max-width: 480px) {
+    #cellInfoPanel {
+        font-size: 12px;
+        padding: 6px 8px;
+        max-height: 250px;
+    }
+    
+    .info-header {
+        font-size: 14px;
+        padding-bottom: 3px;
+        margin-bottom: 3px;
+    }
+    
+    .info-row {
+        font-size: 12px;
+    }
+    
+    .info-row .label {
+        font-size: 12px;
+    }
+    
+    .info-row .value {
+        font-size: 12px;
+    }
+    
+    .info-section-title {
+        font-size: 13px;
+    }
+    
     .cell .cell-name {
         font-size: 5px;
     }
@@ -2469,7 +2501,7 @@ body {
 }
 
 /* ============================================ */
-/* WAITING ROOM OVERLAY (papildymas) */
+/* WAITING ROOM OVERLAY */
 /* ============================================ */
 #waitingRoomOverlay {
     animation: waitingFadeIn 0.3s ease;
