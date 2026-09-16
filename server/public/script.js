@@ -148,12 +148,24 @@ function initSocket() {
         console.log('🎨 Gautos spalvos:', data);
         
         if (data.error) {
-            availableJoinColors = [];
+            // Klaida - rodom VISAS spalvas (kad galėtų rinktis, bet įspėjam)
+            availableJoinColors = [...PLAYER_COLORS];
             selectedJoinColor = null;
-            renderColorPicker('joinColorPicker', PLAYER_COLORS, null, selectJoinColor);
+            renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
             
             const status = document.getElementById('joinColorStatus');
             if (status) status.textContent = '❌ ' + data.error;
+            return;
+        }
+        
+        // Jei available yra tuščias - rodom visas (bet bus klaida bandant prisijungti)
+        if (!data.available || data.available.length === 0) {
+            availableJoinColors = [...PLAYER_COLORS];
+            selectedJoinColor = null;
+            renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
+            
+            const status = document.getElementById('joinColorStatus');
+            if (status) status.textContent = '⚠️ Nėra laisvų spalvų!';
             return;
         }
         
@@ -781,11 +793,19 @@ function selectCreateColor(color) {
 }
 
 function selectJoinColor(color) {
+    // Jei available tuščias - leidžiam bet kokią (serveris patikrins)
+    if (availableJoinColors.length === 0) {
+        selectedJoinColor = color;
+        renderColorPicker('joinColorPicker', PLAYER_COLORS, selectedJoinColor, selectJoinColor);
+        return;
+    }
+    
     if (!availableJoinColors.includes(color)) {
         playErrorSound();
         alert('❌ Ši spalva jau užimta!');
         return;
     }
+    
     selectedJoinColor = color;
     renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
 }
@@ -793,11 +813,12 @@ function selectJoinColor(color) {
 function checkGameColors() {
     const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
     if (!gid || gid.length < 4) {
-        availableJoinColors = [];
+        // Kol kodas per trumpas - rodom VISAS spalvas
+        availableJoinColors = [...PLAYER_COLORS];
         selectedJoinColor = null;
-        renderColorPicker('joinColorPicker', PLAYER_COLORS, null, selectJoinColor);
+        renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
         const status = document.getElementById('joinColorStatus');
-        if (status) status.textContent = '';
+        if (status) status.textContent = 'Įvesk pilną stalo kodą';
         return;
     }
     
@@ -2796,7 +2817,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 🆕 Inicializuoti spalvų ratukus
     renderColorPicker('createColorPicker', null, null, selectCreateColor);
-    renderColorPicker('joinColorPicker', PLAYER_COLORS, null, selectJoinColor);
+    
+    // Prisijungimo picker - inicializuojam su VISOMIS spalvomis (kol kas)
+    availableJoinColors = [...PLAYER_COLORS];
+    renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
     
     // 🆕 Stalo kodo input - kai pasikeičia, tikrinti spalvas
     const gameIdInput = document.getElementById('gameIdInput');
