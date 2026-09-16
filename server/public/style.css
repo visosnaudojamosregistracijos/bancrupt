@@ -2073,21 +2073,21 @@ body {
 }
 
 /* ============================================ */
-/* ---------- INFO PANELĖ (AUTOMATINIS DYDIS) ---------- */
+/* ---------- INFO PANELĖ (DINAMINIS DYDIS) ---------- */
 /* ============================================ */
 #cellInfoPanel {
     display: none;
     flex-direction: column;
     gap: 3px;
-    padding: clamp(5px, 0.6vw, 10px) clamp(8px, 1vw, 14px);
+    padding: 6px 10px;
     background: rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     border: 1px solid rgba(61, 43, 31, 0.1);
     margin-top: 4px;
     min-height: 30px;
-    max-height: clamp(200px, 40vh, 500px);
+    max-height: 100%;
     overflow-y: auto;
-    font-size: clamp(11px, 1.1vw, 16px);
+    font-size: var(--info-font-size, 13px);
     color: #3d2b1f;
     line-height: 1.4;
     flex-shrink: 0;
@@ -2108,32 +2108,32 @@ body {
 
 .info-header {
     font-weight: 700;
-    font-size: clamp(13px, 1.4vw, 20px);
+    font-size: var(--info-header-size, 16px);
     color: #1a6b3c;
     border-bottom: 2px solid #c9a84c;
-    padding-bottom: clamp(3px, 0.4vw, 6px);
-    margin-bottom: clamp(3px, 0.4vw, 6px);
+    padding-bottom: 4px;
+    margin-bottom: 4px;
     text-align: center;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    gap: clamp(4px, 0.6vw, 8px);
+    gap: 6px;
     padding: 2px 0;
-    font-size: clamp(11px, 1.1vw, 16px);
+    font-size: var(--info-font-size, 13px);
 }
 
 .info-row .label {
     color: #6c757d;
     font-weight: 600;
-    font-size: clamp(11px, 1.1vw, 16px);
+    font-size: var(--info-font-size, 13px);
 }
 
 .info-row .value {
     color: #3d2b1f;
     font-weight: 700;
-    font-size: clamp(11px, 1.1vw, 16px);
+    font-size: var(--info-font-size, 13px);
 }
 
 .info-row .value.green {
@@ -2145,22 +2145,22 @@ body {
 }
 
 .info-section {
-    margin-top: clamp(4px, 0.6vw, 8px);
-    padding-top: clamp(4px, 0.6vw, 8px);
+    margin-top: 6px;
+    padding-top: 6px;
     border-top: 1px dashed rgba(61, 43, 31, 0.2);
 }
 
 .info-section-title {
     font-weight: 700;
-    font-size: clamp(12px, 1.2vw, 18px);
+    font-size: var(--info-section-size, 14px);
     color: #1a6b3c;
-    margin-bottom: clamp(2px, 0.3vw, 4px);
+    margin-bottom: 3px;
 }
 
 .info-placeholder {
     text-align: center;
     color: #6c757d;
-    font-size: clamp(10px, 1vw, 14px);
+    font-size: 12px;
     padding: 8px;
     font-style: italic;
 }

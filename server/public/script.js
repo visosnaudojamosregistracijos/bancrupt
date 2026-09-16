@@ -1,5 +1,5 @@
 // ============================================
-// script.js - 1 DALIS
+// script.js - PILNAS
 // ============================================
 
 let socket;
@@ -37,6 +37,9 @@ let waitingRoomState = null;
 
 // VIEŠI STALAI
 let publicGamesCheckInterval = null;
+
+// INFO PANELĖS ŠRIFTAS
+let infoResizeObserver = null;
 
 // ============================================
 // PRISIJUNGIMAS
@@ -152,8 +155,6 @@ function initSocket() {
     // SPALVŲ GAVIMAS
     socket.on('gameColors', (data) => {
         console.log('🎨 Gautos spalvos:', data);
-        console.log('   Available:', data.available);
-        console.log('   Used:', data.used);
         
         if (data.error) {
             availableJoinColors = [...PLAYER_COLORS];
@@ -165,20 +166,17 @@ function initSocket() {
             return;
         }
         
-        // 🆕 Jei serveris atsiuntė used sąrašą - naudojam jį
-        if (data.used && Array.isArray(data.used)) {
-            // Apskaičiuojam available iš PLAYER_COLORS minus used
-            availableJoinColors = PLAYER_COLORS.filter(c => !data.used.includes(c));
-        } else if (data.available && Array.isArray(data.available)) {
-            availableJoinColors = data.available;
-        } else {
+        if (!data.available || data.available.length === 0) {
             availableJoinColors = [...PLAYER_COLORS];
+            selectedJoinColor = null;
+            renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
+            
+            const status = document.getElementById('joinColorStatus');
+            if (status) status.textContent = '⚠️ Nėra laisvų spalvų!';
+            return;
         }
         
-        // Jei available tuščias - rodom visas (kad galėtų rinktis, bet įspėjam)
-        if (availableJoinColors.length === 0) {
-            availableJoinColors = [...PLAYER_COLORS];
-        }
+        availableJoinColors = data.available;
         
         if (selectedJoinColor && !availableJoinColors.includes(selectedJoinColor)) {
             selectedJoinColor = null;
@@ -189,19 +187,8 @@ function initSocket() {
         const status = document.getElementById('joinColorStatus');
         if (status) {
             const totalColors = PLAYER_COLORS.length;
-            const takenCount = data.used ? data.used.length : (totalColors - availableJoinColors.length);
-            const freeCount = availableJoinColors.length;
-            
-            if (freeCount === 0) {
-                status.textContent = '⚠️ Nėra laisvų spalvų!';
-                status.style.color = '#dc3545';
-            } else if (takenCount === 0) {
-                status.textContent = '✨ Visos spalvos laisvos!';
-                status.style.color = '#28a745';
-            } else {
-                status.textContent = `👥 Užimta: ${takenCount}/${totalColors} • Laisvos: ${freeCount}`;
-                status.style.color = '#d4b896';
-            }
+            const takenCount = data.used.length;
+            status.textContent = `👥 Žaidėjai: ${takenCount}/${totalColors} • Laisvos: ${availableJoinColors.length}`;
         }
     });
 
@@ -590,9 +577,7 @@ function initSocket() {
         if (gameState) updateUI(gameState);
     });
 
-    // ============================================
     // AUKCIONO KLAUSYMAI
-    // ============================================
 
     socket.on('auctionStarted', (data) => {
         console.log('🔨 KLIENTAS GAUNA auctionStarted EVENTĄ');
@@ -726,9 +711,7 @@ function initSocket() {
         }, 500);
     });
 
-    // ============================================
     // VOTE-KICK KLAUSYMAI
-    // ============================================
 
     socket.on('voteKickStarted', (data) => {
         console.log('🗳️ Balsavimas pradėtas:', data);
@@ -817,6 +800,73 @@ function initSocket() {
         addNotification(`🗳️ Balsavimas atšauktas: ${data.reason}`);
         addJournal(`🗳️ Balsavimas atšauktas: ${data.reason}`);
     });
+}
+
+// ============================================
+// AUTO INFO PANELĖS ŠRIFTAS
+// ============================================
+
+function autoFitInfoFont() {
+    const panel = document.getElementById('cellInfoPanel');
+    if (!panel || !panel.classList.contains('show')) return;
+    
+    const width = panel.clientWidth;
+    const height = panel.clientHeight;
+    
+    if (width === 0 || height === 0) return;
+    
+    // Bazinis šriftas pagal panelės plotį
+    let fontSize = 13;
+    
+    if (width < 200) fontSize = 10;
+    else if (width < 250) fontSize = 10;
+    else if (width < 300) fontSize = 11;
+    else if (width < 350) fontSize = 12;
+    else if (width < 400) fontSize = 13;
+    else if (width < 500) fontSize = 14;
+    else if (width < 650) fontSize = 15;
+    else fontSize = 16;
+    
+    // Nustatyti CSS kintamuosius
+    panel.style.setProperty('--info-font-size', fontSize + 'px');
+    panel.style.setProperty('--info-header-size', (fontSize + 3) + 'px');
+    panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
+    
+    // Jei turinys netelpa – mažinti šriftą
+    let attempts = 0;
+    while (panel.scrollHeight > panel.clientHeight && fontSize > 9 && attempts < 10) {
+        fontSize--;
+        panel.style.setProperty('--info-font-size', fontSize + 'px');
+        panel.style.setProperty('--info-header-size', (fontSize + 3) + 'px');
+        panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
+        attempts++;
+    }
+    
+    console.log(`📏 Info panel: ${width}×${height}px → ${fontSize}px`);
+}
+
+function initInfoResizeObserver() {
+    const panel = document.getElementById('cellInfoPanel');
+    if (!panel) return;
+    
+    if (infoResizeObserver) {
+        infoResizeObserver.disconnect();
+    }
+    
+    if (window.ResizeObserver) {
+        infoResizeObserver = new ResizeObserver(() => {
+            setTimeout(autoFitInfoFont, 50);
+        });
+        infoResizeObserver.observe(panel);
+        console.log('✅ Info ResizeObserver inicijuotas');
+    }
+    
+    window.addEventListener('resize', () => {
+        setTimeout(autoFitInfoFont, 100);
+    });
+    
+    // Pirmas paleidimas
+    setTimeout(autoFitInfoFont, 200);
 }
 
 // ============================================
@@ -1092,7 +1142,6 @@ function renderPublicGames(games) {
 function joinPublicGame(gid) {
     closePublicGamesModal();
     
-    // Perjungiam į join puslapį su užpildytu kodu
     if (typeof showPage === 'function') {
         showPage('page-join');
     }
@@ -1671,6 +1720,9 @@ function showCellInfo(fieldId) {
     }
     
     panel.innerHTML = html;
+    
+    // 🆕 Automatiškai pritaikyti šriftą
+    setTimeout(autoFitInfoFont, 10);
 }
 
 function hideCellInfo() {
@@ -1873,10 +1925,13 @@ function enterGame() {
         socket.emit('getWaitingRoom');
         showWaitingRoom();
     }, 300);
+    
+    // 🆕 Inicializuoti info panelės stebėjimą
+    setTimeout(initInfoResizeObserver, 1000);
 }
 
 // ============================================
-// PASITRAUKIMAS IŠ ŽAIDIMO
+// PASITRAUKIMAS
 // ============================================
 
 function leaveGame() {
@@ -2704,6 +2759,9 @@ function setMode(mode) {
     
     localStorage.setItem('boardMode', mode);
     playClickSound();
+    
+    // 🆕 Perskaičiuoti info panelės šriftą
+    setTimeout(autoFitInfoFont, 300);
 }
 
 // ============================================
@@ -3032,7 +3090,6 @@ function updateBoard(state) {
 }
 
 function addChatMessage(data) {
-    // Pagrindinis chat
     const container = document.getElementById('chatMessages');
     if (container) {
         const time = new Date(data.timestamp).toLocaleTimeString();
@@ -3040,7 +3097,6 @@ function addChatMessage(data) {
         container.scrollTop = container.scrollHeight;
     }
     
-    // Waiting room chat
     const waitingContainer = document.getElementById('waitingChatMessages');
     if (waitingContainer) {
         const time = new Date(data.timestamp).toLocaleTimeString();
@@ -3081,7 +3137,6 @@ function addJournal(msg) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 Puslapis įkeltas');
     
-    // Create formos name input
     const createNameInput = document.getElementById('createPlayerName');
     if (createNameInput) {
         createNameInput.addEventListener('keypress', (e) => {
@@ -3089,7 +3144,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Join formos name input
     const joinNameInput = document.getElementById('joinPlayerName');
     if (joinNameInput) {
         joinNameInput.addEventListener('keypress', (e) => {
@@ -3097,7 +3151,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Join formos game ID input
     const gameIdInputEl = document.getElementById('gameIdInput');
     if (gameIdInputEl) {
         gameIdInputEl.addEventListener('keypress', (e) => {
@@ -3130,7 +3183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     availableJoinColors = [...PLAYER_COLORS];
     renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
     
-    // STALO KODO INPUT (tikrina spalvas)
+    // STALO KODO INPUT
     if (gameIdInputEl) {
         gameIdInputEl.addEventListener('input', function() {
             if (joinColorCheckTimeout) clearTimeout(joinColorCheckTimeout);
@@ -3140,7 +3193,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // LANGELIŲ INFO REŽIMAS (PC + TELEFONAS)
+    // LANGELIŲ INFO REŽIMAS
     document.querySelectorAll('.cell').forEach(cell => {
         const fieldId = parseInt(cell.dataset.id);
         
@@ -3178,6 +3231,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         updateDiceDisplay(1, 1);
     }, 500);
+    
+    // 🆕 Inicializuoti info panelės stebėjimą
+    setTimeout(initInfoResizeObserver, 800);
     
     console.log('✅ Inicijavimas baigtas');
 });
