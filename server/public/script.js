@@ -467,6 +467,10 @@ function initSocket() {
         if (gameState) updateUI(gameState);
     });
 
+    // ============================================
+    // 🆕 AUKCIONO KLAUSYMAI
+    // ============================================
+
     socket.on('auctionStarted', (data) => {
         console.log('🔨 KLIENTAS GAUNA auctionStarted EVENTĄ');
         playAuctionSound();
@@ -477,20 +481,12 @@ function initSocket() {
             return;
         }
         
-        const msg = `🔨 Prasidėjo aukcionas: ${data.fieldName}!`;
+        const msg = `🔨 Prasidėjo aukcionas: ${data.fieldName}! Bankas siūlo €${data.currentBid}`;
         addNotification(msg);
-        if (data.sellerId !== playerId) {
-            showPopupMessage(msg, 'buy');
-        }
         addJournal(msg);
         
-        if (data.sellerId !== playerId) {
-            showAuction(data);
-        } else {
-            const sellerMsg = `📢 Tu paskelbei aukcioną! Kiti žaidėjai siūlo kainas.`;
-            addNotification(sellerMsg);
-            addJournal(sellerMsg);
-        }
+        // Rodyti modalą VISIEMS (įskaitant pardavėją)
+        showAuction(data);
         
         if (gameState) updateUI(gameState);
     });
@@ -498,15 +494,30 @@ function initSocket() {
     socket.on('auctionUpdated', (data) => {
         console.log('💰 Aukciono pasiūlymas:', data);
         playTradeSound();
+        
         if (data.currentBid !== undefined) {
-            document.getElementById('auctionCurrentBid').textContent = data.currentBid;
+            document.getElementById('auctionCurrentBid').textContent = '€' + data.currentBid;
         }
+        
+        if (data.currentBidderName) {
+            document.getElementById('auctionCurrentBidder').textContent = data.currentBidderName;
+        }
+        
+        // Atnaujinti +10% sumą
+        if (data.currentBid !== undefined) {
+            const plus10 = Math.ceil(data.currentBid * 1.10);
+            const plus10Btn = document.getElementById('auctionPlus10Btn');
+            if (plus10Btn) {
+                plus10Btn.textContent = `➕ +10% (€${plus10})`;
+            }
+        }
+        
         if (data.endTime) {
             startAuctionTimer(data.endTime);
         }
-        const msg = `💰 Naujas pasiūlymas: €${data.currentBid}`;
+        
+        const msg = `💰 ${data.currentBidderName || 'Kažkas'} pasiūlė €${data.currentBid}`;
         addNotification(msg);
-        showPopupMessage(msg, 'move');
         addJournal(msg);
     });
 
@@ -515,20 +526,20 @@ function initSocket() {
         
         auctionEndedSent = true;
         
-        if (data && data.winnerName) {
-            const msg = `🔨 ${data.winnerName} laimėjo aukcioną: ${data.fieldName} už €${data.finalBid}!`;
-            addNotification(msg);
-            if (data.winnerId !== playerId) {
+        if (data) {
+            if (data.winnerId === 'bank') {
+                const msg = `🏦 Bankas laimėjo aukcioną: ${data.fieldName} už €${data.finalBid}`;
+                addNotification(msg);
+                showPopupMessage(msg, 'move');
+                addJournal(msg);
+            } else if (data.winnerName) {
+                const msg = `🔨 ${data.winnerName} laimėjo aukcioną: ${data.fieldName} už €${data.finalBid}!`;
+                addNotification(msg);
                 showPopupMessage(msg, 'buy');
+                addJournal(msg);
+                playAuctionSound();
+                playCashSound();
             }
-            addJournal(msg);
-            playAuctionSound();
-            playCashSound();
-        } else if (data) {
-            const msg = `🔨 Aukcionas baigėsi be laimėtojo`;
-            addNotification(msg);
-            showPopupMessage(msg, 'move');
-            addJournal(msg);
         }
         
         closeAuction();
@@ -594,13 +605,12 @@ function initSocket() {
     });
 
     // ============================================
-    // 🆕 VOTE-KICK KLAUSYMAI
+    // VOTE-KICK KLAUSYMAI
     // ============================================
 
     socket.on('voteKickStarted', (data) => {
         console.log('🗳️ Balsavimas pradėtas:', data);
         
-        // Jei aš esu taikinys - NIEKO NERODYTI (žaidžiu toliau normaliai)
         if (data.targetId === playerId) {
             console.log('🗳️ Aš esu taikinys - nerodau nieko');
             return;
@@ -610,11 +620,9 @@ function initSocket() {
         addNotification(`🗳️ ${data.initiatorName} pradėjo balsavimą dėl "${data.targetName}" pašalinimo!`);
         addJournal(`🗳️ ${data.initiatorName} pradėjo balsavimą dėl "${data.targetName}" pašalinimo!`);
         
-        // Jei aš nesu nei iniciatorius, nei taikinys - parodyk balsavimo promptą
         if (playerId !== data.initiatorId && playerId !== data.targetId) {
             showVoteKickPrompt(data);
         } else if (playerId === data.initiatorId) {
-            // Iniciatorius - parodyk statusą
             showVoteKickStatus(data);
         }
     });
@@ -622,16 +630,13 @@ function initSocket() {
     socket.on('voteKickUpdate', (data) => {
         console.log('🗳️ Balsavimo atnaujinimas:', data);
         
-        // Jei aš taikinys - nerodyti
         if (data.targetId === playerId) return;
         
-        // Atnaujink timer'į
         if (data.timeLeft !== undefined) {
             const timerEl = document.getElementById('voteKickTimer');
             if (timerEl) timerEl.textContent = data.timeLeft;
         }
         
-        // Atnaujink statusą
         const statusEl = document.getElementById('voteKickStatus');
         if (statusEl && data.votes) {
             const votesFor = Object.values(data.votes).filter(v => v === true).length;
@@ -642,7 +647,6 @@ function initSocket() {
             `;
         }
         
-        // Atnaujink balsavimo lentelę
         if (data.votes && gameState) {
             updateVoteKickTable(data);
         }
@@ -651,24 +655,20 @@ function initSocket() {
     socket.on('voteKickResult', (data) => {
         console.log('🗳️ Balsavimo rezultatas:', data);
         
-        // Sustabdyk timer'į
         if (voteKickTimerInterval) {
             clearInterval(voteKickTimerInterval);
             voteKickTimerInterval = null;
         }
         
-        // Jei aš taikinys ir balsavimas PAVYKO - parodyk suvestinę
         if (data.targetId === playerId) {
             if (data.kicked) {
                 amIKicked = true;
                 playBankruptSound();
                 showKickSummary(data);
             }
-            // Jei nepavyko - nieko nerodyti (aš net nežinau, kad buvo balsuota)
             return;
         }
         
-        // Kiti žaidėjai - uždaryk modalą
         closeVoteKick();
         
         if (data.kicked) {
@@ -698,7 +698,148 @@ function initSocket() {
 }
 
 // ============================================
-// 🆕 VOTE-KICK FUNKCIJOS
+// AUKCIONO FUNKCIJOS
+// ============================================
+
+function showAuction(data) {
+    if (!data) {
+        alert('❌ Klaida: gauti neteisingi aukciono duomenys');
+        playErrorSound();
+        return;
+    }
+    
+    auctionEndedSent = false;
+    currentAuctionId = data.auctionId;
+    
+    // Ar aš pardavėjas?
+    const isSeller = data.sellerId === playerId;
+    
+    // Užpildyti info
+    document.getElementById('auctionSeller').textContent = data.sellerName || 'Nežinomas';
+    document.getElementById('auctionFieldName').textContent = data.fieldName || 'Nežinoma kortelė';
+    document.getElementById('auctionFieldCost').textContent = '€' + (data.fieldCost || 0);
+    
+    // Rodyti banko pasiūlymą
+    const bankBid = data.currentBid;
+    document.getElementById('auctionBankBid').textContent = '€' + bankBid;
+    
+    // Dabartinė kaina
+    document.getElementById('auctionCurrentBid').textContent = '€' + bankBid;
+    document.getElementById('auctionCurrentBidder').textContent = '🏦 Bankas';
+    
+    // Skaičiuoti +10% sumą
+    const plus10 = Math.ceil(bankBid * 1.10);
+    const plus10Btn = document.getElementById('auctionPlus10Btn');
+    if (plus10Btn) {
+        plus10Btn.textContent = `➕ +10% (€${plus10})`;
+    }
+    
+    // Pardavėjo režimas
+    const sellerNotice = document.getElementById('auctionSellerNotice');
+    const bidControls = document.getElementById('auctionBidControls');
+    const closeBtn = document.getElementById('auctionCloseBtn');
+    
+    if (isSeller) {
+        if (sellerNotice) sellerNotice.style.display = 'block';
+        if (bidControls) bidControls.style.display = 'none';
+        if (closeBtn) closeBtn.style.display = 'none';
+    } else {
+        if (sellerNotice) sellerNotice.style.display = 'none';
+        if (bidControls) bidControls.style.display = 'flex';
+        if (closeBtn) closeBtn.style.display = 'block';
+    }
+    
+    // Timer'is
+    const endTime = data.endTime || (Date.now() + 60000);
+    startAuctionTimer(endTime);
+    
+    document.getElementById('auctionModal').style.display = 'flex';
+    playAuctionSound();
+}
+
+function closeAuction() {
+    document.getElementById('auctionModal').style.display = 'none';
+    if (auctionTimerInterval) {
+        clearInterval(auctionTimerInterval);
+        auctionTimerInterval = null;
+    }
+    currentAuctionId = null;
+    auctionEndedSent = true;
+    playClickSound();
+}
+
+function startAuctionTimer(endTime) {
+    if (auctionTimerInterval) {
+        clearInterval(auctionTimerInterval);
+    }
+    
+    auctionEndedSent = false;
+    
+    auctionTimerInterval = setInterval(() => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+        const timerEl = document.getElementById('auctionTimer');
+        if (timerEl) timerEl.textContent = remaining;
+        
+        if (remaining <= 0 && !auctionEndedSent) {
+            clearInterval(auctionTimerInterval);
+            auctionTimerInterval = null;
+            if (timerEl) timerEl.textContent = '0';
+            
+            auctionEndedSent = true;
+            // Serveris pats baigs per savo timer'į
+        }
+    }, 1000);
+}
+
+function placeBid() {
+    if (!currentAuctionId) {
+        alert('❌ Nėra aktyvaus aukciono!');
+        playErrorSound();
+        return;
+    }
+    
+    const input = document.getElementById('auctionBidInput');
+    const bidAmount = parseInt(input.value);
+    
+    if (isNaN(bidAmount) || bidAmount <= 0) {
+        alert('❌ Įvesk teisingą kainą!');
+        playErrorSound();
+        return;
+    }
+    
+    const currentBidText = document.getElementById('auctionCurrentBid').textContent;
+    const currentBid = parseInt(currentBidText.replace('€', '')) || 0;
+    
+    if (bidAmount <= currentBid) {
+        alert(`❌ Siūlyk daugiau nei €${currentBid}!`);
+        playErrorSound();
+        return;
+    }
+    
+    socket.emit('bidAuction', { auctionId: currentAuctionId, bidAmount });
+    input.value = '';
+    playClickSound();
+}
+
+function placeBidPlus10() {
+    if (!currentAuctionId) {
+        alert('❌ Nėra aktyvaus aukciono!');
+        playErrorSound();
+        return;
+    }
+    
+    const currentBidText = document.getElementById('auctionCurrentBid').textContent;
+    const currentBid = parseInt(currentBidText.replace('€', '')) || 0;
+    
+    const newBid = Math.ceil(currentBid * 1.10);
+    
+    socket.emit('bidAuction', { auctionId: currentAuctionId, bidAmount: newBid });
+    playClickSound();
+}
+
+// ============================================
+// VOTE-KICK FUNKCIJOS
 // ============================================
 
 function openVoteKick() {
@@ -712,7 +853,6 @@ function openVoteKick() {
         return;
     }
     
-    // Apsauga - jei jau vyksta balsavimas
     if (gameState.activeVoteKick) {
         alert('⚠️ Balsavimas jau vyksta! Palauk kol baigsis.');
         return;
@@ -824,7 +964,6 @@ function showVoteKickPrompt(data) {
     
     modal.style.display = 'flex';
     
-    // Timer'is
     if (voteKickTimerInterval) clearInterval(voteKickTimerInterval);
     voteKickTimerInterval = setInterval(() => {
         const timerEl = document.getElementById('voteKickTimer');
@@ -884,7 +1023,6 @@ function updateVoteKickTable(data) {
 }
 
 function showKickSummary(data) {
-    // Parodyk pranešimą, kad buvai pašalintas
     const summaryHtml = data.voteSummary.map(v => {
         const icon = v.vote ? '✅ UŽ' : '❌ PRIEŠ';
         return `<div style="padding:4px 8px; background:rgba(255,255,255,0.2); border-radius:4px; margin:3px 0;">
@@ -1635,7 +1773,7 @@ function confirmStartAuction() {
         return;
     }
     
-    if (confirm(`🔨 Skelbti aukcioną: ${field.name}?`)) {
+    if (confirm(`🔨 Skelbti aukcioną: ${field.name}?\n\nBankas siūlys 70% (€${Math.floor(field.cost * 0.7)}) startinę kainą.`)) {
         socket.emit('startAuction', { fieldId: selectedAuctionField });
         selectedAuctionField = null;
         closeTrading();
@@ -1923,92 +2061,6 @@ function counterTradeOffer() {
     closeTradeOffer();
     openTrading();
     alert('🔄 Atidarytas prekybos langas. Sukurk priešingą pasiūlymą.');
-    playClickSound();
-}
-
-function showAuction(data) {
-    if (!data) {
-        alert('❌ Klaida: gauti neteisingi aukciono duomenys');
-        playErrorSound();
-        return;
-    }
-    
-    auctionEndedSent = false;
-    
-    document.getElementById('auctionSeller').textContent = data.sellerName || 'Nežinomas';
-    document.getElementById('auctionFieldName').textContent = data.fieldName || 'Nežinoma kortelė';
-    document.getElementById('auctionCurrentBid').textContent = data.currentBid || 0;
-    
-    currentAuctionId = data.auctionId;
-    
-    const endTime = data.endTime || (Date.now() + 60000);
-    startAuctionTimer(endTime);
-    
-    document.getElementById('auctionModal').style.display = 'flex';
-    playAuctionSound();
-}
-
-function closeAuction() {
-    document.getElementById('auctionModal').style.display = 'none';
-    if (auctionTimerInterval) {
-        clearInterval(auctionTimerInterval);
-        auctionTimerInterval = null;
-    }
-    currentAuctionId = null;
-    auctionEndedSent = true;
-    playClickSound();
-}
-
-function startAuctionTimer(endTime) {
-    if (auctionTimerInterval) {
-        clearInterval(auctionTimerInterval);
-    }
-    
-    auctionEndedSent = false;
-    
-    auctionTimerInterval = setInterval(() => {
-        const now = Date.now();
-        const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-        document.getElementById('auctionTimer').textContent = remaining;
-        
-        if (remaining <= 0 && !auctionEndedSent) {
-            clearInterval(auctionTimerInterval);
-            auctionTimerInterval = null;
-            document.getElementById('auctionTimer').textContent = '0';
-            
-            auctionEndedSent = true;
-            if (currentAuctionId) {
-                socket.emit('endAuction', { auctionId: currentAuctionId });
-            }
-        }
-    }, 1000);
-}
-
-function placeBid() {
-    const input = document.getElementById('auctionBidInput');
-    const bidAmount = parseInt(input.value);
-    
-    if (!currentAuctionId) {
-        alert('❌ Nėra aktyvaus aukciono!');
-        playErrorSound();
-        return;
-    }
-    
-    if (isNaN(bidAmount) || bidAmount <= 0) {
-        alert('❌ Įvesk teisingą kainą!');
-        playErrorSound();
-        return;
-    }
-    
-    const currentBid = parseInt(document.getElementById('auctionCurrentBid').textContent) || 0;
-    if (bidAmount <= currentBid) {
-        alert(`❌ Siūlyk daugiau nei dabartinė kaina (€${currentBid})!`);
-        playErrorSound();
-        return;
-    }
-    
-    socket.emit('bidAuction', { auctionId: currentAuctionId, bidAmount });
-    input.value = '';
     playClickSound();
 }
 
@@ -2325,9 +2377,7 @@ function updateUI(state) {
         const isKicked = p.kicked === true;
         const isDebtor = p.isDebtor === true;
         
-        // 🆕 Jei kicked - nerodyti iš viso (arba rodyti perbrauktą)
         if (isKicked && p.id !== playerId) {
-            // Nerodyti pašalinto žaidėjo (jis nematomas kitiems)
             return '';
         }
         

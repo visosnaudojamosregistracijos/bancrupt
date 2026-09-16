@@ -111,7 +111,7 @@
                                     <button onclick="setMode('adaptive')" id="modeAdaptive" class="header-btn active" style="padding:2px 8px; font-size:9px; min-width:auto;">Adaptyvus</button>
                                     <button onclick="setMode('fixed')" id="modeFixed" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">Fiksuotas</button>
                                     <button onclick="toggleSoundPanel()" id="soundBtn" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">🔊 Garsas</button>
-                                                                                               </div>
+                                </div>
 
                                 <!-- GARSO PANELĖ -->
                                 <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.15); border-radius:8px; padding:8px; margin-bottom:4px;">
@@ -197,7 +197,6 @@
                                     </div>
                                 </div>
 
-                                <!-- INFO PANELAS -->
                                 <div id="cellInfoPanel">
                                     <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
                                 </div>
@@ -307,7 +306,7 @@
 
             <div id="auctionPanel" style="display:none;">
                 <h3 style="color:#3d2b1f;">🔨 Skelbti aukcioną</h3>
-                <p style="color:#6c757d; font-size:14px;">Pasirink kortelę aukcionui</p>
+                <p style="color:#6c757d; font-size:13px;">Bankas siūlys 70% startinę kainą.<br>Kiti žaidėjai gali siūlyti daugiau.</p>
                 <div id="auctionableProperties" style="margin:10px 0; text-align:left;"></div>
                 <button onclick="confirmStartAuction()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
                     🔨 Pradėti aukcioną
@@ -373,21 +372,48 @@
 
     <!-- AUKCIONO MODALAS -->
     <div id="auctionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9996; justify-content:center; align-items:center;">
-        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; text-align:center; border:3px solid #ffc107; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:90%; text-align:center; border:3px solid #ffc107; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             <h2 style="color:#ffc107; margin-bottom:10px;">🔨 AUKCIONAS</h2>
+            
             <div id="auctionContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
-                <p><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
-                <p><strong>Kortelė:</strong> <span id="auctionFieldName"></span></p>
-                <p><strong>Dabartinė kaina:</strong> €<span id="auctionCurrentBid">0</span></p>
-                <p><strong>Liko laiko:</strong> <span id="auctionTimer">60</span> sek.</p>
+                <p style="margin:5px 0;"><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
+                <p style="margin:5px 0;"><strong>Kortelė:</strong> <span id="auctionFieldName"></span></p>
+                <p style="margin:5px 0;"><strong>Kortelės vertė:</strong> <span id="auctionFieldCost">€0</span></p>
+                
+                <hr style="border:1px solid #c9a84c; margin:10px 0;">
+                
+                <p style="margin:5px 0; color:#6c757d;"><strong>🏦 Banko pradinė:</strong> <span id="auctionBankBid">€0</span></p>
+                <p style="margin:5px 0; font-size:18px;"><strong>💰 Dabartinė kaina:</strong> <span id="auctionCurrentBid" style="color:#28a745; font-weight:700;">€0</span></p>
+                <p style="margin:5px 0;"><strong>👤 Siūlo:</strong> <span id="auctionCurrentBidder">🏦 Bankas</span></p>
+                
+                <hr style="border:1px solid #c9a84c; margin:10px 0;">
+                
+                <p style="margin:5px 0; text-align:center; font-size:16px;"><strong>⏱️ Liko laiko:</strong> <span id="auctionTimer" style="color:#dc3545; font-weight:700;">60</span> s</p>
             </div>
-            <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
-                <input type="number" id="auctionBidInput" placeholder="Įvesk kainą" style="flex:1; padding:10px; border-radius:8px; border:1px solid #c9a84c; min-width:120px;">
-                <button onclick="placeBid()" class="btn-trade-option" style="padding:10px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
-                    💰 Siūlyti
-                </button>
+            
+            <!-- Pranešimas pardavėjui -->
+            <div id="auctionSellerNotice" style="display:none; padding:12px; background:rgba(255,193,7,0.2); border-radius:8px; margin:10px 0; border:2px solid #ffc107;">
+                📢 <strong>Tu esi pardavėjas!</strong><br>
+                <span style="font-size:13px;">Stebėk aukcioną. Kiti žaidėjai siūlo kainas.</span>
             </div>
-            <button onclick="closeAuction()" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+            
+            <!-- Siūlymo kontrolės -->
+            <div id="auctionBidControls" style="display:flex; flex-direction:column; gap:8px; margin:10px 0;">
+                <div style="display:flex; gap:8px;">
+                    <button onclick="placeBidPlus10()" id="auctionPlus10Btn" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                        ➕ +10%
+                    </button>
+                </div>
+                
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="auctionBidInput" placeholder="Įvesk savo sumą (€)" style="flex:1; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; font-weight:600;">
+                    <button onclick="placeBid()" class="btn-trade-option" style="padding:10px 20px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
+                        💰 Siūlyti
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="closeAuction()" id="auctionCloseBtn" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
                 🔙 Uždaryti
             </button>
         </div>

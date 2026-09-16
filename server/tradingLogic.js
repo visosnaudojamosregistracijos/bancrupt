@@ -68,7 +68,7 @@ class TradingLogic {
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
         if (player.left) return { error: 'Žaidėjas pasitraukęs' };
-        // ⚠️ IŠIMTA: currentTurn patikrinimas - leidžiama bet kada
+        if (player.kicked) return { error: 'Žaidėjas pašalintas' };
 
         let totalPrice = 0;
         const soldFields = [];
@@ -120,7 +120,9 @@ class TradingLogic {
         if (player.left) {
             return { error: 'Žaidėjas pasitraukęs' };
         }
-        // ⚠️ IŠIMTA: currentTurn patikrinimas - leidžiama bet kada
+        if (player.kicked) {
+            return { error: 'Žaidėjas pašalintas' };
+        }
 
         if (!player.properties.includes(fieldId)) {
             return { error: 'Neturi šios kortelės' };
@@ -138,24 +140,47 @@ class TradingLogic {
 
         const auctionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
         const endTime = Date.now() + 60000;
-        const startPrice = Math.floor(field.cost * 0.5);
+        
+        // 🆕 BANKAS SIŪLO 70% STARTINĘ KAINĄ
+        const startPrice = Math.floor(field.cost * 0.7);
+
+        // 🆕 BANKAS KAIP BIDDER
+        const bankBid = {
+            playerId: 'bank',
+            playerName: '🏦 Bankas',
+            bid: startPrice
+        };
 
         this.auctions.set(auctionId, {
             fieldId: fieldId,
             sellerId: playerId,
+            sellerName: player.name,
+            fieldName: field.name,
+            fieldCost: field.cost,
             currentBid: startPrice,
-            bidders: [],
+            currentBidder: 'bank',
+            currentBidderName: '🏦 Bankas',
+            bidders: [bankBid],
             endTime: endTime,
             isActive: true,
-            winner: null
+            winner: null,
+            timer: null  // 🆕
         });
 
+        // Nuimti kortelę iš pardavėjo
         player.properties = player.properties.filter(id => id !== fieldId);
         if (player.houses) {
             delete player.houses[fieldId];
         }
 
-        this.game.addMessage(`🔨 ${player.name} paskelbė aukcioną: ${field.name}! Siūlykite!`);
+        this.game.addMessage(`🔨 ${player.name} paskelbė aukcioną: ${field.name}! Bankas siūlo €${startPrice}`);
+
+        // 🆕 SERVERIO PUSĖS TIMER'IS
+        const auction = this.auctions.get(auctionId);
+        const timeLeft = endTime - Date.now();
+        auction.timer = setTimeout(() => {
+            this.endAuctionServerSide(auctionId);
+        }, timeLeft);
 
         return { 
             success: true, 
@@ -166,6 +191,8 @@ class TradingLogic {
             sellerId: playerId,
             sellerName: player.name,
             currentBid: startPrice,
+            currentBidder: 'bank',
+            currentBidderName: '🏦 Bankas',
             endTime: endTime
         };
     }
@@ -176,37 +203,89 @@ class TradingLogic {
     bidAuction(playerId, auctionId, bidAmount) {
         const auction = this.auctions.get(auctionId);
         if (!auction || !auction.isActive) return { error: 'Aukcionas neaktyvus' };
-        if (auction.sellerId === playerId) return { error: 'Negali siūlyti savo aukcione' };
+        
+        // 🆕 Pardavėjas negali siūlyti
+        if (auction.sellerId === playerId) {
+            return { error: 'Tu esi pardavėjas - negali siūlyti savo aukcione!' };
+        }
+        
         if (Date.now() > auction.endTime) {
-            return this.endAuction(auctionId);
+            return { error: 'Aukcionas jau baigėsi' };
         }
 
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
         if (player.left) return { error: 'Žaidėjas pasitraukęs' };
+        if (player.kicked) return { error: 'Žaidėjas pašalintas' };
         if (player.money < bidAmount) return { error: 'Neturi tiek pinigų' };
-        if (bidAmount <= auction.currentBid) return { error: 'Pasiūlyk daugiau nei dabartinė kaina' };
-
-        auction.currentBid = bidAmount;
         
+        // 🆕 Siūlymas turi būti DIDESNIS nei dabartinė
+        if (bidAmount <= auction.currentBid) {
+            return { error: `Siūlyk daugiau nei €${auction.currentBid}!` };
+        }
+
+        // 🆕 Atnaujinti
+        auction.currentBid = bidAmount;
+        auction.currentBidder = playerId;
+        auction.currentBidderName = player.name;
+        
+        // Pridėti/atnaujinti bidder'į
         const existing = auction.bidders.find(b => b.playerId === playerId);
         if (existing) {
             existing.bid = bidAmount;
         } else {
-            auction.bidders.push({ playerId, bid: bidAmount });
+            auction.bidders.push({ 
+                playerId: playerId, 
+                playerName: player.name,
+                bid: bidAmount 
+            });
         }
 
+        // 🆕 PRATĘSTI TIMER'Į 10s
         auction.endTime = Date.now() + 10000;
+        
+        if (auction.timer) {
+            clearTimeout(auction.timer);
+        }
+        auction.timer = setTimeout(() => {
+            this.endAuctionServerSide(auctionId);
+        }, 10000);
 
-        const field = this.game.board.find(f => f.id === auction.fieldId);
-        this.game.addMessage(`💰 ${player.name} pasiūlė €${bidAmount} už ${field ? field.name : 'kortelę'}`);
+        this.game.addMessage(`💰 ${player.name} pasiūlė €${bidAmount} už ${auction.fieldName}!`);
 
         return { 
             success: true, 
+            auctionId: auctionId,
+            fieldId: auction.fieldId,
+            fieldName: auction.fieldName,
             currentBid: bidAmount,
-            bidder: player.name,
+            currentBidder: playerId,
+            currentBidderName: player.name,
             endTime: auction.endTime
         };
+    }
+
+    // ============================================
+    // 🆕 BAIGTI AUKCIONĄ (serverio pusės)
+    // ============================================
+    endAuctionServerSide(auctionId) {
+        const auction = this.auctions.get(auctionId);
+        if (!auction) return;
+        
+        console.log(`🔨 Server-side endAuction: ${auctionId}`);
+        
+        const result = this.endAuction(auctionId);
+        
+        if (result && this.game.emitFunction) {
+            this.game.emitFunction('auctionEnded', result);
+            this.game.emitFunction('gameState', this.game.getGameState());
+            
+            if (result.winnerId === 'bank') {
+                this.game.emitFunction('message', `🏦 Bankas laimėjo aukcioną: ${result.fieldName} už €${result.finalBid}`);
+            } else if (result.winnerName) {
+                this.game.emitFunction('message', `🔨 ${result.winnerName} laimėjo aukcioną: ${result.fieldName} už €${result.finalBid}!`);
+            }
+        }
     }
 
     // ============================================
@@ -216,47 +295,81 @@ class TradingLogic {
         const auction = this.auctions.get(auctionId);
         if (!auction) return null;
         
+        // 🆕 Sustabdyti timer'į
+        if (auction.timer) {
+            clearTimeout(auction.timer);
+            auction.timer = null;
+        }
+        
         auction.isActive = false;
         const field = this.game.board.find(f => f.id === auction.fieldId);
+        
         let winner = null;
         let winnerId = null;
+        let winnerName = null;
 
-        if (auction.bidders.length > 0) {
-            const sorted = auction.bidders.sort((a, b) => b.bid - a.bid);
-            const winnerData = sorted[0];
-            winner = this.game.players[winnerData.playerId];
-            winnerId = winnerData.playerId;
-            
-            if (winner) {
-                winner.properties.push(auction.fieldId);
-                winner.money -= winnerData.bid;
-                
-                const seller = this.game.players[auction.sellerId];
-                if (seller) {
-                    seller.money += winnerData.bid;
-                    if (seller.money >= 0) {
-                        seller.isDebtor = false;
-                    }
-                }
-                
-                this.game.addMessage(`🔨 ${winner.name} laimėjo aukcioną: ${field ? field.name : 'kortelė'} už €${winnerData.bid}!`);
-            }
-        } else {
-            const seller = this.game.players[auction.sellerId];
+        const seller = this.game.players[auction.sellerId];
+        
+        // 🆕 Jei laimi BANKAS
+        if (auction.currentBidder === 'bank') {
+            // Kortelė grąžinama į laisvų sąrašą (dingsta, bet gali būti nupirkta)
+            // Pardavėjas gauna banko pinigus
             if (seller) {
-                seller.properties.push(auction.fieldId);
-                this.game.addMessage(`⏳ Aukcionas ${field ? field.name : 'kortelė'} baigėsi be pasiūlymų - kortelė grąžinta ${seller.name}`);
+                seller.money += auction.currentBid;
+                if (seller.money >= 0) {
+                    seller.isDebtor = false;
+                }
             }
+            
+            this.game.addMessage(`🏦 Bankas laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}`);
+            
+            this.auctions.delete(auctionId);
+            
+            return { 
+                winner: 'bank',
+                winnerId: 'bank',
+                winnerName: '🏦 Bankas',
+                fieldId: auction.fieldId,
+                fieldName: auction.fieldName,
+                finalBid: auction.currentBid,
+                sellerId: auction.sellerId,
+                sellerName: auction.sellerName
+            };
+        }
+        
+        // 🆕 Jei laimi ŽAIDĖJAS
+        winnerId = auction.currentBidder;
+        winner = this.game.players[winnerId];
+        
+        if (winner) {
+            winnerName = winner.name;
+            
+            // Kortelė atitenka laimėtojui
+            winner.properties.push(auction.fieldId);
+            winner.money -= auction.currentBid;
+            
+            // Pardavėjas gauna pinigus
+            if (seller) {
+                seller.money += auction.currentBid;
+                if (seller.money >= 0) {
+                    seller.isDebtor = false;
+                }
+            }
+            
+            this.game.addMessage(`🔨 ${winner.name} laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}!`);
         }
 
         this.auctions.delete(auctionId);
         
         return { 
             winner: winnerId, 
-            winnerName: winner ? winner.name : null,
+            winnerId: winnerId,
+            winnerName: winnerName,
             fieldId: auction.fieldId,
-            fieldName: field ? field.name : null,
-            finalBid: auction.currentBid
+            fieldName: auction.fieldName,
+            finalBid: auction.currentBid,
+            sellerId: auction.sellerId,
+            sellerName: auction.sellerName
         };
     }
 
@@ -267,13 +380,14 @@ class TradingLogic {
         const player = this.game.players[playerId];
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
         if (player.left) return { error: 'Žaidėjas pasitraukęs' };
-        // ⚠️ IŠIMTA: currentTurn patikrinimas - leidžiama bet kada
+        if (player.kicked) return { error: 'Žaidėjas pašalintas' };
         
         if (playerId === targetPlayerId) return { error: 'Negali siūlyti sau' };
 
         const target = this.game.players[targetPlayerId];
         if (!target || target.bankrupt) return { error: 'Žaidėjas neaktyvus' };
         if (target.left) return { error: 'Žaidėjas pasitraukęs' };
+        if (target.kicked) return { error: 'Žaidėjas pašalintas' };
 
         if (offerFieldIds && offerFieldIds.length > 0) {
             for (const fieldId of offerFieldIds) {
@@ -501,15 +615,16 @@ class TradingLogic {
         const result = [];
         for (const [id, auction] of this.auctions) {
             if (auction.isActive) {
-                const field = this.game.board.find(f => f.id === auction.fieldId);
                 result.push({
                     auctionId: id,
                     fieldId: auction.fieldId,
-                    fieldName: field ? field.name : 'Nežinoma',
+                    fieldName: auction.fieldName,
                     currentBid: auction.currentBid,
+                    currentBidder: auction.currentBidder,
+                    currentBidderName: auction.currentBidderName,
                     endTime: auction.endTime,
                     sellerId: auction.sellerId,
-                    bidders: auction.bidders
+                    sellerName: auction.sellerName
                 });
             }
         }
