@@ -141,7 +141,7 @@ class TradingLogic {
         }
 
         const auctionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
-        const endTime = Date.now() + 60000;
+        const endTime = Date.now() + C.AUCTION_DURATION;
         
         // BANKAS SIŪLO 70% STARTINĘ KAINĄ
         const startPrice = Math.floor(field.cost * C.AUCTION_START_RATIO);
@@ -243,15 +243,15 @@ class TradingLogic {
             });
         }
 
-        // 🆕 PRATĘSTI TIMER'Į 10s
-        auction.endTime = Date.now() + 10000;
+        // PRATĘSTI TIMER'Į 10s
+        auction.endTime = Date.now() + C.AUCTION_EXTENSION;
         
         if (auction.timer) {
             clearTimeout(auction.timer);
         }
         auction.timer = setTimeout(() => {
             this.endAuctionServerSide(auctionId);
-        }, 10000);
+        }, C.AUCTION_EXTENSION);
 
         this.game.addMessage(`💰 ${player.name} pasiūlė €${bidAmount} už ${auction.fieldName}!`);
 

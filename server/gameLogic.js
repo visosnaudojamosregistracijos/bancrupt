@@ -12,7 +12,7 @@ class Game {
         this.currentTurn = 0;
         this.gameStarted = false;
         this.turnHistory = [];
-        this.maxPlayers = 8;
+        this.maxPlayers = C.MAX_PLAYERS;
         this.diceValues = [1, 1];
         this.isRolling = false;
         this.consecutiveDoubles = 0;
@@ -24,7 +24,7 @@ class Game {
         this.buildingLogic = new BuildingLogic(this);
         this.tradingLogic = new TradingLogic(this);
         this.demolishLogic = new DemolishLogic(this);
-        // 🆕 VOTE-KICK
+        // VOTE-KICK
         this.activeVoteKick = null;
         this.voteKickTimer = null;
     }
@@ -34,8 +34,8 @@ class Game {
     }
 
     addPlayer(name) {
-        if (this.players.length >= this.maxPlayers) {
-            return { error: 'Daugiausiai 8 žaidėjai' };
+        if (this.players.length >= C.MAX_PLAYERS) {
+            return { error: `Daugiausiai ${C.MAX_PLAYERS} žaidėjai` };
         }
         
         if (this.gameStarted) {
@@ -51,7 +51,7 @@ class Game {
             id: this.players.length,
             name: name,
             position: 0,
-            money: 1500,
+            money: C.START_MONEY,
             color: colors[this.players.length % colors.length],
             properties: [],
             houses: {},
@@ -145,12 +145,12 @@ class Game {
         let newPosition = (player.position + total) % this.board.length;
 
         if (newPosition < player.position) {
-            player.money += 200;
-            this.addMessage(`${player.name} praėjo START ir gavo €200! 💰`);
+            player.money += C.START_BONUS;
+            this.addMessage(`${player.name} praėjo START ir gavo €${C.START_BONUS}! 💰`);
         }
         else if (newPosition === 0 && player.position !== 0) {
-            player.money += 300;
-            this.addMessage(`🏁 ${player.name} atsistojo ant START ir gavo €300! 💰`);
+            player.money += C.START_LAND_BONUS;
+            this.addMessage(`🏁 ${player.name} atsistojo ant START ir gavo €${C.START_LAND_BONUS}! 💰`);
         }
 
         player.position = newPosition;
@@ -226,10 +226,10 @@ class Game {
             this.addMessage(`${player.name} išėjo iš kalėjimo! 🎉`);
             return this.continueAfterJail(player, dice1, dice2);
         } else if (player.jailTurns >= 3) {
-            player.money -= 50;
+            player.money -= C.JAIL_FINE;
             player.inJail = false;
             player.jailTurns = 0;
-            this.addMessage(`${player.name} sumokėjo €50 ir išėjo iš kalėjimo`);
+            this.addMessage(`${player.name} sumokėjo €${C.JAIL_FINE} ir išėjo iš kalėjimo`);
             if (player.money < 0) {
                 this.checkDebtor(player.id);
             }
@@ -256,12 +256,12 @@ class Game {
         let newPosition = (player.position + total) % this.board.length;
         
         if (newPosition < player.position) {
-            player.money += 200;
-            this.addMessage(`${player.name} praėjo START ir gavo €200! 💰`);
+            player.money += C.START_BONUS;
+            this.addMessage(`${player.name} praėjo START ir gavo €${C.START_BONUS}! 💰`);
         }
         else if (newPosition === 0 && player.position !== 0) {
-            player.money += 300;
-            this.addMessage(`🏁 ${player.name} atsistojo ant START ir gavo €300! 💰`);
+            player.money += C.START_LAND_BONUS;
+            this.addMessage(`🏁 ${player.name} atsistojo ant START ir gavo €${C.START_LAND_BONUS}! 💰`);
         }
 
         player.position = newPosition;
@@ -494,8 +494,8 @@ class Game {
                 break;
                 
             case 'start':
-                player.money += 300;
-                result.message = `🏁 ${player.name} atsistojo ant START ir gavo €300! 💰`;
+                player.money += C.START_LAND_BONUS;
+                result.message = `🏁 ${player.name} atsistojo ant START ir gavo €${C.START_LAND_BONUS}! 💰`;
                 this.addMessage(result.message);
                 break;
                 
@@ -805,12 +805,11 @@ class Game {
     }
 
     // ============================================
-    // 🆕 VOTE-KICK LOGIKA
+    // VOTE-KICK LOGIKA
     // ============================================
 
     getRequiredVotes(playerCount) {
-        const table = { 3: 2, 4: 3, 5: 3, 6: 4, 7: 4, 8: 5 };
-        return table[playerCount] || Math.ceil(playerCount / 2) + 1;
+        return C.VOTE_KICK_REQUIRED[playerCount] || Math.ceil(playerCount / 2) + 1;
     }
 
     startVoteKick(initiatorId, targetId) {
@@ -837,7 +836,7 @@ class Game {
         }
 
         const requiredVotes = this.getRequiredVotes(activePlayers.length);
-        const endTime = Date.now() + 60000;
+        const endTime = Date.now() + C.VOTE_KICK_DURATION;
 
         this.activeVoteKick = {
             initiatorId: initiatorId,
@@ -1116,13 +1115,13 @@ class Game {
         if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
         if (!player.inJail) return { error: 'Žaidėjas nėra kalėjime' };
         if (this.currentTurn !== playerId) return { error: 'Ne tavo eilė' };
-        if (player.money < 50) return { error: 'Nepakanka pinigų (reikia €50)' };
+        if (player.money < C.JAIL_FINE) return { error: `Nepakanka pinigų (reikia €${C.JAIL_FINE})` };
         
-        player.money -= 50;
+        player.money -= C.JAIL_FINE;
         player.inJail = false;
         player.jailTurns = 0;
         
-        this.addMessage(`${player.name} sumokėjo €50 ir išėjo iš kalėjimo! 🚪`);
+        this.addMessage(`${player.name} sumokėjo €${C.JAIL_FINE} ir išėjo iš kalėjimo! 🚪`);
         
         return { success: true, message: `${player.name} išėjo iš kalėjimo!` };
     }

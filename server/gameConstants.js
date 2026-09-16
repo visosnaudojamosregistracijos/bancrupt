@@ -51,5 +51,41 @@ module.exports = {
     RENT_BASE_RATIO: 0.1,
     
     // Nuomos daugikliai: [1 namas, 2, 3, 4, viešbutis]
-    RENT_MULTIPLIERS: [10, 20, 30, 40, 50]
+    RENT_MULTIPLIERS: [10, 20, 30, 40, 50],
+
+    // ============================================
+    // ŽAIDIMO KONSTANTOS
+    // ============================================
+    // Pradinis žaidėjo kapitalas
+    START_MONEY: 1500,
+    
+    // Bonusas praėjus START (nesustojus)
+    START_BONUS: 200,
+    
+    // Bonusas atsistojus ant START
+    START_LAND_BONUS: 300,
+    
+    // Kalėjimo išpirkimas
+    JAIL_FINE: 50,
+    
+    // Maksimalus žaidėjų skaičius
+    MAX_PLAYERS: 8,
+
+    // ============================================
+    // VOTE-KICK KONSTANTOS
+    // ============================================
+    // Kiek balsų reikia UŽ pašalinimą (pagal žaidėjų skaičių)
+    VOTE_KICK_REQUIRED: { 3: 2, 4: 3, 5: 3, 6: 4, 7: 4, 8: 5 },
+    
+    // Balsavimo trukmė (ms)
+    VOTE_KICK_DURATION: 60000,
+
+    // ============================================
+    // AUKCIONO KONSTANTOS
+    // ============================================
+    // Aukciono trukmė (ms)
+    AUCTION_DURATION: 60000,
+    
+    // Pratęsimas po kiekvieno bid'o (ms)
+    AUCTION_EXTENSION: 10000
 };
