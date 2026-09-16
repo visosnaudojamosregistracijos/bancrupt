@@ -30,8 +30,11 @@ io.on('connection', (socket) => {
     console.log('🎮 Naujas žaidėjas prisijungė:', socket.id);
     console.log('📊 Iš viso prisijungę:', io.engine.clientsCount);
 
-    socket.on('createGame', (playerName) => {
-        console.log('📥 Gauta createGame užklausa:', playerName);
+    socket.on('createGame', (data) => {
+        console.log('📥 Gauta createGame užklausa:', data);
+        
+        const playerName = data.name || data;
+        const playerColor = data.color || null;
         
         if (!playerName || playerName.trim() === '') {
             socket.emit('error', 'Įvesk vardą!');
@@ -51,7 +54,7 @@ io.on('connection', (socket) => {
             }
         });
         
-        const player = game.addPlayer(playerName.trim());
+        const player = game.addPlayer(playerName.trim(), playerColor);
         
         if (player.error) {
             socket.emit('error', player.error);
@@ -73,8 +76,8 @@ io.on('connection', (socket) => {
         io.to(gameId).emit('message', `🎉 ${playerName} sukūrė žaidimą!`);
     });
 
-    socket.on('joinGame', ({ gameId, playerName }) => {
-        console.log('📥 Gauta joinGame užklausa:', { gameId, playerName });
+    socket.on('joinGame', ({ gameId, playerName, color }) => {
+        console.log('📥 Gauta joinGame užklausa:', { gameId, playerName, color });
         
         if (!gameId || !playerName) {
             socket.emit('error', 'Įvesk žaidimo ID ir vardą!');
@@ -87,7 +90,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const player = game.addPlayer(playerName.trim());
+        const player = game.addPlayer(playerName.trim(), color);
         if (player.error) {
             socket.emit('error', player.error);
             return;

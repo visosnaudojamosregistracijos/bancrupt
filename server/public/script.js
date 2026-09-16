@@ -21,6 +21,17 @@ let lastHoveredField = null;
 let voteKickTimerInterval = null;
 let amIKicked = false;
 
+// 🆕 SPALVŲ PASIRINKIMAS
+const PLAYER_COLORS = [
+    '#9c0505', '#e2de00', '#5506d3', '#05b130',
+    '#000000', '#00adc4', '#492b1f', '#7edf00'
+];
+
+let selectedCreateColor = null;
+let selectedJoinColor = null;
+let availableJoinColors = [];
+let joinColorCheckTimeout = null;
+
 // ============================================
 // PRISIJUNGIMAS
 // ============================================
@@ -130,6 +141,37 @@ function initSocket() {
         gameState = state;
         updateUI(state);
         document.getElementById('bankruptModal').style.display = 'none';
+    });
+
+    // 🆕 SPALVŲ GAVIMAS
+    socket.on('gameColors', (data) => {
+        console.log('🎨 Gautos spalvos:', data);
+        
+        if (data.error) {
+            availableJoinColors = [];
+            selectedJoinColor = null;
+            renderColorPicker('joinColorPicker', PLAYER_COLORS, null, selectJoinColor);
+            
+            const status = document.getElementById('joinColorStatus');
+            if (status) status.textContent = '❌ ' + data.error;
+            return;
+        }
+        
+        availableJoinColors = data.available;
+        
+        // Jei pasirinkta spalva nebe laisva - išvalom
+        if (selectedJoinColor && !availableJoinColors.includes(selectedJoinColor)) {
+            selectedJoinColor = null;
+        }
+        
+        renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
+        
+        const status = document.getElementById('joinColorStatus');
+        if (status) {
+            const totalColors = PLAYER_COLORS.length;
+            const takenCount = data.used.length;
+            status.textContent = `👥 Žaidėjai: ${takenCount}/${totalColors} • Laisvos: ${availableJoinColors.length}`;
+        }
     });
 
     socket.on('diceRolled', (data) => {
@@ -576,7 +618,6 @@ function initSocket() {
         addJournal(`🏃 Tu pasitraukei iš žaidimo`);
         
         setTimeout(() => {
-            // SPA - grįžtam į menu
             if (typeof goToMenu === 'function') {
                 goToMenu();
             }
@@ -695,6 +736,72 @@ function initSocket() {
         addNotification(`🗳️ Balsavimas atšauktas: ${data.reason}`);
         addJournal(`🗳️ Balsavimas atšauktas: ${data.reason}`);
     });
+}
+
+// ============================================
+// 🆕 SPALVŲ PASIRINKIMO FUNKCIJOS
+// ============================================
+
+function renderColorPicker(containerId, availableColors, selectedColor, onSelect) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    PLAYER_COLORS.forEach(color => {
+        const circle = document.createElement('div');
+        circle.className = 'color-circle';
+        circle.style.background = color;
+        
+        const isAvailable = availableColors === null || availableColors.includes(color);
+        const isSelected = selectedColor === color;
+        
+        if (!isAvailable) {
+            circle.classList.add('taken');
+        }
+        
+        if (isSelected) {
+            circle.classList.add('selected');
+        }
+        
+        if (isAvailable) {
+            circle.onclick = () => {
+                playClickSound();
+                onSelect(color);
+            };
+        }
+        
+        container.appendChild(circle);
+    });
+}
+
+function selectCreateColor(color) {
+    selectedCreateColor = color;
+    renderColorPicker('createColorPicker', null, selectedCreateColor, selectCreateColor);
+}
+
+function selectJoinColor(color) {
+    if (!availableJoinColors.includes(color)) {
+        playErrorSound();
+        alert('❌ Ši spalva jau užimta!');
+        return;
+    }
+    selectedJoinColor = color;
+    renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
+}
+
+function checkGameColors() {
+    const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
+    if (!gid || gid.length < 4) {
+        availableJoinColors = [];
+        selectedJoinColor = null;
+        renderColorPicker('joinColorPicker', PLAYER_COLORS, null, selectJoinColor);
+        const status = document.getElementById('joinColorStatus');
+        if (status) status.textContent = '';
+        return;
+    }
+    
+    socket.emit('getGameColors', { gameId: gid });
 }
 
 // ============================================
@@ -1366,7 +1473,7 @@ function addNotification(msg) {
 
 function showLobbyMessage(msg, color) {
     const el = document.getElementById('lobbyMessages');
-    el.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
+    if (el) el.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
 }
 
 function createGame() {
@@ -1382,7 +1489,11 @@ function createGame() {
         return;
     }
     playClickSound();
-    socket.emit('createGame', name);
+    
+    socket.emit('createGame', {
+        name: name,
+        color: selectedCreateColor
+    });
 }
 
 function joinGame() {
@@ -1403,13 +1514,23 @@ function joinGame() {
         playErrorSound();
         return;
     }
+    
+    if (!selectedJoinColor) {
+        alert('Pasirink savo spalvą!');
+        playErrorSound();
+        return;
+    }
+    
     gameId = gid;
     playClickSound();
-    socket.emit('joinGame', { gameId: gid, playerName: name });
+    socket.emit('joinGame', { 
+        gameId: gid, 
+        playerName: name,
+        color: selectedJoinColor
+    });
 }
 
 function enterGame() {
-    // SPA - perjungiam į žaidimo puslapį
     if (typeof goToGame === 'function') {
         goToGame();
     }
@@ -2656,13 +2777,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // ============================================
+    // 🆕 Inicializuoti spalvų ratukus
+    renderColorPicker('createColorPicker', null, null, selectCreateColor);
+    renderColorPicker('joinColorPicker', PLAYER_COLORS, null, selectJoinColor);
+    
+    // 🆕 Stalo kodo input - kai pasikeičia, tikrinti spalvas
+    const gameIdInput = document.getElementById('gameIdInput');
+    if (gameIdInput) {
+        gameIdInput.addEventListener('input', function() {
+            if (joinColorCheckTimeout) clearTimeout(joinColorCheckTimeout);
+            joinColorCheckTimeout = setTimeout(() => {
+                checkGameColors();
+            }, 500);
+        });
+    }
+    
     // LANGELIŲ INFO REŽIMAS (PC + TELEFONAS)
-    // ============================================
     document.querySelectorAll('.cell').forEach(cell => {
         const fieldId = parseInt(cell.dataset.id);
         
-        // 🖱️ KOMPIUTERIUI - mouse
         cell.addEventListener('mouseenter', () => {
             if (infoMode) {
                 showCellInfo(fieldId);
@@ -2675,7 +2808,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // 📱 TELEFONUI - touch
         cell.addEventListener('touchstart', (e) => {
             if (infoMode) {
                 e.preventDefault();

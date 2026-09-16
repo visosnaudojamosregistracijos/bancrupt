@@ -33,17 +33,51 @@ class Game {
         this.emitFunction = emitFn;
     }
 
-    addPlayer(name) {
+    addPlayer(name, color = null) {
         if (this.players.length >= C.MAX_PLAYERS) {
             return { error: `Daugiausiai ${C.MAX_PLAYERS} žaidėjai` };
         }
         
         if (this.gameStarted) {
-            return { error: 'Žaidimas jau prasidėjo! Negalima prisijungti.' };
+            return { error: 'Žaidimas jau prasėjo! Negalima prisijungti.' };
         }
         
         if (this.players.find(p => p.name === name && !p.left && !p.bankrupt && !p.kicked)) {
             return { error: 'Toks vardas jau užimtas' };
+        }
+
+        // 🆕 SPALVOS PATIKRINIMAS
+        let finalColor;
+        
+        if (color) {
+            // Žaidėjas pasirinko spalvą - tikrinam ar laisva
+            const isTaken = this.players.some(p => 
+                p.color === color && !p.left && !p.bankrupt && !p.kicked
+            );
+            
+            if (isTaken) {
+                return { error: 'Ši spalva jau užimta!' };
+            }
+            
+            // Ar spalva iš viso leidžiama?
+            if (!C.PLAYER_COLORS.includes(color)) {
+                return { error: 'Neteisinga spalva!' };
+            }
+            
+            finalColor = color;
+        } else {
+            // Automatiškai - pirma laisva spalva
+            const usedColors = this.players
+                .filter(p => !p.left && !p.bankrupt && !p.kicked)
+                .map(p => p.color);
+            
+            const availableColor = C.PLAYER_COLORS.find(c => !usedColors.includes(c));
+            
+            if (!availableColor) {
+                return { error: 'Nėra laisvų spalvų!' };
+            }
+            
+            finalColor = availableColor;
         }
 
         const player = {
@@ -51,7 +85,7 @@ class Game {
             name: name,
             position: 0,
             money: C.START_MONEY,
-            color: C.PLAYER_COLORS[this.players.length % C.PLAYER_COLORS.length],
+            color: finalColor,
             properties: [],
             houses: {},
             inJail: false,
@@ -62,10 +96,24 @@ class Game {
             kicked: false,
             isDebtor: false,
             socketId: null,
-            token: Math.random().toString(36).substring(2) + Date.now().toString(36)
+            token: Math.random().toString(36).substring(2) + Date.now().toString(36),
+            ready: false  // 🆕 Pasiruošęs žaidimui (Etapas 3)
         };
         this.players.push(player);
         return player;
+    }
+
+    // 🆕 GAUTI UŽIMTAS SPALVAS
+    getUsedColors() {
+        return this.players
+            .filter(p => !p.left && !p.bankrupt && !p.kicked)
+            .map(p => p.color);
+    }
+
+    // 🆕 GAUTI LAISVAS SPALVAS
+    getAvailableColors() {
+        const used = this.getUsedColors();
+        return C.PLAYER_COLORS.filter(c => !used.includes(c));
     }
 
     checkDebtor(playerId) {

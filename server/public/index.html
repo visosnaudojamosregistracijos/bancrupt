@@ -344,7 +344,7 @@
     <!-- PUSLAPIS 3: LOBBY (Senas create/join) -->
     <!-- ============================================ -->
     <div id="page-lobby" class="page" style="display:none;">
-        <div id="lobby" style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+        <div id="lobby" style="width: 100%; max-width: 550px; margin: 0 auto; padding: 40px 20px;">
             <div class="lobby-container">
                 <h1>🏦 BANCRUPT</h1>
                 <p class="subtitle">💰 Stalo žaidimas internetu</p>
@@ -352,13 +352,31 @@
                 <div class="lobby-form">
                     <input type="text" id="playerName" placeholder="Įvesk savo vardą" maxlength="20">
                     
-                    <div class="lobby-buttons">
-                        <button onclick="createGame()" class="btn btn-primary">🆕 Sukurti žaidimą</button>
-                        <button onclick="joinGame()" class="btn btn-secondary">🔗 Prisijungti</button>
+                    <!-- 🆕 SUKŪRIMO SPALVOS -->
+                    <div style="margin-top:15px;">
+                        <label style="color:#d4b896; font-size:13px; font-weight:600; display:block; margin-bottom:8px;">
+                            🎨 Tavo spalva (sukūrimui):
+                        </label>
+                        <div id="createColorPicker" class="color-picker"></div>
                     </div>
                     
-                    <div class="join-section">
-                        <input type="text" id="gameIdInput" placeholder="Žaidimo ID (pvz., ABC123)" maxlength="6" style="text-transform:uppercase">
+                    <div class="lobby-buttons" style="margin-top:15px;">
+                        <button onclick="createGame()" class="btn btn-primary">🆕 Sukurti žaidimą</button>
+                    </div>
+                    
+                    <div class="join-section" style="margin-top:20px;">
+                        <input type="text" id="gameIdInput" placeholder="Žaidimo kodas (pvz., ABC123)" maxlength="6" style="text-transform:uppercase">
+                        
+                        <!-- 🆕 PRISIJUNGIMO SPALVOS -->
+                        <div style="margin-top:15px;">
+                            <label style="color:#d4b896; font-size:13px; font-weight:600; display:block; margin-bottom:8px;">
+                                🎨 Tavo spalva (prisijungimui):
+                            </label>
+                            <div id="joinColorPicker" class="color-picker"></div>
+                            <div id="joinColorStatus" style="color:#d4b896; font-size:11px; text-align:center; margin-top:5px;"></div>
+                        </div>
+                        
+                        <button onclick="joinGame()" class="btn btn-secondary" style="margin-top:15px;">🔗 Prisijungti prie žaidimo</button>
                     </div>
                     
                     <button onclick="goToMenu()" style="margin-top:10px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer;">🔙 Atgal</button>

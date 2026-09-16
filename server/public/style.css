@@ -27,7 +27,7 @@ body {
 /* ---------- LOBBY ---------- */
 #lobby {
     width: 100%;
-    max-width: 500px;
+    max-width: 550px;
 }
 
 .lobby-container {
@@ -129,6 +129,68 @@ body {
     color: #d4b896;
     font-size: 14px;
     min-height: 30px;
+}
+
+/* ---------- SPALVŲ PASIRINKIMAS ---------- */
+.color-picker {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+.color-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.color-circle:hover:not(.taken) {
+    transform: scale(1.15);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.color-circle.selected {
+    border-color: #ffd700;
+    box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 4px 15px rgba(0,0,0,0.5);
+    transform: scale(1.15);
+}
+
+.color-circle.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 24px;
+    font-weight: 900;
+    text-shadow: 0 0 5px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.9);
+    pointer-events: none;
+}
+
+.color-circle.taken {
+    opacity: 0.25;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.color-circle.taken::after {
+    content: '❌';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    pointer-events: none;
 }
 
 /* ---------- ŽAIDIMO EKRANAS ---------- */
@@ -1131,12 +1193,6 @@ body {
     z-index: 5;
 }
 
-/* ---------- PAPRASTŲ LANGELIŲ NUMERIŲ POZICIJOS ---------- */
-
-
-/* ---------- SAVININKŲ RUTULIUKŲ POZICIJOS ---------- */
-
-
 /* ---------- KAMPŲ NUMERIŲ POZICIJOS ---------- */
 .cell.corner .cell-number {
     font-size: 14px;
@@ -1175,8 +1231,6 @@ body {
     opacity: 0.9;
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
-
-
 
 /* ---------- MINI KORTELĖS (TIKROS KORTELĖS) ---------- */
 .mini-cards-container {
@@ -1277,7 +1331,6 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-/* Tooltip patobulinimas */
 .mini-card::after {
     content: attr(title);
     position: absolute;
@@ -1990,6 +2043,21 @@ body {
     #gameIdBox span { font-size: 8px; }
     .left-btn { font-size: 8px; padding: 5px 3px; }
     #leftPlayerCount, #leftTurnDisplay { font-size: 7px; }
+    
+    /* 🆕 Spalvų pasirinkimas telefone */
+    .color-circle {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .color-circle.selected::after {
+        font-size: 20px;
+    }
+    
+    .color-picker {
+        gap: 8px;
+        padding: 8px;
+    }
 }
 
 /* ---------- GARSO SLIDER ---------- */
@@ -2225,8 +2293,6 @@ body {
 }
 
 /* ---------- FONO IKONA (EMOJI PER VISĄ LANGELĮ) ---------- */
-
-
 .cell-bg-icon {
     position: absolute;
     top: 50%;
@@ -2240,7 +2306,6 @@ body {
     user-select: none;
 }
 
-/* Visi kiti elementai - virš fono */
 .cell .cell-icon,
 .cell .cell-name,
 .cell .cell-cost,
@@ -2250,27 +2315,21 @@ body {
     z-index: 1;
 }
 
-/* Savininko rutuliukas - turi likti absolute */
 .cell .cell-owner {
     position: relative;
     z-index: 5;
 }
 
-
-
-/* Šoniniuose langeliuose - mažesnė fono ikona */
 .row-middle-left .cell-bg-icon,
 .row-middle-right .cell-bg-icon {
     font-size: 5em;
 }
 
-/* Kampusose - didesnė fono ikona */
 .cell.corner .cell-bg-icon {
     font-size: 8em;
     opacity: 0.8;
 }
 
-/* Responsive - mažesni ekranai */
 @media (max-width: 992px) {
     .cell {
         font-size: 8px;
@@ -2350,7 +2409,7 @@ body {
 
 @media (max-width: 480px) {
     .cell .cell-name {
-        font-size: 5px;  /* dar mažesnis */
+        font-size: 5px;
     }
     
     .cell .players-on-cell .player-dot {
