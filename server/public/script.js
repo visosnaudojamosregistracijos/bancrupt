@@ -1472,12 +1472,15 @@ function addNotification(msg) {
 }
 
 function showLobbyMessage(msg, color) {
-    const el = document.getElementById('lobbyMessages');
-    if (el) el.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
+    // Bandom abu
+    const el1 = document.getElementById('createMessages');
+    const el2 = document.getElementById('joinMessages');
+    if (el1) el1.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
+    if (el2) el2.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
 }
 
 function createGame() {
-    const name = document.getElementById('playerName').value.trim();
+    const name = document.getElementById('createPlayerName').value.trim();
     if (!name) {
         alert('Įvesk savo vardą!');
         playErrorSound();
@@ -1497,7 +1500,7 @@ function createGame() {
 }
 
 function joinGame() {
-    const name = document.getElementById('playerName').value.trim();
+    const name = document.getElementById('joinPlayerName').value.trim();
     const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
     if (!name) {
         alert('Įvesk savo vardą!');
@@ -1505,7 +1508,7 @@ function joinGame() {
         return;
     }
     if (!gid) {
-        alert('Įvesk žaidimo ID!');
+        alert('Įvesk žaidimo kodą!');
         playErrorSound();
         return;
     }
@@ -2751,12 +2754,26 @@ function addJournal(msg) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 Puslapis įkeltas');
     
-    document.getElementById('playerName').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') createGame();
-    });
-    document.getElementById('gameIdInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') joinGame();
-    });
+    const createNameInput = document.getElementById('createPlayerName');
+    if (createNameInput) {
+        createNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createGame();
+        });
+    }
+    
+    const joinNameInput = document.getElementById('joinPlayerName');
+    if (joinNameInput) {
+        joinNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinGame();
+        });
+    }
+    
+    const gameIdInputEl = document.getElementById('gameIdInput');
+    if (gameIdInputEl) {
+        gameIdInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinGame();
+        });
+    }
     
     const targetSelect = document.getElementById('tradeTargetPlayer');
     if (targetSelect) {

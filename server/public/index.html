@@ -340,49 +340,69 @@
         </div>
     </div>
 
+     <!-- ============================================ -->
+    <!-- PUSLAPIS 3A: SUKURTI ŽAIDIMĄ -->
     <!-- ============================================ -->
-    <!-- PUSLAPIS 3: LOBBY (Senas create/join) -->
-    <!-- ============================================ -->
-    <div id="page-lobby" class="page" style="display:none;">
-        <div id="lobby" style="width: 100%; max-width: 550px; margin: 0 auto; padding: 40px 20px;">
+    <div id="page-create" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 550px; margin: 0 auto; padding: 40px 20px;">
             <div class="lobby-container">
-                <h1>🏦 BANCRUPT</h1>
-                <p class="subtitle">💰 Stalo žaidimas internetu</p>
+                <h1>🆕 SUKURTI</h1>
+                <p class="subtitle">💰 Naujas žaidimas</p>
                 
                 <div class="lobby-form">
-                    <input type="text" id="playerName" placeholder="Įvesk savo vardą" maxlength="20">
+                    <input type="text" id="createPlayerName" placeholder="Įvesk savo vardą" maxlength="20">
                     
-                    <!-- 🆕 SUKŪRIMO SPALVOS -->
+                    <!-- SUKŪRIMO SPALVOS -->
                     <div style="margin-top:15px;">
                         <label style="color:#d4b896; font-size:13px; font-weight:600; display:block; margin-bottom:8px;">
-                            🎨 Tavo spalva (sukūrimui):
+                            🎨 Pasirink savo spalvą:
                         </label>
                         <div id="createColorPicker" class="color-picker"></div>
                     </div>
                     
-                    <div class="lobby-buttons" style="margin-top:15px;">
-                        <button onclick="createGame()" class="btn btn-primary">🆕 Sukurti žaidimą</button>
+                    <div class="lobby-buttons" style="margin-top:20px;">
+                        <button onclick="createGame()" class="btn btn-primary">✅ Sukurti žaidimą</button>
                     </div>
                     
-                    <div class="join-section" style="margin-top:20px;">
-                        <input type="text" id="gameIdInput" placeholder="Žaidimo kodas (pvz., ABC123)" maxlength="6" style="text-transform:uppercase">
-                        
-                        <!-- 🆕 PRISIJUNGIMO SPALVOS -->
-                        <div style="margin-top:15px;">
-                            <label style="color:#d4b896; font-size:13px; font-weight:600; display:block; margin-bottom:8px;">
-                                🎨 Tavo spalva (prisijungimui):
-                            </label>
-                            <div id="joinColorPicker" class="color-picker"></div>
-                            <div id="joinColorStatus" style="color:#d4b896; font-size:11px; text-align:center; margin-top:5px;"></div>
-                        </div>
-                        
-                        <button onclick="joinGame()" class="btn btn-secondary" style="margin-top:15px;">🔗 Prisijungti prie žaidimo</button>
-                    </div>
-                    
-                    <button onclick="goToMenu()" style="margin-top:10px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer;">🔙 Atgal</button>
+                    <button onclick="goToMenu()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer;">🔙 Atgal</button>
                 </div>
                 
-                <div id="lobbyMessages"></div>
+                <div id="createMessages" style="margin-top:20px; color:#d4b896; font-size:14px; min-height:30px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PUSLAPIS 3B: PRISIJUNGTI -->
+    <!-- ============================================ -->
+    <div id="page-join" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 550px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>🔗 PRISIJUNGTI</h1>
+                <p class="subtitle">💰 Prie esamo žaidimo</p>
+                
+                <div class="lobby-form">
+                    <input type="text" id="gameIdInput" placeholder="Žaidimo kodas (pvz., ABC123)" maxlength="6" style="text-transform:uppercase; letter-spacing:2px;">
+                    
+                    <input type="text" id="joinPlayerName" placeholder="Įvesk savo vardą" maxlength="20">
+                    
+                    <!-- PRISIJUNGIMO SPALVOS -->
+                    <div style="margin-top:15px;">
+                        <label style="color:#d4b896; font-size:13px; font-weight:600; display:block; margin-bottom:8px;">
+                            🎨 Pasirink laisvą spalvą:
+                        </label>
+                        <div id="joinColorPicker" class="color-picker"></div>
+                        <div id="joinColorStatus" style="color:#d4b896; font-size:11px; text-align:center; margin-top:5px;"></div>
+                    </div>
+                    
+                    <div class="lobby-buttons" style="margin-top:20px;">
+                        <button onclick="joinGame()" class="btn btn-secondary">✅ Prisijungti</button>
+                    </div>
+                    
+                    <button onclick="goToMenu()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer;">🔙 Atgal</button>
+                </div>
+                
+                <div id="joinMessages" style="margin-top:20px; color:#d4b896; font-size:14px; min-height:30px;"></div>
             </div>
         </div>
     </div>
@@ -886,10 +906,20 @@
                 targetPage.classList.add('active');
                 if (pageId === 'page-landing' || pageId === 'page-menu') {
                     targetPage.style.display = 'flex';
+                    targetPage.style.flexDirection = 'column';
+                    targetPage.style.alignItems = 'center';
+                    targetPage.style.justifyContent = 'center';
+                    targetPage.style.minHeight = '100vh';
                 } else if (pageId === 'page-game') {
                     targetPage.style.display = 'flex';
+                    targetPage.style.flexDirection = 'column';
                 } else {
-                    targetPage.style.display = 'block';
+                    // page-create, page-join
+                    targetPage.style.display = 'flex';
+                    targetPage.style.flexDirection = 'column';
+                    targetPage.style.alignItems = 'center';
+                    targetPage.style.justifyContent = 'center';
+                    targetPage.style.minHeight = '100vh';
                 }
             }
         }
@@ -904,9 +934,9 @@
             console.log('📍 Menu puslapis');
         }
         
-        function goToLobby() {
-            showPage('page-lobby');
-            console.log('📍 Lobby puslapis');
+       function goToLobby() {
+            showPage('page-menu');
+            console.log('📍 Lobby → menu');
         }
         
         function goToGame() {
@@ -937,16 +967,14 @@
         // MENU MYGTUKAI (laikini - Etapas 2 pridės funkcionalumą)
         // ============================================
         
-        function menuCreate() {
-            console.log('🆕 Kurti žaidimą (Etapas 2)');
-            // Laikinai - perjungiam į seną lobby
-            goToLobby();
+         function menuCreate() {
+            console.log('🆕 Kurti žaidimą');
+            showPage('page-create');
         }
         
         function menuJoin() {
-            console.log('🔗 Prisijungti (Etapas 2)');
-            // Laikinai - perjungiam į seną lobby
-            goToLobby();
+            console.log('🔗 Prisijungti');
+            showPage('page-join');
         }
         
         function menuPublic() {
