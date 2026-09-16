@@ -24,7 +24,7 @@ let amIKicked = false;
 // SPALVŲ PASIRINKIMAS
 const PLAYER_COLORS = [
     '#9c0505', '#e2de00', '#5506d3', '#05b130',
-    '#000000', '#00adc4', '#492b1f', '#7edf00'
+    '#000000', '#00adc4', '#492b1f', '#0609d6'
 ];
 
 let selectedCreateColor = null;
