@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================
-    // REKONEKCIJA (REFRESH PERSISTENCE)
+    // REKONEKCIJA
     // ============================================
     socket.on('reconnectPlayer', ({ gameId, playerToken }) => {
         console.log('🔄 GAUTA reconnectPlayer:', { gameId, playerToken });
@@ -141,6 +141,11 @@ io.on('connection', (socket) => {
             return;
         }
         
+        if (player.kicked) {
+            socket.emit('reconnectFailed', 'Žaidėjas pašalintas');
+            return;
+        }
+        
         socket.join(gameId.toUpperCase());
         socket.gameId = gameId.toUpperCase();
         socket.playerId = player.id;
@@ -161,7 +166,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================
-    // KAULIUKŲ METIMAS - SUTVARKYTA (nebesiunčia 3x)
+    // KAULIUKŲ METIMAS
     // ============================================
     socket.on('rollDice', () => {
         if (!socket.gameId || socket.playerId === undefined) {
@@ -184,7 +189,6 @@ io.on('connection', (socket) => {
         io.to(socket.gameId).emit('diceRolled', result);
         io.to(socket.gameId).emit('gameState', game.getGameState());
         
-        // Siųsti TIK vieną pranešimą (prioritetas: result.result.message)
         const messageToSend = (result.result && result.result.message) || result.message;
         if (messageToSend) {
             io.to(socket.gameId).emit('message', messageToSend);
@@ -614,6 +618,90 @@ io.on('connection', (socket) => {
         io.to(socket.gameId).emit('demolishConfirmed', result);
     });
 
+    // ============================================
+    // 🆕 VOTE-KICK
+    // ============================================
+    socket.on('startVoteKick', ({ targetPlayerId }) => {
+        if (!socket.gameId || socket.playerId === undefined) {
+            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            return;
+        }
+        
+        const game = games.get(socket.gameId);
+        if (!game) {
+            socket.emit('error', 'Žaidimas nerastas!');
+            return;
+        }
+
+        const targetId = parseInt(targetPlayerId);
+        if (isNaN(targetId)) {
+            socket.emit('error', 'Neteisingas žaidėjo ID');
+            return;
+        }
+
+        const result = game.startVoteKick(socket.playerId, targetId);
+        if (result.error) {
+            socket.emit('error', result.error);
+            return;
+        }
+
+        io.to(socket.gameId).emit('voteKickStarted', {
+            initiatorId: socket.playerId,
+            initiatorName: game.players[socket.playerId].name,
+            targetId: targetId,
+            targetName: game.players[targetId].name,
+            requiredVotes: result.voteKick.requiredVotes,
+            timeLeft: result.voteKick.timeLeft,
+            votes: result.voteKick.votes,
+            activePlayerCount: result.voteKick.activePlayerCount
+        });
+
+        io.to(socket.gameId).emit('gameState', game.getGameState());
+    });
+
+    socket.on('voteKick', ({ vote }) => {
+        if (!socket.gameId || socket.playerId === undefined) {
+            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            return;
+        }
+        
+        const game = games.get(socket.gameId);
+        if (!game) {
+            socket.emit('error', 'Žaidimas nerastas!');
+            return;
+        }
+
+        if (!game.activeVoteKick) {
+            socket.emit('error', 'Balsavimas nevyksta');
+            return;
+        }
+
+        const result = game.voteKick(socket.playerId, vote === true);
+        if (result.error) {
+            socket.emit('error', result.error);
+            return;
+        }
+
+        if (result.finished) {
+            io.to(socket.gameId).emit('gameState', game.getGameState());
+            return;
+        }
+
+        const vkState = result.voteKick;
+        io.to(socket.gameId).emit('voteKickUpdate', {
+            votes: vkState.votes,
+            requiredVotes: vkState.requiredVotes,
+            timeLeft: vkState.timeLeft,
+            targetName: vkState.targetName,
+            targetId: vkState.targetId
+        });
+
+        io.to(socket.gameId).emit('gameState', game.getGameState());
+    });
+
+    // ============================================
+    // PASITRAUKIMAS
+    // ============================================
     socket.on('leaveGame', () => {
         console.log('🏃 GAUTA leaveGame UŽKLAUSA:', { socketId: socket.id, playerId: socket.playerId });
         
@@ -681,4 +769,5 @@ server.listen(PORT, () => {
     console.log(`🚀 Bancrupt serveris veikia http://localhost:${PORT}`);
     console.log(`📡 Laukiama prisijungimų...`);
     console.log(`💀 Bankroto handleris aktyvuotas`);
+    console.log(`🗳️ Vote-kick sistema aktyvuota`);
 });

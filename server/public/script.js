@@ -17,6 +17,10 @@ let lastVolume = 50;
 let infoMode = false;
 let lastHoveredField = null;
 
+// 🆕 VOTE-KICK
+let voteKickTimerInterval = null;
+let amIKicked = false;
+
 // ============================================
 // PRISIJUNGIMAS
 // ============================================
@@ -141,38 +145,18 @@ function initSocket() {
             notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
             popupMsg += ` ir atsistojo ant "${data.field.name}"`;
             
-            // SERVICE1 GARSAI
-            if (data.field.id === 2) {
-                playDujosSound();
-            } else if (data.field.id === 14) {
-                playSiukslesSound();
-            } else if (data.field.id === 29) {
-                playElektraSound();
-            } else if (data.field.id === 45) {
-                playVanduoSound();
-            }
-            // SERVICE2 GARSAI
-            else if (data.field.id === 8) {
-                playAirPortSound();
-            } else if (data.field.id === 19) {
-                playTrainSound();
-            } else if (data.field.id === 40) {
-                playPortSound();
-            } else if (data.field.id === 47) {
-                playBusSound();
-            }
-            // LIGONINĖ
-            else if (data.field.id === 13) {
-                playHospitalSound();
-            }
-            // LATRŲ UŽEIGA, PIRTIS, GIMTADIENIS
-            else if (data.field.id === 23) {
-                playLatrasSound();
-            } else if (data.field.id === 33) {
-                playPirtisSound();
-            } else if (data.field.id === 50) {
-                playBirthdaySound();
-            }
+            if (data.field.id === 2) playDujosSound();
+            else if (data.field.id === 14) playSiukslesSound();
+            else if (data.field.id === 29) playElektraSound();
+            else if (data.field.id === 45) playVanduoSound();
+            else if (data.field.id === 8) playAirPortSound();
+            else if (data.field.id === 19) playTrainSound();
+            else if (data.field.id === 40) playPortSound();
+            else if (data.field.id === 47) playBusSound();
+            else if (data.field.id === 13) playHospitalSound();
+            else if (data.field.id === 23) playLatrasSound();
+            else if (data.field.id === 33) playPirtisSound();
+            else if (data.field.id === 50) playBirthdaySound();
             
             if (data.result) {
                 if (data.result.action === 'can_buy') {
@@ -285,7 +269,6 @@ function initSocket() {
         if (msg.includes('HORNY RP') || msg.includes('gavai €200 nuo Dedo')) {
             playChanceSound();
         }
-
         if (msg.includes('pastatė namą')) {
             playBuildSound();
             showPopupMessage(msg, 'buy');
@@ -609,6 +592,346 @@ function initSocket() {
             alert(`🏆 ŽAIDIMAS BAIGTAS!\n\nLaimėtojas: ${data.winner}`);
         }, 500);
     });
+
+    // ============================================
+    // 🆕 VOTE-KICK KLAUSYMAI
+    // ============================================
+
+    socket.on('voteKickStarted', (data) => {
+        console.log('🗳️ Balsavimas pradėtas:', data);
+        
+        // Jei aš esu taikinys - NIEKO NERODYTI (žaidžiu toliau normaliai)
+        if (data.targetId === playerId) {
+            console.log('🗳️ Aš esu taikinys - nerodau nieko');
+            return;
+        }
+        
+        playNotificationSound();
+        addNotification(`🗳️ ${data.initiatorName} pradėjo balsavimą dėl "${data.targetName}" pašalinimo!`);
+        addJournal(`🗳️ ${data.initiatorName} pradėjo balsavimą dėl "${data.targetName}" pašalinimo!`);
+        
+        // Jei aš nesu nei iniciatorius, nei taikinys - parodyk balsavimo promptą
+        if (playerId !== data.initiatorId && playerId !== data.targetId) {
+            showVoteKickPrompt(data);
+        } else if (playerId === data.initiatorId) {
+            // Iniciatorius - parodyk statusą
+            showVoteKickStatus(data);
+        }
+    });
+
+    socket.on('voteKickUpdate', (data) => {
+        console.log('🗳️ Balsavimo atnaujinimas:', data);
+        
+        // Jei aš taikinys - nerodyti
+        if (data.targetId === playerId) return;
+        
+        // Atnaujink timer'į
+        if (data.timeLeft !== undefined) {
+            const timerEl = document.getElementById('voteKickTimer');
+            if (timerEl) timerEl.textContent = data.timeLeft;
+        }
+        
+        // Atnaujink statusą
+        const statusEl = document.getElementById('voteKickStatus');
+        if (statusEl && data.votes) {
+            const votesFor = Object.values(data.votes).filter(v => v === true).length;
+            const votesAgainst = Object.values(data.votes).filter(v => v === false).length;
+            statusEl.innerHTML = `
+                <div class="vote-kick-timer">⏱️ ${data.timeLeft || 0}s</div>
+                <div>Balsai: <strong>${votesFor}/${data.requiredVotes}</strong> UŽ, ${votesAgainst} PRIEŠ</div>
+            `;
+        }
+        
+        // Atnaujink balsavimo lentelę
+        if (data.votes && gameState) {
+            updateVoteKickTable(data);
+        }
+    });
+
+    socket.on('voteKickResult', (data) => {
+        console.log('🗳️ Balsavimo rezultatas:', data);
+        
+        // Sustabdyk timer'į
+        if (voteKickTimerInterval) {
+            clearInterval(voteKickTimerInterval);
+            voteKickTimerInterval = null;
+        }
+        
+        // Jei aš taikinys ir balsavimas PAVYKO - parodyk suvestinę
+        if (data.targetId === playerId) {
+            if (data.kicked) {
+                amIKicked = true;
+                playBankruptSound();
+                showKickSummary(data);
+            }
+            // Jei nepavyko - nieko nerodyti (aš net nežinau, kad buvo balsuota)
+            return;
+        }
+        
+        // Kiti žaidėjai - uždaryk modalą
+        closeVoteKick();
+        
+        if (data.kicked) {
+            playBankruptSound();
+            addNotification(`✅ ${data.targetName} buvo pašalintas! (${data.votesFor}/${data.requiredVotes})`);
+            addJournal(`✅ ${data.targetName} buvo pašalintas! (${data.votesFor}/${data.requiredVotes})`);
+        } else {
+            addNotification(`❌ Balsavimas dėl ${data.targetName} nepavyko (${data.votesFor}/${data.requiredVotes})`);
+            addJournal(`❌ Balsavimas dėl ${data.targetName} nepavyko (${data.votesFor}/${data.requiredVotes})`);
+        }
+        
+        if (gameState) updateUI(gameState);
+    });
+
+    socket.on('voteKickCancelled', (data) => {
+        console.log('🗳️ Balsavimas atšauktas:', data.reason);
+        
+        if (voteKickTimerInterval) {
+            clearInterval(voteKickTimerInterval);
+            voteKickTimerInterval = null;
+        }
+        
+        closeVoteKick();
+        addNotification(`🗳️ Balsavimas atšauktas: ${data.reason}`);
+        addJournal(`🗳️ Balsavimas atšauktas: ${data.reason}`);
+    });
+}
+
+// ============================================
+// 🆕 VOTE-KICK FUNKCIJOS
+// ============================================
+
+function openVoteKick() {
+    if (!socket || !isConnected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        return;
+    }
+    
+    if (!gameState || !gameState.players) {
+        alert('❌ Žaidimas dar neprasidėjęs!');
+        return;
+    }
+    
+    // Apsauga - jei jau vyksta balsavimas
+    if (gameState.activeVoteKick) {
+        alert('⚠️ Balsavimas jau vyksta! Palauk kol baigsis.');
+        return;
+    }
+    
+    const modal = document.getElementById('voteKickModal');
+    const playersDiv = document.getElementById('voteKickPlayers');
+    const statusDiv = document.getElementById('voteKickStatus');
+    
+    playersDiv.innerHTML = '';
+    statusDiv.innerHTML = 'Pasirink žaidėją, kurį nori pašalinti.';
+    
+    const activePlayers = gameState.players.filter(p => 
+        p.isActive && !p.bankrupt && !p.left && !p.kicked
+    );
+    
+    if (activePlayers.length < 3) {
+        statusDiv.innerHTML = '❌ Reikia bent 3 aktyvių žaidėjų balsavimui.';
+        modal.style.display = 'flex';
+        return;
+    }
+    
+    const otherPlayers = activePlayers.filter(p => p.id !== playerId);
+    
+    if (otherPlayers.length === 0) {
+        statusDiv.innerHTML = '❌ Nėra žaidėjų, kuriuos būtų galima pašalinti.';
+    } else {
+        otherPlayers.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'vote-kick-card';
+            card.innerHTML = `
+                <div class="card-color" style="background:${p.color || '#888'}"></div>
+                <div class="card-name">${p.name}</div>
+                <div class="card-votes">🗳️ Balsuoti</div>
+            `;
+            card.onclick = () => startVoteKick(p.id, p.name);
+            playersDiv.appendChild(card);
+        });
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeVoteKick() {
+    document.getElementById('voteKickModal').style.display = 'none';
+    
+    if (voteKickTimerInterval) {
+        clearInterval(voteKickTimerInterval);
+        voteKickTimerInterval = null;
+    }
+}
+
+function startVoteKick(targetPlayerId, targetName) {
+    if (!confirm(`Ar tikrai nori pradėti balsavimą dėl "${targetName}" pašalinimo?`)) {
+        return;
+    }
+    
+    socket.emit('startVoteKick', {
+        targetPlayerId: targetPlayerId
+    });
+    
+    closeVoteKick();
+    playClickSound();
+}
+
+function voteKickAction(targetPlayerId, vote) {
+    socket.emit('voteKick', {
+        vote: vote === true
+    });
+    
+    closeVoteKick();
+    playClickSound();
+}
+
+function showVoteKickPrompt(data) {
+    const modal = document.getElementById('voteKickModal');
+    const playersDiv = document.getElementById('voteKickPlayers');
+    const statusDiv = document.getElementById('voteKickStatus');
+    
+    const requiredVotes = data.requiredVotes || 3;
+    const votesFor = data.votes ? Object.values(data.votes).filter(v => v === true).length : 1;
+    const timeLeft = data.timeLeft || 60;
+    
+    playersDiv.innerHTML = `
+        <div style="padding:15px; background:rgba(255,255,255,0.3); border-radius:8px; margin:10px 0; text-align:center;">
+            <div style="font-size:16px; font-weight:700; color:#3d2b1f; margin-bottom:10px;">
+                Ar pašalinti "${data.targetName}"?
+            </div>
+            <div style="font-size:13px; color:#6c757d; margin-bottom:15px;">
+                Balsavimą pradėjo: ${data.initiatorName}
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="voteKickAction(${data.targetId}, true)" 
+                        style="flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+                    ✅ TAIP, ŠALINTI
+                </button>
+                <button onclick="voteKickAction(${data.targetId}, false)" 
+                        style="flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                    ❌ NE, PALIKTI
+                </button>
+            </div>
+        </div>
+    `;
+    
+    statusDiv.innerHTML = `
+        <div class="vote-kick-timer" id="voteKickTimer">${timeLeft}</div>
+        <div>Balsai: <strong>${votesFor}/${requiredVotes}</strong> UŽ</div>
+    `;
+    
+    modal.style.display = 'flex';
+    
+    // Timer'is
+    if (voteKickTimerInterval) clearInterval(voteKickTimerInterval);
+    voteKickTimerInterval = setInterval(() => {
+        const timerEl = document.getElementById('voteKickTimer');
+        if (timerEl) {
+            let current = parseInt(timerEl.textContent);
+            if (current > 0) {
+                timerEl.textContent = current - 1;
+            } else {
+                clearInterval(voteKickTimerInterval);
+            }
+        }
+    }, 1000);
+}
+
+function showVoteKickStatus(data) {
+    const modal = document.getElementById('voteKickModal');
+    const playersDiv = document.getElementById('voteKickPlayers');
+    const statusDiv = document.getElementById('voteKickStatus');
+    
+    playersDiv.innerHTML = `
+        <div style="padding:15px; background:rgba(255,255,255,0.3); border-radius:8px; margin:10px 0; text-align:center;">
+            <div style="font-size:16px; font-weight:700; color:#3d2b1f; margin-bottom:10px;">
+                🗳️ Tu pradėjai balsavimą dėl "${data.targetName}"
+            </div>
+            <div style="font-size:13px; color:#6c757d;">
+                Laukiame kitų žaidėjų balsų...
+            </div>
+        </div>
+    `;
+    
+    statusDiv.innerHTML = `
+        <div class="vote-kick-timer" id="voteKickTimer">${data.timeLeft || 60}</div>
+        <div>Balsai: <strong>1/${data.requiredVotes}</strong> UŽ (tu)</div>
+    `;
+    
+    modal.style.display = 'flex';
+}
+
+function updateVoteKickTable(data) {
+    const statusDiv = document.getElementById('voteKickStatus');
+    if (!statusDiv) return;
+    
+    const votesFor = Object.values(data.votes).filter(v => v === true).length;
+    const votesAgainst = Object.values(data.votes).filter(v => v === false).length;
+    
+    const voters = Object.keys(data.votes).map(pid => {
+        const p = gameState.players.find(pl => pl.id === parseInt(pid));
+        const vote = data.votes[pid];
+        return `<span style="font-size:11px;">${p?.name || '?'} ${vote ? '✅' : '❌'}</span>`;
+    }).join(', ');
+    
+    statusDiv.innerHTML = `
+        <div class="vote-kick-timer">⏱️ ${data.timeLeft || 0}s</div>
+        <div>Balsai: <strong>${votesFor}/${data.requiredVotes}</strong> UŽ, ${votesAgainst} PRIEŠ</div>
+        <div style="font-size:10px; margin-top:4px;">${voters}</div>
+    `;
+}
+
+function showKickSummary(data) {
+    // Parodyk pranešimą, kad buvai pašalintas
+    const summaryHtml = data.voteSummary.map(v => {
+        const icon = v.vote ? '✅ UŽ' : '❌ PRIEŠ';
+        return `<div style="padding:4px 8px; background:rgba(255,255,255,0.2); border-radius:4px; margin:3px 0;">
+            <strong>${v.playerName}</strong>: ${icon}
+        </div>`;
+    }).join('');
+    
+    const popup = document.createElement('div');
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(145deg, #2d1b1b, #1a0f0f);
+        border: 3px solid #dc3545;
+        border-radius: 16px;
+        padding: 30px 40px;
+        max-width: 500px;
+        width: 90%;
+        z-index: 100000;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+        text-align: center;
+        color: #fff;
+    `;
+    
+    popup.innerHTML = `
+        <div style="font-size:60px; margin-bottom:10px;">🚫</div>
+        <h2 style="color:#dc3545; margin-bottom:15px;">TU BUVAI PAŠALINTAS!</h2>
+        <p style="margin-bottom:15px;">Žaidėjai nubalsavo už tavo pašalinimą nuo stalo.</p>
+        <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:15px; text-align:left;">
+            <div style="font-weight:700; margin-bottom:8px;">🗳️ Balsavimo rezultatai (${data.votesFor}/${data.requiredVotes}):</div>
+            ${summaryHtml}
+        </div>
+        <p style="font-size:13px; color:#aaa; margin-bottom:15px;">Dabar gali tik stebėti žaidimą.</p>
+        <button onclick="this.parentElement.remove();" style="
+            padding:10px 30px;
+            border:none;
+            border-radius:8px;
+            background:linear-gradient(145deg, #dc3545, #a71d2a);
+            color:#fff;
+            font-size:14px;
+            font-weight:700;
+            cursor:pointer;
+        ">OK, SUPRASTAU</button>
+    `;
+    
+    document.body.appendChild(popup);
 }
 
 // ============================================
@@ -689,7 +1012,6 @@ function toggleInfoMode() {
         
         if (infoPanel) infoPanel.classList.add('show');
         
-        // Jei buvo hover'intas langelis - parodyti
         if (lastHoveredField !== null) {
             showCellInfo(lastHoveredField);
         } else {
@@ -722,11 +1044,10 @@ function showCellInfo(fieldId) {
         return;
     }
     
-    const owner = gameState.players.find(p => p.properties.includes(fieldId) && !p.bankrupt && !p.left);
+    const owner = gameState.players.find(p => p.properties.includes(fieldId) && !p.bankrupt && !p.left && !p.kicked);
     
     let html = `<div class="info-header">${field.icon || ''} ${field.name} (#${fieldId})</div>`;
     
-    // Savininkas
     if (owner) {
         html += `
             <div class="info-row">
@@ -743,7 +1064,6 @@ function showCellInfo(fieldId) {
         `;
     }
     
-    // Kaina
     if (field.cost > 0) {
         html += `
             <div class="info-row">
@@ -753,50 +1073,25 @@ function showCellInfo(fieldId) {
         `;
     }
     
-       // Sklypams (property)
     if (field.type === 'property' && field.color) {
         const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
-        
-        // Bazinė nuoma = 10% sklypo vertės
         const baseRent = Math.floor(field.cost * 0.1);
         
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
         
-        html += `
-            <div class="info-row">
-                <span class="label">Bazinė:</span>
-                <span class="value">€${baseRent}</span>
-            </div>
-        `;
-        
-        // Namai - daugikliai: 1→10, 2→20, 3→30, 4→40
         const multipliers = [10, 20, 30, 40];
         for (let i = 1; i <= 4; i++) {
             const rent = Math.floor(baseRent * multipliers[i - 1]);
-            html += `
-                <div class="info-row">
-                    <span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span>
-                    <span class="value">€${rent}</span>
-                </div>
-            `;
+            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
         }
         
-        // Viešbutis - daugiklis 50
         const hotelRent = Math.floor(baseRent * 50);
-        html += `
-            <div class="info-row">
-                <span class="label">🏨 Viešbutis:</span>
-                <span class="value">€${hotelRent}</span>
-            </div>
-        `;
+        html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${hotelRent}</span></div>`;
         html += `</div>`;
     }
     
-    // SERVICE1
     if (field.type === 'service1') {
-        const ids = [2, 14, 29, 45];
-        const count = owner ? owner.properties.filter(id => ids.includes(id)).length : 0;
-        
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
         html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
         html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
@@ -805,7 +1100,6 @@ function showCellInfo(fieldId) {
         html += `</div>`;
     }
     
-    // SERVICE2
     if (field.type === 'service2') {
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
         html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
@@ -815,7 +1109,6 @@ function showCellInfo(fieldId) {
         html += `</div>`;
     }
     
-    // TAX
     if (field.type === 'tax') {
         if (field.id === 5) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€200</span></div></div>`;
@@ -830,7 +1123,6 @@ function showCellInfo(fieldId) {
         }
     }
     
-    // SPECIAL
     if (field.type === 'special') {
         if (field.id === 13) {
             html += `<div class="info-section"><div class="info-row"><span class="label">🏥 Sumokėsi:</span><span class="value red">€100</span></div></div>`;
@@ -1001,7 +1293,6 @@ function enterGame() {
     if (valueDisplay) valueDisplay.textContent = savedVolume;
     changeVolume(savedVolume);
     
-    // Įkelti info režimo būseną
     const savedInfoMode = localStorage.getItem('bancrupt_infoMode');
     if (savedInfoMode === 'true') {
         infoMode = true;
@@ -1146,6 +1437,12 @@ function rollDice() {
         return;
     }
     
+    if (amIKicked) {
+        alert('🚫 Tu buvai pašalintas iš žaidimo!');
+        playErrorSound();
+        return;
+    }
+    
     playClickSound();
     socket.emit('rollDice');
 }
@@ -1161,8 +1458,7 @@ let selectedOfferFields = [];
 let selectedRequestFields = [];
 
 function openTrading() {
-    // Leisti atidaryti prekybą BET KADA
-    if (myPlayer && (myPlayer.bankrupt || myPlayer.left)) {
+    if (myPlayer && (myPlayer.bankrupt || myPlayer.left || myPlayer.kicked)) {
         alert('❌ Tu nebegali prekiauti!');
         playErrorSound();
         return;
@@ -1361,7 +1657,7 @@ function updateTradePlayers() {
     select.innerHTML = '';
     let found = false;
     gameState.players.forEach(p => {
-        if (p.id !== currentPlayerId && p.isActive && !p.bankrupt && !p.left) {
+        if (p.id !== currentPlayerId && p.isActive && !p.bankrupt && !p.left && !p.kicked) {
             const option = document.createElement('option');
             option.value = p.id;
             option.textContent = `${p.name} (€${p.money})`;
@@ -1937,7 +2233,7 @@ function setMode(mode) {
 function updateUI(state) {
     if (!state) return;
     
-    document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left).length}/${state.maxPlayers}`;
+    document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left && !p.kicked).length}/${state.maxPlayers}`;
     const currentPlayer = state.players[state.currentTurn];
     document.getElementById('turnDisplay').textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
     
@@ -1946,7 +2242,7 @@ function updateUI(state) {
 
     const playerCountLeft = document.getElementById('playerCountLeft');
     if (playerCountLeft) {
-        playerCountLeft.textContent = `${state.players.filter(p => p.isActive && !p.bankrupt && !p.left).length}/${state.maxPlayers}`;
+        playerCountLeft.textContent = `${state.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked).length}/${state.maxPlayers}`;
     }
 
     const turnDisplayLeft = document.getElementById('turnDisplayLeft');
@@ -1959,7 +2255,7 @@ function updateUI(state) {
         myPlayer = me;
         const housesInfo = me.houses ? Object.values(me.houses).reduce((a, b) => a + b, 0) : 0;
         
-       let miniCardsHtml = '';
+        let miniCardsHtml = '';
         if (me.properties.length > 0) {
             miniCardsHtml = '<div class="mini-cards-container">';
             
@@ -2013,6 +2309,7 @@ function updateUI(state) {
             ${me.inJail ? '<div style="color:#dc3545; font-size:11px;">⛓️ KALĖJIME</div>' : ''}
             ${me.bankrupt ? '<div style="color:#dc3545; font-size:11px;">💀 BANKROTAS</div>' : ''}
             ${me.left ? '<div style="color:#6c757d; font-size:11px;">😭 PASITRAUKEI</div>' : ''}
+            ${me.kicked ? '<div style="color:#dc3545; font-size:14px; font-weight:700;">🚫 PAŠALINTAS</div>' : ''}
             ${me.isDebtor ? '<div style="color:#dc3545; font-size:14px; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
             <div style="width:100%; border-top:1px solid rgba(61,43,31,0.1); margin-top:4px; padding-top:4px;">
                 <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px;">📋 TURIMOS KORTELĖS</div>
@@ -2025,39 +2322,49 @@ function updateUI(state) {
     playersList.innerHTML = state.players.map(p => {
         const pHouses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
         const isLeft = p.left === true;
+        const isKicked = p.kicked === true;
         const isDebtor = p.isDebtor === true;
+        
+        // 🆕 Jei kicked - nerodyti iš viso (arba rodyti perbrauktą)
+        if (isKicked && p.id !== playerId) {
+            // Nerodyti pašalinto žaidėjo (jis nematomas kitiems)
+            return '';
+        }
+        
         return `
-            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''}">
+            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''} ${isKicked ? 'left' : ''}">
                 <span class="dot" style="background:${p.color}"></span>
                 <span class="pname">${p.name} ${p.id === playerId ? '👤' : ''}</span>
                 <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
                 ${pHouses > 0 ? `🏠${pHouses}` : ''}
                 ${p.inJail ? '⛓️' : ''}
                 ${p.bankrupt ? '💀' : ''}
+                ${isKicked ? '🚫' : ''}
                 ${isDebtor && !p.bankrupt ? '⚠️' : ''}
                 ${isLeft ? '😭' : ''}
-                ${state.currentTurn === p.id && p.isActive && !p.left ? '🎯' : ''}
+                ${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}
             </div>
         `;
-    }).join('');
+    }).filter(html => html !== '').join('');
     
     const isBankrupt = myPlayer && myPlayer.bankrupt;
     const isLeft = myPlayer && myPlayer.left;
+    const isKicked = myPlayer && myPlayer.kicked;
     const isDebtor = myPlayer && myPlayer.isDebtor;
-    isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left;
+    isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left && !myPlayer.kicked;
     
-    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft || isDebtor;
+    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
     
     const tradeBtn = document.getElementById('tradeBtn');
     if (tradeBtn) {
-        tradeBtn.disabled = isBankrupt || isLeft;
+        tradeBtn.disabled = isBankrupt || isLeft || isKicked;
     }
     
-    document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || !myPlayer || !myPlayer.isActive;
+    document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || isKicked || !myPlayer || !myPlayer.isActive;
 
     const jailBtn = document.getElementById('jailBtn');
     if (jailBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && !isDebtor && myPlayer && myPlayer.inJail) {
+        if (isMyTurn && !isBankrupt && !isLeft && !isKicked && !isDebtor && myPlayer && myPlayer.inJail) {
             jailBtn.style.display = 'block';
             jailBtn.disabled = false;
         } else {
@@ -2068,7 +2375,7 @@ function updateUI(state) {
 
     const demolishBtn = document.getElementById('demolishBtn');
     if (demolishBtn) {
-        if ((isMyTurn || isDebtor) && !isBankrupt && !isLeft && myPlayer) {
+        if ((isMyTurn || isDebtor) && !isBankrupt && !isLeft && !isKicked && myPlayer) {
             const hasHouses = myPlayer.houses && Object.keys(myPlayer.houses).length > 0;
             if (hasHouses) {
                 demolishBtn.style.display = 'block';
@@ -2085,7 +2392,7 @@ function updateUI(state) {
 
     const buildBtn = document.getElementById('buildBtn');
     if (buildBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && !isDebtor && myPlayer && gameState) {
+        if (isMyTurn && !isBankrupt && !isLeft && !isKicked && !isDebtor && myPlayer && gameState) {
             const currentField = gameState.board[myPlayer.position];
             if (currentField && (currentField.type === 'property' || currentField.type === 'service2') && currentField.color) {
                 const groupFields = getGroupByColor(currentField.color);
@@ -2140,7 +2447,7 @@ function updateUI(state) {
     const centerCells = document.querySelectorAll('.center-cell');
     centerCells.forEach(cell => {
         if (cell.id === 'center-3') {
-            if (isBankrupt || isLeft) {
+            if (isBankrupt || isLeft || isKicked) {
                 cell.style.opacity = '1';
                 cell.style.filter = 'none';
                 cell.style.background = 'linear-gradient(145deg, #d4b896, #c4a886)';
@@ -2152,7 +2459,7 @@ function updateUI(state) {
                 cell.style.pointerEvents = 'auto';
             }
         } else {
-            if (isBankrupt || isLeft) {
+            if (isBankrupt || isLeft || isKicked) {
                 cell.style.opacity = '0.4';
                 cell.style.filter = 'grayscale(1)';
                 cell.style.pointerEvents = 'none';
@@ -2166,7 +2473,7 @@ function updateUI(state) {
         }
     });
     
-    if (isBankrupt || isLeft) {
+    if (isBankrupt || isLeft || isKicked) {
         document.getElementById('board').style.opacity = '0.5';
         document.getElementById('board').style.filter = 'grayscale(0.8)';
     } else {
@@ -2188,22 +2495,20 @@ function updateBoard(state) {
         const cell = document.getElementById(`cell-${index}`);
         if (!cell) return;
         
-        const playersHere = state.players.filter(p => p.position === index && p.isActive && !p.bankrupt && !p.left);
+        const playersHere = state.players.filter(p => p.position === index && p.isActive && !p.bankrupt && !p.left && !p.kicked);
         
-        const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt);
-let topBarHtml = '';
-if (owner) {
-    topBarHtml = `<span class="cell-owner" style="background:${owner.color}"></span>`;
-}
-let html = `<div class="cell-top-bar">${topBarHtml}<span class="cell-number">${index}</span></div>`;
+        const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt && !p.kicked);
+        let topBarHtml = '';
+        if (owner) {
+            topBarHtml = `<span class="cell-owner" style="background:${owner.color}"></span>`;
+        }
+        let html = `<div class="cell-top-bar">${topBarHtml}<span class="cell-number">${index}</span></div>`;
         
-        // Fono ikona (emoji per visą langelį)
-if (field.icon) {
-    html += `<span class="cell-bg-icon">${field.icon}</span>`;
-}
-// Priekinė ikona (maža, viršuje)
+        if (field.icon) {
+            html += `<span class="cell-bg-icon">${field.icon}</span>`;
+        }
 
-html += `<span class="cell-name">${field.name || index}</span>`;
+        html += `<span class="cell-name">${field.name || index}</span>`;
         
         if (field.cost > 0) {
             if (owner && owner.houses && owner.houses[index] && owner.houses[index] > 0) {
@@ -2300,7 +2605,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Garso slider
     const volumeSlider = document.getElementById('volumeSlider');
     if (volumeSlider) {
         volumeSlider.addEventListener('input', function() {
@@ -2308,7 +2612,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // INFO - hover ant langelių
     document.querySelectorAll('.cell').forEach(cell => {
         const fieldId = parseInt(cell.dataset.id);
         
@@ -2336,171 +2639,3 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('✅ Inicijavimas baigtas');
 });
-
-// ============================================
-// BALSAVIMO SISTEMA (VOTE KICK)
-// ============================================
-
-function openVoteKick() {
-    if (!socket || !isConnected) {
-        alert('❌ Nėra ryšio su serveriu!');
-        return;
-    }
-    
-    if (!gameState || !gameState.players) {
-        alert('❌ Žaidimas dar neprasidėjęs!');
-        return;
-    }
-    
-    const modal = document.getElementById('voteKickModal');
-    const playersDiv = document.getElementById('voteKickPlayers');
-    const statusDiv = document.getElementById('voteKickStatus');
-    
-    playersDiv.innerHTML = '';
-    statusDiv.innerHTML = 'Pasirink žaidėją, kurį nori pašalinti.';
-    
-    // Filtruojam žaidėjus - nerodom savęs ir jau pašalintų
-    const otherPlayers = gameState.players.filter(p => 
-        p.id !== playerId && 
-        !p.bankrupt && 
-        !p.kicked
-    );
-    
-    if (otherPlayers.length === 0) {
-        statusDiv.innerHTML = '❌ Nėra žaidėjų, kuriuos būtų galima pašalinti.';
-    } else {
-        otherPlayers.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'vote-kick-card';
-            card.innerHTML = `
-                <div class="card-color" style="background:${p.color || '#888'}"></div>
-                <div class="card-name">${p.name}</div>
-                <div class="card-votes">🗳️ Balsuoti</div>
-            `;
-            card.onclick = () => startVoteKick(p.id, p.name);
-            playersDiv.appendChild(card);
-        });
-    }
-    
-    modal.style.display = 'flex';
-}
-
-function closeVoteKick() {
-    document.getElementById('voteKickModal').style.display = 'none';
-}
-
-function startVoteKick(targetPlayerId, targetName) {
-    if (!confirm(`Ar tikrai nori pradėti balsavimą dėl "${targetName}" pašalinimo?`)) {
-        return;
-    }
-    
-    socket.emit('startVoteKick', {
-        gameId: gameId,
-        targetPlayerId: targetPlayerId
-    });
-    
-    closeVoteKick();
-}
-
-function voteKick(targetPlayerId, vote) {
-    socket.emit('voteKick', {
-        gameId: gameId,
-        targetPlayerId: targetPlayerId,
-        vote: vote // true = už pašalinimą, false = prieš
-    });
-    
-    closeVoteKick();
-}
-
-// ============================================
-// SOCKET.IO KLAUSYMAI BALSAVIMUI
-// ============================================
-
-socket.on('voteKickStarted', (data) => {
-    console.log('🗳️ Balsavimas pradėtas:', data);
-    
-    // Parodyk pranešimą visiems
-    addNotification(`🗳️ ${data.initiatorName} pradėjo balsavimą dėl "${data.targetName}" pašalinimo!`);
-    playNotificationSound();
-    
-    // Jei aš nesu nei iniciatorius, nei taikinys - parodyk balsavimo modalą
-    if (playerId !== data.initiatorId && playerId !== data.targetPlayerId) {
-        showVoteKickPrompt(data);
-    }
-});
-
-socket.on('voteKickUpdate', (data) => {
-    console.log('🗳️ Balsavimo atnaujinimas:', data);
-    
-    // Atnaujink pranešimą
-    addNotification(`🗳️ Balsai: ${data.currentVotes}/${data.requiredVotes} (liko ${data.timeLeft}s)`);
-    
-    // Jei modalas atidarytas - atnaujink
-    const modal = document.getElementById('voteKickModal');
-    if (modal.style.display === 'flex') {
-        const statusDiv = document.getElementById('voteKickStatus');
-        statusDiv.innerHTML = `
-            <div class="vote-kick-timer">⏱️ ${data.timeLeft}s</div>
-            <div>Balsai: <strong>${data.currentVotes}/${data.requiredVotes}</strong></div>
-            <div style="margin-top:5px; font-size:12px;">Balsavo: ${data.votedPlayers.join(', ') || 'niekas'}</div>
-        `;
-    }
-});
-
-socket.on('voteKickResult', (data) => {
-    console.log('🗳️ Balsavimo rezultatas:', data);
-    
-    closeVoteKick();
-    
-    if (data.kicked) {
-        addNotification(`✅ ${data.targetName} buvo pašalintas nuo stalo! (${data.votes}/${data.requiredVotes})`);
-        playNotificationSound();
-        
-        if (playerId === data.targetPlayerId) {
-            alert('⚠️ Tu buvai pašalintas nuo stalo! Dabar gali tik stebėti žaidimą.');
-        }
-    } else {
-        addNotification(`❌ Balsavimas dėl "${data.targetName}" nepavyko. (${data.votes}/${data.requiredVotes})`);
-    }
-});
-
-socket.on('voteKickCancelled', (data) => {
-    console.log('🗳️ Balsavimas atšauktas:', data);
-    closeVoteKick();
-    addNotification(`🗳️ Balsavimas atšauktas: ${data.reason}`);
-});
-
-// Balsavimo prompt modalas
-function showVoteKickPrompt(data) {
-    const modal = document.getElementById('voteKickModal');
-    const playersDiv = document.getElementById('voteKickPlayers');
-    const statusDiv = document.getElementById('voteKickStatus');
-    
-    playersDiv.innerHTML = `
-        <div style="padding:15px; background:rgba(255,255,255,0.3); border-radius:8px; margin:10px 0; text-align:center;">
-            <div style="font-size:16px; font-weight:700; color:#3d2b1f; margin-bottom:10px;">
-                Ar pašalinti "${data.targetName}"?
-            </div>
-            <div style="font-size:13px; color:#6c757d; margin-bottom:15px;">
-                Balsavimą pradėjo: ${data.initiatorName}
-            </div>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button onclick="voteKick('${data.targetPlayerId}', true)" 
-                        style="flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
-                    ✅ TAIP, ŠALINTI
-                </button>
-                <button onclick="voteKick('${data.targetPlayerId}', false)" 
-                        style="flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
-                    ❌ NE, PALIKTI
-                </button>
-            </div>
-        </div>
-    `;
-    
-    statusDiv.innerHTML = `
-        <div class="vote-kick-timer">⏱️ ${data.timeLeft || 60}s</div>
-        <div>Reikia balsų: <strong>${data.requiredVotes}</strong></div>
-    `;
-    
-    modal.style.display = 'flex';
-}
