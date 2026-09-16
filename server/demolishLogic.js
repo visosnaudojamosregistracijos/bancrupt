@@ -1,5 +1,7 @@
 // server/demolishLogic.js
 
+const C = require('./gameConstants');
+
 class DemolishLogic {
     constructor(game) {
         this.game = game;
@@ -202,21 +204,7 @@ class DemolishLogic {
 
     // Gauti grupės sklypus pagal spalvą
     getGroupByColor(color) {
-        const groups = {
-            '#ffd700': [1, 3],
-            '#4a90d9': [6, 7, 9],
-            '#2ecc71': [10, 11, 12],
-            '#e67e22': [15, 17, 18],
-            '#9b59b6': [20, 21, 22],
-            '#e74c3c': [24, 25, 27],
-            '#8B6914': [28, 30, 31],
-            '#1abc9c': [32, 34, 35],
-            '#ff69b4': [36, 37, 38],
-            '#2c3e50': [39, 41, 43],
-            '#1a237e': [44, 46, 48],
-            '#bdc3c7': [49, 51]
-        };
-        return groups[color] || [];
+        return C.COLOR_GROUPS[color] || [];
     }
 }
 
