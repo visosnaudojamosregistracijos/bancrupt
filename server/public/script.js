@@ -1754,47 +1754,6 @@ function hideOtherPlayerChoice() {
     choice.classList.remove('show');
 }
 
-// ============================================
-// 🆕 KITO ŽAIDĖJO SPRENDIMO REZULTATAS
-// ============================================
-
-function showOtherPlayerResult(data) {
-    const choice = document.getElementById('otherPlayerChoice');
-    if (!choice) return;
-    
-    const box = choice.querySelector('.buy-choice-box');
-    if (!box) return;
-    
-    const isBought = data.bought === true;
-    const color = isBought ? '#28a745' : '#dc3545';
-    const icon = isBought ? '✅' : '❌';
-    const text = isBought 
-        ? `nusipirko ${data.fieldName}!` 
-        : `atsisakė pirkti ${data.fieldName}`;
-    
-    box.innerHTML = `
-        <div class="buy-choice-header" style="color:${color};">
-            ${icon} ${data.playerName}
-        </div>
-        <div class="buy-choice-body">
-            <p style="font-size:14px; font-weight:700; color:${color};">
-                ${text}
-            </p>
-        </div>
-        <div style="text-align:center; font-size:11px; color:#6c757d; padding:4px 0;">
-            ⏳ Dingsta po 3 sek...
-        </div>
-    `;
-    
-    choice.style.display = 'flex';
-    choice.classList.add('show');
-    
-    // Paslėpti po 3 sekundžių
-    setTimeout(() => {
-        hideOtherPlayerChoice();
-    }, 3000);
-}
-
 const style = document.createElement('style');
 style.textContent = `
     @keyframes popupFadeIn {
