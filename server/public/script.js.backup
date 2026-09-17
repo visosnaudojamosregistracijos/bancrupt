@@ -1637,8 +1637,8 @@ function showCellInfo(fieldId) {
     
     lastHoveredField = fieldId;
     
-    const tooltip = document.getElementById('cellInfoTooltip');
-    if (!tooltip) return;
+    const panel = document.getElementById('cellInfoPanel');
+    if (!panel) return;
     
     const field = gameState.board.find(f => f.id === fieldId);
     if (!field) {
@@ -1682,6 +1682,7 @@ function showCellInfo(fieldId) {
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
         html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
         
+        // 🆕 Trumpinam - viena eilutė
         const rent1 = Math.floor(baseRent * 10);
         const rent4 = Math.floor(baseRent * 40);
         html += `<div class="info-row"><span class="label">Su namais:</span><span class="value">€${rent1}–€${rent4}</span></div>`;
@@ -1731,68 +1732,14 @@ function showCellInfo(fieldId) {
         }
     }
     
-    tooltip.innerHTML = html;
-    
-    // Pozicionavimas - rodyk iš karto, kad galėtume išmatuoti
-    tooltip.style.display = 'block';
-    tooltip.style.left = '0px';
-    tooltip.style.top = '0px';
-    
-    const cell = document.getElementById(`cell-${fieldId}`);
-    if (!cell) return;
-    
-    const cellRect = cell.getBoundingClientRect();
-    const tooltipWidth = tooltip.offsetWidth;
-    const tooltipHeight = tooltip.offsetHeight;
-    
-    const boardRect = document.getElementById('board').getBoundingClientRect();
-    const boardCenterX = boardRect.left + boardRect.width / 2;
-    const boardCenterY = boardRect.top + boardRect.height / 2;
-    
-    const cellCenterX = cellRect.left + cellRect.width / 2;
-    const cellCenterY = cellRect.top + cellRect.height / 2;
-    
-    let top, left;
-    
-    // Horizontaliai
-    if (cellCenterX < boardCenterX) {
-        // Sklypas kairėje - tooltip dešinėje
-        left = cellRect.right + 10;
-    } else {
-        // Sklypas dešinėje - tooltip kairėje
-        left = cellRect.left - tooltipWidth - 10;
-    }
-    
-    // Vertikaliai
-    if (cellCenterY < boardCenterY) {
-        // Sklypas viršuje - tooltip apačioje
-        top = cellRect.top;
-    } else {
-        // Sklypas apačioje - tooltip viršuje
-        top = cellRect.bottom - tooltipHeight;
-    }
-    
-    // Patikrink, ar tooltip netelpa už ekrano
-    if (left < 10) left = 10;
-    if (left + tooltipWidth > window.innerWidth - 10) {
-        left = window.innerWidth - tooltipWidth - 10;
-    }
-    if (top < 10) top = 10;
-    if (top + tooltipHeight > window.innerHeight - 10) {
-        top = window.innerHeight - tooltipHeight - 10;
-    }
-    
-    tooltip.style.left = left + 'px';
-    tooltip.style.top = top + 'px';
+    panel.innerHTML = html;
 }
 
 function hideCellInfo() {
     lastHoveredField = null;
-    const tooltip = document.getElementById('cellInfoTooltip');
-    if (tooltip) {
-        tooltip.style.display = 'none';
-        tooltip.innerHTML = '';
-    }
+    const panel = document.getElementById('cellInfoPanel');
+    if (!panel) return;
+    panel.innerHTML = '';
 }
 
 // ============================================
