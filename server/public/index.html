@@ -264,7 +264,7 @@
         }
         
         /* ============================================ */
-        /* VIEŠŲ STALŲ MODALAS (Etapas 6) */
+        /* VIEŠŲ STALŲ MODALAS */
         /* ============================================ */
         #publicGamesModal {
             display: none;
@@ -639,44 +639,41 @@
                                     <div id="playersList"></div>
                                 </div>
                                 <div id="center-5" class="center-cell notifications">
-    <h4>📢 PRANEŠIMAI</h4>
-    
-    <div id="buyChoice" style="display:none;">
-        <div class="buy-choice-box">
-            <div class="buy-choice-header">🏠 SKLYPAS</div>
-            <div class="buy-choice-body">
-                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
-                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
-                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
-            </div>
-            <div class="buy-choice-buttons">
-                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
-                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
-            </div>
-        </div>
-    </div>
+                                    <h4>📢 PRANEŠIMAI</h4>
+                                    
+                                    <div id="buyChoice" style="display:none;">
+                                        <div class="buy-choice-box">
+                                            <div class="buy-choice-header">🏠 SKLYPAS</div>
+                                            <div class="buy-choice-body">
+                                                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
+                                                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
+                                                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
+                                            </div>
+                                            <div class="buy-choice-buttons">
+                                                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
+                                                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
+                                            </div>
+                                        </div>
+                                    </div>
 
-    <!-- 🆕 KITIEMS ŽAIDĖJAMS -->
-    <div id="otherPlayerChoice" style="display:none;">
-        <div class="buy-choice-box">
-            <div class="buy-choice-header">👤 ŽAIDĖJO ĖJIMAS</div>
-            <div class="buy-choice-body">
-                <p><strong id="otherChoicePlayerName">Tomas</strong></p>
-                <p>Atsistojo ant: <strong id="otherChoiceFieldName">Vytauto g.</strong></p>
-                <p>Kaina: <strong id="otherChoiceFieldCost">€60</strong></p>
-            </div>
-            <div style="text-align:center; font-size:11px; color:#6c757d; padding:4px 0;">
-                ⏳ Laukiama sprendimo...
-            </div>
-        </div>
-    </div>
+                                    <div id="cellInfoPanel">
+                                        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
+                                    </div>
 
-    <div id="cellInfoPanel">
-        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
-    </div>
-    
-   <div id="notifications"></div>
-</div>
+                                    <!-- 🆕 KITO ŽAIDĖJO ĖJIMO LANGAS -->
+                                    <div id="otherPlayerChoice" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:10; justify-content:center; align-items:center; border-radius:8px;">
+                                        <div class="buy-choice-box">
+                                            <div class="buy-choice-header" id="otherChoicePlayerName" style="color:#1a6b3c;">👤 Žaidėjas</div>
+                                            <div class="buy-choice-body">
+                                                <p style="font-size:12px;">🏠 <strong id="otherChoiceFieldName">Sklypas</strong></p>
+                                                <p style="font-size:14px;">Kaina: <strong id="otherChoiceFieldCost" style="color:#28a745;">€0</strong></p>
+                                            </div>
+                                            <div style="text-align:center; font-size:11px; color:#6c757d; padding:4px 0;">
+                                                ⏳ Laukiama sprendimo...
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div id="center-6" class="center-cell journal">
                                     <h4>📜 ŽURNALAS</h4>
                                     <div id="journal"></div>
@@ -733,7 +730,6 @@
             <h2 style="color:#ffd700; text-align:center; font-size:2em; margin-bottom:5px;">🏦 BANCRUPT</h2>
             <p style="color:#d4b896; text-align:center; margin-bottom:25px;">⏳ Laukiama žaidėjų...</p>
             
-            <!-- STALO KODAS IR NUORODA -->
             <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:20px; border:2px solid #c9a84c;">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
                     <span style="color:#d4b896; font-weight:600; font-size:13px;">📋 Stalo kodas:</span>
@@ -748,23 +744,18 @@
                 <div id="waitingGameLink" style="color:#9bd9e8; font-size:11px; text-align:center; word-break:break-all;">---</div>
             </div>
             
-            <!-- ŽAIDĖJŲ SĄRAŠAS -->
             <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:15px; margin-bottom:20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <span style="color:#ffd700; font-weight:700; font-size:15px;">👥 Žaidėjai</span>
                     <span id="waitingPlayerCount" style="color:#d4b896; font-size:13px;">0/8</span>
                 </div>
-                <div id="waitingPlayersList" style="display:flex; flex-direction:column; gap:8px; min-height:60px;">
-                    <!-- Žaidėjai bus čia -->
-                </div>
+                <div id="waitingPlayersList" style="display:flex; flex-direction:column; gap:8px; min-height:60px;"></div>
             </div>
             
-            <!-- KIEK TRŪKSTA -->
             <div id="waitingStatusText" style="text-align:center; color:#d4b896; font-size:14px; margin-bottom:20px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px;">
                 Laukiama žaidėjų...
             </div>
             
-            <!-- MYGTUKAI -->
             <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
                 <button id="readyBtn" onclick="toggleReady()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; transition:all 0.3s;">
                     ✋ Aš pasiruošęs
@@ -782,17 +773,13 @@
                 </div>
             </div>
             
-            <!-- 🆕 PASITRAUKIMO MYGTUKAS -->
             <button onclick="leaveGameFromWaiting()" style="width:100%; padding:12px; margin-bottom:20px; border:2px solid #ff6b6b; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
                 🏃 Pasitraukti iš stalo
             </button>
             
-            <!-- CHAT -->
             <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:12px;">
                 <div style="color:#ffd700; font-weight:700; font-size:13px; margin-bottom:8px;">💬 Chat</div>
-                <div id="waitingChatMessages" style="height:100px; overflow-y:auto; font-size:12px; color:#d4b896; background:rgba(0,0,0,0.2); border-radius:8px; padding:8px; margin-bottom:8px;">
-                    <!-- Chat žinutės -->
-                </div>
+                <div id="waitingChatMessages" style="height:100px; overflow-y:auto; font-size:12px; color:#d4b896; background:rgba(0,0,0,0.2); border-radius:8px; padding:8px; margin-bottom:8px;"></div>
                 <div style="display:flex; gap:6px;">
                     <input type="text" id="waitingChatInput" placeholder="Rašyk žinutę..." onkeypress="if(event.key==='Enter') sendWaitingChat()" style="flex:1; padding:8px; border:1px solid #c9a84c; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; font-size:13px; outline:none;">
                     <button onclick="sendWaitingChat()" style="padding:8px 14px; background:#3d2b1f; color:#fff; border:none; border-radius:6px; cursor:pointer;">➤</button>
@@ -1073,11 +1060,6 @@
             </button>
         </div>
     </div>
-
-<!-- INFO TOOLTIP -->
-    <div id="cellInfoTooltip"></div>
-
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="audioManager.js"></script>
