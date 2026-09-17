@@ -1678,7 +1678,16 @@ function hideCellInfo() {
 }
 
 // ============================================
-// 🆕 KITO ŽAIDĖJO PASIRINKIMO LANGAS
+// IŠŠOKANTYS PRANEŠIMAI → 5 LANGELIS
+// ============================================
+
+function showPopupMessage(message, type) {
+    // Visi pranešimai eina į 5 langelį
+    addNotification(message);
+}
+
+// ============================================
+// 🆕 KITO ŽAIDĖJO ĖJIMO LANGAS
 // ============================================
 
 function showOtherPlayerChoice(data) {
@@ -1698,15 +1707,6 @@ function hideOtherPlayerChoice() {
     if (!choice) return;
     choice.style.display = 'none';
     choice.classList.remove('show');
-}
-
-// ============================================
-// IŠŠOKANTYS PRANEŠIMAI → 5 LANGELIS
-// ============================================
-
-function showPopupMessage(message, type) {
-    // Visi pranešimai eina į 5 langelį
-    addNotification(message);
 }
 
 const style = document.createElement('style');
