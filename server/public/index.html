@@ -639,43 +639,46 @@
                                     <div id="playersList"></div>
                                 </div>
                                 <div id="center-5" class="center-cell notifications">
-                                    <h4>📢 PRANEŠIMAI</h4>
-                                    
-                                    <div id="buyChoice" style="display:none;">
-                                        <div class="buy-choice-box">
-                                            <div class="buy-choice-header">🏠 SKLYPAS</div>
-                                            <div class="buy-choice-body">
-                                                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
-                                                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
-                                                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
-                                            </div>
-                                            <div class="buy-choice-buttons">
-                                                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
-                                                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
-                                            </div>
-                                        </div>
-                                    </div>
+    <h4>📢 PRANEŠIMAI</h4>
 
-                                    <div id="cellInfoPanel">
-                                        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
-                                    </div>
+    <!-- PIRKIMO LANGAS -->
+    <div id="buyChoice" style="display:none;">
+        <div class="buy-choice-box">
+            <div class="buy-choice-header">🏠 SKLYPAS</div>
+            <div class="buy-choice-body">
+                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
+                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
+                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
+            </div>
+            <div class="buy-choice-buttons">
+                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
+                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
+            </div>
+        </div>
+    </div>
 
-                                    <!-- 🆕 INFO TOOLTIP -->
-<div id="cellInfoTooltip" class="cell-info-tooltip" style="display:none;"></div>
+    <!-- INFO PANELĖ -->
+    <div id="cellInfoPanel">
+        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
+    </div>
 
-                                    <div id="otherPlayerChoice" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:10; justify-content:center; align-items:center; border-radius:8px;">
-                                        <div class="buy-choice-box">
-                                            <div class="buy-choice-header" id="otherChoicePlayerName" style="color:#1a6b3c;">👤 Žaidėjas</div>
-                                            <div class="buy-choice-body">
-                                                <p style="font-size:12px;">🏠 <strong id="otherChoiceFieldName">Sklypas</strong></p>
-                                                <p style="font-size:14px;">Kaina: <strong id="otherChoiceFieldCost" style="color:#28a745;">€0</strong></p>
-                                            </div>
-                                            <div style="text-align:center; font-size:11px; color:#6c757d; padding:4px 0;">
-                                                ⏳ Laukiama sprendimo...
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+    <!-- 🆕 PRANEŠIMŲ SĄRAŠAS (BŪTINAS) -->
+    <div id="notifications"></div>
+
+    <!-- KITO ŽAIDĖJO SPRENDIMO LANGAS -->
+    <div id="otherPlayerChoice" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:10; justify-content:center; align-items:center; border-radius:8px;">
+        <div class="buy-choice-box">
+            <div class="buy-choice-header" id="otherChoicePlayerName" style="color:#1a6b3c;">👤 Žaidėjas</div>
+            <div class="buy-choice-body">
+                <p style="font-size:12px;">🏠 <strong id="otherChoiceFieldName">Sklypas</strong></p>
+                <p style="font-size:14px;">Kaina: <strong id="otherChoiceFieldCost" style="color:#28a745;">€0</strong></p>
+            </div>
+            <div style="text-align:center; font-size:11px; color:#6c757d; padding:4px 0;">
+                ⏳ Laukiama sprendimo...
+            </div>
+        </div>
+    </div>
+</div>
                                 <div id="center-6" class="center-cell journal">
                                     <h4>📜 ŽURNALAS</h4>
                                     <div id="journal"></div>
@@ -1059,14 +1062,17 @@
             <div id="voteKickStatus" style="margin:15px 0; padding:10px; background:rgba(255,255,255,0.3); border-radius:8px; font-size:14px; color:#3d2b1f;"></div>
             <button onclick="closeVoteKick()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
                 ❌ Uždaryti
-            </button>
-        </div>
+        </button>
     </div>
+</div>
 
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-    <script src="audioManager.js"></script>
-    <script src="script.js"></script>
-    <script>
+<!-- INFO TOOLTIP (šalia sklypo) -->
+<div id="cellInfoTooltip" class="cell-info-tooltip" style="display:none;"></div>
+
+<script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+<script src="audioManager.js"></script>
+<script src="script.js"></script>
+<script>
         // ============================================
         // SPA PUSLAPIŲ VALDYMAS
         // ============================================
