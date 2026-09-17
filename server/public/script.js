@@ -811,13 +811,12 @@ function autoFitInfoFont() {
     if (!panel || !panel.classList.contains('show')) return;
     
     const width = panel.clientWidth;
-    const height = panel.clientHeight;
+    if (width === 0) return;
     
-    if (width === 0 || height === 0) return;
+    // Pradinis šriftas pagal panelės plotį
+    let fontSize = 12;
     
-    let fontSize = 14;
-    
-    if (width < 200) fontSize = 9;
+    if (width < 200) fontSize = 10;
     else if (width < 250) fontSize = 10;
     else if (width < 300) fontSize = 11;
     else if (width < 350) fontSize = 12;
@@ -826,20 +825,12 @@ function autoFitInfoFont() {
     else if (width < 650) fontSize = 15;
     else fontSize = 16;
     
+    // Nustatyti CSS kintamuosius
     panel.style.setProperty('--info-font-size', fontSize + 'px');
     panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
     panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
     
-    let attempts = 0;
-    while (panel.scrollHeight > panel.clientHeight && fontSize > 6 && attempts < 30) {
-        fontSize--;
-        panel.style.setProperty('--info-font-size', fontSize + 'px');
-        panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
-        panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
-        attempts++;
-    }
-    
-    console.log(`📏 Info panel: ${width}×${height}px → ${fontSize}px (${attempts} mažinimai)`);
+    console.log(`📏 Info panel: ${width}px → ${fontSize}px`);
 }
 
 function initInfoResizeObserver() {
@@ -1743,9 +1734,6 @@ function showCellInfo(fieldId) {
     }
     
     panel.innerHTML = html;
-    
-    // 🆕 Automatiškai pritaikyti šriftą
-    setTimeout(autoFitInfoFont, 10);
 }
 
 function hideCellInfo() {
