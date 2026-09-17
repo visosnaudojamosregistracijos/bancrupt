@@ -1578,7 +1578,6 @@ function toggleInfoMode() {
 }
 
 function showCellInfo(fieldId) {
-    if (!infoMode) return;
     if (!gameState) return;
     
     lastHoveredField = fieldId;
@@ -3276,29 +3275,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const fieldId = parseInt(cell.dataset.id);
         
         cell.addEventListener('mouseenter', () => {
-            if (infoMode) {
-                showCellInfo(fieldId);
-            }
-        });
-        
-        cell.addEventListener('mouseleave', () => {
-            if (infoMode) {
-                hideCellInfo();
-            }
-        });
+    showCellInfo(fieldId);
+});
+
+cell.addEventListener('mouseleave', () => {
+    hideCellInfo();
+});
         
         cell.addEventListener('touchstart', (e) => {
-            if (infoMode) {
-                e.preventDefault();
-                showCellInfo(fieldId);
-            }
-        }, { passive: false });
-        
-        cell.addEventListener('touchend', (e) => {
-            if (infoMode) {
-                setTimeout(() => hideCellInfo(), 3000);
-            }
-        });
+    e.preventDefault();
+    showCellInfo(fieldId);
+}, { passive: false });
+
+cell.addEventListener('touchend', (e) => {
+    setTimeout(() => hideCellInfo(), 3000);
+});
     });
     
     const savedMode = localStorage.getItem('boardMode') || 'adaptive';
