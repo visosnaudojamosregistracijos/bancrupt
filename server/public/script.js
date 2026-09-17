@@ -1803,63 +1803,12 @@ function hideCellInfo() {
 // ============================================
 
 // ============================================
-// IŠŠOKANTYS PRANEŠIMAI (be mygtuko, dingsta po 3 sek.)
+// PRANEŠIMAI → 5 LANGELIS
 // ============================================
 
 function showPopupMessage(message, type) {
-    // Jei jau yra popup - pašalink seną
-    const existingPopup = document.getElementById('gamePopup');
-    if (existingPopup) {
-        existingPopup.remove();
-    }
-    
-    const popup = document.createElement('div');
-    popup.id = 'gamePopup';
-    popup.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
-        border: 3px solid #c9a84c;
-        border-radius: 16px;
-        padding: 25px 35px;
-        max-width: 500px;
-        width: 90%;
-        z-index: 10000;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        text-align: center;
-        animation: popupFadeIn 0.3s ease;
-        pointer-events: none;
-    `;
-    
-    let icon = '🎲';
-    let color = '#1a6b3c';
-    if (type === 'buy') { icon = '🏠'; color = '#28a745'; }
-    else if (type === 'rent') { icon = '💰'; color = '#dc3545'; }
-    else if (type === 'jail') { icon = '⛓️'; color = '#6c757d'; }
-    else if (type === 'tax') { icon = '💸'; color = '#dc3545'; }
-    else if (type === 'chance') { icon = '🎲'; color = '#fd7e14'; }
-    else if (type === 'move') { icon = '🎲'; color = '#1a6b3c'; }
-    
-    popup.innerHTML = `
-        <div style="font-size:48px; margin-bottom:10px;">${icon}</div>
-        <div style="font-size:18px; font-weight:700; color:${color}; white-space:pre-line;">${message}</div>
-    `;
-    
-    document.body.appendChild(popup);
-    playNotificationSound();
-    
-    // Automatiškai dingsta po 3 sekundžių
-    setTimeout(() => {
-        if (popup.parentElement) {
-            popup.style.opacity = '0';
-            popup.style.transition = 'opacity 0.5s';
-            setTimeout(() => {
-                if (popup.parentElement) popup.remove();
-            }, 500);
-        }
-    }, 3000);
+    // Visi pranešimai eina į 5 langelį (addNotification)
+    addNotification(message);
 }
 
 const style = document.createElement('style');
