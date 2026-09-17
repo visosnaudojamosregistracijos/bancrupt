@@ -937,20 +937,7 @@ body {
 
 /* ---------- 5 LANGELIS - PRANEŠIMAI ---------- */
 #notifications {
-    flex: 1;
-    overflow-y: auto;
-    font-size: 11px;
-    color: #3d2b1f;
-    max-height: 70px;
-    padding: 6px 8px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 6px;
-    border: 1px solid rgba(61,43,31,0.1);
-    margin: 2px 0;
-    min-height: 50px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display: none !important;
 }
 
 .notification-item {
