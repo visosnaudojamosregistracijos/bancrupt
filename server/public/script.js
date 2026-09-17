@@ -243,133 +243,50 @@ function initSocket() {
     });
 
     socket.on('diceRolled', (data) => {
-        console.log('🎲 Kauliukai mesti:', data);
-        playDiceSound();
-        updateDiceDisplay(data.dice[0], data.dice[1]);
+    console.log('🎲 Kauliukai mesti:', data);
+    playDiceSound();
+    updateDiceDisplay(data.dice[0], data.dice[1]);
+    
+    let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+    
+    if (data.field) {
+        notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
         
-        let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
-        let popupMsg = notificationMsg;
-        let popupType = 'move';
-        
-        if (data.field) {
-            notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
-            popupMsg += ` ir atsistojo ant "${data.field.name}"`;
-            
-            if (data.field.id === 2) playDujosSound();
-            else if (data.field.id === 14) playSiukslesSound();
-            else if (data.field.id === 28) playElektraSound();
-            else if (data.field.id === 44) playVanduoSound();
-            else if (data.field.id === 8) playAirPortSound();
-            else if (data.field.id === 19) playTrainSound();
-            else if (data.field.id === 37) playPortSound();
-            else if (data.field.id === 46) playBusSound();
-            else if (data.field.id === 13) playHospitalSound();
-            else if (data.field.id === 21) playLatrasSound();
-            else if (data.field.id === 32) playPirtisSound();
-            else if (data.field.id === 50) playBirthdaySound();
-            
-            if (data.result) {
-                if (data.result.action === 'can_buy') {
-                    const buyMsg = ` 🏠 Gali nusipirkti už €${data.field.cost}!`;
-                    notificationMsg += buyMsg;
-                    popupMsg += buyMsg;
-                    popupType = 'buy';
-                } else if (data.result.action === 'pay_rent') {
-                    const rentMsg = ` 💰 Sumokėjo nuomą!`;
-                    notificationMsg += rentMsg;
-                    popupMsg += rentMsg;
-                    popupType = 'rent';
-                    
-                    if (data.field.id === 8) {
-                        setTimeout(() => playAirInSound(), 800);
-                    } else {
-                        const isService1 = (data.field.id === 2 || data.field.id === 14 || 
-                                          data.field.id === 28 || data.field.id === 44);
-                        const isService2 = (data.field.id === 19 || data.field.id === 37 || 
-                                          data.field.id === 46);
-                        if (!isService1 && !isService2) {
-                            playPaySound();
-                        }
-                    }
-                } else if (data.result.action === 'pay_tax') {
-                    const taxMsg = ` 💸 Sumokėjo mokesčius!`;
-                    notificationMsg += taxMsg;
-                    popupMsg += taxMsg;
-                    popupType = 'tax';
-                    playTaxSound();
-                } else if (data.result.action === 'hospital') {
-                    const hospitalMsg = ` 🏥 Ligoninė!`;
-                    notificationMsg += hospitalMsg;
-                    popupMsg += hospitalMsg;
-                    popupType = 'tax';
-                    playHospitalSound();
-                } else if (data.result.action === 'birthday') {
-                    const birthdayMsg = ` 🎂 Gimtadienis!`;
-                    notificationMsg += birthdayMsg;
-                    popupMsg += birthdayMsg;
-                    popupType = 'chance';
-                    playBirthdaySound();
-                } else if (data.result.action === 'latras') {
-                    const latrasMsg = ` 🍺 Latrų baras!`;
-                    notificationMsg += latrasMsg;
-                    popupMsg += latrasMsg;
-                    popupType = 'tax';
-                    playLatrasSound();
-                } else if (data.result.action === 'pirtis') {
-                    const pirtisMsg = ` 🧖 Pirtis!`;
-                    notificationMsg += pirtisMsg;
-                    popupMsg += pirtisMsg;
-                    popupType = 'tax';
-                    playPirtisSound();
-                } else if (data.result.action === 'visiting_jail') {
-                    const visitMsg = ` 🚔 Svečiuose pas kalinius!`;
-                    notificationMsg += visitMsg;
-                    popupMsg += visitMsg;
-                    popupType = 'move';
-                } else if (data.result.action === 'go_to_jail') {
-                    const jailMsg = ` ⛓️ Keliauja į kalėjimą!`;
-                    notificationMsg += jailMsg;
-                    popupMsg += jailMsg;
-                    popupType = 'jail';
-                    playJailInSound();
-                } else if (data.result.action === 'chance') {
-                    const chanceMsg = ` 🎲 Gavosi šansas!`;
-                    notificationMsg += chanceMsg;
-                    popupMsg += chanceMsg;
-                    popupType = 'chance';
-                    playChanceSound();
-                } else if (data.result.action === 'special') {
-                    const specialMsg = ` 🎲 HORNY RP!`;
-                    notificationMsg += specialMsg;
-                    popupMsg += specialMsg;
-                    popupType = 'chance';
-                    playChanceSound();
-                }
-            }
-            
-            if (data.canBuy) {
-                const buyMsg = ` 🏠 Gali nusipirkti ${data.field.name} už €${data.field.cost}!`;
-                notificationMsg += buyMsg;
-                popupMsg += buyMsg;
-                popupType = 'buy';
-                playNotificationSound();
-            }
-        }
-        
+        // Garsai
+        if (data.field.id === 2) playDujosSound();
+        else if (data.field.id === 14) playSiukslesSound();
+        else if (data.field.id === 28) playElektraSound();
+        else if (data.field.id === 44) playVanduoSound();
+        else if (data.field.id === 8) playAirPortSound();
+        else if (data.field.id === 19) playTrainSound();
+        else if (data.field.id === 37) playPortSound();
+        else if (data.field.id === 46) playBusSound();
+        else if (data.field.id === 13) playHospitalSound();
+        else if (data.field.id === 21) playLatrasSound();
+        else if (data.field.id === 32) playPirtisSound();
+        else if (data.field.id === 50) playBirthdaySound();
+    }
+    
+    // 🆕 SAU - tik info į 5 langelį
+    if (data.forSelf) {
         addNotification(notificationMsg);
-        
-        if (data.player.id !== playerId) {
-            showPopupMessage(popupMsg, popupType);
+    } 
+    // 🆕 KITIEMS - info į 5 langelį
+    else {
+        if (data.canBuy) {
+            notificationMsg += ` • Gali įsigyti už €${data.field.cost}`;
         }
-        
-        if (data.result && data.result.message) {
-            addJournal(data.result.message);
-        }
-        if (data.field) {
-            addJournal(`${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total} ir atsistojo ant "${data.field.name}"`);
-        }
-        updateUI(gameState);
-    });
+        addNotification(notificationMsg);
+    }
+    
+    if (data.result && data.result.message) {
+        addJournal(data.result.message);
+    }
+    if (data.field) {
+        addJournal(`${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total} ir atsistojo ant "${data.field.name}"`);
+    }
+    updateUI(gameState);
+});
 
     socket.on('message', (msg) => {
         console.log('📢 Pranešimas:', msg);
@@ -488,25 +405,37 @@ function initSocket() {
         console.log('✅ Pirkimas patvirtintas:', data);
         playBuySound();
         playCashSound();
-        const msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
-        addNotification(msg);
-        if (data.playerId !== playerId) {
-            showPopupMessage(msg, 'buy');
+        
+        // 🆕 SAU - "Jūs įsigijote"
+        if (data.forSelf) {
+            addNotification(`✅ Jūs įsigijote ${data.fieldName}!`);
+        } 
+        // 🆕 KITIEMS - "Tomas nusipirko"
+        else {
+            addNotification(`🏠 ${data.playerName} nusipirko ${data.fieldName}!`);
         }
-        addJournal(msg);
+        
+        addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
         hideBuyChoice();
+        if (gameState) updateUI(gameState);
     });
 
     socket.on('buyCancelled', (data) => {
         console.log('❌ Pirkimas atšauktas:', data);
         playMoveSound();
-        const msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
-        addNotification(msg);
-        if (data.playerId !== playerId) {
-            showPopupMessage(msg, 'move');
+        
+        // 🆕 SAU - "Jūs atsisakėte"
+        if (data.forSelf) {
+            addNotification(`❌ Jūs atsisakėte pirkti ${data.fieldName}`);
+        } 
+        // 🆕 KITIEMS - "Tomas atsisakė"
+        else {
+            addNotification(`❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`);
         }
-        addJournal(msg);
+        
+        addJournal(`${data.playerName} atsisakė pirkti ${data.fieldName}`);
         hideBuyChoice();
+        if (gameState) updateUI(gameState);
     });
 
     socket.on('bankruptConfirmed', (data) => {
