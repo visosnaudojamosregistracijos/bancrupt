@@ -937,8 +937,21 @@ body {
 
 /* ---------- 5 LANGELIS - PRANEŠIMAI ---------- */
 #notifications {
-    display: none !important;
+    flex: 1;
+    overflow-y: auto;
+    font-size: 11px;
+    color: #3d2b1f;
+    max-height: 100%;
+    padding: 6px 8px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    margin: 2px 0;
+    min-height: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
+
 
 .notification-item {
     padding: 3px 6px;
@@ -958,7 +971,8 @@ body {
 }
 
 /* ---------- PIRKIMO PASIRINKIMAS ---------- */
-#buyChoice {
+#buyChoice,
+#otherPlayerChoice {
     position: absolute;
     top: 0;
     left: 0;
@@ -973,7 +987,8 @@ body {
     animation: choiceFadeIn 0.25s ease;
 }
 
-#buyChoice.show {
+#buyChoice.show,
+#otherPlayerChoice.show {
     display: flex !important;
 }
 
