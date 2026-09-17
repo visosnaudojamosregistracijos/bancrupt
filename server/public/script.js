@@ -274,22 +274,45 @@ function initSocket() {
     }
     
     // 🆕 Į 5 langelį - TIK svarbūs pranešimai
-    // Smulkūs (metė, gali nusipirkti) - TIK į žurnalą
-    if (data.result && (
-        data.result.action === 'pay_rent' ||
-        data.result.action === 'pay_tax' ||
-        data.result.action === 'go_to_jail' ||
-        data.result.action === 'birthday'
-    )) {
-        let notifMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
-        if (data.field) notifMsg += ` ir atsistojo ant "${data.field.name}"`;
-        
-        if (data.result.action === 'pay_rent') notifMsg += ` 💰 Sumokėjo nuomą!`;
-        else if (data.result.action === 'pay_tax') notifMsg += ` 💸 Sumokėjo mokesčius!`;
-        else if (data.result.action === 'go_to_jail') notifMsg += ` ⛓️ Keliauja į kalėjimą!`;
-        else if (data.result.action === 'birthday') notifMsg += ` 🎂 Gimtadienis!`;
-        
-        addNotification(notifMsg);
+    // Smulkūs (metė X+Y, gali nusipirkti) - TIK į žurnalą
+    let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+    if (data.field) {
+        notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
+    }
+    
+    // Svarbūs įvykiai
+    if (data.result) {
+        if (data.result.action === 'pay_rent') {
+            notificationMsg += ` 💰 Sumokėjo nuomą!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'pay_tax') {
+            notificationMsg += ` 💸 Sumokėjo mokesčius!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'go_to_jail') {
+            notificationMsg += ` ⛓️ Keliauja į kalėjimą!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'birthday') {
+            notificationMsg += ` 🎂 Gimtadienis!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'hospital') {
+            notificationMsg += ` 🏥 Ligoninė!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'latras') {
+            notificationMsg += ` 🍺 Latrų baras!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'pirtis') {
+            notificationMsg += ` 🧖 Pirtis!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'special') {
+            notificationMsg += ` 🎲 HORNY RP!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'chance') {
+            notificationMsg += ` 🎲 Šansas!`;
+            addNotification(notificationMsg);
+        } else if (data.result.action === 'visiting_jail') {
+            notificationMsg += ` 🚔 Svečiuose pas kalinius!`;
+            addNotification(notificationMsg);
+        }
     }
     
     // 🆕 ŽURNALE - visada visas įrašas
