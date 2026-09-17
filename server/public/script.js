@@ -1,5 +1,5 @@
 // ============================================
-// script.js - PILNAS
+// script.js - PILNAS (PATAISYTAS)
 // ============================================
 
 let socket;
@@ -149,7 +149,8 @@ function initSocket() {
         console.log('📊 Gauta žaidimo būsena');
         gameState = state;
         updateUI(state);
-        document.getElementById('bankruptModal').style.display = 'none';
+        const bm = document.getElementById('bankruptModal');
+        if (bm) bm.style.display = 'none';
     });
 
     socket.on('gameColors', (data) => {
@@ -241,85 +242,89 @@ function initSocket() {
     });
 
     // ============================================
-    // 🆕 KAULIUKŲ METIMAS - SKIRTINGAI SAU IR KITIEMS
+    // KAULIUKŲ METIMAS - SKIRTINGAI SAU IR KITIEMS
     // ============================================
     socket.on('diceRolled', (data) => {
-    console.log('🎲 Kauliukai mesti:', data);
-    playDiceSound();
-    updateDiceDisplay(data.dice[0], data.dice[1]);
-    
-    // Garsai
-    if (data.field) {
-        if (data.field.id === 2) playDujosSound();
-        else if (data.field.id === 14) playSiukslesSound();
-        else if (data.field.id === 28) playElektraSound();
-        else if (data.field.id === 44) playVanduoSound();
-        else if (data.field.id === 8) playAirPortSound();
-        else if (data.field.id === 19) playTrainSound();
-        else if (data.field.id === 37) playPortSound();
-        else if (data.field.id === 46) playBusSound();
-        else if (data.field.id === 13) playHospitalSound();
-        else if (data.field.id === 21) playLatrasSound();
-        else if (data.field.id === 32) playPirtisSound();
-        else if (data.field.id === 50) playBirthdaySound();
-    }
-    
-    // 🆕 KITIEMS - TIK pranešimas
-    if (!data.forSelf && data.canBuy && data.field) {
-        const otherMsg = `🏠 ${data.player.name} gali nusipirkti ${data.field.name} už €${data.field.cost}`;
-        addNotification(otherMsg);
-        addJournal(otherMsg);
-    }
-    
-    // 🆕 Į 5 langelį - TIK svarbūs pranešimai
-    let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
-    if (data.field) {
-        notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
-    }
-    
-    if (data.result) {
-        if (data.result.action === 'pay_rent') {
-            notificationMsg += ` 💰 Sumokėjo nuomą!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'pay_tax') {
-            notificationMsg += ` 💸 Sumokėjo mokesčius!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'go_to_jail') {
-            notificationMsg += ` ⛓️ Keliauja į kalėjimą!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'birthday') {
-            notificationMsg += ` 🎂 Gimtadienis!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'hospital') {
-            notificationMsg += ` 🏥 Ligoninė!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'latras') {
-            notificationMsg += ` 🍺 Latrų baras!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'pirtis') {
-            notificationMsg += ` 🧖 Pirtis!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'special') {
-            notificationMsg += ` 🎲 HORNY RP!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'chance') {
-            notificationMsg += ` 🎲 Šansas!`;
-            addNotification(notificationMsg);
-        } else if (data.result.action === 'visiting_jail') {
-            notificationMsg += ` 🚔 Svečiuose pas kalinius!`;
-            addNotification(notificationMsg);
+        console.log('🎲 Kauliukai mesti:', data);
+        playDiceSound();
+        
+        // 🆕 APSAUGA: tikrinam ar dice masyvas yra
+        if (data.dice && Array.isArray(data.dice) && data.dice.length >= 2) {
+            updateDiceDisplay(data.dice[0], data.dice[1]);
         }
-    }
-    
-    // 🆕 ŽURNALE - visada
-    if (data.result && data.result.message) {
-        addJournal(data.result.message);
-    }
-    if (data.field) {
-        addJournal(`${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total} ir atsistojo ant "${data.field.name}"`);
-    }
-    updateUI(gameState);
-});
+        
+        // Garsai
+        if (data.field) {
+            if (data.field.id === 2) playDujosSound();
+            else if (data.field.id === 14) playSiukslesSound();
+            else if (data.field.id === 28) playElektraSound();
+            else if (data.field.id === 44) playVanduoSound();
+            else if (data.field.id === 8) playAirPortSound();
+            else if (data.field.id === 19) playTrainSound();
+            else if (data.field.id === 37) playPortSound();
+            else if (data.field.id === 46) playBusSound();
+            else if (data.field.id === 13) playHospitalSound();
+            else if (data.field.id === 21) playLatrasSound();
+            else if (data.field.id === 32) playPirtisSound();
+            else if (data.field.id === 50) playBirthdaySound();
+        }
+        
+        // KITIEMS - TIK pranešimas
+        if (!data.forSelf && data.canBuy && data.field) {
+            const otherMsg = `🏠 ${data.player.name} gali nusipirkti ${data.field.name} už €${data.field.cost}`;
+            addNotification(otherMsg);
+            addJournal(otherMsg);
+        }
+        
+        // Į 5 langelį - TIK svarbūs pranešimai
+        let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+        if (data.field) {
+            notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
+        }
+        
+        if (data.result) {
+            if (data.result.action === 'pay_rent') {
+                notificationMsg += ` 💰 Sumokėjo nuomą!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'pay_tax') {
+                notificationMsg += ` 💸 Sumokėjo mokesčius!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'go_to_jail') {
+                notificationMsg += ` ⛓️ Keliauja į kalėjimą!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'birthday') {
+                notificationMsg += ` 🎂 Gimtadienis!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'hospital') {
+                notificationMsg += ` 🏥 Ligoninė!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'latras') {
+                notificationMsg += ` 🍺 Latrų baras!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'pirtis') {
+                notificationMsg += ` 🧖 Pirtis!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'special') {
+                notificationMsg += ` 🎲 HORNY RP!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'chance') {
+                notificationMsg += ` 🎲 Šansas!`;
+                addNotification(notificationMsg);
+            } else if (data.result.action === 'visiting_jail') {
+                notificationMsg += ` 🚔 Svečiuose pas kalinius!`;
+                addNotification(notificationMsg);
+            }
+        }
+        
+        // ŽURNALE - visada
+        if (data.result && data.result.message) {
+            addJournal(data.result.message);
+        }
+        if (data.field) {
+            addJournal(`${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total} ir atsistojo ant "${data.field.name}"`);
+        }
+        updateUI(gameState);
+    });
 
     socket.on('message', (msg) => {
         console.log('📢 Pranešimas:', msg);
@@ -404,62 +409,58 @@ function initSocket() {
         }
     });
 
-// ============================================
-// 🆕 PIRKIMAS - SKIRTINGAI SAU IR KITIEMS
-// ============================================
-socket.on('buyConfirmed', (data) => {
-    console.log('✅ Pirkimas patvirtintas:', data);
-    playBuySound();
-    playCashSound();
-    
-    // Paslėpti pirkimo langą
-    hideBuyChoice();
-    
-    const msg = data.forSelf 
-        ? `✅ Jūs įsigijote ${data.fieldName}!` 
-        : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
-    
-    // 🆕 KITIEMS - parodyk sprendimo rezultatą "otherPlayerChoice" lange
-    if (!data.forSelf) {
-        showOtherPlayerResult({
-            playerName: data.playerName,
-            fieldName: data.fieldName,
-            bought: true
-        });
-    }
-    
-    addNotification(msg);
-    addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
-    if (gameState) updateUI(gameState);
-});
+    // ============================================
+    // PIRKIMAS - SKIRTINGAI SAU IR KITIEMS
+    // ============================================
+    socket.on('buyConfirmed', (data) => {
+        console.log('✅ Pirkimas patvirtintas:', data);
+        playBuySound();
+        playCashSound();
+        
+        hideBuyChoice();
+        
+        const msg = data.forSelf 
+            ? `✅ Jūs įsigijote ${data.fieldName}!` 
+            : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
+        
+        if (!data.forSelf) {
+            showOtherPlayerResult({
+                playerName: data.playerName,
+                fieldName: data.fieldName,
+                bought: true
+            });
+        }
+        
+        addNotification(msg);
+        addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
+        if (gameState) updateUI(gameState);
+    });
 
-// ============================================
-// 🆕 ATSISAKYMAS - SKIRTINGAI SAU IR KITIEMS
-// ============================================
+    // ============================================
+    // ATSISAKYMAS - SKIRTINGAI SAU IR KITIEMS
+    // ============================================
     socket.on('buyCancelled', (data) => {
-    console.log('❌ Pirkimas atšauktas:', data);
-    playMoveSound();
-    
-    // Paslėpti pirkimo langą
-    hideBuyChoice();
-    
-    const msg = data.forSelf 
-        ? `❌ Jūs atsisakėte pirkti ${data.fieldName}` 
-        : `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
-    
-    // 🆕 KITIEMS - parodyk sprendimo rezultatą "otherPlayerChoice" lange
-    if (!data.forSelf) {
-        showOtherPlayerResult({
-            playerName: data.playerName,
-            fieldName: data.fieldName,
-            bought: false
-        });
-    }
-    
-    addNotification(msg);
-    addJournal(`${data.playerName} atsisakė pirkti ${data.fieldName}`);
-    if (gameState) updateUI(gameState);
-});
+        console.log('❌ Pirkimas atšauktas:', data);
+        playMoveSound();
+        
+        hideBuyChoice();
+        
+        const msg = data.forSelf 
+            ? `❌ Jūs atsisakėte pirkti ${data.fieldName}` 
+            : `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+        
+        if (!data.forSelf) {
+            showOtherPlayerResult({
+                playerName: data.playerName,
+                fieldName: data.fieldName,
+                bought: false
+            });
+        }
+        
+        addNotification(msg);
+        addJournal(`${data.playerName} atsisakė pirkti ${data.fieldName}`);
+        if (gameState) updateUI(gameState);
+    });
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -468,7 +469,8 @@ socket.on('buyConfirmed', (data) => {
         addNotification(msg);
         addJournal(msg);
         if (data.playerId === playerId) {
-            document.getElementById('bankruptMessage').style.display = 'flex';
+            const bm = document.getElementById('bankruptMessage');
+            if (bm) bm.style.display = 'flex';
         }
         updateUI(gameState);
     });
@@ -545,11 +547,13 @@ socket.on('buyConfirmed', (data) => {
         playTradeSound();
         
         if (data.currentBid !== undefined) {
-            document.getElementById('auctionCurrentBid').textContent = '€' + data.currentBid;
+            const el = document.getElementById('auctionCurrentBid');
+            if (el) el.textContent = '€' + data.currentBid;
         }
         
         if (data.currentBidderName) {
-            document.getElementById('auctionCurrentBidder').textContent = data.currentBidderName;
+            const el = document.getElementById('auctionCurrentBidder');
+            if (el) el.textContent = data.currentBidderName;
         }
         
         if (data.currentBid !== undefined) {
@@ -651,7 +655,6 @@ socket.on('buyConfirmed', (data) => {
     });
 
     // VOTE-KICK KLAUSYMAI
-
     socket.on('voteKickStarted', (data) => {
         console.log('🗳️ Balsavimas pradėtas:', data);
         
@@ -853,7 +856,10 @@ function selectJoinColor(color) {
 }
 
 function checkGameColors() {
-    const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
+    const input = document.getElementById('gameIdInput');
+    if (!input) return;
+    
+    const gid = input.value.trim().toUpperCase();
     if (!gid || gid.length < 4) {
         availableJoinColors = [...PLAYER_COLORS];
         selectedJoinColor = null;
@@ -1086,7 +1092,9 @@ function renderPublicGames(games) {
 }
 
 function joinPublicGame(gid) {
-    closePublicGamesModal();
+    if (typeof closePublicGamesModal === 'function') {
+        closePublicGamesModal();
+    }
     
     if (typeof showPage === 'function') {
         showPage('page-join');
@@ -1155,7 +1163,8 @@ function showAuction(data) {
 }
 
 function closeAuction() {
-    document.getElementById('auctionModal').style.display = 'none';
+    const modal = document.getElementById('auctionModal');
+    if (modal) modal.style.display = 'none';
     if (auctionTimerInterval) {
         clearInterval(auctionTimerInterval);
         auctionTimerInterval = null;
@@ -1293,7 +1302,8 @@ function openVoteKick() {
 }
 
 function closeVoteKick() {
-    document.getElementById('voteKickModal').style.display = 'none';
+    const modal = document.getElementById('voteKickModal');
+    if (modal) modal.style.display = 'none';
     
     if (voteKickTimerInterval) {
         clearInterval(voteKickTimerInterval);
@@ -1487,7 +1497,7 @@ function toggleSoundPanel() {
 function changeVolume(value) {
     const volume = parseInt(value) / 100;
     
-    if (audioManager) {
+    if (typeof audioManager !== 'undefined' && audioManager) {
         audioManager.setVolume(volume);
         audioManager.isEnabled = volume > 0;
     }
@@ -1540,8 +1550,10 @@ function toggleInfoMode() {
     const infoPanel = document.getElementById('cellInfoPanel');
     
     if (infoMode) {
-        btn.classList.add('active');
-        btn.innerHTML = 'ℹ️ Info: 🟢 ĮJ.';
+        if (btn) {
+            btn.classList.add('active');
+            btn.innerHTML = 'ℹ️ Info: 🟢 ĮJ.';
+        }
         localStorage.setItem('bancrupt_infoMode', 'true');
         
         if (infoPanel) infoPanel.classList.add('show');
@@ -1552,8 +1564,10 @@ function toggleInfoMode() {
             hideCellInfo();
         }
     } else {
-        btn.classList.remove('active');
-        btn.innerHTML = 'ℹ️ Info: 🔴 IŠJ.';
+        if (btn) {
+            btn.classList.remove('active');
+            btn.innerHTML = 'ℹ️ Info: 🔴 IŠJ.';
+        }
         localStorage.setItem('bancrupt_infoMode', 'false');
         
         if (infoPanel) infoPanel.classList.remove('show');
@@ -1725,21 +1739,24 @@ function hideCellInfo() {
 // ============================================
 
 function showPopupMessage(message, type) {
-    // Visi pranešimai eina į 5 langelį
     addNotification(message);
 }
 
 // ============================================
-// 🆕 KITO ŽAIDĖJO ĖJIMO LANGAS
+// KITO ŽAIDĖJO ĖJIMO LANGAS
 // ============================================
 
 function showOtherPlayerChoice(data) {
     const choice = document.getElementById('otherPlayerChoice');
     if (!choice) return;
     
-    document.getElementById('otherChoicePlayerName').textContent = data.playerName || 'Žaidėjas';
-    document.getElementById('otherChoiceFieldName').textContent = data.fieldName || 'Sklypas';
-    document.getElementById('otherChoiceFieldCost').textContent = '€' + (data.fieldCost || 0);
+    const nameEl = document.getElementById('otherChoicePlayerName');
+    const fieldEl = document.getElementById('otherChoiceFieldName');
+    const costEl = document.getElementById('otherChoiceFieldCost');
+    
+    if (nameEl) nameEl.textContent = data.playerName || 'Žaidėjas';
+    if (fieldEl) fieldEl.textContent = data.fieldName || 'Sklypas';
+    if (costEl) costEl.textContent = '€' + (data.fieldCost || 0);
     
     choice.style.display = 'flex';
     choice.classList.add('show');
@@ -1753,7 +1770,7 @@ function hideOtherPlayerChoice() {
 }
 
 // ============================================
-// 🆕 KITO ŽAIDĖJO SPRENDIMO REZULTATAS
+// KITO ŽAIDĖJO SPRENDIMO REZULTATAS
 // ============================================
 
 function showOtherPlayerResult(data) {
@@ -1828,7 +1845,10 @@ function showLobbyMessage(msg, color) {
 }
 
 function createGame() {
-    const name = document.getElementById('createPlayerName').value.trim();
+    const nameInput = document.getElementById('createPlayerName');
+    if (!nameInput) return;
+    
+    const name = nameInput.value.trim();
     if (!name) {
         alert('Įvesk savo vardą!');
         playErrorSound();
@@ -1852,8 +1872,14 @@ function createGame() {
 }
 
 function joinGame() {
-    const name = document.getElementById('joinPlayerName').value.trim();
-    const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
+    const nameInput = document.getElementById('joinPlayerName');
+    const gameIdInput = document.getElementById('gameIdInput');
+    
+    if (!nameInput || !gameIdInput) return;
+    
+    const name = nameInput.value.trim();
+    const gid = gameIdInput.value.trim().toUpperCase();
+    
     if (!name) {
         alert('Įvesk savo vardą!');
         playErrorSound();
@@ -1890,7 +1916,8 @@ function enterGame() {
         goToGame();
     }
     
-    document.getElementById('gameIdDisplay').textContent = '📋 ID: ' + gameId;
+    const gameIdDisplay = document.getElementById('gameIdDisplay');
+    if (gameIdDisplay) gameIdDisplay.textContent = '📋 ID: ' + gameId;
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
@@ -2003,13 +2030,19 @@ function updateSingleDice(diceId, value) {
 
 function showBuyChoice(data) {
     const choice = document.getElementById('buyChoice');
-    document.getElementById('choiceFieldName').textContent = data.fieldName || 'Sklypas';
-    document.getElementById('choiceFieldCost').textContent = '€' + (data.fieldCost || 0);
+    if (!choice) return;
     
-    if (gameState) {
+    const nameEl = document.getElementById('choiceFieldName');
+    const costEl = document.getElementById('choiceFieldCost');
+    const moneyEl = document.getElementById('choicePlayerMoney');
+    
+    if (nameEl) nameEl.textContent = data.fieldName || 'Sklypas';
+    if (costEl) costEl.textContent = '€' + (data.fieldCost || 0);
+    
+    if (gameState && moneyEl) {
         const player = gameState.players.find(p => p.id === data.playerId);
         if (player) {
-            document.getElementById('choicePlayerMoney').textContent = '€' + player.money;
+            moneyEl.textContent = '€' + player.money;
         }
     }
     
@@ -2020,6 +2053,7 @@ function showBuyChoice(data) {
 
 function hideBuyChoice() {
     const choice = document.getElementById('buyChoice');
+    if (!choice) return;
     choice.style.display = 'none';
     choice.classList.remove('show');
 }
@@ -2433,11 +2467,17 @@ function updateRequestFields() {
 }
 
 function confirmProposeTrade() {
-    const targetId = parseInt(document.getElementById('tradeTargetPlayer').value);
-    const offerMoney = parseInt(document.getElementById('tradeOfferMoney').value) || 0;
-    const requestMoney = parseInt(document.getElementById('tradeRequestMoney').value) || 0;
+    const targetSelectElem = document.getElementById('tradeTargetPlayer');
+    const offerMoneyElem = document.getElementById('tradeOfferMoney');
+    const requestMoneyElem = document.getElementById('tradeRequestMoney');
     
-    if (isNaN(targetId) || targetId === '' || document.getElementById('tradeTargetPlayer').value === '') {
+    if (!targetSelectElem) return;
+    
+    const targetId = parseInt(targetSelectElem.value);
+    const offerMoney = offerMoneyElem ? parseInt(offerMoneyElem.value) || 0 : 0;
+    const requestMoney = requestMoneyElem ? parseInt(requestMoneyElem.value) || 0 : 0;
+    
+    if (isNaN(targetId) || targetSelectElem.value === '') {
         alert('❌ Pasirink žaidėją!');
         playErrorSound();
         return;
@@ -2456,6 +2496,11 @@ function confirmProposeTrade() {
     }
     
     const target = gameState.players.find(p => p.id === targetId);
+    if (!target) {
+        alert('❌ Žaidėjas nerastas!');
+        playErrorSound();
+        return;
+    }
     
     let msg = `🤝 Siųsti pasiūlymą ${target.name}:\n\n`;
     msg += `📤 SIŪLAI:\n`;
@@ -2499,19 +2544,27 @@ function confirmProposeTrade() {
 }
 
 function showTradeOffer(data) {
-    document.getElementById('offerFromPlayer').textContent = data.fromPlayer;
-    document.getElementById('offerField').textContent = data.offerField || 'Pinigai';
-    document.getElementById('offerMoney').textContent = data.offerMoney || 0;
-    document.getElementById('requestField').textContent = data.requestField || 'Pinigai';
-    document.getElementById('requestMoney').textContent = data.requestMoney || 0;
+    const fromEl = document.getElementById('offerFromPlayer');
+    const offFieldEl = document.getElementById('offerField');
+    const offMoneyEl = document.getElementById('offerMoney');
+    const reqFieldEl = document.getElementById('requestField');
+    const reqMoneyEl = document.getElementById('requestMoney');
+    
+    if (fromEl) fromEl.textContent = data.fromPlayer;
+    if (offFieldEl) offFieldEl.textContent = data.offerField || 'Pinigai';
+    if (offMoneyEl) offMoneyEl.textContent = data.offerMoney || 0;
+    if (reqFieldEl) reqFieldEl.textContent = data.requestField || 'Pinigai';
+    if (reqMoneyEl) reqMoneyEl.textContent = data.requestMoney || 0;
     
     currentTradeId = data.tradeId;
-    document.getElementById('tradeOfferModal').style.display = 'flex';
+    const modal = document.getElementById('tradeOfferModal');
+    if (modal) modal.style.display = 'flex';
     playNotificationSound();
 }
 
 function closeTradeOffer() {
-    document.getElementById('tradeOfferModal').style.display = 'none';
+    const modal = document.getElementById('tradeOfferModal');
+    if (modal) modal.style.display = 'none';
     currentTradeId = null;
     playClickSound();
 }
@@ -2560,7 +2613,8 @@ function openDemolish() {
 }
 
 function closeDemolish() {
-    document.getElementById('demolishModal').style.display = 'none';
+    const modal = document.getElementById('demolishModal');
+    if (modal) modal.style.display = 'none';
     playClickSound();
 }
 
@@ -2683,12 +2737,14 @@ function bankrupt() {
         playErrorSound();
         return;
     }
-    document.getElementById('bankruptModal').style.display = 'flex';
+    const modal = document.getElementById('bankruptModal');
+    if (modal) modal.style.display = 'flex';
     playClickSound();
 }
 
 function confirmBankrupt() {
-    document.getElementById('bankruptModal').style.display = 'none';
+    const modal = document.getElementById('bankruptModal');
+    if (modal) modal.style.display = 'none';
     playClickSound();
     
     if (!socket || !socket.connected) {
@@ -2701,12 +2757,14 @@ function confirmBankrupt() {
 }
 
 function cancelBankrupt() {
-    document.getElementById('bankruptModal').style.display = 'none';
+    const modal = document.getElementById('bankruptModal');
+    if (modal) modal.style.display = 'none';
     playClickSound();
 }
 
 function closeBankruptMessage() {
-    document.getElementById('bankruptMessage').style.display = 'none';
+    const modal = document.getElementById('bankruptMessage');
+    if (modal) modal.style.display = 'none';
     playClickSound();
     if (gameState) {
         updateUI(gameState);
@@ -2715,6 +2773,7 @@ function closeBankruptMessage() {
 
 function sendChat() {
     const input = document.getElementById('chatInput');
+    if (!input) return;
     const msg = input.value.trim();
     if (!msg) return;
     socket.emit('chatMessage', msg);
@@ -2741,7 +2800,7 @@ function getGroupByColor(color) {
 
 function setMode(mode) {
     const board = document.getElementById('board');
-    board.className = mode;
+    if (board) board.className = mode;
     
     const adaptiveBtn = document.getElementById('modeAdaptive');
     const fixedBtn = document.getElementById('modeFixed');
@@ -2764,9 +2823,14 @@ function setMode(mode) {
 function updateUI(state) {
     if (!state) return;
     
-    document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left && !p.kicked).length}/${state.maxPlayers}`;
-    const currentPlayer = state.players[state.currentTurn];
-    document.getElementById('turnDisplay').textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
+    // ✅ PATAISYTA: currentTurn gali būti ID, ne indeksas
+    const currentPlayer = state.players.find(p => p.id === state.currentTurn);
+    
+    const pcEl = document.getElementById('playerCount');
+    if (pcEl) pcEl.textContent = `👥 ${state.players.filter(p => p.isActive && !p.left && !p.kicked).length}/${state.maxPlayers}`;
+    
+    const tdEl = document.getElementById('turnDisplay');
+    if (tdEl) tdEl.textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft && gameId) gameIdLeft.textContent = gameId;
@@ -2829,52 +2893,57 @@ function updateUI(state) {
             miniCardsHtml = '<div style="font-size:9px; color:#6c757d; margin-top:4px;">Neturi kortelių</div>';
         }
         
-        document.getElementById('myInfo').innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
-                <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
-                <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
-            </div>
-            <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};">💰 €${me.money}</div>
-            <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
-            <div style="font-size:11px; color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
-            ${me.inJail ? '<div style="color:#dc3545; font-size:11px;">⛓️ KALĖJIME</div>' : ''}
-            ${me.bankrupt ? '<div style="color:#dc3545; font-size:11px;">💀 BANKROTAS</div>' : ''}
-            ${me.left ? '<div style="color:#6c757d; font-size:11px;">😭 PASITRAUKEI</div>' : ''}
-            ${me.kicked ? '<div style="color:#dc3545; font-size:14px; font-weight:700;">🚫 PAŠALINTAS</div>' : ''}
-            ${me.isDebtor ? '<div style="color:#dc3545; font-size:14px; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
-            <div style="width:100%; border-top:1px solid rgba(61,43,31,0.1); margin-top:4px; padding-top:4px;">
-                <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px;">📋 TURIMOS KORTELĖS</div>
-                ${miniCardsHtml}
-            </div>
-        `;
+        const myInfoEl = document.getElementById('myInfo');
+        if (myInfoEl) {
+            myInfoEl.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
+                    <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
+                    <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
+                </div>
+                <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};">💰 €${me.money}</div>
+                <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
+                <div style="font-size:11px; color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
+                ${me.inJail ? '<div style="color:#dc3545; font-size:11px;">⛓️ KALĖJIME</div>' : ''}
+                ${me.bankrupt ? '<div style="color:#dc3545; font-size:11px;">💀 BANKROTAS</div>' : ''}
+                ${me.left ? '<div style="color:#6c757d; font-size:11px;">😭 PASITRAUKEI</div>' : ''}
+                ${me.kicked ? '<div style="color:#dc3545; font-size:14px; font-weight:700;">🚫 PAŠALINTAS</div>' : ''}
+                ${me.isDebtor ? '<div style="color:#dc3545; font-size:14px; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
+                <div style="width:100%; border-top:1px solid rgba(61,43,31,0.1); margin-top:4px; padding-top:4px;">
+                    <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px;">📋 TURIMOS KORTELĖS</div>
+                    ${miniCardsHtml}
+                </div>
+            `;
+        }
     }
     
     const playersList = document.getElementById('playersList');
-    playersList.innerHTML = state.players.map(p => {
-        const pHouses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
-        const isLeft = p.left === true;
-        const isKicked = p.kicked === true;
-        const isDebtor = p.isDebtor === true;
-        
-        if (isKicked && p.id !== playerId) {
-            return '';
-        }
-        
-        return `
-            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''} ${isKicked ? 'left' : ''}">
-                <span class="dot" style="background:${p.color}"></span>
-                <span class="pname">${p.name} ${p.id === playerId ? '👤' : ''}</span>
-                <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
-                ${pHouses > 0 ? `🏠${pHouses}` : ''}
-                ${p.inJail ? '⛓️' : ''}
-                ${p.bankrupt ? '💀' : ''}
-                ${isKicked ? '🚫' : ''}
-                ${isDebtor && !p.bankrupt ? '⚠️' : ''}
-                ${isLeft ? '😭' : ''}
-                ${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}
-            </div>
-        `;
-    }).filter(html => html !== '').join('');
+    if (playersList) {
+        playersList.innerHTML = state.players.map(p => {
+            const pHouses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
+            const isLeft = p.left === true;
+            const isKicked = p.kicked === true;
+            const isDebtor = p.isDebtor === true;
+            
+            if (isKicked && p.id !== playerId) {
+                return '';
+            }
+            
+            return `
+                <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''} ${isKicked ? 'left' : ''}">
+                    <span class="dot" style="background:${p.color}"></span>
+                    <span class="pname">${p.name} ${p.id === playerId ? '👤' : ''}</span>
+                    <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
+                    ${pHouses > 0 ? `🏠${pHouses}` : ''}
+                    ${p.inJail ? '⛓️' : ''}
+                    ${p.bankrupt ? '💀' : ''}
+                    ${isKicked ? '🚫' : ''}
+                    ${isDebtor && !p.bankrupt ? '⚠️' : ''}
+                    ${isLeft ? '😭' : ''}
+                    ${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}
+                </div>
+            `;
+        }).filter(html => html !== '').join('');
+    }
     
     const isBankrupt = myPlayer && myPlayer.bankrupt;
     const isLeft = myPlayer && myPlayer.left;
@@ -2882,14 +2951,16 @@ function updateUI(state) {
     const isDebtor = myPlayer && myPlayer.isDebtor;
     isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left && !myPlayer.kicked;
     
-    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
+    const rollBtn = document.getElementById('rollBtn');
+    if (rollBtn) rollBtn.disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
     
     const tradeBtn = document.getElementById('tradeBtn');
     if (tradeBtn) {
         tradeBtn.disabled = isBankrupt || isLeft || isKicked;
     }
     
-    document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || isKicked || !myPlayer || !myPlayer.isActive;
+    const bankruptBtn = document.getElementById('bankruptBtn');
+    if (bankruptBtn) bankruptBtn.disabled = isBankrupt || isLeft || isKicked || !myPlayer || !myPlayer.isActive;
 
     const jailBtn = document.getElementById('jailBtn');
     if (jailBtn) {
@@ -3002,12 +3073,15 @@ function updateUI(state) {
         }
     });
     
-    if (isBankrupt || isLeft || isKicked) {
-        document.getElementById('board').style.opacity = '0.5';
-        document.getElementById('board').style.filter = 'grayscale(0.8)';
-    } else {
-        document.getElementById('board').style.opacity = '1';
-        document.getElementById('board').style.filter = 'none';
+    const boardEl = document.getElementById('board');
+    if (boardEl) {
+        if (isBankrupt || isLeft || isKicked) {
+            boardEl.style.opacity = '0.5';
+            boardEl.style.filter = 'grayscale(0.8)';
+        } else {
+            boardEl.style.opacity = '1';
+            boardEl.style.filter = 'none';
+        }
     }
     
     updateBoard(state);
