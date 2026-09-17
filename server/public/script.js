@@ -244,55 +244,63 @@ function initSocket() {
     // 🆕 KAULIUKŲ METIMAS - SKIRTINGAI SAU IR KITIEMS
     // ============================================
     socket.on('diceRolled', (data) => {
-        console.log('🎲 Kauliukai mesti:', data);
-        playDiceSound();
-        updateDiceDisplay(data.dice[0], data.dice[1]);
+    console.log('🎲 Kauliukai mesti:', data);
+    playDiceSound();
+    updateDiceDisplay(data.dice[0], data.dice[1]);
+    
+    // Garsai
+    if (data.field) {
+        if (data.field.id === 2) playDujosSound();
+        else if (data.field.id === 14) playSiukslesSound();
+        else if (data.field.id === 28) playElektraSound();
+        else if (data.field.id === 44) playVanduoSound();
+        else if (data.field.id === 8) playAirPortSound();
+        else if (data.field.id === 19) playTrainSound();
+        else if (data.field.id === 37) playPortSound();
+        else if (data.field.id === 46) playBusSound();
+        else if (data.field.id === 13) playHospitalSound();
+        else if (data.field.id === 21) playLatrasSound();
+        else if (data.field.id === 32) playPirtisSound();
+        else if (data.field.id === 50) playBirthdaySound();
+    }
+    
+    // 🆕 KITIEMS - rodyk kito žaidėjo ėjimo langą
+    if (!data.forSelf && data.canBuy && data.field) {
+        showOtherPlayerChoice({
+            playerName: data.player.name,
+            fieldName: data.field.name,
+            fieldCost: data.field.cost
+        });
+    }
+    
+    // 🆕 Į 5 langelį - TIK svarbūs pranešimai
+    // Smulkūs (metė, gali nusipirkti) - TIK į žurnalą
+    if (data.result && (
+        data.result.action === 'pay_rent' ||
+        data.result.action === 'pay_tax' ||
+        data.result.action === 'go_to_jail' ||
+        data.result.action === 'birthday'
+    )) {
+        let notifMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+        if (data.field) notifMsg += ` ir atsistojo ant "${data.field.name}"`;
         
-        let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+        if (data.result.action === 'pay_rent') notifMsg += ` 💰 Sumokėjo nuomą!`;
+        else if (data.result.action === 'pay_tax') notifMsg += ` 💸 Sumokėjo mokesčius!`;
+        else if (data.result.action === 'go_to_jail') notifMsg += ` ⛓️ Keliauja į kalėjimą!`;
+        else if (data.result.action === 'birthday') notifMsg += ` 🎂 Gimtadienis!`;
         
-        if (data.field) {
-            notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
-            
-            // Garsai
-            if (data.field.id === 2) playDujosSound();
-            else if (data.field.id === 14) playSiukslesSound();
-            else if (data.field.id === 28) playElektraSound();
-            else if (data.field.id === 44) playVanduoSound();
-            else if (data.field.id === 8) playAirPortSound();
-            else if (data.field.id === 19) playTrainSound();
-            else if (data.field.id === 37) playPortSound();
-            else if (data.field.id === 46) playBusSound();
-            else if (data.field.id === 13) playHospitalSound();
-            else if (data.field.id === 21) playLatrasSound();
-            else if (data.field.id === 32) playPirtisSound();
-            else if (data.field.id === 50) playBirthdaySound();
-        }
-        
-        // 🆕 SAU - pirkimo langą rodo showBuy atskirai
-        if (data.forSelf) {
-            // Nieko į 5 langelį - pirkimo langas atsiras atskirai
-        } 
-        // 🆕 KITIEMS - rodyk kito žaidėjo ėjimo langą + info 5 langelyje
-        else {
-            if (data.canBuy && data.field) {
-                showOtherPlayerChoice({
-                    playerName: data.player.name,
-                    fieldName: data.field.name,
-                    fieldCost: data.field.cost
-                });
-                notificationMsg += ` • Gali įsigyti už €${data.field.cost}`;
-            }
-            addNotification(notificationMsg);
-        }
-        
-        if (data.result && data.result.message) {
-            addJournal(data.result.message);
-        }
-        if (data.field) {
-            addJournal(`${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total} ir atsistojo ant "${data.field.name}"`);
-        }
-        updateUI(gameState);
-    });
+        addNotification(notifMsg);
+    }
+    
+    // 🆕 ŽURNALE - visada visas įrašas
+    if (data.result && data.result.message) {
+        addJournal(data.result.message);
+    }
+    if (data.field) {
+        addJournal(`${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total} ir atsistojo ant "${data.field.name}"`);
+    }
+    updateUI(gameState);
+});
 
     socket.on('message', (msg) => {
         console.log('📢 Pranešimas:', msg);
@@ -377,23 +385,22 @@ function initSocket() {
         }
     });
 
-    // ============================================
-    // 🆕 PIRKIMAS - SKIRTINGAI SAU IR KITIEMS
-    // ============================================
-    socket.on('buyConfirmed', (data) => {
+  // ============================================
+// 🆕 PIRKIMAS - SKIRTINGAI SAU IR KITIEMS
+// ============================================
+socket.on('buyConfirmed', (data) => {
     console.log('✅ Pirkimas patvirtintas:', data);
     playBuySound();
     playCashSound();
     
-    // Paslėpti pirkimo langą
     hideBuyChoice();
     
-    const msg = data.forSelf 
-        ? `✅ Jūs įsigijote ${data.fieldName}!` 
-        : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
-    
-    // 🆕 KITIEMS - parodyk sprendimo rezultatą "otherPlayerChoice" lange
-    if (!data.forSelf) {
+    // 🆕 SAU - tik "Jūs įsigijote"
+    if (data.forSelf) {
+        addNotification(`✅ Jūs įsigijote ${data.fieldName}!`);
+    }
+    // 🆕 KITIEMS - rodyk rezultatą "otherPlayerChoice" lange
+    else {
         showOtherPlayerResult({
             playerName: data.playerName,
             fieldName: data.fieldName,
@@ -401,14 +408,14 @@ function initSocket() {
         });
     }
     
-    addNotification(msg);
+    // Žurnale - visada
     addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
     if (gameState) updateUI(gameState);
 });
 
-    // ============================================
-    // 🆕 ATSISAKYMAS - SKIRTINGAI SAU IR KITIEMS
-    // ============================================
+// ============================================
+// 🆕 ATSISAKYMAS - SKIRTINGAI SAU IR KITIEMS
+// ============================================
     socket.on('buyCancelled', (data) => {
     console.log('❌ Pirkimas atšauktas:', data);
     playMoveSound();
