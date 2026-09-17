@@ -3187,6 +3187,8 @@ function addChatMessage(data) {
     }
 }
 
+let journalCount = 0;
+
 function addJournal(msg) {
     const container = document.getElementById('journal');
     if (!container) return;
