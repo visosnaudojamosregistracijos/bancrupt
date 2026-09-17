@@ -3156,22 +3156,36 @@ function updateBoard(state) {
 }
 
 function addChatMessage(data) {
+    const time = new Date(data.timestamp).toLocaleTimeString();
+    
+    // Pagrindinis chat
     const container = document.getElementById('chatMessages');
     if (container) {
-        const time = new Date(data.timestamp).toLocaleTimeString();
-        container.innerHTML += `<div style="color:${data.color}"><b>${data.player}:</b> ${data.message} <span style="font-size:7px;color:rgba(61,43,31,0.4)">${time}</span></div>`;
+        container.innerHTML += `
+            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${data.color}; border:1px solid rgba(0,0,0,0.2); flex-shrink:0;"></span>
+                <b>${data.player}:</b> 
+                <span>${data.message}</span>
+                <span style="font-size:7px; color:rgba(61,43,31,0.4); margin-left:auto;">${time}</span>
+            </div>
+        `;
         container.scrollTop = container.scrollHeight;
     }
     
+    // Laukimosi chat
     const waitingContainer = document.getElementById('waitingChatMessages');
     if (waitingContainer) {
-        const time = new Date(data.timestamp).toLocaleTimeString();
-        waitingContainer.innerHTML += `<div style="color:${data.color}; margin-bottom:4px;"><b>${data.player}:</b> ${data.message} <span style="font-size:9px; color:rgba(212,184,150,0.5);">${time}</span></div>`;
+        waitingContainer.innerHTML += `
+            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${data.color}; border:1px solid rgba(0,0,0,0.2); flex-shrink:0;"></span>
+                <b>${data.player}:</b> 
+                <span>${data.message}</span>
+                <span style="font-size:9px; color:rgba(61,43,31,0.4); margin-left:auto;">${time}</span>
+            </div>
+        `;
         waitingContainer.scrollTop = waitingContainer.scrollHeight;
     }
 }
-
-let journalCount = 0;
 
 function addJournal(msg) {
     const container = document.getElementById('journal');
