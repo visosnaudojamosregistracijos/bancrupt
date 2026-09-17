@@ -264,7 +264,7 @@ function initSocket() {
         else if (data.field.id === 50) playBirthdaySound();
     }
     
-    // 🆕 KITIEMS - TIK pranešimas, be lango
+    // 🆕 KITIEMS - TIK pranešimas
     if (!data.forSelf && data.canBuy && data.field) {
         const otherMsg = `🏠 ${data.player.name} gali nusipirkti ${data.field.name} už €${data.field.cost}`;
         addNotification(otherMsg);
