@@ -1802,8 +1802,19 @@ function hideCellInfo() {
 // IŠŠOKANTYS PRANEŠIMAI
 // ============================================
 
+// ============================================
+// IŠŠOKANTYS PRANEŠIMAI (be mygtuko, dingsta po 3 sek.)
+// ============================================
+
 function showPopupMessage(message, type) {
+    // Jei jau yra popup - pašalink seną
+    const existingPopup = document.getElementById('gamePopup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
     const popup = document.createElement('div');
+    popup.id = 'gamePopup';
     popup.style.cssText = `
         position: fixed;
         top: 50%;
@@ -1812,13 +1823,14 @@ function showPopupMessage(message, type) {
         background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
         border: 3px solid #c9a84c;
         border-radius: 16px;
-        padding: 30px 40px;
+        padding: 25px 35px;
         max-width: 500px;
         width: 90%;
         z-index: 10000;
         box-shadow: 0 20px 60px rgba(0,0,0,0.8);
         text-align: center;
         animation: popupFadeIn 0.3s ease;
+        pointer-events: none;
     `;
     
     let icon = '🎲';
@@ -1832,26 +1844,13 @@ function showPopupMessage(message, type) {
     
     popup.innerHTML = `
         <div style="font-size:48px; margin-bottom:10px;">${icon}</div>
-        <div style="font-size:18px; font-weight:700; color:${color}; margin-bottom:8px; white-space:pre-line;">${message}</div>
-        <button onclick="this.parentElement.remove(); playClickSound();" style="
-            margin-top:15px;
-            padding:8px 30px;
-            border:none;
-            border-radius:8px;
-            background:linear-gradient(145deg, #1a6b3c, #0f4a2a);
-            color:#fff;
-            font-size:14px;
-            font-weight:700;
-            cursor:pointer;
-            transition:all 0.2s;
-        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            OK, SUPRASTAU
-        </button>
+        <div style="font-size:18px; font-weight:700; color:${color}; white-space:pre-line;">${message}</div>
     `;
     
     document.body.appendChild(popup);
     playNotificationSound();
     
+    // Automatiškai dingsta po 3 sekundžių
     setTimeout(() => {
         if (popup.parentElement) {
             popup.style.opacity = '0';
@@ -1860,7 +1859,7 @@ function showPopupMessage(message, type) {
                 if (popup.parentElement) popup.remove();
             }, 500);
         }
-    }, 5000);
+    }, 3000);
 }
 
 const style = document.createElement('style');
