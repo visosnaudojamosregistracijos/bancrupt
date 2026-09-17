@@ -1682,9 +1682,12 @@ function showCellInfo(fieldId) {
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
         html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
         
-        const rent1 = Math.floor(baseRent * 10);
-        const rent4 = Math.floor(baseRent * 40);
-        html += `<div class="info-row"><span class="label">Su namais:</span><span class="value">€${rent1}–€${rent4}</span></div>`;
+        // Namai - daugikliai: 1→10, 2→20, 3→30, 4→40
+        const multipliers = [10, 20, 30, 40];
+        for (let i = 1; i <= 4; i++) {
+            const rent = Math.floor(baseRent * multipliers[i - 1]);
+            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
+        }
         
         const hotelRent = Math.floor(baseRent * 50);
         html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${hotelRent}</span></div>`;
