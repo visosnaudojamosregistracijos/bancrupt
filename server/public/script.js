@@ -272,8 +272,7 @@ function initSocket() {
         // KITIEMS - TIK pranešimas
         if (!data.forSelf && data.canBuy && data.field) {
             const otherMsg = `🏠 ${data.player.name} gali nusipirkti ${data.field.name} už €${data.field.cost}`;
-            addNotification(otherMsg);
-            addJournal(otherMsg);
+                        addJournal(otherMsg);
         }
         
         // Į 5 langelį - TIK svarbūs pranešimai
@@ -329,7 +328,7 @@ function initSocket() {
     socket.on('message', (msg) => {
         console.log('📢 Pranešimas:', msg);
         
-        addNotification(msg);
+        
         
         if (msg.includes('HORNY RP') || msg.includes('gavai €200 nuo Dedo')) {
             playChanceSound();
