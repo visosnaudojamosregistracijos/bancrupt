@@ -1738,48 +1738,42 @@ function hideCellInfo() {
 // ============================================
 
 function showPopupMessage(message, type) {
-    // Jei jau yra popup - pašalink seną
-    const existingPopup = document.getElementById('gamePopup');
-    if (existingPopup) {
-        existingPopup.remove();
-    }
+    // Vietoj popup - rodyk 5 langelyje virš notifications
+    const container = document.getElementById('notifications');
+    if (!container) return;
+    
+    // Sukurk atskirą "popup" elementą 5 langelio viršuje
+    const popupId = 'notificationPopup';
+    const existing = document.getElementById(popupId);
+    if (existing) existing.remove();
     
     const popup = document.createElement('div');
-    popup.id = 'gamePopup';
+    popup.id = popupId;
     popup.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
         background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
-        border: 3px solid #c9a84c;
-        border-radius: 16px;
-        padding: 25px 35px;
-        max-width: 500px;
-        width: 90%;
-        z-index: 10000;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        border: 2px solid #c9a84c;
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        font-size: 11px;
+        color: #3d2b1f;
+        font-weight: 700;
         text-align: center;
         animation: popupFadeIn 0.3s ease;
-        pointer-events: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     `;
     
     let icon = '🎲';
-    let color = '#1a6b3c';
-    if (type === 'buy') { icon = '🏠'; color = '#28a745'; }
-    else if (type === 'rent') { icon = '💰'; color = '#dc3545'; }
-    else if (type === 'jail') { icon = '⛓️'; color = '#6c757d'; }
-    else if (type === 'tax') { icon = '💸'; color = '#dc3545'; }
-    else if (type === 'chance') { icon = '🎲'; color = '#fd7e14'; }
-    else if (type === 'move') { icon = '🎲'; color = '#1a6b3c'; }
+    if (type === 'buy') icon = '🏠';
+    else if (type === 'rent') icon = '💰';
+    else if (type === 'jail') icon = '⛓️';
+    else if (type === 'tax') icon = '💸';
+    else if (type === 'chance') icon = '🎲';
+    else if (type === 'move') icon = '🎲';
     
-    popup.innerHTML = `
-        <div style="font-size:48px; margin-bottom:10px;">${icon}</div>
-        <div style="font-size:18px; font-weight:700; color:${color}; white-space:pre-line;">${message}</div>
-    `;
+    popup.innerHTML = `${icon} ${message}`;
     
-    document.body.appendChild(popup);
-    playNotificationSound();
+    container.insertBefore(popup, container.firstChild);
     
     // Automatiškai dingsta po 3 sekundžių
     setTimeout(() => {
