@@ -433,7 +433,7 @@ if (!data.forSelf && data.canBuy && data.field) {
             showOtherPlayerResult({
                 playerName: data.playerName,
                 fieldName: data.fieldName,
-                bought: false
+                bought: true
             });
         }
         
