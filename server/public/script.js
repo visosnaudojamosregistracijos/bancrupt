@@ -381,42 +381,58 @@ function initSocket() {
     // 🆕 PIRKIMAS - SKIRTINGAI SAU IR KITIEMS
     // ============================================
     socket.on('buyConfirmed', (data) => {
-        console.log('✅ Pirkimas patvirtintas:', data);
-        playBuySound();
-        playCashSound();
-        
-        // Paslėpti kito žaidėjo langą
-        hideOtherPlayerChoice();
-        
-        const msg = data.forSelf 
-            ? `✅ Jūs įsigijote ${data.fieldName}!` 
-            : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
-        
-        addNotification(msg);
-        addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
-        hideBuyChoice();
-        if (gameState) updateUI(gameState);
-    });
+    console.log('✅ Pirkimas patvirtintas:', data);
+    playBuySound();
+    playCashSound();
+    
+    // Paslėpti pirkimo langą
+    hideBuyChoice();
+    
+    const msg = data.forSelf 
+        ? `✅ Jūs įsigijote ${data.fieldName}!` 
+        : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
+    
+    // 🆕 KITIEMS - parodyk sprendimo rezultatą "otherPlayerChoice" lange
+    if (!data.forSelf) {
+        showOtherPlayerResult({
+            playerName: data.playerName,
+            fieldName: data.fieldName,
+            bought: true
+        });
+    }
+    
+    addNotification(msg);
+    addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
+    if (gameState) updateUI(gameState);
+});
 
     // ============================================
     // 🆕 ATSISAKYMAS - SKIRTINGAI SAU IR KITIEMS
     // ============================================
     socket.on('buyCancelled', (data) => {
-        console.log('❌ Pirkimas atšauktas:', data);
-        playMoveSound();
-        
-        // Paslėpti kito žaidėjo langą
-        hideOtherPlayerChoice();
-        
-        const msg = data.forSelf 
-            ? `❌ Jūs atsisakėte pirkti ${data.fieldName}` 
-            : `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
-        
-        addNotification(msg);
-        addJournal(`${data.playerName} atsisakė pirkti ${data.fieldName}`);
-        hideBuyChoice();
-        if (gameState) updateUI(gameState);
-    });
+    console.log('❌ Pirkimas atšauktas:', data);
+    playMoveSound();
+    
+    // Paslėpti pirkimo langą
+    hideBuyChoice();
+    
+    const msg = data.forSelf 
+        ? `❌ Jūs atsisakėte pirkti ${data.fieldName}` 
+        : `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+    
+    // 🆕 KITIEMS - parodyk sprendimo rezultatą "otherPlayerChoice" lange
+    if (!data.forSelf) {
+        showOtherPlayerResult({
+            playerName: data.playerName,
+            fieldName: data.fieldName,
+            bought: false
+        });
+    }
+    
+    addNotification(msg);
+    addJournal(`${data.playerName} atsisakė pirkti ${data.fieldName}`);
+    if (gameState) updateUI(gameState);
+});
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -1701,12 +1717,52 @@ function showOtherPlayerChoice(data) {
     choice.style.display = 'flex';
     choice.classList.add('show');
 }
-
 function hideOtherPlayerChoice() {
     const choice = document.getElementById('otherPlayerChoice');
     if (!choice) return;
     choice.style.display = 'none';
     choice.classList.remove('show');
+}
+
+// ============================================
+// 🆕 KITO ŽAIDĖJO SPRENDIMO REZULTATAS
+// ============================================
+
+function showOtherPlayerResult(data) {
+    const choice = document.getElementById('otherPlayerChoice');
+    if (!choice) return;
+    
+    const box = choice.querySelector('.buy-choice-box');
+    if (!box) return;
+    
+    const isBought = data.bought === true;
+    const color = isBought ? '#28a745' : '#dc3545';
+    const icon = isBought ? '✅' : '❌';
+    const text = isBought 
+        ? `nusipirko ${data.fieldName}!` 
+        : `atsisakė pirkti ${data.fieldName}`;
+    
+    box.innerHTML = `
+        <div class="buy-choice-header" style="color:${color};">
+            ${icon} ${data.playerName}
+        </div>
+        <div class="buy-choice-body">
+            <p style="font-size:14px; font-weight:700; color:${color};">
+                ${text}
+            </p>
+        </div>
+        <div style="text-align:center; font-size:11px; color:#6c757d; padding:4px 0;">
+            ⏳ Dingsta po 3 sek...
+        </div>
+    `;
+    
+    choice.style.display = 'flex';
+    choice.classList.add('show');
+    
+    // Paslėpti po 3 sekundžių
+    setTimeout(() => {
+        hideOtherPlayerChoice();
+    }, 3000);
 }
 
 const style = document.createElement('style');
