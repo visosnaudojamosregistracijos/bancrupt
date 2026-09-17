@@ -202,8 +202,7 @@ function initSocket() {
         playStartSound();
         
         const msg = `🎮 Žaidimas pradėtas! Pirmas eina: ${data.firstPlayerName}`;
-        addNotification(msg);
-        addJournal(msg);
+                addJournal(msg);
         
         hideWaitingRoom();
         
