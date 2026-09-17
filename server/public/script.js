@@ -248,9 +248,12 @@ function initSocket() {
     updateDiceDisplay(data.dice[0], data.dice[1]);
     
     let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+    let popupMsg = notificationMsg;
+    let popupType = 'move';
     
     if (data.field) {
         notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
+        popupMsg += ` ir atsistojo ant "${data.field.name}"`;
         
         // Garsai
         if (data.field.id === 2) playDujosSound();
@@ -267,16 +270,13 @@ function initSocket() {
         else if (data.field.id === 50) playBirthdaySound();
     }
     
-    // 🆕 SAU - tik info į 5 langelį
+    // 🆕 SAU - pirkimo langą rodo showBuy atskirai
     if (data.forSelf) {
-        addNotification(notificationMsg);
+        // Nieko į 5 langelį - pirkimo langas atsiras atskirai
     } 
-    // 🆕 KITIEMS - info į 5 langelį
+    // 🆕 KITIEMS - POPUP su smulkiu pranešimu
     else {
-        if (data.canBuy) {
-            notificationMsg += ` • Gali įsigyti už €${data.field.cost}`;
-        }
-        addNotification(notificationMsg);
+        showPopupMessage(popupMsg, popupType);
     }
     
     if (data.result && data.result.message) {
@@ -402,41 +402,43 @@ function initSocket() {
     });
 
     socket.on('buyConfirmed', (data) => {
-        console.log('✅ Pirkimas patvirtintas:', data);
-        playBuySound();
-        playCashSound();
-        
-        // 🆕 SAU - "Jūs įsigijote"
-        if (data.forSelf) {
-            addNotification(`✅ Jūs įsigijote ${data.fieldName}!`);
-        } 
-        // 🆕 KITIEMS - "Tomas nusipirko"
-        else {
-            addNotification(`🏠 ${data.playerName} nusipirko ${data.fieldName}!`);
-        }
-        
-        addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
-        hideBuyChoice();
-        if (gameState) updateUI(gameState);
-    });
+    console.log('✅ Pirkimas patvirtintas:', data);
+    playBuySound();
+    playCashSound();
+    
+    const msg = data.forSelf 
+        ? `✅ Jūs įsigijote ${data.fieldName}!` 
+        : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
+    
+    addNotification(msg);
+    
+    // 🆕 POPUP - visiems
+    showPopupMessage(msg, 'buy');
+    
+    addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
+    hideBuyChoice();
+    if (gameState) updateUI(gameState);
+});
 
     socket.on('buyCancelled', (data) => {
-        console.log('❌ Pirkimas atšauktas:', data);
-        playMoveSound();
-        
-        // 🆕 SAU - "Jūs atsisakėte"
-        if (data.forSelf) {
-            addNotification(`❌ Jūs atsisakėte pirkti ${data.fieldName}`);
-        } 
-        // 🆕 KITIEMS - "Tomas atsisakė"
-        else {
-            addNotification(`❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`);
-        }
-        
-        addJournal(`${data.playerName} atsisakė pirkti ${data.fieldName}`);
-        hideBuyChoice();
-        if (gameState) updateUI(gameState);
-    });
+    console.log('❌ Pirkimas atšauktas:', data);
+    playMoveSound();
+    
+    const msg = data.forSelf 
+        ? `❌ Jūs atsisakėte pirkti ${data.fieldName}` 
+        : `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+    
+    addNotification(msg);
+    
+    // 🆕 POPUP - tik kitiems
+    if (!data.forSelf) {
+        showPopupMessage(msg, 'move');
+    }
+    
+    addJournal(`${data.playerName} atsisakė pirkti ${data.fieldName}`);
+    hideBuyChoice();
+    if (gameState) updateUI(gameState);
+});
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -1736,22 +1738,60 @@ function hideCellInfo() {
 // ============================================
 
 function showPopupMessage(message, type) {
-    // Visi pranešimai eina į 5 langelį (addNotification)
-    addNotification(message);
+    // Jei jau yra popup - pašalink seną
+    const existingPopup = document.getElementById('gamePopup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    const popup = document.createElement('div');
+    popup.id = 'gamePopup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
+        border: 3px solid #c9a84c;
+        border-radius: 16px;
+        padding: 25px 35px;
+        max-width: 500px;
+        width: 90%;
+        z-index: 10000;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        text-align: center;
+        animation: popupFadeIn 0.3s ease;
+        pointer-events: none;
+    `;
+    
+    let icon = '🎲';
+    let color = '#1a6b3c';
+    if (type === 'buy') { icon = '🏠'; color = '#28a745'; }
+    else if (type === 'rent') { icon = '💰'; color = '#dc3545'; }
+    else if (type === 'jail') { icon = '⛓️'; color = '#6c757d'; }
+    else if (type === 'tax') { icon = '💸'; color = '#dc3545'; }
+    else if (type === 'chance') { icon = '🎲'; color = '#fd7e14'; }
+    else if (type === 'move') { icon = '🎲'; color = '#1a6b3c'; }
+    
+    popup.innerHTML = `
+        <div style="font-size:48px; margin-bottom:10px;">${icon}</div>
+        <div style="font-size:18px; font-weight:700; color:${color}; white-space:pre-line;">${message}</div>
+    `;
+    
+    document.body.appendChild(popup);
+    playNotificationSound();
+    
+    // Automatiškai dingsta po 3 sekundžių
+    setTimeout(() => {
+        if (popup.parentElement) {
+            popup.style.opacity = '0';
+            popup.style.transition = 'opacity 0.5s';
+            setTimeout(() => {
+                if (popup.parentElement) popup.remove();
+            }, 500);
+        }
+    }, 3000);
 }
-
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes popupFadeIn {
-        from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    }
-    @keyframes blink {
-        0%, 50% { opacity: 1; }
-        51%, 100% { opacity: 0.3; }
-    }
-`;
-document.head.appendChild(style);
 
 // ============================================
 // PRANEŠIMAI
