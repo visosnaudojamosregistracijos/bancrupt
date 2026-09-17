@@ -264,13 +264,11 @@ function initSocket() {
         else if (data.field.id === 50) playBirthdaySound();
     }
     
-    // 🆕 KITIEMS - rodyk kito žaidėjo ėjimo langą
+    // 🆕 KITIEMS - TIK pranešimas, be lango
     if (!data.forSelf && data.canBuy && data.field) {
-        showOtherPlayerChoice({
-            playerName: data.player.name,
-            fieldName: data.field.name,
-            fieldCost: data.field.cost
-        });
+        const otherMsg = `🏠 ${data.player.name} gali nusipirkti ${data.field.name} už €${data.field.cost}`;
+        addNotification(otherMsg);
+        addJournal(otherMsg);
     }
     
     // 🆕 Į 5 langelį - TIK svarbūs pranešimai
