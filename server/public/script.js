@@ -274,13 +274,11 @@ function initSocket() {
     }
     
     // 🆕 Į 5 langelį - TIK svarbūs pranešimai
-    // Smulkūs (metė X+Y, gali nusipirkti) - TIK į žurnalą
     let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
     if (data.field) {
         notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
     }
     
-    // Svarbūs įvykiai
     if (data.result) {
         if (data.result.action === 'pay_rent') {
             notificationMsg += ` 💰 Sumokėjo nuomą!`;
@@ -315,7 +313,7 @@ function initSocket() {
         }
     }
     
-    // 🆕 ŽURNALE - visada visas įrašas
+    // 🆕 ŽURNALE - visada
     if (data.result && data.result.message) {
         addJournal(data.result.message);
     }
@@ -408,7 +406,7 @@ function initSocket() {
         }
     });
 
-  // ============================================
+ // ============================================
 // 🆕 PIRKIMAS - SKIRTINGAI SAU IR KITIEMS
 // ============================================
 socket.on('buyConfirmed', (data) => {
@@ -416,14 +414,15 @@ socket.on('buyConfirmed', (data) => {
     playBuySound();
     playCashSound();
     
+    // Paslėpti pirkimo langą
     hideBuyChoice();
     
-    // 🆕 SAU - tik "Jūs įsigijote"
-    if (data.forSelf) {
-        addNotification(`✅ Jūs įsigijote ${data.fieldName}!`);
-    }
-    // 🆕 KITIEMS - rodyk rezultatą "otherPlayerChoice" lange
-    else {
+    const msg = data.forSelf 
+        ? `✅ Jūs įsigijote ${data.fieldName}!` 
+        : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
+    
+    // 🆕 KITIEMS - parodyk sprendimo rezultatą "otherPlayerChoice" lange
+    if (!data.forSelf) {
         showOtherPlayerResult({
             playerName: data.playerName,
             fieldName: data.fieldName,
@@ -431,7 +430,7 @@ socket.on('buyConfirmed', (data) => {
         });
     }
     
-    // Žurnale - visada
+    addNotification(msg);
     addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
     if (gameState) updateUI(gameState);
 });
@@ -1747,6 +1746,7 @@ function showOtherPlayerChoice(data) {
     choice.style.display = 'flex';
     choice.classList.add('show');
 }
+
 function hideOtherPlayerChoice() {
     const choice = document.getElementById('otherPlayerChoice');
     if (!choice) return;
