@@ -269,10 +269,17 @@ function initSocket() {
         }
         
         // KITIEMS - TIK pranešimas
-        if (!data.forSelf && data.canBuy && data.field) {
-            const otherMsg = `🏠 ${data.player.name} gali nusipirkti ${data.field.name} už €${data.field.cost}`;
-                        addJournal(otherMsg);
-        }
+if (!data.forSelf && data.canBuy && data.field) {
+    const otherMsg = `🏠 ${data.player.name} gali nusipirkti ${data.field.name} už €${data.field.cost}`;
+    addJournal(otherMsg);
+    
+    // 🆕 Rodyti „Laukiama sprendimo..." kitiems
+    showOtherPlayerChoice({
+        playerName: data.player.name,
+        fieldName: data.field.name,
+        fieldCost: data.field.cost
+    });
+}
         
         // Į 5 langelį - TIK svarbūs pranešimai
         let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
@@ -421,11 +428,12 @@ function initSocket() {
             ? `✅ Jūs įsigijote ${data.fieldName}!` 
             : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
         
-        if (!data.forSelf) {
+       if (!data.forSelf) {
+            hideOtherPlayerChoice();
             showOtherPlayerResult({
                 playerName: data.playerName,
                 fieldName: data.fieldName,
-                bought: true
+                bought: false
             });
         }
         
@@ -448,6 +456,7 @@ function initSocket() {
             : `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
         
         if (!data.forSelf) {
+            hideOtherPlayerChoice();  
             showOtherPlayerResult({
                 playerName: data.playerName,
                 fieldName: data.fieldName,
