@@ -292,9 +292,6 @@ class Game {
     }
 
     isAlive() {
-        // Stalas gyvas, jei:
-        // 1. Yra aktyvių žaidėjų
-        // 2. Praėjo mažiau nei 5 min nuo paskutinės veiklos
         const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
         const fiveMinutes = 5 * 60 * 1000;
         const timeSinceActivity = Date.now() - this.lastActivity;
@@ -865,12 +862,7 @@ class Game {
         this.waitingForBuy = false;
         this.lastActivity = Date.now();
         
-        if (this.emitFunction) {
-            this.emitFunction('buyConfirmed', {
-                playerName: player.name,
-                fieldName: field.name
-            });
-        }
+        // ❌ IŠIMTA: this.emitFunction('buyConfirmed', ...) – server.js siunčia buyConfirmed
         
         if (this.doubleRoll) {
             this.addMessage(`🎲 ${player.name} išmetė dublį! Gali mesti dar kartą.`);
@@ -895,12 +887,7 @@ class Game {
         
         this.lastActivity = Date.now();
         
-        if (this.emitFunction) {
-            this.emitFunction('buyCancelled', {
-                playerName: player.name,
-                fieldName: field.name
-            });
-        }
+        // ❌ IŠIMTA: this.emitFunction('buyCancelled', ...) – server.js siunčia buyCancelled
         
         if (this.doubleRoll) {
             return { 
