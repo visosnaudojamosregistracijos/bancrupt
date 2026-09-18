@@ -441,8 +441,7 @@ if (!data.forSelf && data.canBuy && data.field) {
             });
         }
         
-        addNotification(msg);
-        addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
+                addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
         if (gameState) updateUI(gameState);
     });
 
