@@ -509,28 +509,52 @@ socket.on('buyPending', (data) => {
 });
 
     socket.on('buyConfirmed', (data) => {
-        console.log('✅ Pirkimas patvirtintas:', data);
-        playBuySound();
-        playCashSound();
-        const msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
-        addNotification(msg);
-        if (data.playerId !== playerId) {
-            showPopupMessage(msg, 'buy');
-        }
-        hideBuyChoice();
-    hideBuyPending();  // 🆕
+    console.log('✅ Pirkimas patvirtintas:', data);
+    playBuySound();
+    playCashSound();
+    
+    // 🆕 Skirtingas pranešimas priklausomai nuo to, kas pirko
+    let msg;
+    if (data.playerId === playerId) {
+        msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
+    } else {
+        msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
+    }
+    
+    addNotification(msg);
+    
+    // Popup TIK kitiems (ne pirkėjui)
+    if (data.playerId !== playerId) {
+        showPopupMessage(msg, 'buy');
+    }
+    
+    addJournal(msg);
+    hideBuyChoice();
+    hideBuyPending();
 });
 
     socket.on('buyCancelled', (data) => {
-        console.log('❌ Pirkimas atšauktas:', data);
-        playMoveSound();
-        const msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
-        addNotification(msg);
-        if (data.playerId !== playerId) {
-            showPopupMessage(msg, 'move');
-        }
-        hideBuyChoice();
-    hideBuyPending();  // 🆕
+    console.log('❌ Pirkimas atšauktas:', data);
+    playMoveSound();
+    
+    // 🆕 Skirtingas pranešimas priklausomai nuo to, kas atsisakė
+    let msg;
+    if (data.playerId === playerId) {
+        msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
+    } else {
+        msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+    }
+    
+    addNotification(msg);
+    
+    // Popup TIK kitiems (ne tam, kuris atsisakė)
+    if (data.playerId !== playerId) {
+        showPopupMessage(msg, 'move');
+    }
+    
+    addJournal(msg);
+    hideBuyChoice();
+    hideBuyPending();
 });
 
     socket.on('bankruptConfirmed', (data) => {

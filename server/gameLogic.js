@@ -885,58 +885,59 @@ clearBuyTimeout() {
 }
 
     buyProperty(playerId) {
-        // 🆕 Išvalyti timeout
+    // 🆕 Išvalyti timeout
     this.clearBuyTimeout();
 
-        if (!this.waitingForBuy) {
-            return { error: 'Čia negalima pirkti' };
-        }
-        
-        const player = this.players[playerId];
-        if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
-        
-        const field = this.board[player.position];
-        if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2') {
-            this.waitingForBuy = false;
-            return { error: 'Čia negalima pirkti' };
-        }
-        
-        if (player.properties.includes(field.id)) {
-            this.waitingForBuy = false;
-            return { error: 'Jau turi šį objektą' };
-        }
-        
-        if (this.players.find(p => p.properties.includes(field.id) && p.id !== player.id && !p.kicked)) {
-            this.waitingForBuy = false;
-            return { error: 'Šis objektas jau priklauso kitam žaidėjui' };
-        }
-        
-        if (player.money < field.cost) {
-            return { error: 'Nepakanka pinigų' };
-        }
-        
-        player.money -= field.cost;
-        player.properties.push(field.id);
-        this.addMessage(`${player.name} nusipirko ${field.name} už €${field.cost}! 🏠`);
-        
-        this.waitingForBuy = false;
-        this.lastActivity = Date.now();
-        
-        if (this.emitFunction) {
-            this.emitFunction('buyConfirmed', {
-                playerName: player.name,
-                fieldName: field.name
-            });
-        }
-        
-        if (this.doubleRoll) {
-            this.addMessage(`🎲 ${player.name} išmetė dublį! Gali mesti dar kartą.`);
-            return { success: true, message: `${field.name} nupirktas! Gali mesti dar kartą (dublis)!`, double: true };
-        }
-        
-        this.endTurn();
-        return { success: true, message: `${field.name} nupirktas!`, double: false };
+    if (!this.waitingForBuy) {
+        return { error: 'Čia negalima pirkti' };
     }
+    
+    const player = this.players[playerId];
+    if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
+    
+    const field = this.board[player.position];
+    if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2') {
+        this.waitingForBuy = false;
+        return { error: 'Čia negalima pirkti' };
+    }
+    
+    if (player.properties.includes(field.id)) {
+        this.waitingForBuy = false;
+        return { error: 'Jau turi šį objektą' };
+    }
+    
+    if (this.players.find(p => p.properties.includes(field.id) && p.id !== player.id && !p.kicked)) {
+        this.waitingForBuy = false;
+        return { error: 'Šis objektas jau priklauso kitam žaidėjui' };
+    }
+    
+    if (player.money < field.cost) {
+        return { error: 'Nepakanka pinigų' };
+    }
+    
+    player.money -= field.cost;
+    player.properties.push(field.id);
+    this.addMessage(`${player.name} nusipirko ${field.name} už €${field.cost}! 🏠`);
+    
+    this.waitingForBuy = false;
+    this.lastActivity = Date.now();
+    
+    if (this.emitFunction) {
+        this.emitFunction('buyConfirmed', {
+            playerId: player.id,      // 🆕 PRIDĖTA
+            playerName: player.name,
+            fieldName: field.name
+        });
+    }
+    
+    if (this.doubleRoll) {
+        this.addMessage(`🎲 ${player.name} išmetė dublį! Gali mesti dar kartą.`);
+        return { success: true, message: `${field.name} nupirktas! Gali mesti dar kartą (dublis)!`, double: true };
+    }
+    
+    this.endTurn();
+    return { success: true, message: `${field.name} nupirktas!`, double: false };
+}
 
     cancelBuy(playerId) {
        // 🆕 Išvalyti timeout
@@ -956,11 +957,12 @@ clearBuyTimeout() {
         this.lastActivity = Date.now();
         
         if (this.emitFunction) {
-            this.emitFunction('buyCancelled', {
-                playerName: player.name,
-                fieldName: field.name
-            });
-        }
+    this.emitFunction('buyCancelled', {
+        playerId: player.id,      // 🆕 PRIDĖTA
+        playerName: player.name,
+        fieldName: field.name
+    });
+}
         
         if (this.doubleRoll) {
             return { 
