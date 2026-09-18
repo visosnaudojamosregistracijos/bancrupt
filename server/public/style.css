@@ -25,6 +25,350 @@ body {
     padding: 0px;
 }
 
+/* ============================================
+   SPA PUSLAPIŲ VALDYMAS
+   ============================================ */
+.page {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+}
+.page.active {
+    display: flex;
+}
+
+/* ============================================
+   LANDING PUSLAPIS
+   ============================================ */
+#page-landing {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+    padding: 40px 20px;
+    min-height: 100vh;
+}
+
+.landing-container {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.3);
+    border: 3px solid #c9a84c;
+    border-radius: 24px;
+    padding: 40px 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.landing-container h1 {
+    color: #ffd700;
+    font-size: 3.5em;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+}
+
+.landing-subtitle {
+    color: #d4b896;
+    font-size: 1.2em;
+    margin-bottom: 40px;
+}
+
+.landing-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.landing-btn {
+    padding: 18px 30px;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #fff;
+}
+
+.landing-btn-primary {
+    background: linear-gradient(145deg, #ffd700, #f0c000);
+    color: #1a3b1a;
+}
+
+.landing-btn-primary:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 25px rgba(255,215,0,0.5);
+}
+
+.landing-btn-secondary {
+    background: linear-gradient(145deg, #17a2b8, #138496);
+}
+
+.landing-btn-secondary:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 25px rgba(23,162,184,0.5);
+}
+
+/* ============================================
+   MENU PUSLAPIS
+   ============================================ */
+#page-menu {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+    padding: 40px 20px;
+    min-height: 100vh;
+}
+
+.menu-container {
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.3);
+    border: 3px solid #c9a84c;
+    border-radius: 24px;
+    padding: 40px 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.menu-container h1 {
+    color: #ffd700;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.menu-container p {
+    color: #d4b896;
+    margin-bottom: 30px;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.menu-btn {
+    padding: 16px 24px;
+    border: 2px solid #c9a84c;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: rgba(255,255,255,0.1);
+    color: #ffd700;
+}
+
+.menu-btn:hover {
+    background: #ffd700;
+    color: #0d1f0d;
+    transform: scale(1.02);
+}
+
+.menu-btn-back {
+    background: rgba(108, 117, 125, 0.3);
+    color: #d4b896;
+    border-color: #6c757d;
+    margin-top: 15px;
+}
+
+.menu-btn-back:hover {
+    background: #6c757d;
+    color: #fff;
+}
+
+/* ============================================
+   TAISYKLIŲ MODALAS
+   ============================================ */
+#rulesModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+#rulesModal.active {
+    display: flex;
+}
+
+.rules-content {
+    background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 3px solid #c9a84c;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    position: relative;
+}
+
+.rules-content h2 {
+    color: #1a6b3c;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    text-align: center;
+    border-bottom: 2px solid #c9a84c;
+    padding-bottom: 10px;
+}
+
+.rules-content h3 {
+    color: #1a6b3c;
+    font-size: 1.2em;
+    margin-top: 20px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rules-content p {
+    color: #3d2b1f;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.rules-content ul {
+    color: #3d2b1f;
+    padding-left: 25px;
+    margin-bottom: 10px;
+}
+
+.rules-content li {
+    margin-bottom: 5px;
+    line-height: 1.5;
+}
+
+.rules-close {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    padding: 14px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rules-close:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(26,107,60,0.4);
+}
+
+.rules-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rules-content::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 3px;
+}
+
+/* ============================================
+   VIEŠŲ STALŲ MODALAS (Etapas 6)
+   ============================================ */
+#publicGamesModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+#publicGamesModal.active {
+    display: flex;
+}
+
+.public-games-content {
+    background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 550px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 3px solid #c9a84c;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+.public-games-content h2 {
+    color: #ffd700;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.public-game-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    border: 2px solid #c9a84c;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.public-game-item:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.02);
+    border-color: #ffd700;
+}
+
+.public-game-item .game-host {
+    flex: 1;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.public-game-item .game-code {
+    color: #ffd700;
+    font-weight: 900;
+    letter-spacing: 2px;
+    font-size: 16px;
+}
+
+.public-game-item .game-count {
+    color: #d4b896;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.public-games-empty {
+    text-align: center;
+    padding: 30px;
+    color: #d4b896;
+    font-style: italic;
+}
+
 /* ---------- LOBBY ---------- */
 #lobby {
     width: 100%;
@@ -371,10 +715,6 @@ body {
     overflow: auto !important;
 }
 
-#board.fixed {
-    overflow: auto !important;
-}
-
 #board.fixed .board-row {
     flex-shrink: 0;
 }
@@ -497,24 +837,6 @@ body {
     font-size: 10px;
     color: #000000;
     font-weight: 700;
-}
-
-.cell .players-on-cell {
-    display: flex;
-    gap: 2px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 2px;
-}
-
-.cell .players-on-cell .player-dot {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* ---------- VIDURIO LANGELIAI ---------- */
@@ -1079,7 +1401,7 @@ body {
 
 #center-5 {
     position: relative;
-    overflow-y: auto;       /* vietoj hidden */
+    overflow-y: auto;
     overflow-x: hidden;
 }
 
@@ -1276,7 +1598,7 @@ body {
 .mini-card:hover {
     transform: translateY(-8px) scale(1.15);
     box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    z-index: 99999;    /* 🆕 Padidinta */
+    z-index: 99999;
     border-color: #ffd700;
 }
 
@@ -1471,6 +1793,20 @@ body {
     pointer-events: none;
 }
 
+.cell .players-on-cell .player-dot {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.4);
+    flex-shrink: 0;
+    pointer-events: auto;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+}
 
 .cell .players-on-cell .player-dot:hover {
     transform: scale(1.2);
@@ -1568,9 +1904,22 @@ body {
         gap: 6px;
     }
     .cell .players-on-cell .player-dot {
-    width: 38px;
-    height: 38px;
-}
+        width: 38px;
+        height: 38px;
+    }
+    .cell {
+        font-size: 8px;
+    }
+    .cell-bg-icon {
+        font-size: 5em;
+    }
+    .row-middle-left .cell-bg-icon,
+    .row-middle-right .cell-bg-icon {
+        font-size: 4em;
+    }
+    .cell.corner .cell-bg-icon {
+        font-size: 6em;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1602,14 +1951,14 @@ body {
         font-size: 7px;
     }
     .cell .players-on-cell .player-dot {
-    width: 16px;
-    height: 16px;
-    border-width: 2px;
-}
+        width: 16px;
+        height: 16px;
+        border-width: 2px;
+    }
     .cell.corner .players-on-cell .player-dot {
-    width: 14px;
-    height: 14px;
-}
+        width: 14px;
+        height: 14px;
+    }
     .row-middle-left,
     .row-middle-right {
         flex: 0 0 45px;
@@ -1749,6 +2098,16 @@ body {
     #gameIdBox span { font-size: 9px; }
     .left-btn { font-size: 9px; padding: 6px 4px; }
     #leftPlayerCount, #leftTurnDisplay { font-size: 8px; padding: 3px 4px; }
+    .cell-bg-icon {
+        font-size: 4em;
+    }
+    .row-middle-left .cell-bg-icon,
+    .row-middle-right .cell-bg-icon {
+        font-size: 3em;
+    }
+    .cell.corner .cell-bg-icon {
+        font-size: 5em;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1780,14 +2139,14 @@ body {
         font-size: 6px;
     }
     .cell .players-on-cell .player-dot {
-    width: 13px;
-    height: 13px;
-    border-width: 1.5px;
-}
+        width: 13px;
+        height: 13px;
+        border-width: 1.5px;
+    }
     .cell.corner .players-on-cell .player-dot {
-    width: 11px;
-    height: 11px;
-}
+        width: 11px;
+        height: 11px;
+    }
     .row-middle-left,
     .row-middle-right {
         flex: 0 0 32px;
@@ -1975,6 +2334,36 @@ body {
     .cell .players-on-cell .player-dot {
         width: 10px;
         height: 10px;
+    }
+    .cell-bg-icon {
+        font-size: 3.5em;
+    }
+    .row-middle-left .cell-bg-icon,
+    .row-middle-right .cell-bg-icon {
+        font-size: 2.5em;
+    }
+    .cell.corner .cell-bg-icon {
+        font-size: 4em;
+    }
+    /* Landing responsive */
+    .landing-container h1 {
+        font-size: 2.5em;
+    }
+    .landing-container {
+        padding: 30px 20px;
+    }
+    .landing-btn {
+        padding: 14px 20px;
+        font-size: 16px;
+    }
+    .menu-container h1 {
+        font-size: 2em;
+    }
+    .rules-content {
+        padding: 20px 15px;
+    }
+    .rules-content h2 {
+        font-size: 1.4em;
     }
 }
 
@@ -2257,54 +2646,6 @@ body {
     opacity: 0.8;
 }
 
-@media (max-width: 992px) {
-    .cell {
-        font-size: 8px;
-    }
-    .cell-bg-icon {
-        font-size: 5em;
-    }
-    .row-middle-left .cell-bg-icon,
-    .row-middle-right .cell-bg-icon {
-        font-size: 4em;
-    }
-    .cell.corner .cell-bg-icon {
-        font-size: 6em;
-    }
-}
-
-@media (max-width: 768px) {
-    .cell {
-        font-size: 6px;
-    }
-    .cell-bg-icon {
-        font-size: 4em;
-    }
-    .row-middle-left .cell-bg-icon,
-    .row-middle-right .cell-bg-icon {
-        font-size: 3em;
-    }
-    .cell.corner .cell-bg-icon {
-        font-size: 5em;
-    }
-}
-
-@media (max-width: 480px) {
-    .cell {
-        font-size: 5px;
-    }
-    .cell-bg-icon {
-        font-size: 3.5em;
-    }
-    .row-middle-left .cell-bg-icon,
-    .row-middle-right .cell-bg-icon {
-        font-size: 2.5em;
-    }
-    .cell.corner .cell-bg-icon {
-        font-size: 4em;
-    }
-}
-
 .cell-top-bar {
     position: absolute;
     display: flex;
@@ -2332,54 +2673,6 @@ body {
 .row-middle-left .cell-top-bar {
     top: 4px;
     left: 6px;
-}
-
-/* ============================================ */
-/* VIEŠI STALAI (Etapas 6) */
-/* ============================================ */
-.public-game-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px;
-    margin-bottom: 10px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 12px;
-    border: 2px solid #c9a84c;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.public-game-item:hover {
-    background: rgba(255,255,255,0.2);
-    transform: scale(1.02);
-    border-color: #ffd700;
-}
-
-.public-game-item .game-host {
-    color: #fff;
-    font-weight: 700;
-    font-size: 14px;
-}
-
-.public-game-item .game-code {
-    color: #ffd700;
-    font-weight: 900;
-    letter-spacing: 2px;
-    font-size: 16px;
-}
-
-.public-game-item .game-count {
-    color: #d4b896;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.public-games-empty {
-    text-align: center;
-    padding: 30px;
-    color: #d4b896;
-    font-style: italic;
 }
 
 /* ============================================ */
