@@ -433,15 +433,18 @@ if (!data.forSelf && data.canBuy && data.field) {
             : `🏠 ${data.playerName} nusipirko ${data.fieldName}!`;
         
        if (!data.forSelf) {
-            hideOtherPlayerChoice();
-            showOtherPlayerResult({
-                playerName: data.playerName,
-                fieldName: data.fieldName,
-                bought: true
-            });
-        }
+    setTimeout(() => {
+        hideOtherPlayerChoice();
+        showOtherPlayerResult({
+            playerName: data.playerName,
+            fieldName: data.fieldName,
+            bought: true
+        });
+    }, 2000);
+}
         
-                addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
+                addNotification(msg);
+        addJournal(`${data.playerName} nusipirko ${data.fieldName}`);
         if (gameState) updateUI(gameState);
     });
 
@@ -459,13 +462,15 @@ if (!data.forSelf && data.canBuy && data.field) {
             : `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
         
         if (!data.forSelf) {
-            hideOtherPlayerChoice();  
-            showOtherPlayerResult({
-                playerName: data.playerName,
-                fieldName: data.fieldName,
-                bought: false
-            });
-        }
+    setTimeout(() => {
+        hideOtherPlayerChoice();  
+        showOtherPlayerResult({
+            playerName: data.playerName,
+            fieldName: data.fieldName,
+            bought: false
+        });
+    }, 2000);
+}
         
         addNotification(msg);
         addJournal(`${data.playerName} atsisakė pirkti ${data.fieldName}`);
