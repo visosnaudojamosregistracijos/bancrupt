@@ -244,8 +244,12 @@ function initSocket() {
     // KAULIUKŲ METIMAS - SKIRTINGAI SAU IR KITIEMS
     // ============================================
     socket.on('diceRolled', (data) => {
-        console.log('🎲 Kauliukai mesti:', data);
-        playDiceSound();
+    window.lastDiceRolled = data;       // 🆕 Laikinai testavimui
+    console.log('🎲 Kauliukai mesti:', data);
+    console.log('forSelf:', data.forSelf);    // 🆕
+    console.log('canBuy:', data.canBuy);      // 🆕
+    console.log('field:', data.field);        // 🆕
+    playDiceSound();
         
         // 🆕 APSAUGA: tikrinam ar dice masyvas yra
         if (data.dice && Array.isArray(data.dice) && data.dice.length >= 2) {
