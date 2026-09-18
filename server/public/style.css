@@ -952,7 +952,6 @@ body {
     gap: 2px;
 }
 
-
 .notification-item {
     padding: 3px 6px;
     background: rgba(255,255,255,0.2);
@@ -971,8 +970,7 @@ body {
 }
 
 /* ---------- PIRKIMO PASIRINKIMAS ---------- */
-#buyChoice,
-#otherPlayerChoice {
+#buyChoice {
     position: absolute;
     top: 0;
     left: 0;
@@ -987,8 +985,7 @@ body {
     animation: choiceFadeIn 0.25s ease;
 }
 
-#buyChoice.show,
-#otherPlayerChoice.show {
+#buyChoice.show {
     display: flex !important;
 }
 
