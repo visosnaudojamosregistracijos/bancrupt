@@ -499,7 +499,7 @@ socket.on('buyPending', (data) => {
     
     // Jei aš ne tas, kuris gali pirkti - rodyk bloką
     if (data.playerId !== playerId) {
-        const msg = `⏳ ${data.playerName} gali pirkti "${data.fieldName}" už €${data.fieldCost}... Laukiama sprendimo`;
+        const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
         addNotification(msg);
         addJournal(msg);
         
@@ -522,22 +522,22 @@ socket.on('buyPending', (data) => {
     }
     
     addNotification(msg);
+    addJournal(msg);
     
-    // Popup TIK kitiems (ne pirkėjui)
+    // 🆕 Rodyti bloką VISIEMS (ir pirkėjui, ir kitiems)
+    showBuyResult(data.playerName, data.fieldName, 'buy', data.playerId === playerId);
+    
     if (data.playerId !== playerId) {
         showPopupMessage(msg, 'buy');
     }
     
-    addJournal(msg);
     hideBuyChoice();
-    hideBuyPending();
 });
 
     socket.on('buyCancelled', (data) => {
     console.log('❌ Pirkimas atšauktas:', data);
     playMoveSound();
     
-    // 🆕 Skirtingas pranešimas priklausomai nuo to, kas atsisakė
     let msg;
     if (data.playerId === playerId) {
         msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
@@ -546,15 +546,16 @@ socket.on('buyPending', (data) => {
     }
     
     addNotification(msg);
+    addJournal(msg);
     
-    // Popup TIK kitiems (ne tam, kuris atsisakė)
+    // 🆕 Rodyti bloką VISIEMS
+    showBuyResult(data.playerName, data.fieldName, 'cancel', data.playerId === playerId);
+    
     if (data.playerId !== playerId) {
         showPopupMessage(msg, 'move');
     }
     
-    addJournal(msg);
     hideBuyChoice();
-    hideBuyPending();
 });
 
     socket.on('bankruptConfirmed', (data) => {
@@ -2110,6 +2111,25 @@ function hideBuyPending() {
     if (!box) return;
     box.style.display = 'none';
     box.classList.remove('show');
+    
+    // 🆕 Atstatyti turinį atgal į "laukiama sprendimo"
+    const header = box.querySelector('.buy-pending-header');
+    const body = box.querySelector('.buy-pending-body');
+    
+    if (header) {
+        header.textContent = '⏳ LAUKIAMA SPRENDIMO';
+        header.style.color = '#e0a800';
+        header.style.borderBottomColor = '#ffc107';
+    }
+    
+    if (body) {
+        body.innerHTML = `
+            <p><strong id="pendingPlayerName">Žaidėjas</strong> gali pirkti</p>
+            <p><strong id="pendingFieldName">Sklypas</strong></p>
+            <p>Kaina: <strong id="pendingFieldCost">€0</strong></p>
+            <p style="font-size:10px; color:#6c757d; margin-top:6px;">⏱️ Laukiama sprendimo...</p>
+        `;
+    }
 }
 
 function hideBuyChoice() {
@@ -2128,6 +2148,64 @@ function cancelBuy() {
     socket.emit('cancelBuy');
     playClickSound();
     hideBuyChoice();
+}
+
+// 🆕 PIRKIMO REZULTATO BLOKAS (po sprendimo)
+let buyResultTimeout = null;
+
+function showBuyResult(playerName, fieldName, result, isMe) {
+    const box = document.getElementById('buyPendingInfo');
+    if (!box) return;
+    
+    // Pakeisti turinį
+    const header = box.querySelector('.buy-pending-header');
+    const body = box.querySelector('.buy-pending-body');
+    
+    if (!header || !body) return;
+    
+    if (result === 'buy') {
+        header.textContent = '✅ NUSIPIRKTA';
+        header.style.color = '#28a745';
+        header.style.borderBottomColor = '#28a745';
+        
+        if (isMe) {
+            body.innerHTML = `
+                <p><strong>Jūs nusipirkote</strong></p>
+                <p><strong>${fieldName}</strong></p>
+            `;
+        } else {
+            body.innerHTML = `
+                <p><strong>${playerName}</strong> nusipirko</p>
+                <p><strong>${fieldName}</strong></p>
+            `;
+        }
+    } else {
+        header.textContent = '❌ ATSISAKYTA';
+        header.style.color = '#dc3545';
+        header.style.borderBottomColor = '#dc3545';
+        
+        if (isMe) {
+            body.innerHTML = `
+                <p><strong>Jūs atsisakėte pirkti</strong></p>
+                <p><strong>${fieldName}</strong></p>
+            `;
+        } else {
+            body.innerHTML = `
+                <p><strong>${playerName}</strong> atsisakė pirkti</p>
+                <p><strong>${fieldName}</strong></p>
+            `;
+        }
+    }
+    
+    box.style.display = 'flex';
+    box.classList.add('show');
+    
+    // 🆕 Paslėpti po 3s
+    if (buyResultTimeout) clearTimeout(buyResultTimeout);
+    buyResultTimeout = setTimeout(() => {
+        hideBuyPending();
+        buyResultTimeout = null;
+    }, 3000);
 }
 
 // ============================================
