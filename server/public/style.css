@@ -1276,7 +1276,7 @@ body {
 .mini-card:hover {
     transform: translateY(-8px) scale(1.15);
     box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    z-index: 100;
+    z-index: 99999;    /* 🆕 Padidinta */
     border-color: #ffd700;
 }
 

@@ -151,6 +151,10 @@ function initSocket() {
     updateUI(state);
     document.getElementById('bankruptModal').style.display = 'none';
     
+
+
+
+
     // 🆕 Jei žaidimas prasidėjęs - paslėpti waiting room
     if (state.gameStarted) {
         hideWaitingRoom();
@@ -1853,6 +1857,136 @@ function hideCellInfo() {
     }
 }
 
+// 🆕 MINI KORTELIŲ TOOLTIP
+function initMiniCardTooltips() {
+    document.querySelectorAll('.mini-card').forEach(card => {
+        card.addEventListener('mouseenter', (e) => {
+            const fieldId = parseInt(card.dataset.fieldId);
+            if (!fieldId && fieldId !== 0) return;
+            
+            showMiniCardTooltip(fieldId, card);
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            hideMiniCardTooltip();
+        });
+    });
+}
+
+function showMiniCardTooltip(fieldId, cardElement) {
+    if (!gameState) return;
+    
+    const tooltip = document.getElementById('cellInfoTooltip');
+    if (!tooltip) return;
+    
+    const field = gameState.board.find(f => f.id === fieldId);
+    if (!field) return;
+    
+    const owner = gameState.players.find(p => p.properties.includes(fieldId) && !p.bankrupt && !p.left && !p.kicked);
+    
+    let html = `<div class="info-header">${field.icon || ''} ${field.name} (#${fieldId})</div>`;
+    
+    if (owner) {
+        html += `
+            <div class="info-row">
+                <span class="label">👤 Savininkas:</span>
+                <span class="value" style="color:${owner.color};">${owner.name}</span>
+            </div>
+        `;
+    }
+    
+    if (field.cost > 0) {
+        html += `
+            <div class="info-row">
+                <span class="label">💰 Kaina:</span>
+                <span class="value">€${field.cost}</span>
+            </div>
+        `;
+    }
+    
+    // NUOMA
+    if (field.type === 'property' && field.color) {
+        const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
+        const baseRent = Math.floor(field.cost * 0.1);
+        
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
+        
+        const multipliers = [10, 20, 30, 40];
+        for (let i = 1; i <= 4; i++) {
+            const rent = Math.floor(baseRent * multipliers[i - 1]);
+            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
+        }
+        
+        const hotelRent = Math.floor(baseRent * 50);
+        html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${hotelRent}</span></div>`;
+        html += `</div>`;
+        
+        if (owner) {
+            html += `<div class="info-section">`;
+            html += `<div class="info-section-title">🏠 DABARTINIS</div>`;
+            if (houses >= 5) {
+                html += `<div class="info-row"><span class="label">Statusas:</span><span class="value">🏨 VIEŠBUTIS</span></div>`;
+            } else if (houses > 0) {
+                html += `<div class="info-row"><span class="label">Namai:</span><span class="value">${houses} 🏠</span></div>`;
+            } else {
+                html += `<div class="info-row"><span class="label">Namai:</span><span class="value">0</span></div>`;
+            }
+            html += `</div>`;
+        }
+    }
+    
+    // SERVICE1
+    if (field.type === 'service1') {
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
+        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
+        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
+        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+        html += `</div>`;
+    }
+    
+    // SERVICE2
+    if (field.type === 'service2') {
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
+        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
+        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
+        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+        html += `</div>`;
+    }
+    
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    
+    // Pozicionavimas
+    const rect = cardElement.getBoundingClientRect();
+    const tooltipWidth = tooltip.offsetWidth;
+    const tooltipHeight = tooltip.offsetHeight;
+    
+    let left = rect.left + rect.width / 2 - tooltipWidth / 2;
+    let top = rect.top - tooltipHeight - 10;
+    
+    if (left < 10) left = 10;
+    if (left + tooltipWidth > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipWidth - 10;
+    }
+    if (top < 10) {
+        top = rect.bottom + 10;
+    }
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+}
+
+function hideMiniCardTooltip() {
+    const tooltip = document.getElementById('cellInfoTooltip');
+    if (tooltip) {
+        tooltip.style.display = 'none';
+        tooltip.innerHTML = '';
+    }
+}
+
 // ============================================
 // IŠŠOKANTYS PRANEŠIMAI
 // ============================================
@@ -3192,6 +3326,9 @@ function updateUI(state) {
     }
     
     updateBoard(state);
+    
+    // 🆕 Inicializuoti mini kortelių tooltip'us
+    setTimeout(initMiniCardTooltips, 100);
 }
 
 // ============================================
