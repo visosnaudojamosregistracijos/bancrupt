@@ -493,6 +493,18 @@ if (data.player.id !== playerId) {
         }
     });
 
+    // 🆕 Kiti žaidėjai mato, kad laukiama sprendimo
+socket.on('buyPending', (data) => {
+    console.log('⏳ Laukiama sprendimo:', data);
+    
+    // Jei aš ne tas, kuris gali pirkti - rodyk pranešimą
+    if (data.playerId !== playerId) {
+        const msg = `⏳ ${data.playerName} svarsto pirkti "${data.fieldName}" už €${data.fieldCost}... Laukiama sprendimo`;
+        addNotification(msg);
+        addJournal(msg);
+    }
+});
+
     socket.on('buyConfirmed', (data) => {
         console.log('✅ Pirkimas patvirtintas:', data);
         playBuySound();
