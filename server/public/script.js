@@ -2232,7 +2232,7 @@ async function animateMovement(playerId, fromPos, toPos) {
     
     console.log(`🎬 Animacija: player ${playerId} nuo ${fromPos} iki ${toPos} (${totalSteps} žingsniai)`);
     
-    const stepDuration = totalSteps > 8 ? 80 : 150;
+    const stepDuration = totalSteps > 8 ? 120 : 200;
     
     for (let i = 1; i <= totalSteps; i++) {
         const currentPos = (fromPos + i) % boardSize;
