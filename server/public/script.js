@@ -353,12 +353,13 @@ function initSocket() {
             }
             
             if (data.canBuy) {
-                const buyMsg = ` 🏠 Gali nusipirkti ${data.field.name} už €${data.field.cost}!`;
-                notificationMsg += buyMsg;
-                popupMsg += buyMsg;
-                popupType = 'buy';
-                playNotificationSound();
-            }
+    // 🆕 NEBEPRIDĖTI prie pranešimo - jau rodoma atskirai
+    // const buyMsg = ` 🏠 Gali nusipirkti ${data.field.name} už €${data.field.cost}!`;
+    // notificationMsg += buyMsg;
+    // popupMsg += buyMsg;
+    popupType = 'buy';
+    playNotificationSound();
+}
         }
         
         addNotification(notificationMsg);
@@ -381,9 +382,14 @@ if (data.player.id !== playerId) {
     });
 
     socket.on('message', (msg) => {
-        console.log('📢 Pranešimas:', msg);
-        
-        addNotification(msg);
+    console.log('📢 Pranešimas:', msg);
+    
+    // 🆕 PRALEISTI pranešimus, kurie jau rodomi per diceRolled
+    if (msg.includes('gali nusipirkti') && msg.includes('už €')) {
+        return; // Nepridėti į notifications
+    }
+    
+    addNotification(msg);
         
         if (msg.includes('HORNY RP') || msg.includes('gavai €200 nuo Dedo')) {
             playChanceSound();

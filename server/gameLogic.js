@@ -441,7 +441,8 @@ class Game {
             fieldCost: currentField.cost
         });
         
-        this.emitFunction('message', `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`);
+        // 🆕 NEBESIŲSTI - jau siunčiama per 'buyPending' ir 'diceRolled'
+// this.emitFunction('message', `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`);
     }
     
     // 🆕 TIMEOUT 30s
