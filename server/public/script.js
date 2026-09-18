@@ -497,11 +497,14 @@ if (data.player.id !== playerId) {
 socket.on('buyPending', (data) => {
     console.log('⏳ Laukiama sprendimo:', data);
     
-    // Jei aš ne tas, kuris gali pirkti - rodyk pranešimą
+    // Jei aš ne tas, kuris gali pirkti - rodyk bloką
     if (data.playerId !== playerId) {
-        const msg = `⏳ ${data.playerName} svarsto pirkti "${data.fieldName}" už €${data.fieldCost}... Laukiama sprendimo`;
+        const msg = `⏳ ${data.playerName} gali pirkti "${data.fieldName}" už €${data.fieldCost}... Laukiama sprendimo`;
         addNotification(msg);
         addJournal(msg);
+        
+        // 🆕 Rodyti atskirą bloką
+        showBuyPending(data);
     }
 });
 
@@ -514,9 +517,9 @@ socket.on('buyPending', (data) => {
         if (data.playerId !== playerId) {
             showPopupMessage(msg, 'buy');
         }
-        addJournal(msg);
         hideBuyChoice();
-    });
+    hideBuyPending();  // 🆕
+});
 
     socket.on('buyCancelled', (data) => {
         console.log('❌ Pirkimas atšauktas:', data);
@@ -526,9 +529,9 @@ socket.on('buyPending', (data) => {
         if (data.playerId !== playerId) {
             showPopupMessage(msg, 'move');
         }
-        addJournal(msg);
         hideBuyChoice();
-    });
+    hideBuyPending();  // 🆕
+});
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -2063,6 +2066,26 @@ function showBuyChoice(data) {
     choice.style.display = 'flex';
     choice.classList.add('show');
     playNotificationSound();
+}
+
+// 🆕 PIRKIMO LAUKIMO BLOKAS KITIEMS ŽAIDĖJAMS
+function showBuyPending(data) {
+    const box = document.getElementById('buyPendingInfo');
+    if (!box) return;
+    
+    document.getElementById('pendingPlayerName').textContent = data.playerName;
+    document.getElementById('pendingFieldName').textContent = data.fieldName;
+    document.getElementById('pendingFieldCost').textContent = '€' + data.fieldCost;
+    
+    box.style.display = 'flex';
+    box.classList.add('show');
+}
+
+function hideBuyPending() {
+    const box = document.getElementById('buyPendingInfo');
+    if (!box) return;
+    box.style.display = 'none';
+    box.classList.remove('show');
 }
 
 function hideBuyChoice() {
