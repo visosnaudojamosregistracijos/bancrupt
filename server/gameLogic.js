@@ -433,6 +433,14 @@ class Game {
             fieldCost: currentField.cost
         }, player.socketId);
         
+        // 🆕 Pranešimas VISIEMS, kad laukiama sprendimo
+        this.emitFunction('buyPending', {
+            playerId: player.id,
+            playerName: player.name,
+            fieldName: currentField.name,
+            fieldCost: currentField.cost
+        });
+        
         this.emitFunction('message', `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`);
     }
     
@@ -546,6 +554,14 @@ class Game {
             fieldName: currentField.name,
             fieldCost: currentField.cost
         }, player.socketId);
+        
+        // 🆕 Pranešimas VISIEMS, kad laukiama sprendimo
+        this.emitFunction('buyPending', {
+            playerId: player.id,
+            playerName: player.name,
+            fieldName: currentField.name,
+            fieldCost: currentField.cost
+        });
         
         this.emitFunction('message', `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`);
     }
