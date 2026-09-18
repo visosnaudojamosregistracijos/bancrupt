@@ -146,11 +146,16 @@ function initSocket() {
     });
 
     socket.on('gameState', (state) => {
-        console.log('📊 Gauta žaidimo būsena');
-        gameState = state;
-        updateUI(state);
-        document.getElementById('bankruptModal').style.display = 'none';
-    });
+    console.log('📊 Gauta žaidimo būsena');
+    gameState = state;
+    updateUI(state);
+    document.getElementById('bankruptModal').style.display = 'none';
+    
+    // 🆕 Jei žaidimas prasidėjęs - paslėpti waiting room
+    if (state.gameStarted) {
+        hideWaitingRoom();
+    }
+});
 
     // SPALVŲ GAVIMAS
     socket.on('gameColors', (data) => {
@@ -1811,7 +1816,6 @@ function hideCellInfo() {
 // ============================================
 
 function showPopupMessage(message, type) {
-    // Visi pranešimai eina į 5 langelį (addNotification)
     addNotification(message);
 }
 
@@ -1940,6 +1944,13 @@ function enterGame() {
     socket.emit('getGameState');
     
     setTimeout(() => {
+        // 🆕 Rodyti waiting room TIK jei žaidimas dar neprasidėjęs
+        if (gameState && gameState.gameStarted) {
+            console.log('🎮 Žaidimas jau prasidėjęs - nerodomas waiting room');
+            hideWaitingRoom();
+            return;
+        }
+        
         socket.emit('getWaitingRoom');
         showWaitingRoom();
     }, 300);
@@ -2291,8 +2302,10 @@ function updateTradePlayers() {
     const select = document.getElementById('tradeTargetPlayer');
     if (!select) return;
     if (!gameState) return;
+    if (playerId == null) return; // 🆕 Apsauga nuo null
     
-    const currentPlayerId = myPlayer?.id !== undefined ? myPlayer.id : playerId;
+    // 🆕 Saugus null handling
+    const currentPlayerId = myPlayer?.id ?? playerId;
     
     select.innerHTML = '';
     let found = false;
@@ -2721,7 +2734,7 @@ function confirmBankrupt() {
         return;
     }
     
-    socket.emit('bankrupt', playerId);
+    socket.emit('bankrupt');
 }
 
 function cancelBankrupt() {

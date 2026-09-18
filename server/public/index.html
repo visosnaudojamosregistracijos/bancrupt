@@ -1064,8 +1064,6 @@
     <div id="cellInfoTooltip"></div>
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="audioManager.js"></script>
     <script src="script.js"></script>
     <script>
@@ -1151,8 +1149,13 @@
         }
         
         function closePublicGamesModal() {
-            document.getElementById('publicGamesModal').classList.remove('active');
-        }
+    document.getElementById('publicGamesModal').classList.remove('active');
+    
+    // 🆕 Išeiti iš lobby
+    if (typeof socket !== 'undefined' && socket && isConnected) {
+        socket.emit('leaveLobby');
+    }
+}
         
         document.getElementById('publicGamesModal').addEventListener('click', function(e) {
             if (e.target === this) {
@@ -1175,9 +1178,16 @@
         }
         
         function menuPublic() {
-            console.log('🌐 Vieši stalai');
-            openPublicGamesModal();
-        }
+    console.log('🌐 Vieši stalai');
+    
+    // 🆕 Patikrinti, ar yra ryšys
+    if (typeof isConnected === 'undefined' || !isConnected) {
+        alert('⏳ Jungiamasi prie serverio... Palauk kelias sekundes ir bandyk dar kartą.');
+        return;
+    }
+    
+    openPublicGamesModal();
+}
         
         // ============================================
         // URL PARAMETRŲ APDOROJIMAS

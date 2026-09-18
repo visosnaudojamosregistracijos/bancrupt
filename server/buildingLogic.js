@@ -20,8 +20,8 @@ class BuildingLogic {
 
     // Patikrinti ar žaidėjas turi VISUS grupės sklypus
     hasFullGroup(playerId, fieldId) {
-        const player = this.game.players[playerId];
-        if (!player || player.bankrupt) return false;
+    const player = this.game.players.find(p => p.id === playerId);
+    if (!player || player.bankrupt) return false;
 
         const field = this.game.board[fieldId];
         if (!field || !field.color) return false;
@@ -35,8 +35,8 @@ class BuildingLogic {
 
     // Gauti žaidėjo visus sklypus su namų skaičiumi
     getPlayerPropertiesWithHouses(playerId) {
-        const player = this.game.players[playerId];
-        if (!player) return [];
+    const player = this.game.players.find(p => p.id === playerId);
+    if (!player) return [];
 
         return player.properties.map(fieldId => {
             const field = this.game.board[fieldId];
@@ -51,8 +51,8 @@ class BuildingLogic {
 
     // Patikrinti ar galima statyti namą/viezbutį ant konkretaus sklypo
     canBuildHouse(playerId, fieldId) {
-        const player = this.game.players[playerId];
-        if (!player || player.bankrupt) return { can: false, reason: 'Žaidėjas neaktyvus' };
+    const player = this.game.players.find(p => p.id === playerId);
+    if (!player || player.bankrupt) return { can: false, reason: 'Žaidėjas neaktyvus' };
         if (this.game.currentTurn !== playerId) return { can: false, reason: 'Ne tavo eilė' };
         if (player.position !== fieldId) return { can: false, reason: 'Stovi ant kito sklypo' };
 
@@ -110,13 +110,13 @@ class BuildingLogic {
 
     // Statyti namą arba viezbutį
     buildHouse(playerId, fieldId) {
-        const result = this.canBuildHouse(playerId, fieldId);
-        if (!result.can) {
-            return { error: result.reason };
-        }
+    const result = this.canBuildHouse(playerId, fieldId);
+    if (!result.can) {
+        return { error: result.reason };
+    }
 
-        const player = this.game.players[playerId];
-        const field = this.game.board[fieldId];
+    const player = this.game.players.find(p => p.id === playerId);
+    const field = this.game.board.find(f => f.id === fieldId);
         const cost = result.cost;
         const isHotel = result.isHotel || false;
 
@@ -179,22 +179,22 @@ class BuildingLogic {
 
     // Gauti statybos kainą pagal sklypo ID (50% sklypo vertės)
     getBuildCost(fieldId) {
-        const field = this.game.board[fieldId];
-        if (!field) return 0;
-        return Math.floor(field.cost * C.BUILD_COST_RATIO);
-    }
+    const field = this.game.board.find(f => f.id === fieldId);
+    if (!field) return 0;
+    return Math.floor(field.cost * C.BUILD_COST_RATIO);
+}
 
     // Gauti viezbučio kainą (100% sklypo vertės)
     getHotelCost(fieldId) {
-        const field = this.game.board[fieldId];
-        if (!field) return 0;
-        return Math.floor(field.cost * C.HOTEL_COST_RATIO);
-    }
+    const field = this.game.board.find(f => f.id === fieldId);
+    if (!field) return 0;
+    return Math.floor(field.cost * C.HOTEL_COST_RATIO);
+}
 
     // Gauti informaciją apie visus žaidėjo sklypus su namais
     getGroupStatus(playerId) {
-        const player = this.game.players[playerId];
-        if (!player) return [];
+    const player = this.game.players.find(p => p.id === playerId);
+    if (!player) return [];
 
         const result = [];
         const processedColors = new Set();
@@ -241,9 +241,9 @@ class BuildingLogic {
     //   Viežbutis → × 50
     // ============================================
     getRentWithHouses(playerId, fieldId) {
-        const player = this.game.players[playerId];
-        const field = this.game.board[fieldId];
-        if (!player || !field) return 0;
+    const player = this.game.players.find(p => p.id === playerId);
+    const field = this.game.board.find(f => f.id === fieldId);
+    if (!player || !field) return 0;
 
         // Bazinė nuoma = 10% sklypo vertės
         let baseRent = field.cost * C.RENT_BASE_RATIO;

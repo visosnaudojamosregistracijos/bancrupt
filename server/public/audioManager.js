@@ -60,22 +60,13 @@ class AudioManager {
     }
 
     play(soundName) {
-        if (!this.isEnabled) return;
-        try {
-            const sound = new Audio(`sounds/${soundName}.mp3`);
-            sound.volume = this.volume;
-            sound.play().catch(e => {});
-        } catch (e) {}
-    }
-
-    playWithOverlap(soundName) {
-        if (!this.isEnabled) return;
-        try {
-            const sound = new Audio(`sounds/${soundName}.mp3`);
-            sound.volume = this.volume;
-            sound.play().catch(e => {});
-        } catch (e) {}
-    }
+    if (!this.isEnabled) return;
+    try {
+        const sound = new Audio(`sounds/${soundName}.mp3`);
+        sound.volume = this.volume;
+        sound.play().catch(e => {});
+    } catch (e) {}
+}
 
     setVolume(volume) {
         this.volume = Math.max(0, Math.min(1, volume));

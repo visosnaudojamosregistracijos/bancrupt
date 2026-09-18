@@ -69,8 +69,9 @@ function broadcastPublicGames() {
         }
     }
     
-    // Siųsti visiems, kurie mėgina gauti viešų stalų sąrašą
-    io.emit('publicGamesList', publicGames);
+    // 🆕 Siųsti TIK tiems, kurie yra laukimo kambaryje (ne žaidime)
+    // Naudojame atskirą room'ą 'lobby' - žaidėjai, kurie naršo viešus stalus
+    io.to('lobby').emit('publicGamesList', publicGames);
 }
 
 // ============================================
@@ -132,6 +133,7 @@ io.on('connection', (socket) => {
         
         games.set(gameId, game);
         socket.join(gameId);
+        socket.leave('lobby'); // 🆕 Išeiti iš lobby
         socket.gameId = gameId;
         socket.playerId = player.id;
         
@@ -180,6 +182,7 @@ io.on('connection', (socket) => {
         }
 
         socket.join(gameId.toUpperCase());
+        socket.leave('lobby'); // 🆕 Išeiti iš lobby
         socket.gameId = gameId.toUpperCase();
         socket.playerId = player.id;
 
@@ -929,43 +932,54 @@ io.on('connection', (socket) => {
     // VIEŠI STALAI (Etapas 6)
     // ============================================
     socket.on('getPublicGames', () => {
-        const publicGames = [];
-        
-        for (const [gameId, game] of games) {
-            if (game.isPublic && !game.gameStarted) {
-                const activePlayers = game.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
-                
-                if (activePlayers.length < game.maxPlayers) {
-                    publicGames.push({
-                        gameId: gameId,
-                        hostName: activePlayers[0] ? activePlayers[0].name : 'Nežinomas',
-                        playerCount: activePlayers.length,
-                        maxPlayers: game.maxPlayers
-                    });
-                }
+    // 🆕 Prisijungti prie 'lobby' room'o
+    socket.join('lobby');
+    
+    const publicGames = [];
+    
+    for (const [gameId, game] of games) {
+        if (game.isPublic && !game.gameStarted) {
+            const activePlayers = game.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+            
+            if (activePlayers.length < game.maxPlayers) {
+                publicGames.push({
+                    gameId: gameId,
+                    hostName: activePlayers[0] ? activePlayers[0].name : 'Nežinomas',
+                    playerCount: activePlayers.length,
+                    maxPlayers: game.maxPlayers
+                });
             }
         }
-        
-        socket.emit('publicGamesList', publicGames);
-    });
+    }
+    
+    socket.emit('publicGamesList', publicGames);
+});
+
+socket.on('leaveLobby', () => {
+    socket.leave('lobby');
+    console.log('🚪 Žaidėjas išėjo iš lobby:', socket.id);
+});
 
     socket.on('setGamePublic', ({ isPublic }) => {
-        if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
-            return;
-        }
-        
-        const game = games.get(socket.gameId);
-        if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
-            return;
-        }
-        
-        // Tik kūrėjas gali keisti
-        if (socket.playerId !== 0) {
-            socket.emit('error', 'Tik žaidimo kūrėjas gali keisti viešumą');
-            return;
-        }
+    if (!socket.gameId || socket.playerId === undefined) {
+        socket.emit('error', 'Neprisijungei prie žaidimo!');
+        return;
+    }
+    
+    const game = games.get(socket.gameId);
+    if (!game) {
+        socket.emit('error', 'Žaidimas nerastas!');
+        return;
+    }
+    
+    // 🆕 Tik kūrėjas (hostId) gali keisti
+    const hostPlayer = game.players.find(p => p.isHost === true);
+    const hostId = hostPlayer ? hostPlayer.id : 0;
+    
+    if (socket.playerId !== hostId) {
+        socket.emit('error', 'Tik žaidimo kūrėjas gali keisti viešumą');
+        return;
+    }
         
         if (game.gameStarted) {
             socket.emit('error', 'Žaidimas jau prasidėjo');

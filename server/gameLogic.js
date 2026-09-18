@@ -7,32 +7,34 @@ const C = require('./gameConstants');
 
 class Game {
     constructor() {
-        this.players = [];
-        this.board = boardData;
-        this.currentTurn = 0;
-        this.gameStarted = false;
-        this.turnHistory = [];
-        this.maxPlayers = C.MAX_PLAYERS;
-        this.diceValues = [1, 1];
-        this.isRolling = false;
-        this.consecutiveDoubles = 0;
-        this.waitingForBuy = false;
-        this.currentPlayerId = null;
-        this.doubleRoll = false;
-        this.emitFunction = null;
-        this.lastMessage = '';
-        this.buildingLogic = new BuildingLogic(this);
-        this.tradingLogic = new TradingLogic(this);
-        this.demolishLogic = new DemolishLogic(this);
-        // VOTE-KICK
-        this.activeVoteKick = null;
-        this.voteKickTimer = null;
-        // VIEŠI STALAI (Etapas 6)
-        this.isPublic = false;
-        this.lastActivity = Date.now();
-        // URBAN KODAS (Etapas 5)
-        this.gameId = null;
-    }
+    this.players = [];
+    this.board = boardData;
+    this.currentTurn = 0;
+    this.gameStarted = false;
+    this.turnHistory = [];
+    this.maxPlayers = C.MAX_PLAYERS;
+    this.diceValues = [1, 1];
+    this.isRolling = false;
+    this.consecutiveDoubles = 0;
+    this.waitingForBuy = false;
+    this.currentPlayerId = null;
+    this.doubleRoll = false;
+    this.emitFunction = null;
+    this.lastMessage = '';
+    this.buildingLogic = new BuildingLogic(this);
+    this.tradingLogic = new TradingLogic(this);
+    this.demolishLogic = new DemolishLogic(this);
+    // VOTE-KICK
+    this.activeVoteKick = null;
+    this.voteKickTimer = null;
+    // VIEŠI STALAI (Etapas 6)
+    this.isPublic = false;
+    this.lastActivity = Date.now();
+    // URBAN KODAS (Etapas 5)
+    this.gameId = null;
+    // 🆕 BUY TIMEOUT
+    this.buyTimeoutTimer = null;
+}
 
     setEmitFunction(emitFn) {
         this.emitFunction = emitFn;
@@ -91,25 +93,26 @@ class Game {
         }
 
         const player = {
-            id: this.players.length,
-            name: name,
-            position: 0,
-            money: C.START_MONEY,
-            color: finalColor,
-            properties: [],
-            houses: {},
-            inJail: false,
-            jailTurns: 0,
-            isActive: true,
-            bankrupt: false,
-            left: false,
-            kicked: false,
-            isDebtor: false,
-            ready: false,
-            socketId: null,
-            token: Math.random().toString(36).substring(2) + Date.now().toString(36),
-            joinedAt: Date.now()
-        };
+    id: this.players.length,
+    name: name,
+    position: 0,
+    money: C.START_MONEY,
+    color: finalColor,
+    properties: [],
+    houses: {},
+    inJail: false,
+    jailTurns: 0,
+    isActive: true,
+    bankrupt: false,
+    left: false,
+    kicked: false,
+    isDebtor: false,
+    ready: false,
+    socketId: null,
+    token: Math.random().toString(36).substring(2) + Date.now().toString(36),
+    joinedAt: Date.now(),
+    isHost: this.players.length === 0  // 🆕 Pirmas žaidėjas = host
+};
         this.players.push(player);
         
         this.lastActivity = Date.now();
@@ -176,19 +179,22 @@ class Game {
     }
 
     startGame(playerId) {
-        // Tik kūrėjas (pirmas žaidėjas) gali pradėti
-        if (playerId !== 0) {
-            return { error: 'Tik žaidimo kūrėjas gali pradėti' };
-        }
-        
-        if (this.gameStarted) {
-            return { error: 'Žaidimas jau prasidėjo' };
-        }
-        
-        const canStart = this.canStartGame();
-        if (!canStart.can) {
-            return { error: canStart.reason };
-        }
+    // 🆕 Tik kūrėjas (hostId) gali pradėti
+    const hostPlayer = this.players.find(p => p.isHost === true);
+    const hostId = hostPlayer ? hostPlayer.id : 0;
+    
+    if (playerId !== hostId) {
+        return { error: 'Tik žaidimo kūrėjas gali pradėti' };
+    }
+    
+    if (this.gameStarted) {
+        return { error: 'Žaidimas jau prasidėjo' };
+    }
+    
+    const canStart = this.canStartGame();
+    if (!canStart.can) {
+        return { error: canStart.reason };
+    }
         
         // 🎲 ATSITIKTINIS RIKIAVIMAS (Etapas 4)
         const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
@@ -221,65 +227,70 @@ class Game {
     }
 
     kickPlayer(kickerId, targetId) {
-        // Tik kūrėjas gali išmesti
-        if (kickerId !== 0) {
-            return { error: 'Tik žaidimo kūrėjas gali išmesti žaidėjus' };
-        }
-        
-        if (this.gameStarted) {
-            return { error: 'Žaidimas jau prasidėjo' };
-        }
-        
-        if (targetId === 0) {
-            return { error: 'Negali išmesti savęs' };
-        }
-        
-        const target = this.players[targetId];
-        if (!target || target.left || target.kicked) {
-            return { error: 'Žaidėjas jau neaktyvus' };
-        }
-        
-        const targetName = target.name;
-        const socketId = target.socketId;
-        
-        // Pašalinam
-        target.kicked = true;
-        target.isActive = false;
-        target.ready = false;
-        
-        this.lastActivity = Date.now();
-        
-        this.addMessage(`❌ ${targetName} buvo išmestas iš žaidimo`);
-        
-        return {
-            success: true,
-            targetId: targetId,
-            targetName: targetName,
-            socketId: socketId
-        };
+    // 🆕 Tik kūrėjas (hostId) gali išmesti
+    const hostPlayer = this.players.find(p => p.isHost === true);
+    const hostId = hostPlayer ? hostPlayer.id : 0;
+    
+    if (kickerId !== hostId) {
+        return { error: 'Tik žaidimo kūrėjas gali išmesti žaidėjus' };
     }
+    
+    if (this.gameStarted) {
+        return { error: 'Žaidimas jau prasidėjo' };
+    }
+    
+    if (targetId === kickerId) {  // 🆕 PAKEISTA
+        return { error: 'Negali išmesti savęs' };
+    }
+    
+    const target = this.players[targetId];
+    if (!target || target.left || target.kicked) {
+        return { error: 'Žaidėjas jau neaktyvus' };
+    }
+    
+    const targetName = target.name;
+    const socketId = target.socketId;
+    
+    // Pašalinam
+    target.kicked = true;
+    target.isActive = false;
+    target.ready = false;
+    
+    this.lastActivity = Date.now();
+    
+    this.addMessage(`❌ ${targetName} buvo išmestas iš žaidimo`);
+    
+    return {
+        success: true,
+        targetId: targetId,
+        targetName: targetName,
+        socketId: socketId
+    };
+}
 
     getWaitingRoomState() {
-        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
-        
-        return {
-            gameStarted: this.gameStarted,
-            players: activePlayers.map(p => ({
-                id: p.id,
-                name: p.name,
-                color: p.color,
-                ready: p.ready === true,
-                isHost: p.id === 0,
-                isActive: p.isActive
-            })),
-            totalPlayers: activePlayers.length,
-            readyCount: activePlayers.filter(p => p.ready).length,
-            canStart: this.canStartGame().can,
-            hostId: 0,
-            isPublic: this.isPublic,
-            gameId: this.gameId
-        };
-    }
+    const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+    const hostPlayer = this.players.find(p => p.isHost === true);
+    const hostId = hostPlayer ? hostPlayer.id : 0;
+    
+    return {
+        gameStarted: this.gameStarted,
+        players: activePlayers.map(p => ({
+            id: p.id,
+            name: p.name,
+            color: p.color,
+            ready: p.ready === true,
+            isHost: p.id === hostId,   // 🆕
+            isActive: p.isActive
+        })),
+        totalPlayers: activePlayers.length,
+        readyCount: activePlayers.filter(p => p.ready).length,
+        canStart: this.canStartGame().can,
+        hostId: hostId,                // 🆕
+        isPublic: this.isPublic,
+        gameId: this.gameId
+    };
+}
 
     // ============================================
     // VIEŠI STALAI (Etapas 6)
@@ -411,31 +422,34 @@ class Game {
         const result = this.handleField(player, currentField);
         
         if (result.action === 'can_buy') {
-            this.waitingForBuy = true;
-            this.isRolling = false;
-            
-            if (this.emitFunction) {
-                this.emitFunction('showBuy', {
-                    fieldId: currentField.id,
-                    playerId: player.id,
-                    fieldName: currentField.name,
-                    fieldCost: currentField.cost
-                }, player.socketId);
-                
-                this.emitFunction('message', `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`);
-            }
-            
-            return { 
-                dice: [dice1, dice2], 
-                total, 
-                player, 
-                field: currentField,
-                result,
-                double: this.doubleRoll,
-                canBuy: true,
-                message: `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`
-            };
-        }
+    this.waitingForBuy = true;
+    this.isRolling = false;
+    
+    if (this.emitFunction) {
+        this.emitFunction('showBuy', {
+            fieldId: currentField.id,
+            playerId: player.id,
+            fieldName: currentField.name,
+            fieldCost: currentField.cost
+        }, player.socketId);
+        
+        this.emitFunction('message', `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`);
+    }
+    
+    // 🆕 TIMEOUT 30s
+    this.startBuyTimeout(playerId);
+    
+    return { 
+        dice: [dice1, dice2], 
+        total, 
+        player, 
+        field: currentField,
+        result,
+        double: this.doubleRoll,
+        canBuy: true,
+        message: `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`
+    };
+}
 
         this.turnHistory.push({
             player: player.name,
@@ -522,31 +536,34 @@ class Game {
         const result = this.handleField(player, currentField);
 
         if (result.action === 'can_buy') {
-            this.waitingForBuy = true;
-            this.isRolling = false;
-            
-            if (this.emitFunction) {
-                this.emitFunction('showBuy', {
-                    fieldId: currentField.id,
-                    playerId: player.id,
-                    fieldName: currentField.name,
-                    fieldCost: currentField.cost
-                }, player.socketId);
-                
-                this.emitFunction('message', `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`);
-            }
-            
-            return { 
-                dice: [dice1, dice2], 
-                total, 
-                player, 
-                field: currentField,
-                result,
-                double: false,
-                canBuy: true,
-                message: `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`
-            };
-        }
+    this.waitingForBuy = true;
+    this.isRolling = false;
+    
+    if (this.emitFunction) {
+        this.emitFunction('showBuy', {
+            fieldId: currentField.id,
+            playerId: player.id,
+            fieldName: currentField.name,
+            fieldCost: currentField.cost
+        }, player.socketId);
+        
+        this.emitFunction('message', `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`);
+    }
+    
+    // 🆕 TIMEOUT 30s
+    this.startBuyTimeout(playerId);
+    
+    return { 
+        dice: [dice1, dice2], 
+        total, 
+        player, 
+        field: currentField,
+        result,
+        double: false,
+        canBuy: true,
+        message: `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`
+    };
+}
 
         this.isRolling = false;
         this.endTurn();
@@ -830,7 +847,31 @@ class Game {
         }
     }
 
+// 🆕 BUY TIMEOUT
+startBuyTimeout(playerId) {
+    if (this.buyTimeoutTimer) {
+        clearTimeout(this.buyTimeoutTimer);
+        this.buyTimeoutTimer = null;
+    }
+    
+    this.buyTimeoutTimer = setTimeout(() => {
+        console.log(`⏰ Buy timeout - auto-cancel (player ${playerId})`);
+        this.cancelBuy(playerId);
+        this.buyTimeoutTimer = null;
+    }, 30000); // 30 sekundžių
+}
+
+clearBuyTimeout() {
+    if (this.buyTimeoutTimer) {
+        clearTimeout(this.buyTimeoutTimer);
+        this.buyTimeoutTimer = null;
+    }
+}
+
     buyProperty(playerId) {
+        // 🆕 Išvalyti timeout
+    this.clearBuyTimeout();
+
         if (!this.waitingForBuy) {
             return { error: 'Čia negalima pirkti' };
         }
@@ -882,6 +923,9 @@ class Game {
     }
 
     cancelBuy(playerId) {
+       // 🆕 Išvalyti timeout
+    this.clearBuyTimeout();
+
         if (!this.waitingForBuy) {
             return { error: 'Nėra ką pirkti' };
         }

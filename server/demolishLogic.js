@@ -9,7 +9,7 @@ class DemolishLogic {
 
     // Gauti sklypus su namais - TIK TUOS KURIUOS GALIMA GRIAUTI
     getPlayerPropertiesWithHouses(playerId) {
-        const player = this.game.players[playerId];
+        const player = this.game.players.find(p => p.id === playerId);
         if (!player) return [];
 
         const result = [];
@@ -86,7 +86,8 @@ class DemolishLogic {
 
     // Gauti grąžos sumą
     getRefundAmount(fieldId, playerId) {
-        const player = this.game.players[playerId || this.game.currentTurn];
+        const playerIdToUse = playerId || this.game.currentTurn;
+const player = this.game.players.find(p => p.id === playerIdToUse);
         if (!player) return 0;
         
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
@@ -104,10 +105,10 @@ class DemolishLogic {
 
     // Patikrinti ar galima griauti ant konkretaus sklypo
     canDemolish(playerId, fieldId) {
-        const player = this.game.players[playerId];
-        if (!player || player.bankrupt) {
-            return { can: false, reason: 'Žaidėjas neaktyvus' };
-        }
+    const player = this.game.players.find(p => p.id === playerId);
+    if (!player || player.bankrupt) {
+        return { can: false, reason: 'Žaidėjas neaktyvus' };
+    }
         if (this.game.currentTurn !== playerId) {
             return { can: false, reason: 'Ne tavo eilė' };
         }
@@ -163,7 +164,7 @@ class DemolishLogic {
             return { error: result.reason };
         }
 
-        const player = this.game.players[playerId];
+        const player = this.game.players.find(p => p.id === playerId);
         const field = this.game.board.find(f => f.id === fieldId);
         const refund = result.refund;
 
