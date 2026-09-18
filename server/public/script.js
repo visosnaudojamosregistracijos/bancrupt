@@ -2233,8 +2233,9 @@ async function animateMovement(playerId, fromPos, toPos) {
     
     console.log(`🎬 Animacija: player ${playerId} nuo ${fromPos} iki ${toPos} (${totalSteps} žingsniai)`);
     
-    const stepDuration = totalSteps > 8 ? 120 : 200;
+    const stepDuration = totalSteps > 8 ? 150 : 250;
     
+    // 🆕 1 FAZĖ: Langeliai paryškėja paeiliui (rutuliukas nejuda)
     for (let i = 1; i <= totalSteps; i++) {
         const currentPos = (fromPos + i) % boardSize;
         const cell = document.getElementById(`cell-${currentPos}`);
@@ -2243,25 +2244,23 @@ async function animateMovement(playerId, fromPos, toPos) {
         
         cell.classList.add('highlight');
         
-        const playerDots = cell.querySelectorAll('.player-dot');
-        playerDots.forEach(dot => {
-            if (dot.dataset.playerId == playerId) {
-                dot.classList.add('jumping');
-            }
-        });
-        
         if (typeof playClickSound === 'function') {
             playClickSound();
         }
         
         await new Promise(resolve => setTimeout(resolve, stepDuration));
         
-        cell.classList.remove('highlight');
-        playerDots.forEach(dot => {
-            if (dot.dataset.playerId == playerId) {
-                dot.classList.remove('jumping');
-            }
-        });
+        // 🆕 Nuimti paryškinimą, IŠSKYRUS paskutinį langelį
+        if (i < totalSteps) {
+            cell.classList.remove('highlight');
+        }
+    }
+    
+    // 🆕 2 FAZĖ: Paskutinis langelis lieka paryškintas 500ms
+    const finalCell = document.getElementById(`cell-${toPos}`);
+    if (finalCell) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        finalCell.classList.remove('highlight');
     }
     
     console.log(`✅ Animacija baigta`);
