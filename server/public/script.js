@@ -252,11 +252,16 @@ function initSocket() {
     });
 
     socket.on('diceRolled', (data) => {
-        console.log('🎲 Kauliukai mesti:', data);
-        playDiceSound();
-        updateDiceDisplay(data.dice[0], data.dice[1]);
-        
-        let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+    console.log('🎲 Kauliukai mesti:', data);
+    playDiceSound();
+    updateDiceDisplay(data.dice[0], data.dice[1]);
+    
+    // 🆕 Animuoti judėjimą
+    if (data.oldPosition !== undefined && data.newPosition !== undefined) {
+        animateMovement(data.player.id, data.oldPosition, data.newPosition);
+    }
+    
+    let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
         let popupMsg = notificationMsg;
         let popupType = 'move';
         
@@ -2216,6 +2221,52 @@ function updateSingleDice(diceId, value) {
 }
 
 // ============================================
+// 🆕 ŽAIDĖJO JUDĖJIMO ANIMACIJA
+// ============================================
+async function animateMovement(playerId, fromPos, toPos) {
+    if (fromPos === toPos) return;
+    
+    const boardSize = 52;
+    const totalSteps = (toPos - fromPos + boardSize) % boardSize;
+    if (totalSteps === 0) return;
+    
+    console.log(`🎬 Animacija: player ${playerId} nuo ${fromPos} iki ${toPos} (${totalSteps} žingsniai)`);
+    
+    const stepDuration = totalSteps > 8 ? 80 : 150;
+    
+    for (let i = 1; i <= totalSteps; i++) {
+        const currentPos = (fromPos + i) % boardSize;
+        const cell = document.getElementById(`cell-${currentPos}`);
+        
+        if (!cell) continue;
+        
+        cell.classList.add('highlight');
+        
+        const playerDots = cell.querySelectorAll('.player-dot');
+        playerDots.forEach(dot => {
+            if (dot.dataset.playerId == playerId) {
+                dot.classList.add('jumping');
+            }
+        });
+        
+        if (typeof playClickSound === 'function') {
+            playClickSound();
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, stepDuration));
+        
+        cell.classList.remove('highlight');
+        playerDots.forEach(dot => {
+            if (dot.dataset.playerId == playerId) {
+                dot.classList.remove('jumping');
+            }
+        });
+    }
+    
+    console.log(`✅ Animacija baigta`);
+}
+
+// ============================================
 // PIRKIMAS
 // ============================================
 
@@ -3380,8 +3431,8 @@ function updateBoard(state) {
         if (playersHere.length > 0) {
             html += `<div class="players-on-cell">`;
             playersHere.forEach(p => {
-                html += `<span class="player-dot" style="background:${p.color}"></span>`;
-            });
+    html += `<span class="player-dot" style="background:${p.color}" data-player-id="${p.id}"></span>`;
+});
             html += `</div>`;
         }
         
