@@ -1874,6 +1874,9 @@ function initMiniCardTooltips() {
 }
 
 function showMiniCardTooltip(fieldId, cardElement) {
+    // 🆕 Tikrinti, ar info režimas įjungtas
+    if (!infoMode) return;
+    
     if (!gameState) return;
     
     const tooltip = document.getElementById('cellInfoTooltip');
