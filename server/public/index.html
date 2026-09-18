@@ -642,20 +642,20 @@
     <h4>📢 PRANEŠIMAI</h4>
 
     <!-- PIRKIMO LANGAS -->
-    <div id="buyChoice" style="display:none;">
-        <div class="buy-choice-box">
-            <div class="buy-choice-header">🏠 SKLYPAS</div>
-            <div class="buy-choice-body">
-                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
-                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
-                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
-            </div>
-            <div class="buy-choice-buttons">
-                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
-                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
-            </div>
+<div id="buyChoice" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:10000; justify-content:center; align-items:center;">
+    <div class="buy-choice-box">
+        <div class="buy-choice-header">🏠 SKLYPAS</div>
+        <div class="buy-choice-body">
+            <p><strong id="choiceFieldName">Vytauto g.</strong></p>
+            <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
+            <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
+        </div>
+        <div class="buy-choice-buttons">
+            <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
+            <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
         </div>
     </div>
+</div>
 
     <!-- INFO PANELĖ -->
     <div id="cellInfoPanel">
@@ -666,7 +666,7 @@
     <div id="notifications"></div>
 
     <!-- KITO ŽAIDĖJO SPRENDIMO LANGAS -->
-    <div id="otherPlayerChoice" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:10; justify-content:center; align-items:center; border-radius:8px;">
+    <div id="otherPlayerChoice" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:10000; justify-content:center; align-items:center;">
         <div class="buy-choice-box">
             <div class="buy-choice-header" id="otherChoicePlayerName" style="color:#1a6b3c;">👤 Žaidėjas</div>
             <div class="buy-choice-body">
