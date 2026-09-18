@@ -251,15 +251,24 @@ function initSocket() {
         renderPublicGames(games);
     });
 
-    socket.on('diceRolled', async (data) => {
+   socket.on('diceRolled', async (data) => {
     console.log('🎲 Kauliukai mesti:', data);
     playDiceSound();
     updateDiceDisplay(data.dice[0], data.dice[1]);
+    
+    // 🆕 Pažymėti, kad žaidėjas animuojamas
+    window.animatingPlayers = window.animatingPlayers || [];
+    if (!window.animatingPlayers.includes(data.player.id)) {
+        window.animatingPlayers.push(data.player.id);
+    }
     
     // 🆕 Laukti animacijos pabaigos
     if (data.oldPosition !== undefined && data.newPosition !== undefined) {
         await animateMovement(data.player.id, data.oldPosition, data.newPosition);
     }
+    
+    // 🆕 Nuimti žymą po animacijos
+    window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
     
     let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
     let popupMsg = notificationMsg;
@@ -2235,7 +2244,10 @@ async function animateMovement(playerId, fromPos, toPos) {
     
     const stepDuration = totalSteps > 8 ? 150 : 250;
     
-    // 🆕 1 FAZĖ: Langeliai paryškėja paeiliui (rutuliukas nejuda)
+    // 🆕 PASLĖPTI rutuliuką (jis bus rodomas po animacijos)
+    hidePlayerDot(playerId);
+    
+    // 🆕 1 FAZĖ: Langeliai paryškėja paeiliui
     for (let i = 1; i <= totalSteps; i++) {
         const currentPos = (fromPos + i) % boardSize;
         const cell = document.getElementById(`cell-${currentPos}`);
@@ -2250,7 +2262,6 @@ async function animateMovement(playerId, fromPos, toPos) {
         
         await new Promise(resolve => setTimeout(resolve, stepDuration));
         
-        // 🆕 Nuimti paryškinimą, IŠSKYRUS paskutinį langelį
         if (i < totalSteps) {
             cell.classList.remove('highlight');
         }
@@ -2263,7 +2274,38 @@ async function animateMovement(playerId, fromPos, toPos) {
         finalCell.classList.remove('highlight');
     }
     
+    // 🆕 3 FAZĖ: PARODYTI rutuliuką galutinėje pozicijoje
+    showPlayerDot(playerId, toPos);
+    
+    // „Jump" animacija
+    if (finalCell) {
+        const playerDots = finalCell.querySelectorAll('.player-dot');
+        playerDots.forEach(dot => {
+            if (dot.dataset.playerId == playerId) {
+                dot.classList.add('jumping');
+                setTimeout(() => dot.classList.remove('jumping'), 300);
+            }
+        });
+    }
+    
     console.log(`✅ Animacija baigta`);
+}
+
+// 🆕 PAGALBINĖS FUNKCIJOS
+function hidePlayerDot(playerId) {
+    document.querySelectorAll('.player-dot').forEach(dot => {
+        if (dot.dataset.playerId == playerId) {
+            dot.style.display = 'none';
+        }
+    });
+}
+
+function showPlayerDot(playerId, position) {
+    document.querySelectorAll('.player-dot').forEach(dot => {
+        if (dot.dataset.playerId == playerId) {
+            dot.style.display = '';
+        }
+    });
 }
 
 // ============================================
@@ -3424,12 +3466,14 @@ function updateBoard(state) {
         }
         
         if (playersHere.length > 0) {
-            html += `<div class="players-on-cell">`;
-            playersHere.forEach(p => {
-    html += `<span class="player-dot" style="background:${p.color}" data-player-id="${p.id}"></span>`;
-});
-            html += `</div>`;
-        }
+    html += `<div class="players-on-cell">`;
+    playersHere.forEach(p => {
+        const isAnimating = window.animatingPlayers && window.animatingPlayers.includes(p.id);
+        const displayStyle = isAnimating ? 'display:none;' : '';
+        html += `<span class="player-dot" style="background:${p.color};${displayStyle}" data-player-id="${p.id}"></span>`;
+    });
+    html += `</div>`;
+}
         
         cell.innerHTML = html;
         
