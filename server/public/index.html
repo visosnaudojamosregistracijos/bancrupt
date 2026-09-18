@@ -1194,26 +1194,37 @@
         // ============================================
         
         function checkUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const gameParam = urlParams.get('game');
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameParam = urlParams.get('game');
+    
+    if (gameParam) {
+        console.log('🔗 URL kodas aptiktas:', gameParam);
+        
+        // 🆕 Bandyti iš karto, jei nepavyksta - bandyti dar kartą
+        const tryShowJoin = () => {
+            showPage('page-join');
             
-            if (gameParam) {
-                console.log('🔗 URL kodas aptiktas:', gameParam);
+            const gameIdInput = document.getElementById('gameIdInput');
+            if (gameIdInput) {
+                gameIdInput.value = gameParam.toUpperCase();
                 
-                setTimeout(() => {
-                    showPage('page-join');
-                    
-                    const gameIdInput = document.getElementById('gameIdInput');
-                    if (gameIdInput) {
-                        gameIdInput.value = gameParam.toUpperCase();
-                        
-                        if (typeof checkGameColors === 'function') {
-                            setTimeout(() => checkGameColors(), 200);
-                        }
-                    }
-                }, 500);
+                if (typeof checkGameColors === 'function') {
+                    checkGameColors();
+                }
+                return true;
             }
-        }
+            return false;
+        };
+        
+        // Bandyti po 200ms
+        setTimeout(() => {
+            if (!tryShowJoin()) {
+                // Jei nepavyko - bandyti dar kartą po 300ms
+                setTimeout(tryShowJoin, 300);
+            }
+        }, 200);
+    }
+}
         
         // ============================================
         // INICIJAVIMAS
