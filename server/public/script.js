@@ -2328,20 +2328,10 @@ function showBuyChoice(data) {
 }
 
 // 🆕 PIRKIMO LAUKIMO BLOKAS KITIEMS ŽAIDĖJAMS
-function hideBuyPending() {
+function showBuyPending(data) {
     const box = document.getElementById('buyPendingInfo');
     if (!box) return;
-    box.style.display = 'none';
-    box.classList.remove('show');
-}
-
-function hideBuyPending() {
-    const box = document.getElementById('buyPendingInfo');
-    if (!box) return;
-    box.style.display = 'none';
-    box.classList.remove('show');
     
-    // 🆕 Atstatyti turinį atgal į "laukiama sprendimo"
     const header = box.querySelector('.buy-pending-header');
     const body = box.querySelector('.buy-pending-body');
     
@@ -2353,12 +2343,22 @@ function hideBuyPending() {
     
     if (body) {
         body.innerHTML = `
-            <p><strong id="pendingPlayerName">Žaidėjas</strong> gali pirkti</p>
-            <p><strong id="pendingFieldName">Sklypas</strong></p>
-            <p>Kaina: <strong id="pendingFieldCost">€0</strong></p>
+            <p><strong>${data.playerName}</strong> gali pirkti</p>
+            <p><strong>${data.fieldName}</strong></p>
+            <p>Kaina: <strong>€${data.fieldCost}</strong></p>
             <p style="font-size:10px; color:#6c757d; margin-top:6px;">⏱️ Laukiama sprendimo...</p>
         `;
     }
+    
+    box.style.display = 'flex';
+    box.classList.add('show');
+}
+
+function hideBuyPending() {
+    const box = document.getElementById('buyPendingInfo');
+    if (!box) return;
+    box.style.display = 'none';
+    box.classList.remove('show');
 }
 
 function hideBuyChoice() {
