@@ -2011,7 +2011,9 @@ function hideMiniCardTooltip() {
 // ============================================
 
 function showPopupMessage(message, type) {
-    addNotification(message);
+    // 🆕 NEBERODYTI 5 LANGELYJE
+    // addNotification(message);
+    console.log('📢 Popup:', message);
 }
 
 const style = document.createElement('style');
