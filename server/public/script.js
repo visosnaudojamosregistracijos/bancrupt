@@ -376,13 +376,12 @@ function initSocket() {
         }
     }
     
-    addNotification(notificationMsg);
-    
-    if (data.player.id !== playerId) {
-        showPopupMessage(popupMsg, popupType);
-    } else {
-        addNotification(popupMsg);
-    }
+    // addNotification(notificationMsg);
+
+if (data.player.id !== playerId) {
+    showPopupMessage(popupMsg, popupType);
+}
+// else { addNotification(popupMsg); }
     
     if (data.result && data.result.message) {
         addJournal(data.result.message);
