@@ -333,12 +333,21 @@ function initSocket() {
         }
         
         if (msgKey) {
-            const msg = getCellMessage(fieldId, msgKey, msgData);
-            if (msg) {
-                console.log('📢 Popup:', msg);
-                addJournal(msg);
-            }
-        }
+    const msg = getCellMessage(fieldId, msgKey, msgData);
+    if (msg) {
+        console.log('📢 Popup:', msg);
+        addJournal(msg);
+        
+        // 🆕 Rodyti bloką 5 langelyje
+        let actionType = 'info';
+        if (data.result.action === 'pay_rent') actionType = 'rent';
+        else if (data.result.action === 'pay_tax' || data.result.action === 'latras' || data.result.action === 'pirtis') actionType = 'tax';
+        else if (data.result.action === 'chance' || data.result.action === 'special' || data.result.action === 'birthday') actionType = 'chance';
+        else actionType = 'visit';
+        
+        showCellAction(msg, actionType);
+    }
+}
         
         updateUI(gameState);
         return;
@@ -3531,6 +3540,67 @@ function getCellMessage(cellId, type, data = {}) {
 function getCountSuffix(count) {
     if (count === 1) return 'as';
     return 'ai';
+}
+
+// ============================================
+// 🆕 LANGELIO PRANEŠIMO BLOKAS
+// ============================================
+let cellActionTimeout = null;
+
+function showCellAction(message, type = 'info') {
+    const box = document.getElementById('cellActionInfo');
+    if (!box) return;
+    
+    const header = document.getElementById('cellActionHeader');
+    const body = document.getElementById('cellActionBody');
+    
+    if (!header || !body) return;
+    
+    // Nustatyti spalvą pagal tipą
+    let headerText = '📢 PRANEŠIMAS';
+    let headerColor = '#1a6b3c';
+    let borderColor = '#c9a84c';
+    
+    if (type === 'rent') {
+        headerText = '💰 NUOMA';
+        headerColor = '#28a745';
+        borderColor = '#28a745';
+    } else if (type === 'tax') {
+        headerText = '💸 MOKESČIAI';
+        headerColor = '#dc3545';
+        borderColor = '#dc3545';
+    } else if (type === 'visit') {
+        headerText = '🏠 ATVYKIMAS';
+        headerColor = '#17a2b8';
+        borderColor = '#17a2b8';
+    } else if (type === 'chance') {
+        headerText = '🎲 ŠANSAS';
+        headerColor = '#ffc107';
+        borderColor = '#ffc107';
+    }
+    
+    header.textContent = headerText;
+    header.style.color = headerColor;
+    header.style.borderBottomColor = borderColor;
+    
+    body.innerHTML = `<p>${message}</p>`;
+    
+    box.style.display = 'flex';
+    box.classList.add('show');
+    
+    // Paslėpti po 3s
+    if (cellActionTimeout) clearTimeout(cellActionTimeout);
+    cellActionTimeout = setTimeout(() => {
+        hideCellAction();
+        cellActionTimeout = null;
+    }, 3000);
+}
+
+function hideCellAction() {
+    const box = document.getElementById('cellActionInfo');
+    if (!box) return;
+    box.style.display = 'none';
+    box.classList.remove('show');
 }
 
 // ============================================
