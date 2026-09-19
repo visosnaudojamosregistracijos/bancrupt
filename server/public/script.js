@@ -408,8 +408,6 @@ function initSocket() {
         return;
     }
     
-    addNotification(msg);
-        
         if (msg.includes('HORNY RP') || msg.includes('gavai €200 nuo Dedo')) {
             playChanceSound();
         }
