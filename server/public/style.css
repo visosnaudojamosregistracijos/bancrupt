@@ -2923,3 +2923,27 @@ body {
 .cell-action-body p {
     margin: 4px 0;
 }
+
+/* ---------- TELEFONO LENTOS PLOTIS ---------- */
+@media (max-width: 768px) {
+    #board {
+        min-width: 100%;
+        width: 100%;
+    }
+    
+    .board-row {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .row-top,
+    .row-bottom {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .row-middle {
+        width: 100%;
+        min-width: 100%;
+    }
+}
