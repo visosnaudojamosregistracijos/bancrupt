@@ -619,6 +619,7 @@ class Game {
                         player.money -= rent;
                         propOwner.money += rent;
                         result.action = 'pay_rent';
+                        result.rent = rent;   // 🆕 PRIDĖTA
                         result.message = `${player.name} sumokėjo €${rent} nuomos ${propOwner.name}`;
                         this.addMessage(result.message);
                         
