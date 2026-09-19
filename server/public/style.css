@@ -2947,3 +2947,24 @@ body {
         min-width: 100%;
     }
 }
+
+/* 🆕 TELEFONO LENTOS PLOTIS */
+@media (max-width: 768px) {
+    #gameBody {
+        gap: 4px;
+    }
+    
+    #board {
+        width: calc(100% - 84px);
+        min-width: calc(100% - 84px);
+    }
+    
+    .row-top,
+    .row-bottom {
+        width: 100%;
+    }
+    
+    .row-middle {
+        width: 100%;
+    }
+}
