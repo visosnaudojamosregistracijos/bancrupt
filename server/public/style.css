@@ -700,6 +700,7 @@ body {
     flex: 1;
     min-height: 0;
     height: 99%;
+    width: 100%;
 }
 
 #board.adaptive {
@@ -708,12 +709,11 @@ body {
 }
 
 #board.fixed {
-    width: 1000px;
-    min-width: 1500px;
-    max-width: 1000px;
+    width: 100%;
+    max-width: 1500px;
     margin: 0 auto;
     overflow: auto !important;
-    max-height: 100vh;
+    -webkit-overflow-scrolling: touch;
 }
 
 #board.fixed .board-row {
@@ -737,6 +737,11 @@ body {
 
 #board.fixed::-webkit-scrollbar-thumb:hover {
     background: #ffd700;
+}
+
+.board-row {
+    display: flex;
+    gap: 2px;
 }
 
 /* ---------- LANGELIAI ---------- */
@@ -1919,6 +1924,10 @@ body {
 }
 
 @media (max-width: 768px) {
+    #game {
+        height: 100dvh;
+    }
+    
     #board {
         padding: 8px;
         gap: 1px;
