@@ -127,12 +127,27 @@
 
             <div id="gameBody">
                 <aside id="leftPanel">
-                    <div id="gameIdBox">
-                        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
-                    </div>
-                    <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
-                        🏃 Pasitraukti
-                    </button>
+    <div id="gameIdBox">
+        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
+    </div>
+    
+    <!-- 🆕 GARSO MYGTUKAS -->
+    <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn">
+        🔊 Garsas
+    </button>
+
+    <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.25); border-radius:8px; padding:8px; margin-bottom:4px; border:1px solid rgba(255,215,0,0.2);">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+        <span style="font-size:12px;">🔊</span>
+        <input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1; cursor:pointer;">
+        <span id="volumeValue" style="font-size:10px; font-weight:700; color:#ffd700; min-width:20px; text-align:right;">50</span>
+    </div>
+    <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti</button>
+</div>
+    
+    <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
+        🏃 Pasitraukti
+    </button>
                     <button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">ℹ️ Info: 🔴 IŠJ.</button>
                     <button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn">
                         🗳️ Balsuoti
@@ -196,17 +211,9 @@
                                         <span style="font-size:9px; color:#3d2b1f; display:flex; align-items:center;">Režimas:</span>
                                         <button onclick="setMode('adaptive')" id="modeAdaptive" class="header-btn active" style="padding:2px 8px; font-size:9px; min-width:auto;">Adaptyvus</button>
                                         <button onclick="setMode('fixed')" id="modeFixed" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">Fiksuotas</button>
-                                        <button onclick="toggleSoundPanel()" id="soundBtn" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">🔊 Garsas</button>
-                                    </div>
+                                                                            </div>
 
-                                    <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.15); border-radius:8px; padding:8px; margin-bottom:4px;">
-                                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                                            <span style="font-size:14px;">🔊</span>
-                                            <input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1; cursor:pointer;">
-                                            <span id="volumeValue" style="font-size:11px; font-weight:700; color:#3d2b1f; min-width:30px; text-align:right;">50</span>
-                                        </div>
-                                        <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti garsą</button>
-                                    </div>
+                                    
                                     
                                     <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;">⛓️ Išeiti iš kalėjimo (€50)</button>
 
