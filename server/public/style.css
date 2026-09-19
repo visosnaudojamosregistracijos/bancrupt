@@ -703,6 +703,12 @@ body {
     width: 100%;
 }
 
+/* 🆕 ČIA ĮDĖK */              ← ŠITA VIETA
+#board.adaptive {
+    width: 100%;
+    max-width: 100vw;
+}
+
 #board.fixed {
     width: 100%;
     max-width: 1500px;
