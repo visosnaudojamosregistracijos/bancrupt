@@ -139,7 +139,9 @@
     <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.25); border-radius:8px; padding:8px; margin-bottom:4px; border:1px solid rgba(255,215,0,0.2);">
     <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
         <span style="font-size:12px;">🔊</span>
-        <input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1; cursor:pointer;">
+        <input type="range" id="volumeSlider" min="0" max="100" value="50" 
+               oninput="changeVolume(this.value)" 
+               style="flex:1; cursor:pointer;">
         <span id="volumeValue" style="font-size:10px; font-weight:700; color:#ffd700; min-width:20px; text-align:right;">50</span>
     </div>
     <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti</button>
