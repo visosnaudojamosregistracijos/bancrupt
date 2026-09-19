@@ -125,56 +125,83 @@ class BuildingLogic {
         if (!player.houses) player.houses = {};
 
         if (isHotel) {
-            // Statyti viezbutį TIK ANT ŠIO SKLYPO
-            player.houses[fieldId] = 5;  // 5 = viezbutis
-            const message = `🏨 ${player.name} pastatė VIEZBUTĮ ant ${field.name} už €${cost}! 🎉`;
-            this.game.addMessage(message);
-            this.game.turnHistory.push({
-                player: player.name,
-                action: 'build_hotel',
-                field: field.name,
-                timestamp: new Date().toISOString()
-            });
-            return { 
-                success: true, 
-                fieldId: fieldId,
-                fieldName: field.name,
-                houses: 5,
-                isHotel: true,
-                cost: cost,
-                message: message
-            };
-        } else {
-            // Statyti paprastą namą
-            player.houses[fieldId] = (player.houses[fieldId] || 0) + 1;
-            const houseCount = player.houses[fieldId];
-            const message = `🏠 ${player.name} pastatė namą ant ${field.name} (dabar ${houseCount} namai) už €${cost}!`;
-            this.game.addMessage(message);
-            this.game.turnHistory.push({
-                player: player.name,
-                action: 'build_house',
-                field: field.name,
-                houses: houseCount,
-                timestamp: new Date().toISOString()
-            });
+    // Statyti viezbutį TIK ANT ŠIO SKLYPO
+    player.houses[fieldId] = 5;  // 5 = viezbutis
+    const message = `🏨 ${player.name} pastatė VIEZBUTĮ ant ${field.name} už €${cost}! 🎉`;
+    this.game.addMessage(message);
+    this.game.turnHistory.push({
+        player: player.name,
+        action: 'build_hotel',
+        field: field.name,
+        timestamp: new Date().toISOString()
+    });
+    
+    // 🆕 Siųsti buildingBuilt event
+    if (this.game.emitFunction) {
+        this.game.emitFunction('buildingBuilt', {
+            playerId: player.id,
+            playerName: player.name,
+            fieldId: fieldId,
+            fieldName: field.name,
+            houseCount: 5,
+            isHotel: true,
+            cost: cost
+        });
+    }
+    
+    return { 
+        success: true, 
+        fieldId: fieldId,
+        fieldName: field.name,
+        houses: 5,
+        isHotel: true,
+        cost: cost,
+        message: message
+    };
+} else {
+    // Statyti paprastą namą
+    player.houses[fieldId] = (player.houses[fieldId] || 0) + 1;
+    const houseCount = player.houses[fieldId];
+    const message = `🏠 ${player.name} pastatė namą ant ${field.name} (dabar ${houseCount} namai) už €${cost}!`;
+    this.game.addMessage(message);
+    this.game.turnHistory.push({
+        player: player.name,
+        action: 'build_house',
+        field: field.name,
+        houses: houseCount,
+        timestamp: new Date().toISOString()
+    });
 
-            // Patikrinti ar visur po 4 namus
-            const groupFields = this.getGroupByColor(field.color);
-            const allHave4 = groupFields.every(id => (player.houses[id] || 0) >= 4);
-            if (allHave4) {
-                this.game.addMessage(`🏆 ${player.name} gali statyti VIEZBUTĮ ant ${field.color} grupės!`);
-            }
+    // 🆕 Siųsti buildingBuilt event
+    if (this.game.emitFunction) {
+        this.game.emitFunction('buildingBuilt', {
+            playerId: player.id,
+            playerName: player.name,
+            fieldId: fieldId,
+            fieldName: field.name,
+            houseCount: houseCount,
+            isHotel: false,
+            cost: cost
+        });
+    }
 
-            return { 
-                success: true, 
-                fieldId: fieldId,
-                fieldName: field.name,
-                houses: houseCount,
-                isHotel: false,
-                cost: cost,
-                message: message
-            };
-        }
+    // Patikrinti ar visur po 4 namus
+    const groupFields = this.getGroupByColor(field.color);
+    const allHave4 = groupFields.every(id => (player.houses[id] || 0) >= 4);
+    if (allHave4) {
+        this.game.addMessage(`🏆 ${player.name} gali statyti VIEZBUTĮ ant ${field.color} grupės!`);
+    }
+
+    return { 
+        success: true, 
+        fieldId: fieldId,
+        fieldName: field.name,
+        houses: houseCount,
+        isHotel: false,
+        cost: cost,
+        message: message
+    };
+}
     }
 
     // Gauti statybos kainą pagal sklypo ID (50% sklypo vertės)
