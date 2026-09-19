@@ -748,6 +748,11 @@ body {
     gap: 2px;
 }
 
+.row-top,
+.row-bottom {
+    min-width: 0;
+}
+
 /* ---------- LANGELIAI ---------- */
 .cell {
     background: linear-gradient(145deg, #e8d5b5, #d4b896);
@@ -765,7 +770,8 @@ body {
     position: relative;
     min-height: 40px;
     font-weight: 600;
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 40px;
     overflow: visible !important;
 }
 
@@ -851,6 +857,7 @@ body {
     flex: 1;
     min-height: 0;
     height: 100%;
+    min-width: 0;   
 }
 
 .row-middle-left,
@@ -875,6 +882,7 @@ body {
     padding: 0 2px;
     min-height: 0;
     height: 100%;
+    min-width: 0;   
 }
 
 .center-row {
