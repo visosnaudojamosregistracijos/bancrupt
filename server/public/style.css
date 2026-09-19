@@ -685,7 +685,6 @@ body {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
 
-/* ---------- LENTA ---------- */
 #board {
     background: radial-gradient(ellipse at center, #1a7a4a, #0f4a2a);
     padding: 12px;
@@ -701,46 +700,9 @@ body {
     flex: 1;
     min-height: 0;
     height: 99%;
-}
-
-#board.adaptive {
-    width: 100%;
-    max-width: 100vw;
-}
-
-#board.fixed {
-    width: 100%;
-    max-width: 1500px;
-    margin: 0 auto;
     overflow: auto !important;
-}
-
-#board.fixed .board-row {
-    flex-shrink: 0;
-}
-
-#board.fixed::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-#board.fixed::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.2);
-    border-radius: 4px;
-}
-
-#board.fixed::-webkit-scrollbar-thumb {
-    background: #c9a84c;
-    border-radius: 4px;
-}
-
-#board.fixed::-webkit-scrollbar-thumb:hover {
-    background: #ffd700;
-}
-
-.board-row {
-    display: flex;
-    gap: 2px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
 }
 
 /* ---------- LANGELIAI ---------- */
