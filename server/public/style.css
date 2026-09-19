@@ -700,6 +700,15 @@ body {
     flex: 1;
     min-height: 0;
     height: 99%;
+    width: 100%;
+}
+
+#board.fixed {
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* ---------- LANGELIAI ---------- */
