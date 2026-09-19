@@ -3550,6 +3550,33 @@ function addJournal(msg) {
 }
 
 // ============================================
+// 🆕 LANGELIO PRANEŠIMŲ GAVIMAS
+// ============================================
+function getCellMessage(cellId, type, data = {}) {
+    const cell = window.CELL_MESSAGES?.[cellId];
+    if (!cell) {
+        console.warn('⚠️ Nėra pranešimų langeliui:', cellId);
+        return '';
+    }
+    
+    let msg = cell.messages?.[type] || '';
+    if (!msg) return '';
+    
+    // Pakeisti visus {key} į reikšmes
+    for (const [key, value] of Object.entries(data)) {
+        msg = msg.replace(new RegExp(`{${key}}`, 'g'), value);
+    }
+    
+    return msg;
+}
+
+// 🆕 Skaičiaus galūnė
+function getCountSuffix(count) {
+    if (count === 1) return 'as';
+    return 'ai';
+}
+
+// ============================================
 // INICIJAVIMAS
 // ============================================
 
