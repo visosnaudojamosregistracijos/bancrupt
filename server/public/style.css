@@ -700,21 +700,43 @@ body {
     flex: 1;
     min-height: 0;
     height: 99%;
-    width: 100%;
 }
 
-/* 🆕 ČIA ĮDĖK */              ← ŠITA VIETA
 #board.adaptive {
     width: 100%;
     max-width: 100vw;
 }
 
 #board.fixed {
-    width: 100%;
-    max-width: 1500px;
+    width: 1000px;
+    min-width: 1500px;
+    max-width: 1000px;
     margin: 0 auto;
     overflow: auto !important;
-    -webkit-overflow-scrolling: touch;
+    max-height: 100vh;
+}
+
+#board.fixed .board-row {
+    flex-shrink: 0;
+}
+
+#board.fixed::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+#board.fixed::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+
+#board.fixed::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 4px;
+}
+
+#board.fixed::-webkit-scrollbar-thumb:hover {
+    background: #ffd700;
 }
 
 /* ---------- LANGELIAI ---------- */
