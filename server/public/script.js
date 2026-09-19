@@ -271,6 +271,20 @@ function initSocket() {
     window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
     
     const isMe = data.player.id === playerId;
+
+    // 🆕 Jei neužtenka pinigų
+    if (data.result && data.result.message && data.result.message.includes('neturi pakankamai pinigų')) {
+        const msg = isMe 
+            ? `❌ Neužtenka pinigų ${data.field.name} pirkti!`
+            : `❌ ${data.player.name} neužtenka pinigų ${data.field.name} pirkti!`;
+        
+        console.log('📢 Popup:', msg);
+        showCellAction(msg, 'tax');
+        addJournal(msg);
+        
+        updateUI(gameState);
+        return;
+    }
     
     // 🆕 GARSO EFEKTAI (pagal langelio tipą)
     if (data.field) {
