@@ -132,19 +132,21 @@
     </div>
     
     <!-- 🆕 GARSO MYGTUKAS -->
-    <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn">
+<div style="position:relative; width:100%;">
+    <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
         🔊 Garsas
     </button>
-
-    <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:130px; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8);">
-    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-        <span style="font-size:12px;">🔊</span>
-        <input type="range" id="volumeSlider" min="0" max="100" value="50" 
-               oninput="changeVolume(this.value)" 
-               style="flex:1; cursor:pointer;">
-        <span id="volumeValue" style="font-size:10px; font-weight:700; color:#ffd700; min-width:20px; text-align:right;">50</span>
+    
+    <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8);">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+            <span style="font-size:12px;">🔊</span>
+            <input type="range" id="volumeSlider" min="0" max="100" value="50" 
+                   oninput="changeVolume(this.value)" 
+                   style="flex:1; cursor:pointer;">
+            <span id="volumeValue" style="font-size:10px; font-weight:700; color:#ffd700; min-width:20px; text-align:right;">50</span>
+        </div>
+        <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti</button>
     </div>
-    <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti</button>
 </div>
     
     <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
