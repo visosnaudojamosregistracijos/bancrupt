@@ -391,13 +391,13 @@ function initSocket() {
             playChanceSound();
         }
         if (msg.includes('pastatė namą')) {
-            playBuildSound();
-            showPopupMessage(msg, 'buy');
-        }
+    // playBuildSound();  ← UŽKOMENTUOTA (jau groja per buildingBuilt)
+    // showPopupMessage(msg, 'buy');
+}
         if (msg.includes('pastatė VIEZBUTĮ')) {
-            playHotelSound();
-            showPopupMessage(msg, 'buy');
-        }
+    // playHotelSound();  ← UŽKOMENTUOTA
+    // showPopupMessage(msg, 'buy');
+}
         if (msg.includes('Dabar eina')) {
             playMoveSound();
         }
@@ -724,6 +724,35 @@ socket.on('buyPending', (data) => {
         playCashSound();
         if (gameState) updateUI(gameState);
     });
+
+// 🆕 STATYBOS PRANEŠIMAS
+socket.on('buildingBuilt', (data) => {
+    console.log('🏠 Statyba:', data);
+    playBuildSound();
+    
+    const isMe = data.playerId === playerId;
+    
+    let msgKey = '';
+    if (data.isHotel) {
+        msgKey = isMe ? 'hotelMine' : 'hotelOthers';
+    } else {
+        msgKey = isMe ? 'buildMine' : 'buildOthers';
+    }
+    
+    const msgData = {
+        player: data.playerName,
+        field: data.fieldName
+    };
+    
+    const msg = getCellMessage(data.fieldId, msgKey, msgData);
+    if (msg) {
+        console.log('📢 Popup:', msg);
+        showCellAction(msg, 'visit');
+        addJournal(msg);
+    }
+    
+    updateUI(gameState);
+});
 
     socket.on('leftGame', (data) => {
         console.log('🏃 Pasitraukei iš žaidimo:', data);
