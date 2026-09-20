@@ -6,15 +6,13 @@
 
 /* 🔧 FIX: CSS kintamasis šoninėms kolonoms ir kampams */
 :root {
-    --side-col-width: 175px;
-}:root {
     /* Bazinis (maksimalus) dydis */
     --side-col-width: 175px;
     
     /* Minimalūs dydžiai – žemiau šito nesislenka, atsiranda scroll */
     --side-col-min: 40px;
     
-    /* Bendras lentos min plotis (apskaičiuotas: 2×kampas + 9×šonas + tarpai) */
+    /* Bendras lentos min plotis */
     --board-min-width: 720px;
     
     /* Bendras lentos max plotis */
