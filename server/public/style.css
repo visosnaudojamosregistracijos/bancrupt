@@ -3065,9 +3065,13 @@ body {
     box-sizing: border-box !important;
 }
 
-/* 🔧 FIX: savininko rutuliukas nebestumia turinio */
+/* 🔧 FIX: savininko rutuliukas VISADA viršutiniame dešiniajame kampe */
 .cell .cell-owner {
     position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    left: auto !important;
+    bottom: auto !important;
     width: 14px !important;
     height: 14px !important;
     min-width: 14px !important;
@@ -3082,82 +3086,17 @@ body {
     flex: 0 0 auto !important;
 }
 
-/* Viršutinė eilutė – savininkas viršutiniame dešiniajame kampe */
-.row-top .cell .cell-owner {
-    top: 3px !important;
-    right: 3px !important;
-    left: auto !important;
-    bottom: auto !important;
-}
-
-/* Apatinė eilutė – savininkas apatiniame dešiniajame kampe */
-.row-bottom .cell .cell-owner {
-    bottom: 3px !important;
-    right: 3px !important;
-    top: auto !important;
-    left: auto !important;
-}
-
-/* Kairė kolona – savininkas viršutiniame kairiajame kampe */
-.row-middle-left .cell .cell-owner {
-    top: 3px !important;
-    left: 3px !important;
-    right: auto !important;
-    bottom: auto !important;
-}
-
-/* Dešinė kolona – savininkas viršutiniame dešiniajame kampe */
-.row-middle-right .cell .cell-owner {
-    top: 3px !important;
-    right: 3px !important;
-    left: auto !important;
-    bottom: auto !important;
-}
-
-/* Kampiniai – savininkas viršutiniame dešiniajame kampe */
-.cell.corner .cell-owner {
-    top: 4px !important;
-    right: 4px !important;
-    left: auto !important;
-    bottom: auto !important;
-}
-
-/* .cell-top-bar – absoliutus, kad nestumtų turinio */
+/* .cell-top-bar – pririštas prie dešinio viršaus */
 .cell .cell-top-bar {
     position: absolute !important;
-    top: 3px !important;
-    right: 3px !important;
+    top: 2px !important;
+    right: 2px !important;
     left: auto !important;
     bottom: auto !important;
     display: flex !important;
     gap: 3px !important;
     z-index: 5 !important;
     pointer-events: none !important;
-}
-
-.row-bottom .cell .cell-top-bar {
-    bottom: 3px !important;
-    top: auto !important;
-    right: 3px !important;
-    left: auto !important;
-}
-
-.row-middle-left .cell .cell-top-bar {
-    top: 3px !important;
-    left: 3px !important;
-    right: auto !important;
-    bottom: auto !important;
-}
-
-.row-middle-right .cell .cell-top-bar {
-    top: 3px !important;
-    right: 3px !important;
-    left: auto !important;
-    bottom: auto !important;
-}
-
-/* Skaičius – nejuda */
-.cell .cell-number {
-    position: relative !important;
-    z-index: 2 !important;
+    flex-direction: row !important;
+    align-items: center !important;
 }
