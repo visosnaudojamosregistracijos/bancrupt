@@ -3130,9 +3130,9 @@ body {
    Skaičius: dešinėje (savo vietoje)
    ───────────────────────────────────────── */
 .row-middle-left .cell .cell-top-bar {
-    bottom: auto !important;       /* ← atstumas nuo VIRŠAUS */
+    bottom: 2px !important;       /* ← atstumas nuo VIRŠAUS */
     left: auto !important;      /* ← atstumas nuo KAIRIO krašto */
-    right: 2px !important;    /* ← išjungia dešinę */
+    right: auto !important;    /* ← išjungia dešinę */
     bottom: 2px !important;   /* ← išjungia apačią */
 }
 
