@@ -10,13 +10,13 @@
     --side-col-width: 175px;
     
     /* Minimalūs dydžiai – žemiau šito nesislenka, atsiranda scroll */
-    --side-col-min: 40px;
+    --side-col-min: 175px;
     
     /* Bendras lentos min plotis */
-    --board-min-width: 720px;
+    --board-min-width: 1900px;
     
     /* Bendras lentos max plotis */
-    --board-max-width: 1400px;
+    --board-max-width: 2200px;
 }
 
 /* ---------- BENDRI ---------- */
@@ -817,8 +817,12 @@ body {
 }
 
 .cell.corner {
-    /* 🔧 clamp: min 40px, idealus 12vw, max 175px */
-    flex: 0 0 clamp(40px, 12vw, 175px);
+    /* 🔧 FIKSUOTAS 175px VISADA */
+    flex: 0 0 175px;
+    width: 175px;
+    height: 175px;
+    min-width: 175px;
+    max-width: 175px;
     aspect-ratio: 1;
     font-size: 8px;
     border-width: 3px;
@@ -913,15 +917,15 @@ body {
     min-width: 0;
 }
 
-/* 🔧 FIX: ŠONINĖS KOLONOS PRIRIŠTOS PRIE KRAŠTŲ */
 .row-middle-left,
 .row-middle-right {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    /* 🔧 clamp: min 40px, idealus 12vw, max 175px */
-    flex: 0 0 clamp(40px, 12vw, 175px);
-    min-width: 0;
+    flex: 0 0 175px;
+    width: 175px;
+    min-width: 175px;
+    max-width: 175px;
 }
 
 .row-middle-left {
@@ -1951,11 +1955,18 @@ body {
     }
     
     .cell.corner {
-        flex: 0 0 clamp(40px, 10vw, 55px);
+        flex: 0 0 175px;
+        width: 175px;
+        height: 175px;
+        min-width: 175px;
+        max-width: 175px;
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 clamp(40px, 10vw, 55px);
+        flex: 0 0 175px;
+        width: 175px;
+        min-width: 175px;
+        max-width: 175px;
     }
     .cell .cell-icon {
         font-size: 24px;
@@ -2008,9 +2019,16 @@ body {
 }
 
 @media (max-width: 768px) {
-    :root { 
-        --board-min-width: 480px;
+    #board {
+        width: 1400px;      /* fiksuotas */
+        height: 900px;     /* fiksuotas – kvadratas */
+        min-width: 1400px;
+        max-width: 1400px;
+        min-height: 900px;
+        max-height: 900px;
+        overflow: auto;
     }
+}
     
     #game {
         height: 100dvh;
@@ -2037,10 +2055,14 @@ body {
         min-width: 0;
     }
     .cell.corner {
-        flex: 0 0 clamp(35px, 9vw, 45px);
-        aspect-ratio: auto;
-        font-size: 6px;
-        border-width: 2px;
+        flex: 0 0 175px;
+        width: 175px;
+        height: 175px;
+        min-width: 175px;
+        max-width: 175px;
+        aspect-ratio: 1;
+        font-size: 8px;
+        border-width: 3px;
     }
     .cell .cell-icon {
         font-size: 18px;
@@ -2062,8 +2084,10 @@ body {
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 clamp(35px, 9vw, 45px);
-        min-width: 0;
+        flex: 0 0 175px;
+        width: 175px;
+        min-width: 175px;
+        max-width: 175px;
     }
     .row-middle {
         gap: 1px;
@@ -2238,9 +2262,13 @@ body {
         min-width: 0;
     }
     .cell.corner {
-        flex: 0 0 clamp(30px, 8vw, 35px);
-        aspect-ratio: auto;
-        border-width: 1.5px;
+        flex: 0 0 175px;
+        width: 175px;
+        height: 175px;
+        min-width: 175px;
+        max-width: 175px;
+        aspect-ratio: 1;
+        border-width: 3px;
     }
     .cell .cell-icon {
         font-size: 14px;
@@ -2262,7 +2290,10 @@ body {
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 clamp(30px, 8vw, 35px);
+        flex: 0 0 175px;
+        width: 175px;
+        min-width: 175px;
+        max-width: 175px;
     }
     .row-middle {
         gap: 1px;
