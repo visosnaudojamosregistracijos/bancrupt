@@ -3118,7 +3118,7 @@ body {
    Skaičius: viršuje (savo vietoje)
    ───────────────────────────────────────── */
 .row-bottom .cell .cell-top-bar {
-    bottom: auto !important;    /* ← atstumas nuo APAČIOS krašto */
+    bottom: 2px !important;    /* ← atstumas nuo APAČIOS krašto */
     right: 2px !important;     /* ← atstumas nuo DEŠINIO krašto */
     top: auto !important;      /* ← išjungia viršų */
     left: auto !important;     /* ← išjungia kairę */
@@ -3131,8 +3131,8 @@ body {
    ───────────────────────────────────────── */
 .row-middle-left .cell .cell-top-bar {
     bottom: auto !important;       /* ← atstumas nuo VIRŠAUS */
-    left: auto !important;      /* ← atstumas nuo KAIRIO krašto */
-    right: 2px !important;    /* ← išjungia dešinę */
+    left: 2px !important;      /* ← atstumas nuo KAIRIO krašto */
+    right: auto !important;    /* ← išjungia dešinę */
     bottom: 2px !important;   /* ← išjungia apačią */
 }
 
