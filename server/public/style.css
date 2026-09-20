@@ -1,21 +1,11 @@
 /* ============================================
    BANCRUPT - PAGRINDINIS STILIUS
-   SU AUTOMATINIAIS DYDŽIAIS (clamp)
-   PATAISYTA: Telefono layout'o problemos
    ============================================ */
 
-/* 🔧 FIX: CSS kintamasis šoninėms kolonoms ir kampams */
 :root {
-    /* Bazinis (maksimalus) dydis */
     --side-col-width: 175px;
-    
-    /* Minimalūs dydžiai – žemiau šito nesislenka, atsiranda scroll */
     --side-col-min: 175px;
-    
-    /* Bendras lentos min plotis */
     --board-min-width: 1900px;
-    
-    /* Bendras lentos max plotis */
     --board-max-width: 2200px;
 }
 
@@ -589,13 +579,13 @@ body {
     min-height: 0;
     min-width: 0;
     gap: 6px;
-    overflow-x: auto; /* 🔧 scroll per visą gameBody */
+    overflow-x: auto;
     overflow-y: hidden;
 }
 
 #leftPanel {
     width: 130px;
-    flex: 0 0 auto; /* 🔧 FIX */
+    flex: 0 0 auto;
     background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
     border: 2px solid #c9a84c;
     border-radius: 10px;
@@ -717,20 +707,15 @@ body {
     transition: all 0.3s ease;
     position: relative;
     flex: 1 1 0;
-    
-    /* 🔧 FIKSUOTAS MIN PLOTIS – kai ekranas mažesnis, atsiranda scroll */
     min-width: var(--board-min-width);
     max-width: var(--board-max-width);
-    
-    /* 🔧 OVERFLOW – leidžia slinkti, kai lenta netelpa */
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    
     min-height: 0;
     height: 99%;
     width: auto;
-    margin: 0 auto; /* 🔧 centruoja, kai mažesnis už max */
+    margin: 0 auto;
 }
 
 #board.adaptive {
@@ -776,8 +761,8 @@ body {
 .board-row {
     display: flex;
     gap: 2px;
-    min-width: 0; /* 🔧 FIX */
-    width: 100%;  /* 🔧 FIX */
+    min-width: 0;
+    width: 100%;
 }
 
 .row-top,
@@ -803,10 +788,7 @@ body {
     font-weight: 600;
     flex: 1 1 0;
     min-width: 0;
-    
-    /* 🔧 FIKSUOTAS MIN DYDIS – langeliai nesitraukia mažiau */
     min-height: clamp(20px, 4vh, 50px);
-    
     overflow: visible !important;
 }
 
@@ -943,7 +925,7 @@ body {
 }
 
 .row-middle-center {
-    flex: 1 1 0; /* 🔧 FIX */
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -951,7 +933,6 @@ body {
     min-height: 0;
     height: 100%;
     min-width: 0;
-    /* 🔧 max-width: calc(100% - 92px) PAŠALINTAS */
 }
 
 .center-row {
@@ -973,7 +954,7 @@ body {
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    min-width: 0; /* 🔧 FIX */
+    min-width: 0;
 }
 
 .center-cell h4 {
@@ -1949,9 +1930,8 @@ body {
 
 @media (max-width: 992px) {
     :root { 
-        --board-min-width: 1000px;   /* ✅ PAKANKAMAI */
+        --board-min-width: 1000px;
     }
-    
     
     .cell.corner {
         flex: 0 0 175px;
@@ -2238,7 +2218,7 @@ body {
 
 @media (max-width: 480px) {
     :root { 
-        --board-min-width: 900px;   /* ✅ PAKANKAMAI */
+        --board-min-width: 900px;
     }
     
     #board {
@@ -3043,4 +3023,22 @@ body {
 
 .cell-action-body p {
     margin: 4px 0;
+}
+
+/* ============================================
+   🔧 ULTIMATE FIX – kampai VISADA 175px
+   (PATI PASKUTINĖ TAISYKLĖ FAilE)
+   ============================================ */
+#board .row-top > .cell.corner,
+#board .row-bottom > .cell.corner,
+#board .cell.corner {
+    flex: 0 0 175px !important;
+    width: 175px !important;
+    min-width: 175px !important;
+    max-width: 175px !important;
+    height: 175px !important;
+    min-height: 175px !important;
+    max-height: 175px !important;
+    aspect-ratio: 1 / 1 !important;
+    box-sizing: border-box !important;
 }
