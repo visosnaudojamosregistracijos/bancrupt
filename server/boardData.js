@@ -4,9 +4,9 @@ const boardData = [
     
     // VIRŠUS
     { id: 1, name: 'Telšiai', type: 'property', color: '#ffd700', cost: 60, icon: '' },
-    { id: 2, name: 'DUJOS', type: 'service1', color: null, cost: 150, icon: '⚡' },
+    { id: 2, name: 'DUJOS', type: 'service1', color: null, cost: 150, icon: '🔥' },
     { id: 3, name: 'Plungė', type: 'property', color: '#ffd700', cost: 73, icon: '' },
-    { id: 4, name: 'HORNY RP', type: 'special', color: null, cost: 0, icon: '🎲' },
+    { id: 4, name: 'HORNY RP', type: 'special', color: null, cost: 0, icon: '💋' },
     { id: 5, name: 'VMI', type: 'tax', color: '#dc3545', cost: 100, icon: '💰' },
     { id: 6, name: 'Kėdainiai', type: 'property', color: '#4a90d9', cost: 86, icon: '' },
     { id: 7, name: 'Ariogala', type: 'property', color: '#4a90d9', cost: 99, icon: '' },
@@ -30,7 +30,7 @@ const boardData = [
     { id: 21, name: 'LATRŲ BARAS', type: 'tax', color: '#dc3545', cost: 0, icon: '🍺' },
     { id: 22, name: 'Marijampolė', type: 'property', color: '#e74c3c', cost: 242, icon: '' },
     { id: 23, name: 'Vilkaviškis', type: 'property', color: '#e74c3c', cost: 255, icon: '' },
-    { id: 24, name: 'Dirbtuvės', type: 'special', color: null, cost: 50, icon: '🐕' },
+    { id: 24, name: 'Dirbtuvės', type: 'special', color: null, cost: 50, icon: '🛠️' },
     { id: 25, name: 'Kalvarija', type: 'property', color: '#e74c3c', cost: 268, icon: '' },
     
     // KAMPAS 3: PARKINGAS

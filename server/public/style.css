@@ -3117,3 +3117,148 @@ body {
    Rutuliukas: APAČIOJE DEŠINĖJE
    Skaičius: viršuje (savo vietoje)
    ─────────────────────────────────────────
+
+   /* ============================================
+   🎨 EMODŽIŲ ANIMACIJOS
+   ============================================ */
+
+@keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.15); }
+}
+
+@keyframes spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+@keyframes wave {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-8px); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-12px); }
+}
+
+@keyframes glow {
+    0%, 100% { 
+        filter: drop-shadow(0 0 5px gold); 
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% { 
+        filter: drop-shadow(0 0 15px gold); 
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+/* 🏁 START – pulsavimas */
+.cell[data-id="0"] .cell-bg-icon {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* 🔥 DUJOS – spindėjimas */
+.cell[data-id="2"] .cell-bg-icon {
+    animation: glow 1.5s ease-in-out infinite;
+}
+
+/* 💋 HORNY RP – pulsavimas */
+.cell[data-id="4"] .cell-bg-icon {
+    animation: pulse 1.8s ease-in-out infinite;
+}
+
+/* 💰 VMI – mirgėjimas */
+.cell[data-id="5"] .cell-bg-icon {
+    animation: blink 1.2s ease-in-out infinite;
+}
+
+/* ✈️ ORO UOSTAS – banga */
+.cell[data-id="8"] .cell-bg-icon {
+    animation: wave 3s ease-in-out infinite;
+}
+
+/* 🎪 Cirkas – šokinėjimas */
+.cell[data-id="11"] .cell-bg-icon {
+    animation: bounce 1.5s ease-in-out infinite;
+}
+
+/* 🏥 LIGONINĖ – pulsavimas */
+.cell[data-id="13"] .cell-bg-icon {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* 🗑️ ŠIUKŠLĖS – banga */
+.cell[data-id="14"] .cell-bg-icon {
+    animation: wave 3s ease-in-out infinite;
+}
+
+/* ⛓️ Kalėjimas – mirgėjimas */
+.cell[data-id="16"] .cell-bg-icon {
+    animation: blink 1.5s ease-in-out infinite;
+}
+
+/* 🚂 GEL. STOTIS – banga */
+.cell[data-id="19"] .cell-bg-icon {
+    animation: wave 3s ease-in-out infinite;
+}
+
+/* 🍺 LATRŲ BARAS – šokinėjimas */
+.cell[data-id="21"] .cell-bg-icon {
+    animation: bounce 1.8s ease-in-out infinite;
+}
+
+/* 🛠️ Dirbtuvės – sukimasis */
+.cell[data-id="24"] .cell-bg-icon {
+    animation: spin 8s linear infinite;
+}
+
+/* 🅿️ PARKINGAS – banga */
+.cell[data-id="26"] .cell-bg-icon {
+    animation: wave 3s ease-in-out infinite;
+}
+
+/* 💡 ELEKTRA – mirgėjimas */
+.cell[data-id="28"] .cell-bg-icon {
+    animation: blink 1s ease-in-out infinite;
+}
+
+/* 🧖 SAUNA – pulsavimas */
+.cell[data-id="32"] .cell-bg-icon {
+    animation: pulse 2.5s ease-in-out infinite;
+}
+
+/* ⚓ UOSTAS – banga */
+.cell[data-id="37"] .cell-bg-icon {
+    animation: wave 3s ease-in-out infinite;
+}
+
+/* 🚨 Keliauk į kalėjimą – mirgėjimas */
+.cell[data-id="42"] .cell-bg-icon {
+    animation: blink 0.8s ease-in-out infinite;
+}
+
+/* 💧 VANDUO – banga */
+.cell[data-id="44"] .cell-bg-icon {
+    animation: wave 2.5s ease-in-out infinite;
+}
+
+/* 🚌 AUTOBUSŲ STOTIS – banga */
+.cell[data-id="46"] .cell-bg-icon {
+    animation: wave 3s ease-in-out infinite;
+}
+
+/* 🛒 Akropolis – pulsavimas */
+.cell[data-id="48"] .cell-bg-icon {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* 🎂 TAVO GIMTADIENIS – šokinėjimas */
+.cell[data-id="50"] .cell-bg-icon {
+    animation: bounce 1.5s ease-in-out infinite;
+}
