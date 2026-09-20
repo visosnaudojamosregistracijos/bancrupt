@@ -7,6 +7,18 @@
 /* 🔧 FIX: CSS kintamasis šoninėms kolonoms ir kampams */
 :root {
     --side-col-width: 175px;
+}:root {
+    /* Bazinis (maksimalus) dydis */
+    --side-col-width: 175px;
+    
+    /* Minimalūs dydžiai – žemiau šito nesislenka, atsiranda scroll */
+    --side-col-min: 40px;
+    
+    /* Bendras lentos min plotis (apskaičiuotas: 2×kampas + 9×šonas + tarpai) */
+    --board-min-width: 720px;
+    
+    /* Bendras lentos max plotis */
+    --board-max-width: 1400px;
 }
 
 /* ---------- BENDRI ---------- */
@@ -577,8 +589,10 @@ body {
     display: flex;
     flex: 1;
     min-height: 0;
-    min-width: 0; /* 🔧 FIX */
+    min-width: 0;
     gap: 6px;
+    overflow-x: auto; /* 🔧 scroll per visą gameBody */
+    overflow-y: hidden;
 }
 
 #leftPanel {
@@ -704,11 +718,21 @@ body {
     gap: 2px;
     transition: all 0.3s ease;
     position: relative;
-    flex: 1 1 0; /* 🔧 FIX */
-    min-width: 0; /* 🔧 FIX */
+    flex: 1 1 0;
+    
+    /* 🔧 FIKSUOTAS MIN PLOTIS – kai ekranas mažesnis, atsiranda scroll */
+    min-width: var(--board-min-width);
+    max-width: var(--board-max-width);
+    
+    /* 🔧 OVERFLOW – leidžia slinkti, kai lenta netelpa */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    
     min-height: 0;
     height: 99%;
-    width: auto; /* 🔧 FIX */
+    width: auto;
+    margin: 0 auto; /* 🔧 centruoja, kai mažesnis už max */
 }
 
 #board.adaptive {
@@ -778,10 +802,13 @@ body {
     padding: 2px;
     transition: all 0.3s;
     position: relative;
-    min-height: 40px;
     font-weight: 600;
     flex: 1 1 0;
-    min-width: 0; /* 🔧 FIX */
+    min-width: 0;
+    
+    /* 🔧 FIKSUOTAS MIN DYDIS – langeliai nesitraukia mažiau */
+    min-height: clamp(20px, 4vh, 50px);
+    
     overflow: visible !important;
 }
 
@@ -792,7 +819,8 @@ body {
 }
 
 .cell.corner {
-    flex: 0 0 var(--side-col-width); /* 🔧 FIX */
+    /* 🔧 clamp: min 40px, idealus 12vw, max 175px */
+    flex: 0 0 clamp(40px, 12vw, 175px);
     aspect-ratio: 1;
     font-size: 8px;
     border-width: 3px;
@@ -893,7 +921,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    flex: 0 0 var(--side-col-width);
+    /* 🔧 clamp: min 40px, idealus 12vw, max 175px */
+    flex: 0 0 clamp(40px, 12vw, 175px);
     min-width: 0;
 }
 
@@ -1919,14 +1948,16 @@ body {
 }
 
 @media (max-width: 992px) {
-    :root { --side-col-width: 55px; }
+    :root { 
+        --board-min-width: 600px;
+    }
     
     .cell.corner {
-        flex: 0 0 var(--side-col-width);
+        flex: 0 0 clamp(40px, 10vw, 55px);
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 var(--side-col-width);
+        flex: 0 0 clamp(40px, 10vw, 55px);
     }
     .cell .cell-icon {
         font-size: 24px;
@@ -1979,7 +2010,9 @@ body {
 }
 
 @media (max-width: 768px) {
-    :root { --side-col-width: 45px; }
+    :root { 
+        --board-min-width: 480px;
+    }
     
     #game {
         height: 100dvh;
@@ -2006,7 +2039,7 @@ body {
         min-width: 0;
     }
     .cell.corner {
-        flex: 0 0 var(--side-col-width);
+        flex: 0 0 clamp(35px, 9vw, 45px);
         aspect-ratio: auto;
         font-size: 6px;
         border-width: 2px;
@@ -2031,7 +2064,7 @@ body {
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 var(--side-col-width);
+        flex: 0 0 clamp(35px, 9vw, 45px);
         min-width: 0;
     }
     .row-middle {
@@ -2187,7 +2220,9 @@ body {
 }
 
 @media (max-width: 480px) {
-    :root { --side-col-width: 32px; }
+    :root { 
+        --board-min-width: 400px;
+    }
     
     #board {
         padding: 4px;
@@ -2205,7 +2240,7 @@ body {
         min-width: 0;
     }
     .cell.corner {
-        flex: 0 0 var(--side-col-width);
+        flex: 0 0 clamp(30px, 8vw, 35px);
         aspect-ratio: auto;
         border-width: 1.5px;
     }
@@ -2229,7 +2264,7 @@ body {
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 var(--side-col-width);
+        flex: 0 0 clamp(30px, 8vw, 35px);
     }
     .row-middle {
         gap: 1px;
