@@ -3111,7 +3111,7 @@ body {
 /* APAČIA – skaičius viršuje, rutuliukas APAČIOJE DEŠINĖJE */
 .row-bottom .cell .cell-top-bar {
     bottom: 2px !important;
-    right: 2px !important;
+    left: 2px !important;
     top: auto !important;
     left: auto !important;
 }
@@ -3126,7 +3126,7 @@ body {
 
 /* DEŠINĖ – skaičius kairėje, rutuliukas VIRŠUJE DEŠINĖJE */
 .row-middle-right .cell .cell-top-bar {
-    top: 2px !important;
+    tottom: 2px !important;
     right: 2px !important;
     left: auto !important;
     bottom: auto !important;
