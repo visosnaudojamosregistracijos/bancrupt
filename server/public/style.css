@@ -817,7 +817,6 @@ body {
 }
 
 .cell.corner {
-    /* 🔧 FIKSUOTAS 175px VISADA */
     flex: 0 0 175px;
     width: 175px;
     height: 175px;
@@ -829,7 +828,6 @@ body {
     font-weight: 700;
 }
 
-/* 🔧 FIX: KAMPINIAI PRIRIŠTI PRIE KRAŠTŲ */
 .row-top .cell.corner:first-child {
     margin-right: auto;
 }
@@ -2020,15 +2018,14 @@ body {
 
 @media (max-width: 768px) {
     #board {
-        width: 1400px;      /* fiksuotas */
-        height: 900px;     /* fiksuotas – kvadratas */
-        min-width: 700px;
+        width: 1400px;
+        height: 900px;
+        min-width: 1400px;
         max-width: 1400px;
-        min-height: 450px;
+        min-height: 900px;
         max-height: 900px;
         overflow: auto;
     }
-}
     
     #game {
         height: 100dvh;
@@ -2239,7 +2236,7 @@ body {
     .cell.corner .cell-bg-icon {
         font-size: 5em;
     }
-
+}
 
 @media (max-width: 480px) {
     :root { 
