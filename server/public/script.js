@@ -3753,3 +3753,37 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('✅ Inicijavimas baigtas');
 });
+
+// 🔧 FIX: Visada grąžinti 'corner' klasę kampams
+function fixCornerClasses() {
+    const corners = {
+        'cell-0':  'cell corner start',
+        'cell-16': 'cell corner jail',
+        'cell-26': 'cell corner parking',
+        'cell-42': 'cell corner go-to-jail'
+    };
+    
+    Object.entries(corners).forEach(([id, correctClass]) => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('corner')) {
+            el.className = correctClass;
+            console.log(`✅ ${id}: atstatyta klasė → "${correctClass}"`);
+        }
+    });
+}
+
+// Paleisti iškart
+fixCornerClasses();
+
+// Stebėti DOM pakeitimus ir visada grąžinti
+const cornerObserver = new MutationObserver(() => {
+    fixCornerClasses();
+});
+cornerObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class']
+});
+
+console.log('✅ cornerObserver įjungtas');
