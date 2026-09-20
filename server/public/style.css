@@ -1949,8 +1949,9 @@ body {
 
 @media (max-width: 992px) {
     :root { 
-        --board-min-width: 600px;
+        --board-min-width: 1000px;   /* ✅ PAKANKAMAI */
     }
+    
     
     .cell.corner {
         flex: 0 0 175px;
@@ -2025,6 +2026,8 @@ body {
         min-height: 800px;
         max-height: 800px;
         overflow: auto;
+        padding: 8px;
+        gap: 1px;
     }
     
     #game {
@@ -2033,11 +2036,6 @@ body {
     
     #gameBody {
         gap: 4px;
-    }
-    
-    #board {
-        padding: 8px;
-        gap: 1px;
     }
     .board-row {
         gap: 1px;
@@ -2240,7 +2238,7 @@ body {
 
 @media (max-width: 480px) {
     :root { 
-        --board-min-width: 400px;
+        --board-min-width: 900px;   /* ✅ PAKANKAMAI */
     }
     
     #board {
