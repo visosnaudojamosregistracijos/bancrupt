@@ -1611,12 +1611,12 @@ body {
 /* ---------- SAVININKŲ RUTULIUKŲ IŠVAZDA ---------- */
 .cell .cell-owner {
     position: absolute;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     border: 2px solid rgba(255,255,255,0.9);
     pointer-events: none;
-    z-index: 3;
+    z-index: 5;
     opacity: 0.9;
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
@@ -3065,13 +3065,11 @@ body {
     box-sizing: border-box !important;
 }
 
-/* 🔧 FIX: savininko rutuliukas VISADA viršutiniame dešiniajame kampe */
+/* 🔧 FIX: savininko rutuliukas – PRIEŠINGAME kampe nuo skaičiaus */
+
+/* Bazinis – absoliutus, kad nestumtų */
 .cell .cell-owner {
     position: absolute !important;
-    top: 2px !important;
-    right: 2px !important;
-    left: auto !important;
-    bottom: auto !important;
     width: 14px !important;
     height: 14px !important;
     min-width: 14px !important;
@@ -3086,17 +3084,58 @@ body {
     flex: 0 0 auto !important;
 }
 
-/* .cell-top-bar – pririštas prie dešinio viršaus */
+/* .cell-top-bar – absoliutus, kad nestumtų */
 .cell .cell-top-bar {
     position: absolute !important;
-    top: 2px !important;
-    right: 2px !important;
-    left: auto !important;
-    bottom: auto !important;
     display: flex !important;
     gap: 3px !important;
     z-index: 5 !important;
     pointer-events: none !important;
     flex-direction: row !important;
     align-items: center !important;
+}
+
+/* ============================================
+   SAVININKO POZICIJA PAGAL PUSĘ
+   (priešingas kampas nuo skaičiaus)
+   ============================================ */
+
+/* VIRŠUS – skaičius apačioje, rutuliukas VIRŠUJE DEŠINĖJE */
+.row-top .cell .cell-top-bar {
+    top: 2px !important;
+    right: 2px !important;
+    left: auto !important;
+    bottom: auto !important;
+}
+
+/* APAČIA – skaičius viršuje, rutuliukas APAČIOJE DEŠINĖJE */
+.row-bottom .cell .cell-top-bar {
+    bottom: 2px !important;
+    right: 2px !important;
+    top: auto !important;
+    left: auto !important;
+}
+
+/* KAIRĖ – skaičius dešinėje, rutuliukas VIRŠUJE KAIRĖJE */
+.row-middle-left .cell .cell-top-bar {
+    top: 2px !important;
+    left: 2px !important;
+    right: auto !important;
+    bottom: auto !important;
+}
+
+/* DEŠINĖ – skaičius kairėje, rutuliukas VIRŠUJE DEŠINĖJE */
+.row-middle-right .cell .cell-top-bar {
+    top: 2px !important;
+    right: 2px !important;
+    left: auto !important;
+    bottom: auto !important;
+}
+
+/* KAMPINIAI – rutuliukas VIRŠUJE DEŠINĖJE */
+.cell.corner .cell-top-bar {
+    top: 4px !important;
+    right: 4px !important;
+    left: auto !important;
+    bottom: auto !important;
 }
