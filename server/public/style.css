@@ -3131,8 +3131,8 @@ body {
    ───────────────────────────────────────── */
 .row-middle-left .cell .cell-top-bar {
     bottom: auto !important;       /* ← atstumas nuo VIRŠAUS */
-    left: 2px !important;      /* ← atstumas nuo KAIRIO krašto */
-    right: auto !important;    /* ← išjungia dešinę */
+    left: auto !important;      /* ← atstumas nuo KAIRIO krašto */
+    right: 2px !important;    /* ← išjungia dešinę */
     bottom: 2px !important;   /* ← išjungia apačią */
 }
 
