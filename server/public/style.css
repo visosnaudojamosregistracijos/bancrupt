@@ -3107,8 +3107,8 @@ body {
    ───────────────────────────────────────── */
 .row-top .cell .cell-top-bar {
     top: 2px !important;       /* ← atstumas nuo VIRŠAUS krašto */
-    right: 2px !important;     /* ← atstumas nuo DEŠINIO krašto */
-    left: auto !important;     /* ← išjungia kairę (kad netemptų į kairę) */
+    right: auto !important;     /* ← atstumas nuo DEŠINIO krašto */
+    left: 2px !important;     /* ← išjungia kairę (kad netemptų į kairę) */
     bottom: auto !important;   /* ← išjungia apačią */
 }
 
