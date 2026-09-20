@@ -5,8 +5,8 @@
 :root {
     --side-col-width: 175px;
     --side-col-min: 175px;
-    --board-min-width: 1900px;
-    --board-max-width: 2200px;
+    --board-min-width: 1600px;
+    --board-max-width: 1900px;
 }
 
 /* ---------- BENDRI ---------- */
