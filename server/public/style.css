@@ -2022,9 +2022,9 @@ body {
     #board {
         width: 1400px;      /* fiksuotas */
         height: 900px;     /* fiksuotas – kvadratas */
-        min-width: 1400px;
+        min-width: 700px;
         max-width: 1400px;
-        min-height: 900px;
+        min-height: 450px;
         max-height: 900px;
         overflow: auto;
     }
@@ -2239,7 +2239,7 @@ body {
     .cell.corner .cell-bg-icon {
         font-size: 5em;
     }
-}
+
 
 @media (max-width: 480px) {
     :root { 
