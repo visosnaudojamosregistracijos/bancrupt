@@ -1946,6 +1946,8 @@ body {
     }
     .board-row {
         gap: 1px;
+        width: 100%;
+        min-width: 0;
     }
     .cell {
         font-size: 6px;
@@ -1981,12 +1983,17 @@ body {
         flex: 0 0 45px;
     }
     .row-middle {
-        gap: 1px;
-    }
+    gap: 1px;
+    width: 100%;
+    min-width: 0;
+}
     .row-middle-center {
-        gap: 1px;
-        padding: 0 1px;
-    }
+    gap: 1px;
+    padding: 0 1px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: calc(100% - 92px);
+}
     .center-row {
         gap: 1px;
     }
