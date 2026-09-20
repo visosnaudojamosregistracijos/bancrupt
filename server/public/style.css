@@ -1,7 +1,13 @@
 /* ============================================
    BANCRUPT - PAGRINDINIS STILIUS
    SU AUTOMATINIAIS DYDŽIAIS (clamp)
+   PATAISYTA: Telefono layout'o problemos
    ============================================ */
+
+/* 🔧 FIX: CSS kintamasis šoninėms kolonoms */
+:root {
+    --side-col-width: 175px;
+}
 
 /* ---------- BENDRI ---------- */
 * {
@@ -571,12 +577,13 @@ body {
     display: flex;
     flex: 1;
     min-height: 0;
+    min-width: 0; /* 🔧 FIX */
     gap: 6px;
 }
 
 #leftPanel {
     width: 130px;
-    flex-shrink: 0;
+    flex: 0 0 auto; /* 🔧 FIX: buvo flex-shrink: 0 */
     background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
     border: 2px solid #c9a84c;
     border-radius: 10px;
@@ -697,10 +704,11 @@ body {
     gap: 2px;
     transition: all 0.3s ease;
     position: relative;
-    flex: 1;
+    flex: 1 1 0; /* 🔧 FIX */
+    min-width: 0; /* 🔧 FIX */
     min-height: 0;
     height: 99%;
-    width: 100%;
+    width: auto; /* 🔧 FIX: buvo 100% */
 }
 
 #board.adaptive {
@@ -746,6 +754,8 @@ body {
 .board-row {
     display: flex;
     gap: 2px;
+    min-width: 0; /* 🔧 FIX */
+    width: 100%;  /* 🔧 FIX */
 }
 
 .row-top,
@@ -771,7 +781,7 @@ body {
     min-height: 40px;
     font-weight: 600;
     flex: 1 1 0;
-    min-width: 40px;
+    min-width: 0; /* 🔧 FIX: buvo 40px */
     overflow: visible !important;
 }
 
@@ -782,7 +792,7 @@ body {
 }
 
 .cell.corner {
-    flex: 0 0 175px;
+    flex: 0 0 var(--side-col-width); /* 🔧 FIX */
     aspect-ratio: 1;
     font-size: 8px;
     border-width: 3px;
@@ -865,17 +875,19 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    flex: 0 0 175px;
+    flex: 0 0 var(--side-col-width); /* 🔧 FIX */
+    min-width: 0; /* 🔧 FIX */
 }
 
 .row-middle-left .cell,
 .row-middle-right .cell {
     flex: 1;
     min-height: 30px;
+    min-width: 0; /* 🔧 FIX */
 }
 
 .row-middle-center {
-    flex: 1;
+    flex: 1 1 0; /* 🔧 FIX */
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -883,6 +895,7 @@ body {
     min-height: 0;
     height: 100%;
     min-width: 0;   
+    /* 🔧 FIX: max-width PAŠALINTAS – flex pats suskaičiuoja */
 }
 
 .center-row {
@@ -904,6 +917,7 @@ body {
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    min-width: 0; /* 🔧 FIX */
 }
 
 .center-cell h4 {
@@ -1877,13 +1891,16 @@ body {
     }
 }
 
+/* 🔧 FIX: atnaujinti kintamąjį pagal breakpoint'us */
 @media (max-width: 992px) {
+    :root { --side-col-width: 55px; }
+    
     .cell.corner {
-        flex: 0 0 55px;
+        flex: 0 0 var(--side-col-width);
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 55px;
+        flex: 0 0 var(--side-col-width);
     }
     .cell .cell-icon {
         font-size: 24px;
@@ -1936,13 +1953,20 @@ body {
 }
 
 @media (max-width: 768px) {
+    :root { --side-col-width: 45px; } /* 🔧 FIX */
+    
     #game {
         height: 100dvh;
+    }
+    
+    #gameBody {
+        gap: 4px;
     }
     
     #board {
         padding: 8px;
         gap: 1px;
+        /* 🔧 FIX: width/min-width PAŠALINTI – flex jau valdo */
     }
     .board-row {
         gap: 1px;
@@ -1954,9 +1978,11 @@ body {
         min-height: 30px;
         padding: 1px;
         border-width: 1px;
+        min-width: 0; /* 🔧 FIX */
     }
     .cell.corner {
-        flex: 0 0 45px;
+        flex: 0 0 var(--side-col-width);
+        aspect-ratio: auto; /* 🔧 FIX */
         font-size: 6px;
         border-width: 2px;
     }
@@ -1980,20 +2006,21 @@ body {
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 45px;
+        flex: 0 0 var(--side-col-width);
+        min-width: 0;
     }
     .row-middle {
-    gap: 1px;
-    width: 100%;
-    min-width: 0;
-}
+        gap: 1px;
+        width: 100%;
+        min-width: 0;
+    }
     .row-middle-center {
-    gap: 1px;
-    padding: 0 1px;
-    flex: 1 1 0;
-    min-width: 0;
-    max-width: calc(100% - 92px);
-}
+        gap: 1px;
+        padding: 0 1px;
+        flex: 1 1 0;
+        min-width: 0;
+        /* 🔧 FIX: max-width PAŠALINTAS */
+    }
     .center-row {
         gap: 1px;
     }
@@ -2001,6 +2028,7 @@ body {
         padding: 3px 4px;
         min-height: 50px;
         border-width: 1px;
+        min-width: 0;
     }
     .center-cell h4 {
         font-size: 8px;
@@ -2135,6 +2163,8 @@ body {
 }
 
 @media (max-width: 480px) {
+    :root { --side-col-width: 32px; } /* 🔧 FIX */
+    
     #board {
         padding: 4px;
         gap: 1px;
@@ -2148,9 +2178,11 @@ body {
         border-radius: 3px;
         padding: 1px;
         border-width: 1px;
+        min-width: 0;
     }
     .cell.corner {
-        flex: 0 0 32px;
+        flex: 0 0 var(--side-col-width);
+        aspect-ratio: auto; /* 🔧 FIX */
         border-width: 1.5px;
     }
     .cell .cell-icon {
@@ -2173,7 +2205,7 @@ body {
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 32px;
+        flex: 0 0 var(--side-col-width);
     }
     .row-middle {
         gap: 1px;
@@ -2181,6 +2213,7 @@ body {
     .row-middle-center {
         gap: 1px;
         padding: 0 1px;
+        /* 🔧 FIX: max-width PAŠALINTAS */
     }
     .center-row {
         gap: 1px;
@@ -2931,47 +2964,11 @@ body {
     margin: 4px 0;
 }
 
-/* ---------- TELEFONO LENTOS PLOTIS ---------- */
-@media (max-width: 768px) {
-    #board {
-        min-width: 100%;
-        width: 100%;
-    }
-    
-    .board-row {
-        width: 100%;
-        min-width: 100%;
-    }
-    
-    .row-top,
-    .row-bottom {
-        width: 100%;
-        min-width: 100%;
-    }
-    
-    .row-middle {
-        width: 100%;
-        min-width: 100%;
-    }
-}
-
-/* 🆕 TELEFONO LENTOS PLOTIS */
-@media (max-width: 768px) {
-    #gameBody {
-        gap: 4px;
-    }
-    
-    #board {
-        width: calc(100% - 84px);
-        min-width: calc(100% - 84px);
-    }
-    
-    .row-top,
-    .row-bottom {
-        width: 100%;
-    }
-    
-    .row-middle {
-        width: 100%;
-    }
-}
+/* ============================================
+   🔧 FIX: PAŠALINTI konfliktuojantys @media 768px blokai
+   (anksčiau buvo DU atskiri blokai, kurie perrašydavo
+   #board { width: calc(100% - 84px) } ir lūždavo
+   ant 480px ekranų. Dabar #board naudoja flex: 1 1 0,
+   o #leftPanel flex: 0 0 auto – tai automatiškai
+   paskirsto likusią vietą be jokių calc().
+   ============================================ */
