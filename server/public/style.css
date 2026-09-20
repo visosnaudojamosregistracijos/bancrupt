@@ -3118,10 +3118,10 @@ body {
    Skaičius: viršuje (savo vietoje)
    ───────────────────────────────────────── */
 .row-bottom .cell .cell-top-bar {
-    bottom: 2px !important;    /* ← atstumas nuo APAČIOS krašto */
-    right: 2px !important;     /* ← atstumas nuo DEŠINIO krašto */
+    bottom: auto !important;    /* ← atstumas nuo APAČIOS krašto */
+    right: auto !important;     /* ← atstumas nuo DEŠINIO krašto */
     top: auto !important;      /* ← išjungia viršų */
-    left: auto !important;     /* ← išjungia kairę */
+    left: 2px !important;     /* ← išjungia kairę */
 }
 
 /* ─────────────────────────────────────────
