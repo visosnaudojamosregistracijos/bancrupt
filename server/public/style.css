@@ -3100,42 +3100,62 @@ body {
    (priešingas kampas nuo skaičiaus)
    ============================================ */
 
-/* VIRŠUS – skaičius apačioje, rutuliukas VIRŠUJE DEŠINĖJE */
+/* ─────────────────────────────────────────
+   VIRŠUTINĖ EILUTĖ (langeliai 1–15)
+   Rutuliukas: VIRŠUJE DEŠINĖJE
+   Skaičius: apačioje (savo vietoje)
+   ───────────────────────────────────────── */
 .row-top .cell .cell-top-bar {
-    top: 2px !important;
-    right: 2px !important;
-    left: auto !important;
-    bottom: auto !important;
+    top: 2px !important;       /* ← atstumas nuo VIRŠAUS krašto */
+    right: 2px !important;     /* ← atstumas nuo DEŠINIO krašto */
+    left: auto !important;     /* ← išjungia kairę (kad netemptų į kairę) */
+    bottom: auto !important;   /* ← išjungia apačią */
 }
 
-/* APAČIA – skaičius viršuje, rutuliukas APAČIOJE DEŠINĖJE */
+/* ─────────────────────────────────────────
+   APATINĖ EILUTĖ (langeliai 27–41)
+   Rutuliukas: APAČIOJE DEŠINĖJE
+   Skaičius: viršuje (savo vietoje)
+   ───────────────────────────────────────── */
 .row-bottom .cell .cell-top-bar {
-    bottom: 2px !important;
-    left: 2px !important;
-    top: auto !important;
-    left: auto !important;
+    bottom: 2px !important;    /* ← atstumas nuo APAČIOS krašto */
+    right: 2px !important;     /* ← atstumas nuo DEŠINIO krašto */
+    top: auto !important;      /* ← išjungia viršų */
+    left: auto !important;     /* ← išjungia kairę */
 }
 
-/* KAIRĖ – skaičius dešinėje, rutuliukas VIRŠUJE KAIRĖJE */
+/* ─────────────────────────────────────────
+   KAIRĖ KOLONA (langeliai 43–51)
+   Rutuliukas: VIRŠUJE KAIRĖJE
+   Skaičius: dešinėje (savo vietoje)
+   ───────────────────────────────────────── */
 .row-middle-left .cell .cell-top-bar {
-    top: 2px !important;
-    left: 2px !important;
-    right: auto !important;
-    bottom: auto !important;
+    top: 2px !important;       /* ← atstumas nuo VIRŠAUS */
+    left: 2px !important;      /* ← atstumas nuo KAIRIO krašto */
+    right: auto !important;    /* ← išjungia dešinę */
+    bottom: auto !important;   /* ← išjungia apačią */
 }
 
-/* DEŠINĖ – skaičius kairėje, rutuliukas VIRŠUJE DEŠINĖJE */
+/* ─────────────────────────────────────────
+   DEŠINĖ KOLONA (langeliai 17–25)
+   Rutuliukas: VIRŠUJE DEŠINĖJE
+   Skaičius: kairėje (savo vietoje)
+   ───────────────────────────────────────── */
 .row-middle-right .cell .cell-top-bar {
-    tottom: 2px !important;
-    right: 2px !important;
-    left: auto !important;
-    bottom: auto !important;
+    top: 2px !important;       /* ← atstumas nuo VIRŠAUS */
+    right: 2px !important;     /* ← atstumas nuo DEŠINIO krašto */
+    left: auto !important;     /* ← išjungia kairę */
+    bottom: auto !important;   /* ← išjungia apačią */
 }
 
-/* KAMPINIAI – rutuliukas VIRŠUJE DEŠINĖJE */
+/* ─────────────────────────────────────────
+   KAMPINIAI LANGELIAI (0, 16, 26, 42)
+   Rutuliukas: VIRŠUJE DEŠINĖJE
+   Truputį didesnis atstumas (4px vietoj 2px)
+   ───────────────────────────────────────── */
 .cell.corner .cell-top-bar {
-    top: 4px !important;
-    right: 4px !important;
-    left: auto !important;
-    bottom: auto !important;
+    top: 4px !important;       /* ← atstumas nuo VIRŠAUS (4px) */
+    right: 4px !important;     /* ← atstumas nuo DEŠINIO (4px) */
+    left: auto !important;     /* ← išjungia kairę */
+    bottom: auto !important;   /* ← išjungia apačią */
 }
