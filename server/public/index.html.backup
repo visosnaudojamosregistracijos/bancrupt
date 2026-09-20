@@ -2,383 +2,9 @@
 <html lang="lt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>🏦 BANCRUPT</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* ============================================ */
-        /* SPA PUSLAPIŲ VALDYMAS */
-        /* ============================================ */
-        .page {
-            display: none;
-            width: 100%;
-            min-height: 100vh;
-        }
-        .page.active {
-            display: flex;
-        }
-        
-        /* ============================================ */
-        /* LANDING PUSLAPIS */
-        /* ============================================ */
-        #page-landing {
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
-            padding: 40px 20px;
-            min-height: 100vh;
-        }
-        
-        .landing-container {
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.3);
-            border: 3px solid #c9a84c;
-            border-radius: 24px;
-            padding: 40px 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-        }
-        
-        .landing-container h1 {
-            color: #ffd700;
-            font-size: 3.5em;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            letter-spacing: 4px;
-            margin-bottom: 10px;
-        }
-        
-        .landing-subtitle {
-            color: #d4b896;
-            font-size: 1.2em;
-            margin-bottom: 40px;
-        }
-        
-        .landing-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        .landing-btn {
-            padding: 18px 30px;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: #fff;
-        }
-        
-        .landing-btn-primary {
-            background: linear-gradient(145deg, #ffd700, #f0c000);
-            color: #1a3b1a;
-        }
-        
-        .landing-btn-primary:hover {
-            transform: scale(1.03);
-            box-shadow: 0 6px 25px rgba(255,215,0,0.5);
-        }
-        
-        .landing-btn-secondary {
-            background: linear-gradient(145deg, #17a2b8, #138496);
-        }
-        
-        .landing-btn-secondary:hover {
-            transform: scale(1.03);
-            box-shadow: 0 6px 25px rgba(23,162,184,0.5);
-        }
-        
-        /* ============================================ */
-        /* MENU PUSLAPIS */
-        /* ============================================ */
-        #page-menu {
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
-            padding: 40px 20px;
-            min-height: 100vh;
-        }
-        
-        .menu-container {
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.3);
-            border: 3px solid #c9a84c;
-            border-radius: 24px;
-            padding: 40px 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-        }
-        
-        .menu-container h1 {
-            color: #ffd700;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        
-        .menu-container p {
-            color: #d4b896;
-            margin-bottom: 30px;
-        }
-        
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .menu-btn {
-            padding: 16px 24px;
-            border: 2px solid #c9a84c;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: rgba(255,255,255,0.1);
-            color: #ffd700;
-        }
-        
-        .menu-btn:hover {
-            background: #ffd700;
-            color: #0d1f0d;
-            transform: scale(1.02);
-        }
-        
-        .menu-btn-back {
-            background: rgba(108, 117, 125, 0.3);
-            color: #d4b896;
-            border-color: #6c757d;
-            margin-top: 15px;
-        }
-        
-        .menu-btn-back:hover {
-            background: #6c757d;
-            color: #fff;
-        }
-        
-        /* ============================================ */
-        /* TAISYKLIŲ MODALAS */
-        /* ============================================ */
-        #rulesModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 10000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        
-        #rulesModal.active {
-            display: flex;
-        }
-        
-        .rules-content {
-            background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 3px solid #c9a84c;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-            position: relative;
-        }
-        
-        .rules-content h2 {
-            color: #1a6b3c;
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            text-align: center;
-            border-bottom: 2px solid #c9a84c;
-            padding-bottom: 10px;
-        }
-        
-        .rules-content h3 {
-            color: #1a6b3c;
-            font-size: 1.2em;
-            margin-top: 20px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .rules-content p {
-            color: #3d2b1f;
-            line-height: 1.6;
-            margin-bottom: 8px;
-        }
-        
-        .rules-content ul {
-            color: #3d2b1f;
-            padding-left: 25px;
-            margin-bottom: 10px;
-        }
-        
-        .rules-content li {
-            margin-bottom: 5px;
-            line-height: 1.5;
-        }
-        
-        .rules-close {
-            position: sticky;
-            bottom: 0;
-            width: 100%;
-            padding: 14px;
-            margin-top: 20px;
-            border: none;
-            border-radius: 10px;
-            background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
-            color: #fff;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .rules-close:hover {
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(26,107,60,0.4);
-        }
-        
-        .rules-content::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .rules-content::-webkit-scrollbar-thumb {
-            background: #c9a84c;
-            border-radius: 3px;
-        }
-        
-        /* ============================================ */
-        /* VIEŠŲ STALŲ MODALAS (Etapas 6) */
-        /* ============================================ */
-        #publicGamesModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        
-        #publicGamesModal.active {
-            display: flex;
-        }
-        
-        .public-games-content {
-            background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 550px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 3px solid #c9a84c;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        }
-        
-        .public-games-content h2 {
-            color: #ffd700;
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .public-game-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            border: 2px solid #c9a84c;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .public-game-item:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.02);
-        }
-        
-        .public-game-item .game-host {
-            flex: 1;
-            color: #fff;
-            font-weight: 700;
-            font-size: 14px;
-        }
-        
-        .public-game-item .game-code {
-            color: #ffd700;
-            font-weight: 900;
-            letter-spacing: 2px;
-            font-size: 16px;
-        }
-        
-        .public-game-item .game-count {
-            color: #d4b896;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .public-games-empty {
-            text-align: center;
-            padding: 30px;
-            color: #d4b896;
-            font-style: italic;
-        }
-        
-        /* ============================================ */
-        /* RESPONSIVE */
-        /* ============================================ */
-        @media (max-width: 480px) {
-            .landing-container h1 {
-                font-size: 2.5em;
-            }
-            
-            .landing-container {
-                padding: 30px 20px;
-            }
-            
-            .landing-btn {
-                padding: 14px 20px;
-                font-size: 16px;
-            }
-            
-            .menu-container h1 {
-                font-size: 2em;
-            }
-            
-            .rules-content {
-                padding: 20px 15px;
-            }
-            
-            .rules-content h2 {
-                font-size: 1.4em;
-            }
-        }
-    </style>
 </head>
 <body>
 
@@ -501,12 +127,31 @@
 
             <div id="gameBody">
                 <aside id="leftPanel">
-                    <div id="gameIdBox">
-                        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
-                    </div>
-                    <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
-                        🏃 Pasitraukti
-                    </button>
+    <div id="gameIdBox">
+        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
+    </div>
+    
+    <!-- 🆕 GARSO MYGTUKAS -->
+<div style="position:relative; width:100%;">
+    <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
+        🔊 Garsas
+    </button>
+    
+    <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8);">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+            <span style="font-size:12px;">🔊</span>
+            <input type="range" id="volumeSlider" min="0" max="100" value="50" 
+                   oninput="changeVolume(this.value)" 
+                   style="flex:1; cursor:pointer;">
+            <span id="volumeValue" style="font-size:10px; font-weight:700; color:#ffd700; min-width:20px; text-align:right;">50</span>
+        </div>
+        <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti</button>
+    </div>
+</div>
+    
+    <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
+        🏃 Pasitraukti
+    </button>
                     <button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">ℹ️ Info: 🔴 IŠJ.</button>
                     <button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn">
                         🗳️ Balsuoti
@@ -570,17 +215,9 @@
                                         <span style="font-size:9px; color:#3d2b1f; display:flex; align-items:center;">Režimas:</span>
                                         <button onclick="setMode('adaptive')" id="modeAdaptive" class="header-btn active" style="padding:2px 8px; font-size:9px; min-width:auto;">Adaptyvus</button>
                                         <button onclick="setMode('fixed')" id="modeFixed" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">Fiksuotas</button>
-                                        <button onclick="toggleSoundPanel()" id="soundBtn" class="header-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">🔊 Garsas</button>
-                                    </div>
+                                                                            </div>
 
-                                    <div id="soundPanel" style="display:none; background:rgba(0,0,0,0.15); border-radius:8px; padding:8px; margin-bottom:4px;">
-                                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                                            <span style="font-size:14px;">🔊</span>
-                                            <input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1; cursor:pointer;">
-                                            <span id="volumeValue" style="font-size:11px; font-weight:700; color:#3d2b1f; min-width:30px; text-align:right;">50</span>
-                                        </div>
-                                        <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti garsą</button>
-                                    </div>
+                                    
                                     
                                     <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;">⛓️ Išeiti iš kalėjimo (€50)</button>
 
@@ -655,6 +292,29 @@
             </div>
         </div>
     </div>
+
+<!-- 🆕 KITIEMS ŽAIDĖJAMS - LAUKIMO BLOKAS -->
+<div id="buyPendingInfo" style="display:none;">
+    <div class="buy-pending-box">
+        <div class="buy-pending-header">⏳ LAUKIAMA SPRENDIMO</div>
+        <div class="buy-pending-body">
+            <p><strong id="pendingPlayerName">Žaidėjas</strong> gali pirkti</p>
+            <p><strong id="pendingFieldName">Sklypas</strong></p>
+            <p>Kaina: <strong id="pendingFieldCost">€0</strong></p>
+            <p style="font-size:10px; color:#6c757d; margin-top:6px;">⏱️ Laukiama sprendimo...</p>
+        </div>
+    </div>
+</div>
+
+<!-- 🆕 LANGELIO PRANEŠIMŲ BLOKAS -->
+<div id="cellActionInfo" style="display:none;">
+    <div class="cell-action-box">
+        <div class="cell-action-header" id="cellActionHeader">📢 PRANEŠIMAS</div>
+        <div class="cell-action-body" id="cellActionBody">
+            <p>Info</p>
+        </div>
+    </div>
+</div>
 
     <div id="cellInfoPanel">
         <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
@@ -1064,10 +724,9 @@
     <div id="cellInfoTooltip"></div>
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-    <script src="audioManager.js"></script>
-    <script src="script.js"></script>
+<script src="cellMessages.js"></script>
+<script src="audioManager.js"></script>
+<script src="script.js"></script>
     <script>
         // ============================================
         // SPA PUSLAPIŲ VALDYMAS
@@ -1151,8 +810,13 @@
         }
         
         function closePublicGamesModal() {
-            document.getElementById('publicGamesModal').classList.remove('active');
-        }
+    document.getElementById('publicGamesModal').classList.remove('active');
+    
+    // 🆕 Išeiti iš lobby
+    if (typeof socket !== 'undefined' && socket && isConnected) {
+        socket.emit('leaveLobby');
+    }
+}
         
         document.getElementById('publicGamesModal').addEventListener('click', function(e) {
             if (e.target === this) {
@@ -1175,35 +839,53 @@
         }
         
         function menuPublic() {
-            console.log('🌐 Vieši stalai');
-            openPublicGamesModal();
-        }
+    console.log('🌐 Vieši stalai');
+    
+    // 🆕 Patikrinti, ar yra ryšys
+    if (typeof isConnected === 'undefined' || !isConnected) {
+        alert('⏳ Jungiamasi prie serverio... Palauk kelias sekundes ir bandyk dar kartą.');
+        return;
+    }
+    
+    openPublicGamesModal();
+}
         
         // ============================================
         // URL PARAMETRŲ APDOROJIMAS
         // ============================================
         
         function checkUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const gameParam = urlParams.get('game');
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameParam = urlParams.get('game');
+    
+    if (gameParam) {
+        console.log('🔗 URL kodas aptiktas:', gameParam);
+        
+        // 🆕 Bandyti iš karto, jei nepavyksta - bandyti dar kartą
+        const tryShowJoin = () => {
+            showPage('page-join');
             
-            if (gameParam) {
-                console.log('🔗 URL kodas aptiktas:', gameParam);
+            const gameIdInput = document.getElementById('gameIdInput');
+            if (gameIdInput) {
+                gameIdInput.value = gameParam.toUpperCase();
                 
-                setTimeout(() => {
-                    showPage('page-join');
-                    
-                    const gameIdInput = document.getElementById('gameIdInput');
-                    if (gameIdInput) {
-                        gameIdInput.value = gameParam.toUpperCase();
-                        
-                        if (typeof checkGameColors === 'function') {
-                            setTimeout(() => checkGameColors(), 200);
-                        }
-                    }
-                }, 500);
+                if (typeof checkGameColors === 'function') {
+                    checkGameColors();
+                }
+                return true;
             }
-        }
+            return false;
+        };
+        
+        // Bandyti po 200ms
+        setTimeout(() => {
+            if (!tryShowJoin()) {
+                // Jei nepavyko - bandyti dar kartą po 300ms
+                setTimeout(tryShowJoin, 300);
+            }
+        }, 200);
+    }
+}
         
         // ============================================
         // INICIJAVIMAS

@@ -4,7 +4,7 @@
    PATAISYTA: Telefono layout'o problemos
    ============================================ */
 
-/* 🔧 FIX: CSS kintamasis šoninėms kolonoms */
+/* 🔧 FIX: CSS kintamasis šoninėms kolonoms ir kampams */
 :root {
     --side-col-width: 175px;
 }
@@ -289,7 +289,7 @@ body {
 }
 
 /* ============================================
-   VIEŠŲ STALŲ MODALAS (Etapas 6)
+   VIEŠŲ STALŲ MODALAS
    ============================================ */
 #publicGamesModal {
     display: none;
@@ -583,7 +583,7 @@ body {
 
 #leftPanel {
     width: 130px;
-    flex: 0 0 auto; /* 🔧 FIX: buvo flex-shrink: 0 */
+    flex: 0 0 auto; /* 🔧 FIX */
     background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
     border: 2px solid #c9a84c;
     border-radius: 10px;
@@ -708,7 +708,7 @@ body {
     min-width: 0; /* 🔧 FIX */
     min-height: 0;
     height: 99%;
-    width: auto; /* 🔧 FIX: buvo 100% */
+    width: auto; /* 🔧 FIX */
 }
 
 #board.adaptive {
@@ -781,7 +781,7 @@ body {
     min-height: 40px;
     font-weight: 600;
     flex: 1 1 0;
-    min-width: 0; /* 🔧 FIX: buvo 40px */
+    min-width: 0; /* 🔧 FIX */
     overflow: visible !important;
 }
 
@@ -797,6 +797,23 @@ body {
     font-size: 8px;
     border-width: 3px;
     font-weight: 700;
+}
+
+/* 🔧 FIX: KAMPINIAI PRIRIŠTI PRIE KRAŠTŲ */
+.row-top .cell.corner:first-child {
+    margin-right: auto;
+}
+
+.row-top .cell.corner:last-child {
+    margin-left: auto;
+}
+
+.row-bottom .cell.corner:first-child {
+    margin-right: auto;
+}
+
+.row-bottom .cell.corner:last-child {
+    margin-left: auto;
 }
 
 .cell.start {
@@ -867,23 +884,33 @@ body {
     flex: 1;
     min-height: 0;
     height: 100%;
-    min-width: 0;   
+    min-width: 0;
 }
 
+/* 🔧 FIX: ŠONINĖS KOLONOS PRIRIŠTOS PRIE KRAŠTŲ */
 .row-middle-left,
 .row-middle-right {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    flex: 0 0 var(--side-col-width); /* 🔧 FIX */
-    min-width: 0; /* 🔧 FIX */
+    flex: 0 0 var(--side-col-width);
+    min-width: 0;
+}
+
+.row-middle-left {
+    margin-right: auto;
+}
+
+.row-middle-right {
+    margin-left: auto;
 }
 
 .row-middle-left .cell,
 .row-middle-right .cell {
-    flex: 1;
+    flex: 1 1 0;
     min-height: 30px;
-    min-width: 0; /* 🔧 FIX */
+    min-width: 0;
+    width: 100%;
 }
 
 .row-middle-center {
@@ -894,8 +921,8 @@ body {
     padding: 0 2px;
     min-height: 0;
     height: 100%;
-    min-width: 0;   
-    /* 🔧 FIX: max-width PAŠALINTAS – flex pats suskaičiuoja */
+    min-width: 0;
+    /* 🔧 max-width: calc(100% - 92px) PAŠALINTAS */
 }
 
 .center-row {
@@ -1145,7 +1172,7 @@ body {
     cursor: not-allowed;
 }
 
-/* ---------- 3 LANGELIS - CHAT (AUTO DYDIS) ---------- */
+/* ---------- 3 LANGELIS - CHAT ---------- */
 .chat {
     display: flex;
     flex-direction: column;
@@ -1432,7 +1459,7 @@ body {
     overflow-x: hidden;
 }
 
-/* ---------- 6 LANGELIS - ŽURNALAS (AUTO DYDIS) ---------- */
+/* ---------- 6 LANGELIS - ŽURNALAS ---------- */
 #journal {
     flex: 1;
     overflow-y: auto;
@@ -1571,7 +1598,7 @@ body {
     left: 6px;
 }
 
-/* ---------- SAVININKŲ RUTULIUKŲ IŠVAIZDA ---------- */
+/* ---------- SAVININKŲ RUTULIUKŲ IŠVAZDA ---------- */
 .cell .cell-owner {
     position: absolute;
     width: 16px;
@@ -1891,7 +1918,6 @@ body {
     }
 }
 
-/* 🔧 FIX: atnaujinti kintamąjį pagal breakpoint'us */
 @media (max-width: 992px) {
     :root { --side-col-width: 55px; }
     
@@ -1953,7 +1979,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    :root { --side-col-width: 45px; } /* 🔧 FIX */
+    :root { --side-col-width: 45px; }
     
     #game {
         height: 100dvh;
@@ -1966,7 +1992,6 @@ body {
     #board {
         padding: 8px;
         gap: 1px;
-        /* 🔧 FIX: width/min-width PAŠALINTI – flex jau valdo */
     }
     .board-row {
         gap: 1px;
@@ -1978,11 +2003,11 @@ body {
         min-height: 30px;
         padding: 1px;
         border-width: 1px;
-        min-width: 0; /* 🔧 FIX */
+        min-width: 0;
     }
     .cell.corner {
         flex: 0 0 var(--side-col-width);
-        aspect-ratio: auto; /* 🔧 FIX */
+        aspect-ratio: auto;
         font-size: 6px;
         border-width: 2px;
     }
@@ -2019,7 +2044,6 @@ body {
         padding: 0 1px;
         flex: 1 1 0;
         min-width: 0;
-        /* 🔧 FIX: max-width PAŠALINTAS */
     }
     .center-row {
         gap: 1px;
@@ -2163,7 +2187,7 @@ body {
 }
 
 @media (max-width: 480px) {
-    :root { --side-col-width: 32px; } /* 🔧 FIX */
+    :root { --side-col-width: 32px; }
     
     #board {
         padding: 4px;
@@ -2182,7 +2206,7 @@ body {
     }
     .cell.corner {
         flex: 0 0 var(--side-col-width);
-        aspect-ratio: auto; /* 🔧 FIX */
+        aspect-ratio: auto;
         border-width: 1.5px;
     }
     .cell .cell-icon {
@@ -2213,7 +2237,6 @@ body {
     .row-middle-center {
         gap: 1px;
         padding: 0 1px;
-        /* 🔧 FIX: max-width PAŠALINTAS */
     }
     .center-row {
         gap: 1px;
@@ -2402,7 +2425,6 @@ body {
     .cell.corner .cell-bg-icon {
         font-size: 4em;
     }
-    /* Landing responsive */
     .landing-container h1 {
         font-size: 2.5em;
     }
@@ -2774,7 +2796,7 @@ body {
     accent-color: #ffd700;
 }
 
-/* ---------- INFO TOOLTIP (ŠALIA SKLYPO) ---------- */
+/* ---------- INFO TOOLTIP ---------- */
 #cellInfoTooltip {
     position: fixed;
     display: none;
@@ -2846,7 +2868,7 @@ body {
     margin-bottom: 3px;
 }
 
-/* ---------- PIRKIMO LAUKIMO BLOKAS (KITIEMS) ---------- */
+/* ---------- PIRKIMO LAUKIMO BLOKAS ---------- */
 #buyPendingInfo {
     position: absolute;
     top: 0;
@@ -2963,12 +2985,3 @@ body {
 .cell-action-body p {
     margin: 4px 0;
 }
-
-/* ============================================
-   🔧 FIX: PAŠALINTI konfliktuojantys @media 768px blokai
-   (anksčiau buvo DU atskiri blokai, kurie perrašydavo
-   #board { width: calc(100% - 84px) } ir lūždavo
-   ant 480px ekranų. Dabar #board naudoja flex: 1 1 0,
-   o #leftPanel flex: 0 0 auto – tai automatiškai
-   paskirsto likusią vietą be jokių calc().
-   ============================================ */
