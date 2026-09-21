@@ -3271,12 +3271,17 @@ function updateUI(state) {
             miniCardsHtml = '<div style="font-size:9px; color:#6c757d; margin-top:4px;">Neturi kortelių</div>';
         }
         
+        // 🆕 Išsaugoti seną pinigų sumą PRIEŠ perrašant
+        const oldMoneyEl = document.querySelector('#myInfo .player-money');
+        const oldMoney = oldMoneyEl ? parseInt(oldMoneyEl.textContent.replace(/[^0-9-]/g, '')) : me.money;
+        const newMoney = me.money;
+        
         document.getElementById('myInfo').innerHTML = `
             <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
                 <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
                 <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
             </div>
-            <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};">💰 €${me.money}</div>
+            <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};" data-target="${newMoney}">💰 €${newMoney}</div>
             <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
             <div style="font-size:11px; color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
             ${me.inJail ? '<div style="color:#dc3545; font-size:11px;">⛓️ KALĖJIME</div>' : ''}
@@ -3950,4 +3955,100 @@ function createConfetti() {
     }
     
     console.log('🎊 Konfeti sukurta:', totalConfetti);
+}
+
+// ============================================
+// 💰 PINIGŲ SKAIČIAUS ANIMACIJA
+// ============================================
+function animateMoney(element, from, to, duration = 800) {
+    if (!element) return;
+    
+    // Jei skirtumas 0 – nieko neveikti
+    if (from === to) return;
+    
+    // Jei jau animuojama – sustabdyti
+    if (element._moneyAnimFrame) {
+        cancelAnimationFrame(element._moneyAnimFrame);
+    }
+    
+    const start = performance.now();
+    const diff = to - from;
+    
+    function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing funkcija (ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        
+        const current = Math.round(from + diff * easeOut);
+        
+        element.textContent = '💰 €' + current;
+        
+        // Spalva pagal reikšmę
+        if (current < 0) {
+            element.style.color = '#dc3545';
+        } else {
+            element.style.color = '#000000';
+        }
+        
+        if (progress < 1) {
+            element._moneyAnimFrame = requestAnimationFrame(update);
+        } else {
+            element.textContent = '💰 €' + to;
+            element._moneyAnimFrame = null;
+        }
+    }
+    
+    element._moneyAnimFrame = requestAnimationFrame(update);
+}
+
+// 🆕 Animuoti VISŲ žaidėjų pinigus sąraše
+function animateAllPlayersMoney(state) {
+    if (!state || !state.players) return;
+    
+    state.players.forEach(p => {
+        // Rasti žaidėjo elementą sąraše
+        const playerItems = document.querySelectorAll('#playersList .player-item');
+        playerItems.forEach(item => {
+            const nameEl = item.querySelector('.pname');
+            const moneyEl = item.querySelector('.pmoney');
+            
+            if (!nameEl || !moneyEl) return;
+            
+            // Patikrinti, ar tai tas žaidėjas
+            const itemName = nameEl.textContent.replace(/👤/g, '').trim();
+            if (itemName.includes(p.name)) {
+                const oldText = moneyEl.textContent.replace(/[^0-9-]/g, '');
+                const oldMoney = parseInt(oldText) || 0;
+                const newMoney = p.money;
+                
+                if (oldMoney !== newMoney) {
+                    moneyEl.dataset.target = newMoney;
+                    
+                    // Animuoti
+                    const start = performance.now();
+                    const diff = newMoney - oldMoney;
+                    
+                    function update(now) {
+                        const elapsed = now - start;
+                        const progress = Math.min(elapsed / 600, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        const current = Math.round(oldMoney + diff * easeOut);
+                        
+                        moneyEl.textContent = '€' + current;
+                        moneyEl.style.color = current < 0 ? '#dc3545' : '#000000';
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(update);
+                        } else {
+                            moneyEl.textContent = '€' + newMoney;
+                        }
+                    }
+                    
+                    requestAnimationFrame(update);
+                }
+            }
+        });
+    });
 }
