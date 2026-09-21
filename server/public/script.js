@@ -382,6 +382,15 @@ function initSocket() {
         return;
     }
     
+
+
+
+
+
+
+
+
+
     // 🆕 PRALEISTI metimų pranešimus (jau rodomi per diceRolled)
     if (msg.includes('metė') && msg.includes('atsistojo ant')) {
         return;
@@ -433,21 +442,26 @@ function initSocket() {
             }
             showPopupMessage(msg, 'rent');
 
-           // 🆕 Raudonas highlight nuomos mokėjimui
+            // 🆕 Raudonas highlight nuomos mokėjimui
             if (gameState && gameState.board && gameState.players) {
-                // Rasti sklypą pagal msg
                 const fieldMatch = msg.match(/([A-ZĄČĘĖĮŠŲŪŽ][a-ząčęėįšųūž]+)/);
                 if (fieldMatch) {
                     const fieldName = fieldMatch[1];
                     const field = gameState.board.find(f => f.name === fieldName);
                     if (field) {
                         highlightCell(field.id, 'red', 2000);
+                        
+                        // 🆕 Skrendantys pinigai
+                        const amountMatch = msg.match(/sumokėjo €(\d+)/);
+                        if (amountMatch) {
+                            const amount = parseInt(amountMatch[1]);
+                            showFlyingMoney(amount, true);
+                        }
                     }
                 }
             }
-
         }
-        if (msg.includes('LATRŲ BARĄ') || msg.includes('LATRŲ BARAS') || msg.includes('LATRŲ UŽEIGĄ')) {
+        else if (msg.includes('LATRŲ BARĄ') || msg.includes('LATRŲ BARAS') || msg.includes('LATRŲ UŽEIGĄ')) {
             showPopupMessage(msg, 'tax');
         }
         else if (msg.includes('VLADUKO PIRTĮ') || msg.includes('PIRTĮ')) {
@@ -460,16 +474,17 @@ function initSocket() {
             playTaxSound();
             showPopupMessage(msg, 'tax');
         }
-        else if (msg.includes('LIGONINĖ') || msg.includes('ligoninėje')) {
-            showPopupMessage(msg, 'tax');
-        }
-        else if (msg.includes('užsuko į svečius pas kalinius')) {
-            showPopupMessage(msg, 'move');
-        }
         else if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
             !msg.includes('GIMTADIENIS') && 
             !msg.includes('gimtadienį')) {
             playCashSound();
+            
+            // 🆕 Skrendantys pinigai (teigiami)
+            const amountMatch = msg.match(/€(\d+)/);
+            if (amountMatch) {
+                const amount = parseInt(amountMatch[1]);
+                showFlyingMoney(amount, false);
+            }
         }
         if (msg.includes('prarado')) {
             playPaySound();
@@ -495,6 +510,18 @@ function initSocket() {
         
         addJournal(msg);
     });
+
+
+
+
+
+
+
+
+
+
+
+
 
     socket.on('chatMessage', (data) => {
         console.log('💬 Žinutė:', data);
@@ -4263,4 +4290,67 @@ function hideCard() {
         modal.style.display = 'none';
         modal.classList.remove('show');
     }
+}
+
+// ============================================
+// 💸 SKRENDANTYS PINIGAI
+// ============================================
+function showFlyingMoney(amount, isNegative = true, fromElement = null) {
+    const moneyEl = document.createElement('div');
+    moneyEl.className = `flying-money ${isNegative ? 'negative' : 'positive'}`;
+    moneyEl.textContent = `${isNegative ? '-' : '+'}€${amount}`;
+    
+    // Pradinė pozicija
+    let startX = window.innerWidth / 2;
+    let startY = window.innerHeight / 2;
+    
+    if (fromElement) {
+        const rect = fromElement.getBoundingClientRect();
+        startX = rect.left + rect.width / 2;
+        startY = rect.top + rect.height / 2;
+    } else {
+        // Naudoti #myInfo elementą
+        const myInfo = document.getElementById('myInfo');
+        if (myInfo) {
+            const rect = myInfo.getBoundingClientRect();
+            startX = rect.left + rect.width / 2;
+            startY = rect.top + rect.height / 2;
+        }
+    }
+    
+    // Nustatyti pradinę poziciją
+    moneyEl.style.left = startX + 'px';
+    moneyEl.style.top = startY + 'px';
+    
+    // Skrydžio kryptis
+    const flyX = (Math.random() - 0.5) * 200;
+    const flyY = -200 - Math.random() * 100;
+    
+    moneyEl.style.setProperty('--fly-x', flyX + 'px');
+    moneyEl.style.setProperty('--fly-y', flyY + 'px');
+    
+    document.body.appendChild(moneyEl);
+    
+    // Pašalinti po animacijos
+    setTimeout(() => {
+        moneyEl.remove();
+    }, 1300);
+    
+    console.log(`💸 Skrendantys pinigai: ${isNegative ? '-' : '+'}€${amount}`);
+}
+
+// 🆕 Parodyti pinigus nuo konkretaus žaidėjo
+function showMoneyFromPlayer(playerName, amount, isNegative = true) {
+    // Rasti žaidėjo elementą
+    const playerItems = document.querySelectorAll('#playersList .player-item');
+    let targetElement = null;
+    
+    playerItems.forEach(item => {
+        const nameEl = item.querySelector('.pname');
+        if (nameEl && nameEl.textContent.includes(playerName)) {
+            targetElement = item;
+        }
+    });
+    
+    showFlyingMoney(amount, isNegative, targetElement);
 }

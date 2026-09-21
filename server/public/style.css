@@ -3567,3 +3567,42 @@ body {
 #cardModal.show {
     display: flex !important;
 }
+
+/* ============================================
+   💸 SKRENDANTYS PINIGAI
+   ============================================ */
+
+@keyframes flyMoney {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--fly-x, 0px), var(--fly-y, -200px)) scale(0.3);
+        opacity: 0;
+    }
+}
+
+.flying-money {
+    position: fixed;
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.9), 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 99999;
+    pointer-events: none;
+    animation: flyMoney 1.2s ease-out forwards;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flying-money.negative {
+    color: #dc3545;
+    text-shadow: 0 0 10px rgba(220, 53, 69, 0.9), 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.flying-money.positive {
+    color: #28a745;
+    text-shadow: 0 0 10px rgba(40, 167, 69, 0.9), 0 2px 5px rgba(0,0,0,0.5);
+}
