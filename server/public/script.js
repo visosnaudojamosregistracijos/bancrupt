@@ -3921,7 +3921,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initSocket();
     
     setTimeout(() => {
-        updateDiceDisplay(1, 1);
+        const dice1 = document.getElementById('centerDice1');
+        const dice2 = document.getElementById('centerDice2');
+        
+        if (dice1) updateSingleDice('centerDice1', 1);
+        if (dice2) updateSingleDice('centerDice2', 1);
     }, 500);
     
     // 🆕 Inicializuoti info panelės stebėjimą
