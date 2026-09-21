@@ -3770,3 +3770,138 @@ button:disabled,
     cursor: not-allowed;
     opacity: 0.5;
 }
+
+/* ============================================
+   🎲 KAULIUKŲ PATOBULINIMAI
+   ============================================ */
+
+/* Didesni kauliukai (5) + švytėjimas (3) */
+.dice {
+    width: 70px !important;
+    height: 70px !important;
+    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25), inset 0 -2px 5px rgba(0,0,0,0.1) !important;
+    transition: transform 0.3s, box-shadow 0.3s !important;
+}
+
+.dice:hover {
+    transform: scale(1.08) !important;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.35), 0 0 20px rgba(255,215,0,0.4) !important;
+}
+
+.dice-dots-container {
+    width: 50px !important;
+    height: 50px !important;
+    gap: 6px !important;
+}
+
+.dice-dot {
+    width: 11px !important;
+    height: 11px !important;
+    background: radial-gradient(circle at 30% 30%, #4a4a4a, #1a1a1a) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4) !important;
+}
+
+/* 🎬 Sukimosi animacija (4) + Metimo animacija (8) */
+@keyframes diceRollEnhanced {
+    0% {
+        transform: rotate(0deg) scale(1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+    20% {
+        transform: rotate(72deg) scale(1.15);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    40% {
+        transform: rotate(144deg) scale(0.9);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+    60% {
+        transform: rotate(216deg) scale(1.2);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    80% {
+        transform: rotate(288deg) scale(0.95);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+}
+
+.dice.rolling {
+    animation: diceRollEnhanced 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
+}
+
+/* ✨ Švytėjimo efektas (10) */
+@keyframes diceGlow {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 5px rgba(255,215,0,0.3);
+    }
+    50% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 25px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4);
+    }
+}
+
+.dice.rolling {
+    animation: diceRollEnhanced 0.8s cubic-bezier(0.4, 0.0, 0.2, 1), diceGlow 0.8s ease-in-out !important;
+}
+
+/* 🎲 3D efektas (13) */
+.dice {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.dice.rolling {
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+}
+
+/* Kai sustoja - trumpas efektas */
+@keyframes diceSettle {
+    0% { transform: scale(1.1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+.dice.settle {
+    animation: diceSettle 0.3s ease-out;
+}
+
+/* 📱 Telefono versija */
+@media (max-width: 768px) {
+    .dice {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .dice-dots-container {
+        width: 36px !important;
+        height: 36px !important;
+        gap: 4px !important;
+    }
+    
+    .dice-dot {
+        width: 8px !important;
+        height: 8px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .dice {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .dice-dots-container {
+        width: 28px !important;
+        height: 28px !important;
+        gap: 3px !important;
+    }
+    
+    .dice-dot {
+        width: 6px !important;
+        height: 6px !important;
+    }
+}

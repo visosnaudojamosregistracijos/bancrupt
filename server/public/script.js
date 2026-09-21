@@ -382,16 +382,7 @@ function initSocket() {
         return;
     }
     
-
-
-
-
-
-
-
-
-
-    // 🆕 PRALEISTI metimų pranešimus (jau rodomi per diceRolled)
+   // 🆕 PRALEISTI metimų pranešimus (jau rodomi per diceRolled)
     if (msg.includes('metė') && msg.includes('atsistojo ant')) {
         return;
     }
@@ -510,18 +501,6 @@ function initSocket() {
         
         addJournal(msg);
     });
-
-
-
-
-
-
-
-
-
-
-
-
 
     socket.on('chatMessage', (data) => {
         console.log('💬 Žinutė:', data);
@@ -2293,10 +2272,23 @@ function updateDiceDisplay(value1, value2) {
     if (dice1) dice1.classList.add('rolling');
     if (dice2) dice2.classList.add('rolling');
     
+    // 📳 Vibracija telefone (12)
+    if (navigator.vibrate) {
+        navigator.vibrate([50, 30, 50, 30, 100]);
+    }
+    
     setTimeout(() => {
-        if (dice1) dice1.classList.remove('rolling');
-        if (dice2) dice2.classList.remove('rolling');
-    }, 500);
+        if (dice1) {
+            dice1.classList.remove('rolling');
+            dice1.classList.add('settle');
+            setTimeout(() => dice1.classList.remove('settle'), 300);
+        }
+        if (dice2) {
+            dice2.classList.remove('rolling');
+            dice2.classList.add('settle');
+            setTimeout(() => dice2.classList.remove('settle'), 300);
+        }
+    }, 800);
 }
 
 function updateSingleDice(diceId, value) {
@@ -2557,6 +2549,11 @@ function rollDice() {
         alert('🚫 Tu buvai pašalintas iš žaidimo!');
         playErrorSound();
         return;
+    }
+    
+    // 📳 Vibracija prieš metimą
+    if (navigator.vibrate) {
+        navigator.vibrate(100);
     }
     
     playClickSound();
