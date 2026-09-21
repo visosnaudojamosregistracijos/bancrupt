@@ -3794,3 +3794,59 @@ cornerObserver.observe(document.body, {
 });
 
 console.log('✅ cornerObserver įjungtas');
+
+// 🔧 FIX: Pridėti 'property' klasę perkamiems specialiems (11, 24, 48)
+function fixPropertyClasses() {
+    const buyableIds = [11, 24, 48];
+    
+    buyableIds.forEach(id => {
+        const cell = document.getElementById(`cell-${id}`);
+        if (cell && !cell.classList.contains('property')) {
+            cell.classList.add('property', 'edge');
+            console.log(`✅ cell-${id}: pridėta 'property' klasė`);
+        }
+    });
+}
+
+fixPropertyClasses();
+
+// ============================================
+// 🔧 FIX: Property klasė perkamiems specialiems
+// ============================================
+function fixPropertyClasses() {
+    const buyableIds = [11, 24, 48];
+    
+    buyableIds.forEach(id => {
+        const cell = document.getElementById(`cell-${id}`);
+        if (cell) {
+            if (!cell.classList.contains('property')) {
+                cell.classList.add('property');
+                console.log(`✅ cell-${id}: pridėta 'property' klasė`);
+            }
+            if (!cell.classList.contains('edge')) {
+                cell.classList.add('edge');
+                console.log(`✅ cell-${id}: pridėta 'edge' klasė`);
+            }
+        }
+    });
+}
+
+// Paleisti iš karto
+fixPropertyClasses();
+
+// Kartoti kas 500ms
+setInterval(fixPropertyClasses, 500);
+
+// Stebėti DOM pakeitimus
+const propertyObserver = new MutationObserver(() => {
+    fixPropertyClasses();
+});
+
+propertyObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class']
+});
+
+console.log('✅ propertyObserver įjungtas');
