@@ -127,42 +127,52 @@
 
             <div id="gameBody">
                 <aside id="leftPanel">
-    <div id="gameIdBox">
-        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
-    </div>
-    
-    <!-- 🆕 GARSO MYGTUKAS -->
-<div style="position:relative; width:100%;">
-    <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
-        🔊 Garsas
-    </button>
-    
-    <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8);">
-        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-            <span style="font-size:12px;">🔊</span>
-            <input type="range" id="volumeSlider" min="0" max="100" value="50" 
-                   oninput="changeVolume(this.value)" 
-                   style="flex:1; cursor:pointer;">
-            <span id="volumeValue" style="font-size:10px; font-weight:700; color:#ffd700; min-width:20px; text-align:right;">50</span>
-        </div>
-        <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti</button>
-    </div>
-</div>
-    
-    <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
-        🏃 Pasitraukti
-    </button>
-    <!-- 🆕 REŽIMO MYGTUKAS -->
-<button onclick="toggleMode()" id="modeBtn" class="left-btn" style="background: linear-gradient(145deg, #17a2b8, #138496); color: #fff; border-color: #4dd0e1;">
-    📊 Režimas: Adaptyvus
-</button>
+                    <div id="gameIdBox">
+                        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
+                    </div>
+                    
+                    <!-- GARSO MYGTUKAS -->
+                    <div style="position:relative; width:100%;">
+                        <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
+                            🔊 Garsas
+                        </button>
+                        
+                        <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8);">
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                                <span style="font-size:12px;">🔊</span>
+                                <input type="range" id="volumeSlider" min="0" max="100" value="50" 
+                                       oninput="changeVolume(this.value)" 
+                                       style="flex:1; cursor:pointer;">
+                                <span id="volumeValue" style="font-size:10px; font-weight:700; color:#ffd700; min-width:20px; text-align:right;">50</span>
+                            </div>
+                            <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;">🔇 Išjungti</button>
+                        </div>
+                    </div>
+                    
+                    <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn">
+                        🏃 Pasitraukti
+                    </button>
+                    
+                    <!-- REŽIMO MYGTUKAS -->
+                    <button onclick="toggleMode()" id="modeBtn" class="left-btn" style="background: linear-gradient(145deg, #17a2b8, #138496); color: #fff; border-color: #4dd0e1;">
+                        📊 Režimas: Adaptyvus
+                    </button>
+                    
+                    <!-- STATISTIKOS MYGTUKAS -->
+                    <button onclick="openStats()" id="statsBtn" class="left-btn" style="background: linear-gradient(145deg, #6f42c1, #5a32a3); color: #fff; border-color: #8b5cf6;">
+                        📈 Statistika
+                    </button>
+                    
                     <button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;">ℹ️ Info: 🔴 IŠJ.</button>
+                    
                     <button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn">
                         🗳️ Balsuoti
                     </button>
+                    
                     <div id="leftPlayerCount">
                         👥 <span id="playerCountLeft">0/8</span>
                     </div>
+                    
                     <div id="leftTurnDisplay">
                         🎯 <span id="turnDisplayLeft">---</span>
                     </div>
@@ -171,7 +181,7 @@
                 <div id="board">
                     <!-- VIRŠUS -->
                     <div class="board-row row-top">
-                        <div id="cell-0" class="cell corner start" data-id="0" style="flex: 0 0 175px !important; width: 175px !important; min-width: 175px !important; max-width: 175px !important; height: 175px !important; min-height: 175px !important; max-height: 175px !important; box-sizing: border-box !important;">
+                        <div id="cell-0" class="cell corner start" data-id="0">
                             🏁<br>START
                         </div>
                         <div id="cell-1" class="cell edge property" data-id="1">1</div>
@@ -215,7 +225,6 @@
                                     <div id="myInfo">Laukiama...</div>
                                 </div>
                                 <div id="center-2" class="center-cell controls">
-                                                                                                            
                                     <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;">⛓️ Išeiti iš kalėjimo (€50)</button>
 
                                     <div class="action-row">
@@ -224,34 +233,34 @@
                                     </div>
                                     
                                     <h4>🎲 VALDYMAS</h4>
-<div class="dice-container">
-    <div class="dice" id="centerDice1">
-        <div class="dice-dots-container">
-            <span class="dice-dot dot-tl"></span>
-            <span class="dice-dot dot-tc"></span>
-            <span class="dice-dot dot-tr"></span>
-            <span class="dice-dot dot-cl"></span>
-            <span class="dice-dot dot-cc"></span>
-            <span class="dice-dot dot-cr"></span>
-            <span class="dice-dot dot-bl"></span>
-            <span class="dice-dot dot-bc"></span>
-            <span class="dice-dot dot-br"></span>
-        </div>
-    </div>
-    <div class="dice" id="centerDice2">
-        <div class="dice-dots-container">
-            <span class="dice-dot dot-tl"></span>
-            <span class="dice-dot dot-tc"></span>
-            <span class="dice-dot dot-tr"></span>
-            <span class="dice-dot dot-cl"></span>
-            <span class="dice-dot dot-cc"></span>
-            <span class="dice-dot dot-cr"></span>
-            <span class="dice-dot dot-bl"></span>
-            <span class="dice-dot dot-bc"></span>
-            <span class="dice-dot dot-br"></span>
-        </div>
-    </div>
-</div>
+                                    <div class="dice-container">
+                                        <div class="dice" id="centerDice1">
+                                            <div class="dice-dots-container">
+                                                <span class="dice-dot dot-tl"></span>
+                                                <span class="dice-dot dot-tc"></span>
+                                                <span class="dice-dot dot-tr"></span>
+                                                <span class="dice-dot dot-cl"></span>
+                                                <span class="dice-dot dot-cc"></span>
+                                                <span class="dice-dot dot-cr"></span>
+                                                <span class="dice-dot dot-bl"></span>
+                                                <span class="dice-dot dot-bc"></span>
+                                                <span class="dice-dot dot-br"></span>
+                                            </div>
+                                        </div>
+                                        <div class="dice" id="centerDice2">
+                                            <div class="dice-dots-container">
+                                                <span class="dice-dot dot-tl"></span>
+                                                <span class="dice-dot dot-tc"></span>
+                                                <span class="dice-dot dot-tr"></span>
+                                                <span class="dice-dot dot-cl"></span>
+                                                <span class="dice-dot dot-cc"></span>
+                                                <span class="dice-dot dot-cr"></span>
+                                                <span class="dice-dot dot-bl"></span>
+                                                <span class="dice-dot dot-bc"></span>
+                                                <span class="dice-dot dot-br"></span>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="control-buttons">
                                         <button onclick="rollDice()" id="rollBtn" class="btn-dice">🎲 Mesti</button>
                                         <button onclick="openTrading()" id="tradeBtn" class="btn-trade">🏪 Prekyba</button>
@@ -273,53 +282,50 @@
                                     <div id="playersList"></div>
                                 </div>
                                 <div id="center-5" class="center-cell notifications">
-    <h4>📢 PRANEŠIMAI</h4>
-    
-    <div id="buyChoice" style="display:none;">
-        <div class="buy-choice-box">
-            <div class="buy-choice-header">🏠 SKLYPAS</div>
-            <div class="buy-choice-body">
-                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
-                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
-                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
-            </div>
-            <div class="buy-choice-buttons">
-                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
-                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
-            </div>
-        </div>
-    </div>
+                                    <h4>📢 PRANEŠIMAI</h4>
+                                    
+                                    <div id="buyChoice" style="display:none;">
+                                        <div class="buy-choice-box">
+                                            <div class="buy-choice-header">🏠 SKLYPAS</div>
+                                            <div class="buy-choice-body">
+                                                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
+                                                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
+                                                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
+                                            </div>
+                                            <div class="buy-choice-buttons">
+                                                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
+                                                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
+                                            </div>
+                                        </div>
+                                    </div>
 
-<!-- 🆕 KITIEMS ŽAIDĖJAMS - LAUKIMO BLOKAS -->
-<div id="buyPendingInfo" style="display:none;">
-    <div class="buy-pending-box">
-        <div class="buy-pending-header">⏳ LAUKIAMA SPRENDIMO</div>
-        <div class="buy-pending-body">
-            <p><strong id="pendingPlayerName">Žaidėjas</strong> gali pirkti</p>
-            <p><strong id="pendingFieldName">Sklypas</strong></p>
-            <p>Kaina: <strong id="pendingFieldCost">€0</strong></p>
-            <p style="font-size:10px; color:#6c757d; margin-top:6px;">⏱️ Laukiama sprendimo...</p>
-        </div>
-    </div>
-</div>
+                                    <div id="buyPendingInfo" style="display:none;">
+                                        <div class="buy-pending-box">
+                                            <div class="buy-pending-header">⏳ LAUKIAMA SPRENDIMO</div>
+                                            <div class="buy-pending-body">
+                                                <p><strong id="pendingPlayerName">Žaidėjas</strong> gali pirkti</p>
+                                                <p><strong id="pendingFieldName">Sklypas</strong></p>
+                                                <p>Kaina: <strong id="pendingFieldCost">€0</strong></p>
+                                                <p style="font-size:10px; color:#6c757d; margin-top:6px;">⏱️ Laukiama sprendimo...</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
-<!-- 🆕 LANGELIO PRANEŠIMŲ BLOKAS -->
-<div id="cellActionInfo" style="display:none;">
-    <div class="cell-action-box">
-        <div class="cell-action-header" id="cellActionHeader">📢 PRANEŠIMAS</div>
-        <div class="cell-action-body" id="cellActionBody">
-            <p>Info</p>
-        </div>
-    </div>
-</div>
+                                    <div id="cellActionInfo" style="display:none;">
+                                        <div class="cell-action-box">
+                                            <div class="cell-action-header" id="cellActionHeader">📢 PRANEŠIMAS</div>
+                                            <div class="cell-action-body" id="cellActionBody">
+                                                <p>Info</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
-    <div id="cellInfoPanel">
-        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
-    </div>
-    
-    <!-- 🆕 PRANEŠIMŲ SĄRAŠAS -->
-    <div id="notifications"></div>
-</div>
+                                    <div id="cellInfoPanel">
+                                        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
+                                    </div>
+                                    
+                                    <div id="notifications"></div>
+                                </div>
                                 <div id="center-6" class="center-cell journal">
                                     <h4>📜 ŽURNALAS</h4>
                                     <div id="journal"></div>
@@ -376,7 +382,6 @@
             <h2 style="color:#ffd700; text-align:center; font-size:2em; margin-bottom:5px;">🏦 BANCRUPT</h2>
             <p style="color:#d4b896; text-align:center; margin-bottom:25px;">⏳ Laukiama žaidėjų...</p>
             
-            <!-- STALO KODAS IR NUORODA -->
             <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:20px; border:2px solid #c9a84c;">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
                     <span style="color:#d4b896; font-weight:600; font-size:13px;">📋 Stalo kodas:</span>
@@ -391,23 +396,19 @@
                 <div id="waitingGameLink" style="color:#9bd9e8; font-size:11px; text-align:center; word-break:break-all;">---</div>
             </div>
             
-            <!-- ŽAIDĖJŲ SĄRAŠAS -->
             <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:15px; margin-bottom:20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <span style="color:#ffd700; font-weight:700; font-size:15px;">👥 Žaidėjai</span>
                     <span id="waitingPlayerCount" style="color:#d4b896; font-size:13px;">0/8</span>
                 </div>
                 <div id="waitingPlayersList" style="display:flex; flex-direction:column; gap:8px; min-height:60px;">
-                    <!-- Žaidėjai bus čia -->
                 </div>
             </div>
             
-            <!-- KIEK TRŪKSTA -->
             <div id="waitingStatusText" style="text-align:center; color:#d4b896; font-size:14px; margin-bottom:20px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px;">
                 Laukiama žaidėjų...
             </div>
             
-            <!-- MYGTUKAI -->
             <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
                 <button id="readyBtn" onclick="toggleReady()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; transition:all 0.3s;">
                     ✋ Aš pasiruošęs
@@ -425,16 +426,13 @@
                 </div>
             </div>
             
-            <!-- 🆕 PASITRAUKIMO MYGTUKAS -->
             <button onclick="leaveGameFromWaiting()" style="width:100%; padding:12px; margin-bottom:20px; border:2px solid #ff6b6b; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
                 🏃 Pasitraukti iš stalo
             </button>
             
-            <!-- CHAT -->
             <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:12px;">
                 <div style="color:#ffd700; font-weight:700; font-size:13px; margin-bottom:8px;">💬 Chat</div>
                 <div id="waitingChatMessages" style="height:100px; overflow-y:auto; font-size:12px; color:#d4b896; background:rgba(0,0,0,0.2); border-radius:8px; padding:8px; margin-bottom:8px;">
-                    <!-- Chat žinutės -->
                 </div>
                 <div style="display:flex; gap:6px;">
                     <input type="text" id="waitingChatInput" placeholder="Rašyk žinutę..." onkeypress="if(event.key==='Enter') sendWaitingChat()" style="flex:1; padding:8px; border:1px solid #c9a84c; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; font-size:13px; outline:none;">
@@ -546,19 +544,6 @@
             <button onclick="closeBankruptMessage()" style="padding:12px 40px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">OK, SUPRASTAU</button>
         </div>
     </div>
-
-    <!-- 🏆 LAIMĖJIMO MODALAS -->
-<div id="winnerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; justify-content:center; align-items:center; overflow:hidden;">
-    <div style="text-align:center; padding:40px; position:relative; z-index:2;">
-        <div style="font-size:120px; margin-bottom:20px; animation: winnerBounce 1s ease-in-out infinite;">🏆</div>
-        <h1 style="color:#ffd700; font-size:56px; margin-bottom:20px; text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 20px rgba(0,0,0,0.9); animation: winnerGlow 2s ease-in-out infinite;">LAIMĖTOJAS!</h1>
-        <p id="winnerName" style="color:#fff; font-size:36px; font-weight:700; margin-bottom:30px; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">---</p>
-        <div id="winnerStats" style="color:#d4b896; font-size:16px; margin-bottom:30px;"></div>
-        <button onclick="closeWinnerModal()" style="padding:18px 50px; font-size:20px; font-weight:700; background:linear-gradient(145deg, #ffd700, #f0c000); color:#1a3b1a; border:none; border-radius:14px; cursor:pointer; transition:all 0.3s; box-shadow: 0 8px 30px rgba(255,215,0,0.5);">
-            🎮 ŽAISTI VĖL
-        </button>
-    </div>
-</div>
 
     <!-- PREKYBOS MODALAS -->
     <div id="tradingModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9998; justify-content:center; align-items:center;">
@@ -731,23 +716,52 @@
     </div>
 
     <!-- 🎴 KORTELĖS MODALAS -->
-<div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99998; justify-content:center; align-items:center;">
-    <div id="cardContent" style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:320px; width:90%; text-align:center; border:4px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8); position:relative; animation: cardFlip 0.6s ease-out;">
-        <div id="cardColor" style="width:100%; height:80px; border-radius:12px; margin-bottom:15px; border:3px solid #3d2b1f;"></div>
-        <h2 id="cardName" style="color:#1a6b3c; font-size:24px; margin-bottom:10px;">Sklypas</h2>
-        <div id="cardPrice" style="color:#28a745; font-size:28px; font-weight:700; margin-bottom:15px;">€0</div>
-        <div id="cardInfo" style="color:#3d2b1f; font-size:14px; line-height:1.6;"></div>
-        <div id="cardOwner" style="margin-top:15px; font-size:16px; font-weight:700; color:#dc3545;"></div>
+    <div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99998; justify-content:center; align-items:center;">
+        <div id="cardContent" style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:320px; width:90%; text-align:center; border:4px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8); position:relative; animation: cardFlip 0.6s ease-out;">
+            <div id="cardColor" style="width:100%; height:80px; border-radius:12px; margin-bottom:15px; border:3px solid #3d2b1f;"></div>
+            <h2 id="cardName" style="color:#1a6b3c; font-size:24px; margin-bottom:10px;">Sklypas</h2>
+            <div id="cardPrice" style="color:#28a745; font-size:28px; font-weight:700; margin-bottom:15px;">€0</div>
+            <div id="cardInfo" style="color:#3d2b1f; font-size:14px; line-height:1.6;"></div>
+            <div id="cardOwner" style="margin-top:15px; font-size:16px; font-weight:700; color:#dc3545;"></div>
+        </div>
     </div>
-</div>
 
-<!-- INFO TOOLTIP -->
+    <!-- 📊 STATISTIKOS MODALAS -->
+    <div id="statsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99997; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
+        <div style="background:linear-gradient(145deg, #1a6b3c, #0f4a2a); border-radius:20px; padding:30px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <h2 style="color:#ffd700; text-align:center; font-size:1.8em; margin-bottom:20px; border-bottom:2px solid #c9a84c; padding-bottom:10px;">
+                📊 STATISTIKA
+            </h2>
+            
+            <div id="statsContent">
+            </div>
+            
+            <button onclick="closeStats()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+                ❌ Uždaryti
+            </button>
+        </div>
+    </div>
+
+    <!-- 🏆 LAIMĖJIMO MODALAS -->
+    <div id="winnerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; justify-content:center; align-items:center; overflow:hidden;">
+        <div style="text-align:center; padding:40px; position:relative; z-index:2;">
+            <div style="font-size:120px; margin-bottom:20px; animation: winnerBounce 1s ease-in-out infinite;">🏆</div>
+            <h1 style="color:#ffd700; font-size:56px; margin-bottom:20px; text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 20px rgba(0,0,0,0.9); animation: winnerGlow 2s ease-in-out infinite;">LAIMĖTOJAS!</h1>
+            <p id="winnerName" style="color:#fff; font-size:36px; font-weight:700; margin-bottom:30px; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">---</p>
+            <div id="winnerStats" style="color:#d4b896; font-size:16px; margin-bottom:30px;"></div>
+            <button onclick="closeWinnerModal()" style="padding:18px 50px; font-size:20px; font-weight:700; background:linear-gradient(145deg, #ffd700, #f0c000); color:#1a3b1a; border:none; border-radius:14px; cursor:pointer; transition:all 0.3s; box-shadow: 0 8px 30px rgba(255,215,0,0.5);">
+                🎮 ŽAISTI VĖL
+            </button>
+        </div>
+    </div>
+
+    <!-- INFO TOOLTIP -->
     <div id="cellInfoTooltip"></div>
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-<script src="cellMessages.js"></script>
-<script src="audioManager.js"></script>
-<script src="script.js"></script>
+    <script src="cellMessages.js"></script>
+    <script src="audioManager.js"></script>
+    <script src="script.js"></script>
     <script>
         // ============================================
         // SPA PUSLAPIŲ VALDYMAS
@@ -831,13 +845,12 @@
         }
         
         function closePublicGamesModal() {
-    document.getElementById('publicGamesModal').classList.remove('active');
-    
-    // 🆕 Išeiti iš lobby
-    if (typeof socket !== 'undefined' && socket && isConnected) {
-        socket.emit('leaveLobby');
-    }
-}
+            document.getElementById('publicGamesModal').classList.remove('active');
+            
+            if (typeof socket !== 'undefined' && socket && isConnected) {
+                socket.emit('leaveLobby');
+            }
+        }
         
         document.getElementById('publicGamesModal').addEventListener('click', function(e) {
             if (e.target === this) {
@@ -860,53 +873,49 @@
         }
         
         function menuPublic() {
-    console.log('🌐 Vieši stalai');
-    
-    // 🆕 Patikrinti, ar yra ryšys
-    if (typeof isConnected === 'undefined' || !isConnected) {
-        alert('⏳ Jungiamasi prie serverio... Palauk kelias sekundes ir bandyk dar kartą.');
-        return;
-    }
-    
-    openPublicGamesModal();
-}
+            console.log('🌐 Vieši stalai');
+            
+            if (typeof isConnected === 'undefined' || !isConnected) {
+                alert('⏳ Jungiamasi prie serverio... Palauk kelias sekundes ir bandyk dar kartą.');
+                return;
+            }
+            
+            openPublicGamesModal();
+        }
         
         // ============================================
         // URL PARAMETRŲ APDOROJIMAS
         // ============================================
         
         function checkUrlParams() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameParam = urlParams.get('game');
-    
-    if (gameParam) {
-        console.log('🔗 URL kodas aptiktas:', gameParam);
-        
-        // 🆕 Bandyti iš karto, jei nepavyksta - bandyti dar kartą
-        const tryShowJoin = () => {
-            showPage('page-join');
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameParam = urlParams.get('game');
             
-            const gameIdInput = document.getElementById('gameIdInput');
-            if (gameIdInput) {
-                gameIdInput.value = gameParam.toUpperCase();
+            if (gameParam) {
+                console.log('🔗 URL kodas aptiktas:', gameParam);
                 
-                if (typeof checkGameColors === 'function') {
-                    checkGameColors();
-                }
-                return true;
+                const tryShowJoin = () => {
+                    showPage('page-join');
+                    
+                    const gameIdInput = document.getElementById('gameIdInput');
+                    if (gameIdInput) {
+                        gameIdInput.value = gameParam.toUpperCase();
+                        
+                        if (typeof checkGameColors === 'function') {
+                            checkGameColors();
+                        }
+                        return true;
+                    }
+                    return false;
+                };
+                
+                setTimeout(() => {
+                    if (!tryShowJoin()) {
+                        setTimeout(tryShowJoin, 300);
+                    }
+                }, 200);
             }
-            return false;
-        };
-        
-        // Bandyti po 200ms
-        setTimeout(() => {
-            if (!tryShowJoin()) {
-                // Jei nepavyko - bandyti dar kartą po 300ms
-                setTimeout(tryShowJoin, 300);
-            }
-        }, 200);
-    }
-}
+        }
         
         // ============================================
         // INICIJAVIMAS
@@ -920,4 +929,4 @@
         });
     </script>
 </body>
-</html>
+</html> 
