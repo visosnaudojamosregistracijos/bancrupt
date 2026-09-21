@@ -550,6 +550,16 @@ socket.on('buyPending', (data) => {
         const field = gameState.board.find(f => f.name === data.fieldName);
         if (field) {
             highlightCell(field.id, 'green', 2000);
+            
+            // 🆕 Rodyti kortelę
+            setTimeout(() => {
+                showCard(field.id, data.playerName);
+                
+                // Paslėpti po 2.5s
+                setTimeout(() => {
+                    hideCard();
+                }, 2500);
+            }, 500);
         }
     }
     
@@ -3582,9 +3592,59 @@ function updateBoard(state) {
             cell.classList.add('edge');
         }
         
-        // 🆕 Pridėti 'property' klasę specialiems perkamiems (11, 24, 48)
-        if (field.id === 11 || field.id === 24 || field.id === 48) {
+        // 🆕 Pridėti 'property' klasę specialiems perkamiems (11, 24, 32, 48)
+        if (field.id === 11 || field.id === 24 || field.id === 32 || field.id === 48) {
             cell.classList.add('property', 'edge');
+        }
+        
+        // 🆕 GRUPAVIMAS – priskirti data-group pagal spalvą
+        if (field.color && field.type === 'property') {
+            cell.setAttribute('data-group', field.color);
+            cell.style.setProperty('--group-color', field.color);
+            
+            // 🆕 Patikrinti, ar savininkas turi VISĄ grupę
+            if (owner) {
+                const COLOR_GROUPS = {
+                    '#ffd700': [1, 3],
+                    '#4a90d9': [6, 7, 9],
+                    '#2ecc71': [10, 12, 15],
+                    '#9b59b6': [17, 18, 20],
+                    '#e74c3c': [22, 23, 25],
+                    '#8B6914': [27, 29, 30],
+                    '#1abc9c': [31, 33, 34],
+                    '#ff69b4': [35, 36, 38],
+                    '#2c3e50': [39, 40, 41],
+                    '#1a237e': [43, 45, 47],
+                    '#bdc3c7': [49, 51]
+                };
+                
+                const group = COLOR_GROUPS[field.color] || [];
+                
+                // 🆕 Pridėti specialią grupę (11, 24, 32, 48)
+                const SPECIAL_GROUP = [11, 24, 32, 48];
+                const isSpecialGroup = SPECIAL_GROUP.includes(field.id);
+                
+                if (isSpecialGroup) {
+                    const ownedInSpecial = owner.properties.filter(id => SPECIAL_GROUP.includes(id)).length;
+                    if (ownedInSpecial === 4) {
+                        cell.classList.add('full-group');
+                    } else {
+                        cell.classList.remove('full-group');
+                    }
+                } else if (group.length > 0) {
+                    const hasAll = group.every(id => owner.properties.includes(id));
+                    if (hasAll) {
+                        cell.classList.add('full-group');
+                    } else {
+                        cell.classList.remove('full-group');
+                    }
+                }
+            } else {
+                cell.classList.remove('full-group');
+            }
+        } else {
+            cell.removeAttribute('data-group');
+            cell.classList.remove('full-group');
         }
         
         if (field.color) {
@@ -4125,4 +4185,82 @@ function highlightCell(cellId, color = 'yellow', duration = 1500) {
     setTimeout(() => {
         cell.classList.remove(className);
     }, duration);
+}
+
+// ============================================
+// 🎴 KORTELĖS IŠŠOKIMAS
+// ============================================
+function showCard(fieldId, ownerName) {
+    const modal = document.getElementById('cardModal');
+    const content = document.getElementById('cardContent');
+    const colorEl = document.getElementById('cardColor');
+    const nameEl = document.getElementById('cardName');
+    const priceEl = document.getElementById('cardPrice');
+    const infoEl = document.getElementById('cardInfo');
+    const ownerEl = document.getElementById('cardOwner');
+    
+    if (!modal || !gameState || !gameState.board) return;
+    
+    const field = gameState.board.find(f => f.id === fieldId);
+    if (!field) return;
+    
+    // Nustatyti spalvą
+    if (colorEl) {
+        colorEl.style.background = field.color || '#c9a84c';
+    }
+    
+    // Pavadinimas
+    if (nameEl) {
+        nameEl.textContent = `${field.icon || ''} ${field.name}`;
+    }
+    
+    // Kaina
+    if (priceEl) {
+        priceEl.textContent = `€${field.cost}`;
+    }
+    
+    // Info
+    if (infoEl) {
+        let infoHtml = '';
+        
+        if (field.type === 'property') {
+            const baseRent = Math.floor(field.cost * 0.1);
+            infoHtml += `<div style="margin:5px 0;">🏘️ <strong>Nuoma:</strong> €${baseRent}</div>`;
+            infoHtml += `<div style="margin:5px 0; font-size:12px; color:#6c757d;">Su namais: €${baseRent * 10} – €${baseRent * 40}</div>`;
+            infoHtml += `<div style="margin:5px 0; font-size:12px; color:#6c757d;">🏨 Viešbutis: €${baseRent * 50}</div>`;
+        } else if (field.type === 'service1' || field.type === 'service2') {
+            infoHtml += `<div style="margin:5px 0;">🏘️ <strong>Nuoma:</strong> €50 – €200</div>`;
+        }
+        
+        infoEl.innerHTML = infoHtml;
+    }
+    
+    // Savininkas
+    if (ownerEl) {
+        if (ownerName) {
+            ownerEl.textContent = `👤 Savininkas: ${ownerName}`;
+            ownerEl.style.color = '#28a745';
+        } else {
+            ownerEl.textContent = `👤 Laisvas sklypas`;
+            ownerEl.style.color = '#6c757d';
+        }
+    }
+    
+    // Rodyti modalą
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    
+    // Garso efektas
+    if (typeof playBuySound === 'function') playBuySound();
+    if (typeof playCashSound === 'function') playCashSound();
+    
+    console.log(`🎴 Kortelė: ${field.name}`);
+}
+
+function hideCard() {
+    const modal = document.getElementById('cardModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+    }
 }
