@@ -3281,6 +3281,9 @@ function updateUI(state) {
                 <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
                 <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
             </div>
+
+        
+
             <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};" data-target="${newMoney}">💰 €${newMoney}</div>
             <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
             <div style="font-size:11px; color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
