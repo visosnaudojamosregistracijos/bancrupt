@@ -3486,13 +3486,20 @@ function updateBoard(state) {
         cell.innerHTML = html;
         
         cell.className = 'cell';
-        if (field.type === 'start') cell.classList.add('start');
-        else if (field.type === 'jail') cell.classList.add('jail');
-        else if (field.type === 'parking') cell.classList.add('parking');
-        else if (field.type === 'go-to-jail') cell.classList.add('go-to-jail');
+        if (field.type === 'start') cell.classList.add('start', 'corner');
+        else if (field.type === 'jail') cell.classList.add('jail', 'corner');
+        else if (field.type === 'parking') cell.classList.add('parking', 'corner');
+        else if (field.type === 'go-to-jail') cell.classList.add('go-to-jail', 'corner');
         else if (field.type === 'property') cell.classList.add('property');
-        else if (field.id === 0 || field.id === 16 || field.id === 26 || field.id === 42) {
-            cell.classList.add('corner');
+        
+        // 🆕 Pridėti 'edge' klasę visiems ne kampiniams
+        if (field.id !== 0 && field.id !== 16 && field.id !== 26 && field.id !== 42) {
+            cell.classList.add('edge');
+        }
+        
+        // 🆕 Pridėti 'property' klasę specialiems perkamiems (11, 24, 48)
+        if (field.id === 11 || field.id === 24 || field.id === 48) {
+            cell.classList.add('property', 'edge');
         }
         
         if (field.color) {
