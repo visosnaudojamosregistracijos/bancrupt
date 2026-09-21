@@ -255,6 +255,12 @@ function initSocket() {
     console.log('🎲 Kauliukai mesti:', data);
     playDiceSound();
     updateDiceDisplay(data.dice[0], data.dice[1]);
+
+    // 🆕 Statistika – metimai
+    if (data.player && data.player.id !== undefined) {
+        const isDouble = data.dice[0] === data.dice[1];
+        incrementRolls(data.player.id, isDouble);
+    }
     
     // 🆕 Pažymėti, kad žaidėjas animuojamas
     window.animatingPlayers = window.animatingPlayers || [];
@@ -534,6 +540,11 @@ socket.on('buyPending', (data) => {
     console.log('✅ Pirkimas patvirtintas:', data);
     playBuySound();
     playCashSound();
+
+    // 🆕 Statistika – pirkimas
+    if (data.playerId !== undefined) {
+        incrementBought(data.playerId);
+    }
     
     let msg;
     if (data.playerId === playerId) {
@@ -4370,4 +4381,350 @@ function showMoneyFromPlayer(playerName, amount, isNegative = true) {
     });
     
     showFlyingMoney(amount, isNegative, targetElement);
+}
+
+// ============================================
+// 📊 STATISTIKA
+// ============================================
+
+// 🆕 Statistikos objektas
+window.gameStats = {
+    players: {},  // { playerId: { metimai, dubliai, kalėjimai, ... } }
+    gameStartTime: null,
+    totalRolls: 0,
+    totalDoubles: 0
+};
+
+// 🆕 Inicializuoti žaidėjo statistiką
+function initPlayerStats(playerId, playerName, playerColor) {
+    if (!window.gameStats.players[playerId]) {
+        window.gameStats.players[playerId] = {
+            id: playerId,
+            name: playerName,
+            color: playerColor,
+            metimai: 0,
+            dubliai: 0,
+            kalėjimai: 0,
+            nusipirko: 0,
+            pastate: 0,
+            nuomaGavo: 0,
+            nuomaSumokejo: 0,
+            bankrotai: 0,
+            patekoIKalejima: 0
+        };
+    }
+}
+
+// 🆕 Atidaryti statistikos modalą
+function openStats() {
+    const modal = document.getElementById('statsModal');
+    if (!modal) return;
+    
+    updateStatsDisplay();
+    modal.style.display = 'flex';
+    playClickSound();
+}
+
+// 🆕 Uždaryti statistikos modalą
+function closeStats() {
+    const modal = document.getElementById('statsModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    playClickSound();
+}
+
+// 🆕 Atnaujinti statistikos rodymą
+function updateStatsDisplay() {
+    const content = document.getElementById('statsContent');
+    if (!content) return;
+    
+    let html = '';
+    
+    // 🆕 Žaidimo trukmė
+    if (window.gameStats.gameStartTime) {
+        const elapsed = Math.floor((Date.now() - window.gameStats.gameStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        html += `
+            <div style="background:rgba(255,255,255,0.1); border-radius:10px; padding:12px; margin-bottom:15px; text-align:center; border:2px solid #c9a84c;">
+                <div style="color:#d4b896; font-size:13px; margin-bottom:4px;">⏱️ Žaidimo trukmė</div>
+                <div style="color:#ffd700; font-size:24px; font-weight:700;">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+            </div>
+        `;
+    }
+    
+    // 🆕 Bendri skaičiai
+    html += `
+        <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px;">
+            <div style="color:#ffd700; font-size:14px; font-weight:700; margin-bottom:8px;">🎯 BENDRI SKAIČIAI</div>
+            <div style="display:flex; justify-content:space-between; color:#fff; font-size:13px; margin-bottom:4px;">
+                <span>🎲 Viso metimų:</span>
+                <strong>${window.gameStats.totalRolls}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#fff; font-size:13px;">
+                <span>🎲 Viso dublių:</span>
+                <strong>${window.gameStats.totalDoubles}</strong>
+            </div>
+        </div>
+    `;
+    
+    // 🆕 Kiekvieno žaidėjo statistika
+    const players = Object.values(window.gameStats.players);
+    
+    if (players.length === 0) {
+        html += `<div style="color:#d4b896; text-align:center; padding:20px;">Nėra statistikos</div>`;
+    } else {
+        html += `<div style="color:#ffd700; font-size:14px; font-weight:700; margin-bottom:8px;">👥 ŽAIDĖJŲ STATISTIKA</div>`;
+        
+        players.forEach(p => {
+            html += `
+                <div style="background:rgba(255,255,255,0.1); border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid ${p.color};">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <span style="width:16px; height:16px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5);"></span>
+                        <span style="color:#fff; font-weight:700; font-size:14px;">${p.name}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px; color:#d4b896;">
+                        <div>🎲 Metimai: <strong style="color:#fff;">${p.metimai}</strong></div>
+                        <div>🎲 Dubliai: <strong style="color:#fff;">${p.dubliai}</strong></div>
+                        <div>⛓️ Kalėjimai: <strong style="color:#fff;">${p.patekoIKalejima}</strong></div>
+                        <div>🏠 Nusipirko: <strong style="color:#fff;">${p.nusipirko}</strong></div>
+                        <div>🏠 Pastatė: <strong style="color:#fff;">${p.pastate}</strong></div>
+                        <div>💰 Nuoma gavo: <strong style="color:#28a745;">€${p.nuomaGavo}</strong></div>
+                        <div>💸 Nuoma sumokėjo: <strong style="color:#dc3545;">€${p.nuomaSumokejo}</strong></div>
+                        <div>💀 Bankrotai: <strong style="color:#fff;">${p.bankrotai}</strong></div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    content.innerHTML = html;
+}
+
+// 🆕 Atnaujinti statistiką iš gameState
+function updateStatsFromGameState(state) {
+    if (!state || !state.players) return;
+    
+    // Inicializuoti žaidėjus
+    state.players.forEach(p => {
+        initPlayerStats(p.id, p.name, p.color);
+    });
+    
+    // 🆕 Nustatyti žaidimo pradžios laiką
+    if (state.gameStarted && !window.gameStats.gameStartTime) {
+        window.gameStats.gameStartTime = Date.now();
+    }
+}
+
+// 🆕 Padidinti metimų skaičių
+function incrementRolls(playerId, isDouble) {
+    if (!window.gameStats.players[playerId]) return;
+    
+    window.gameStats.players[playerId].metimai++;
+    window.gameStats.totalRolls++;
+    
+    if (isDouble) {
+        window.gameStats.players[playerId].dubliai++;
+        window.gameStats.totalDoubles++;
+    }
+}
+
+// 🆕 Padidinti kalėjimų skaičių
+function incrementJail(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].patekoIKalejima++;
+}
+
+// 🆕 Padidinti pirkimų skaičių
+function incrementBought(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nusipirko++;
+}
+
+// 🆕 Padidinti statybų skaičių
+function incrementBuilt(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].pastate++;
+}
+
+// 🆕 Pridėti nuomą (gautą)
+function addRentReceived(playerId, amount) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nuomaGavo += amount;
+}
+
+// 🆕 Pridėti nuomą (sumokėtą)
+function addRentPaid(playerId, amount) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nuomaSumokejo += amount;
+}
+
+// 🆕 Padidinti bankrotų skaičių
+function incrementBankrupt(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].bankrotai++;
+}
+
+// ============================================
+// 📊 STATISTIKA
+// ============================================
+
+window.gameStats = {
+    players: {},
+    gameStartTime: null,
+    totalRolls: 0,
+    totalDoubles: 0
+};
+
+function initPlayerStats(playerId, playerName, playerColor) {
+    if (!window.gameStats.players[playerId]) {
+        window.gameStats.players[playerId] = {
+            id: playerId,
+            name: playerName,
+            color: playerColor,
+            metimai: 0,
+            dubliai: 0,
+            kalėjimai: 0,
+            nusipirko: 0,
+            pastate: 0,
+            nuomaGavo: 0,
+            nuomaSumokejo: 0,
+            bankrotai: 0,
+            patekoIKalejima: 0
+        };
+    }
+}
+
+function openStats() {
+    const modal = document.getElementById('statsModal');
+    if (!modal) return;
+    
+    updateStatsDisplay();
+    modal.style.display = 'flex';
+    playClickSound();
+}
+
+function closeStats() {
+    const modal = document.getElementById('statsModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    playClickSound();
+}
+
+function updateStatsDisplay() {
+    const content = document.getElementById('statsContent');
+    if (!content) return;
+    
+    let html = '';
+    
+    if (window.gameStats.gameStartTime) {
+        const elapsed = Math.floor((Date.now() - window.gameStats.gameStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        html += `
+            <div style="background:rgba(255,255,255,0.1); border-radius:10px; padding:12px; margin-bottom:15px; text-align:center; border:2px solid #c9a84c;">
+                <div style="color:#d4b896; font-size:13px; margin-bottom:4px;">⏱️ Žaidimo trukmė</div>
+                <div style="color:#ffd700; font-size:24px; font-weight:700;">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+            </div>
+        `;
+    }
+    
+    html += `
+        <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px;">
+            <div style="color:#ffd700; font-size:14px; font-weight:700; margin-bottom:8px;">🎯 BENDRI SKAIČIAI</div>
+            <div style="display:flex; justify-content:space-between; color:#fff; font-size:13px; margin-bottom:4px;">
+                <span>🎲 Viso metimų:</span>
+                <strong>${window.gameStats.totalRolls}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#fff; font-size:13px;">
+                <span>🎲 Viso dublių:</span>
+                <strong>${window.gameStats.totalDoubles}</strong>
+            </div>
+        </div>
+    `;
+    
+    const players = Object.values(window.gameStats.players);
+    
+    if (players.length === 0) {
+        html += `<div style="color:#d4b896; text-align:center; padding:20px;">Nėra statistikos</div>`;
+    } else {
+        html += `<div style="color:#ffd700; font-size:14px; font-weight:700; margin-bottom:8px;">👥 ŽAIDĖJŲ STATISTIKA</div>`;
+        
+        players.forEach(p => {
+            html += `
+                <div style="background:rgba(255,255,255,0.1); border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid ${p.color};">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <span style="width:16px; height:16px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5);"></span>
+                        <span style="color:#fff; font-weight:700; font-size:14px;">${p.name}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px; color:#d4b896;">
+                        <div>🎲 Metimai: <strong style="color:#fff;">${p.metimai}</strong></div>
+                        <div>🎲 Dubliai: <strong style="color:#fff;">${p.dubliai}</strong></div>
+                        <div>⛓️ Kalėjimai: <strong style="color:#fff;">${p.patekoIKalejima}</strong></div>
+                        <div>🏠 Nusipirko: <strong style="color:#fff;">${p.nusipirko}</strong></div>
+                        <div>🏠 Pastatė: <strong style="color:#fff;">${p.pastate}</strong></div>
+                        <div>💰 Nuoma gavo: <strong style="color:#28a745;">€${p.nuomaGavo}</strong></div>
+                        <div>💸 Nuoma sumokėjo: <strong style="color:#dc3545;">€${p.nuomaSumokejo}</strong></div>
+                        <div>💀 Bankrotai: <strong style="color:#fff;">${p.bankrotai}</strong></div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    content.innerHTML = html;
+}
+
+function updateStatsFromGameState(state) {
+    if (!state || !state.players) return;
+    
+    state.players.forEach(p => {
+        initPlayerStats(p.id, p.name, p.color);
+    });
+    
+    if (state.gameStarted && !window.gameStats.gameStartTime) {
+        window.gameStats.gameStartTime = Date.now();
+    }
+}
+
+function incrementRolls(playerId, isDouble) {
+    if (!window.gameStats.players[playerId]) return;
+    
+    window.gameStats.players[playerId].metimai++;
+    window.gameStats.totalRolls++;
+    
+    if (isDouble) {
+        window.gameStats.players[playerId].dubliai++;
+        window.gameStats.totalDoubles++;
+    }
+}
+
+function incrementJail(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].patekoIKalejima++;
+}
+
+function incrementBought(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nusipirko++;
+}
+
+function incrementBuilt(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].pastate++;
+}
+
+function addRentReceived(playerId, amount) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nuomaGavo += amount;
+}
+
+function addRentPaid(playerId, amount) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nuomaSumokejo += amount;
+}
+
+function incrementBankrupt(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].bankrotai++;
 }
