@@ -3492,17 +3492,7 @@ body {
 }
 
 /* Grupės spalva – viršutinė juostelė */
-.cell.property[data-group]::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--group-color, #c9a84c);
-    z-index: 2;
-    border-radius: 2px 2px 0 0;
-}
+
 
 /* Pilnos grupės – auksinis rėmelis */
 .cell.property.full-group {
