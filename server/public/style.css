@@ -3596,3 +3596,177 @@ body {
     color: #28a745;
     text-shadow: 0 0 10px rgba(40, 167, 69, 0.9), 0 2px 5px rgba(0,0,0,0.5);
 }
+
+/* ============================================
+   🖱️ MYGTUKŲ HOVER EFEKTAI
+   ============================================ */
+
+/* Visi mygtukai – bazinis transition */
+button,
+.btn,
+.menu-btn,
+.landing-btn,
+.header-btn,
+.left-btn,
+.control-buttons button,
+.choice-btn,
+.action-row button {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    cursor: pointer;
+}
+
+/* Landing mygtukai */
+.landing-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.landing-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.landing-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.landing-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.landing-btn-primary:hover {
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
+}
+
+.landing-btn-secondary:hover {
+    box-shadow: 0 10px 30px rgba(23, 162, 184, 0.5);
+}
+
+/* Menu mygtukai */
+.menu-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.menu-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.menu-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.menu-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+    border-color: #ffd700;
+}
+
+/* Header mygtukai */
+.header-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+/* Kairės panelės mygtukai */
+.left-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+}
+
+.leave-btn:hover {
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5) !important;
+}
+
+/* Valdymo mygtukai */
+.control-buttons button:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn-dice:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5) !important;
+}
+
+.btn-trade:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5) !important;
+}
+
+/* Action mygtukai */
+.action-row button:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+}
+
+.btn-bankrupt:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5) !important;
+}
+
+.btn-demolish:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5) !important;
+}
+
+/* Choice mygtukai */
+.choice-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.choice-buy:hover {
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5) !important;
+}
+
+.choice-cancel:hover {
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5) !important;
+}
+
+/* Bendri .btn */
+.btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5) !important;
+}
+
+.btn-secondary:hover {
+    box-shadow: 0 10px 30px rgba(108, 117, 125, 0.5) !important;
+}
+
+/* Mygtukų paspaudimas (active) */
+button:active:not(:disabled),
+.btn:active,
+.menu-btn:active,
+.landing-btn:active,
+.header-btn:active,
+.left-btn:active {
+    transform: translateY(0) scale(0.98) !important;
+    transition: all 0.1s !important;
+}
+
+/* Išjungti mygtukai */
+button:disabled,
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
