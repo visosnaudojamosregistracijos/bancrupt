@@ -432,6 +432,20 @@ function initSocket() {
                 playPaySound();
             }
             showPopupMessage(msg, 'rent');
+
+           // 🆕 Raudonas highlight nuomos mokėjimui
+            if (gameState && gameState.board && gameState.players) {
+                // Rasti sklypą pagal msg
+                const fieldMatch = msg.match(/([A-ZĄČĘĖĮŠŲŪŽ][a-ząčęėįšųūž]+)/);
+                if (fieldMatch) {
+                    const fieldName = fieldMatch[1];
+                    const field = gameState.board.find(f => f.name === fieldName);
+                    if (field) {
+                        highlightCell(field.id, 'red', 2000);
+                    }
+                }
+            }
+
         }
         if (msg.includes('LATRŲ BARĄ') || msg.includes('LATRŲ BARAS') || msg.includes('LATRŲ UŽEIGĄ')) {
             showPopupMessage(msg, 'tax');
