@@ -3297,6 +3297,13 @@ function updateUI(state) {
                 ${miniCardsHtml}
             </div>
         `;
+        
+        // 🆕 Animuoti pinigus
+        if (oldMoney !== newMoney) {
+            setTimeout(() => {
+                animateMoney(document.querySelector('#myInfo .player-money'), oldMoney, newMoney, 800);
+            }, 50);
+        }
     }
     
     const playersList = document.getElementById('playersList');
