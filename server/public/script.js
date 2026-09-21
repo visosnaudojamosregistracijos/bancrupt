@@ -3733,7 +3733,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // LANGELIŲ INFO REŽIMAS
+     // LANGELIŲ INFO REŽIMAS
     document.querySelectorAll('.cell').forEach(cell => {
         const fieldId = parseInt(cell.dataset.id);
         
@@ -3778,7 +3778,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ Inicijavimas baigtas');
 });
 
+// ============================================
 // 🔧 FIX: Visada grąžinti 'corner' klasę kampams
+// ============================================
 function fixCornerClasses() {
     const corners = {
         'cell-0':  'cell corner start',
@@ -3812,26 +3814,11 @@ cornerObserver.observe(document.body, {
 
 console.log('✅ cornerObserver įjungtas');
 
-// 🔧 FIX: Pridėti 'property' klasę perkamiems specialiems (11, 24, 48)
-function fixPropertyClasses() {
-    const buyableIds = [11, 24, 48];
-    
-    buyableIds.forEach(id => {
-        const cell = document.getElementById(`cell-${id}`);
-        if (cell && !cell.classList.contains('property')) {
-            cell.classList.add('property', 'edge');
-            console.log(`✅ cell-${id}: pridėta 'property' klasė`);
-        }
-    });
-}
-
-fixPropertyClasses();
-
 // ============================================
-// 🔧 FIX: Property klasė perkamiems specialiems
+// 🔧 FIX: Property klasė perkamiems specialiems (11, 24, 32, 48)
 // ============================================
 function fixPropertyClasses() {
-    const buyableIds = [11, 24, 48];
+    const buyableIds = [11, 24, 32, 48];
     
     buyableIds.forEach(id => {
         const cell = document.getElementById(`cell-${id}`);
