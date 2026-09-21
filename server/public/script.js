@@ -730,6 +730,10 @@ socket.on('buildingBuilt', (data) => {
     console.log('🏠 Statyba:', data);
     playBuildSound();
     
+    // 🆕 Pažymėti, kad namas ką tik pastatytas
+    window.newHouseAnimations = window.newHouseAnimations || {};
+    window.newHouseAnimations[data.fieldId] = true;
+    
     const isMe = data.playerId === playerId;
     
     let msgKey = '';
@@ -3503,14 +3507,32 @@ function updateBoard(state) {
             if (owner && owner.houses && owner.houses[index] && owner.houses[index] > 0) {
                 const houseCount = owner.houses[index];
                 let houseIcons = '';
+                
+                // 🆕 Patikrinti, ar namas ką tik pastatytas
+                const isNewHouse = window.newHouseAnimations && window.newHouseAnimations[index];
+                const isNewHotel = houseCount >= 5 && isNewHouse;
+                
                 if (houseCount >= 5) {
-                    houseIcons = '🏨';
+                    houseIcons = `<span class="${isNewHotel ? 'new-hotel' : ''}">🏨</span>`;
                 } else {
                     for (let i = 0; i < Math.min(houseCount, 4); i++) {
-                        houseIcons += '🏠';
+                        if (i === houseCount - 1 && isNewHouse) {
+                            houseIcons += `<span class="new-house">🏠</span>`;
+                        } else {
+                            houseIcons += '🏠';
+                        }
                     }
                 }
                 html += `<span class="cell-cost" style="font-size:14px; display:block; line-height:1.2;">${houseIcons}</span>`;
+                
+                // 🆕 Išvalyti žymą po 1 sekundės
+                if (isNewHouse) {
+                    setTimeout(() => {
+                        if (window.newHouseAnimations) {
+                            delete window.newHouseAnimations[index];
+                        }
+                    }, 1000);
+                }
             } else {
                 html += `<span class="cell-cost">€${field.cost}</span>`;
             }
