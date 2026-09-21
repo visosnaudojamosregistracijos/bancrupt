@@ -128,14 +128,19 @@
             <div id="gameBody">
                 <aside id="leftPanel">
                     <div id="gameIdBox">
-                        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
-                    </div>
-                    
-                    <!-- GARSO MYGTUKAS -->
-                    <div style="position:relative; width:100%;">
-                        <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
-                            🔊 Garsas
-                        </button>
+    📋 ID:<br><span id="gameIdDisplayLeft">---</span>
+</div>
+
+<!-- 🏆 LYDERIŲ MYGTUKAS -->
+<button onclick="openLeaders()" id="leadersBtn" class="left-btn" style="background: linear-gradient(145deg, #f39c12, #e67e22); color: #fff; border-color: #f1c40f;">
+    🏆 Lyderiai
+</button>
+
+<!-- 🆕 GARSO MYGTUKAS -->
+<div style="position:relative; width:100%;">
+    <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
+        🔊 Garsas
+    </button>
                         
                         <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8);">
                             <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
@@ -757,6 +762,23 @@
 
     <!-- INFO TOOLTIP -->
     <div id="cellInfoTooltip"></div>
+
+    <!-- 🏆 LYDERIŲ MODALAS -->
+<div id="leadersModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99996; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
+    <div style="background:linear-gradient(145deg, #1a6b3c, #0f4a2a); border-radius:20px; padding:30px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; border:3px solid #f39c12; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+        <h2 style="color:#ffd700; text-align:center; font-size:1.8em; margin-bottom:20px; border-bottom:2px solid #f39c12; padding-bottom:10px;">
+            🏆 LYDERIŲ LENTELĖ
+        </h2>
+        
+        <div id="leadersContent">
+            <!-- Lyderiai bus čia -->
+        </div>
+        
+        <button onclick="closeLeaders()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+            ❌ Uždaryti
+        </button>
+    </div>
+</div>
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="cellMessages.js"></script>

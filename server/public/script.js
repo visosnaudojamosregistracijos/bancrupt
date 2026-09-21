@@ -4564,3 +4564,132 @@ function incrementBankrupt(playerId) {
     if (!window.gameStats.players[playerId]) return;
     window.gameStats.players[playerId].bankrotai++;
 }
+
+// ============================================
+// 🏆 LYDERIŲ LENTELĖ
+// ============================================
+
+// 🆕 Atidaryti lyderių modalą
+function openLeaders() {
+    const modal = document.getElementById('leadersModal');
+    if (!modal) return;
+    
+    updateLeadersDisplay();
+    modal.style.display = 'flex';
+    playClickSound();
+}
+
+// 🆕 Uždaryti lyderių modalą
+function closeLeaders() {
+    const modal = document.getElementById('leadersModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    playClickSound();
+}
+
+// 🆕 Atnaujinti lyderių rodymą
+function updateLeadersDisplay() {
+    const content = document.getElementById('leadersContent');
+    if (!content) return;
+    
+    if (!gameState || !gameState.players) {
+        content.innerHTML = '<div style="color:#d4b896; text-align:center; padding:20px;">Nėra žaidėjų</div>';
+        return;
+    }
+    
+    // 🆕 Surinkti visus žaidėjus
+    const players = gameState.players
+        .filter(p => !p.kicked)  // Neišmesti
+        .map(p => {
+            const houses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
+            return {
+                id: p.id,
+                name: p.name,
+                color: p.color,
+                money: p.money,
+                properties: p.properties ? p.properties.length : 0,
+                houses: houses,
+                bankrupt: p.bankrupt,
+                left: p.left,
+                kicked: p.kicked,
+                isActive: p.isActive
+            };
+        });
+    
+    // 🆕 Rikiuoti pagal pinigus (nuo didžiausio)
+    players.sort((a, b) => {
+        // Bankrutavę – į apačią
+        if (a.bankrupt !== b.bankrupt) return a.bankrupt ? 1 : -1;
+        if (a.left !== b.left) return a.left ? 1 : -1;
+        
+        // Pagal pinigus
+        return b.money - a.money;
+    });
+    
+    let html = '';
+    
+    // 🆕 Bendras skaičius
+    html += `
+        <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px; text-align:center;">
+            <div style="color:#d4b896; font-size:13px; margin-bottom:4px;">👥 Žaidėjų skaičius</div>
+            <div style="color:#ffd700; font-size:20px; font-weight:700;">${players.length}/8</div>
+        </div>
+    `;
+    
+    // 🆕 Lyderių sąrašas
+    players.forEach((p, index) => {
+        // Medaliai
+        let medal = '';
+        let bgColor = 'rgba(255,255,255,0.1)';
+        let borderColor = p.color;
+        
+        if (index === 0 && !p.bankrupt && !p.left) {
+            medal = '🥇';
+            bgColor = 'rgba(255,215,0,0.15)';
+            borderColor = '#ffd700';
+        } else if (index === 1 && !p.bankrupt && !p.left) {
+            medal = '🥈';
+            bgColor = 'rgba(192,192,192,0.15)';
+            borderColor = '#c0c0c0';
+        } else if (index === 2 && !p.bankrupt && !p.left) {
+            medal = '🥉';
+            bgColor = 'rgba(205,127,50,0.15)';
+            borderColor = '#cd7f32';
+        } else {
+            medal = `#${index + 1}`;
+        }
+        
+        // Statusas
+        let status = '';
+        if (p.bankrupt) status = '<span style="color:#dc3545; font-size:11px;">💀 BANKROTAS</span>';
+        else if (p.left) status = '<span style="color:#6c757d; font-size:11px;">😭 PASITRAUKĖ</span>';
+        else if (p.kicked) status = '<span style="color:#dc3545; font-size:11px;">🚫 PAŠALINTAS</span>';
+        else if (!p.isActive) status = '<span style="color:#6c757d; font-size:11px;">⏸️ NEAKTYVUS</span>';
+        
+        html += `
+            <div style="background:${bgColor}; border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid ${borderColor}; ${p.bankrupt || p.left ? 'opacity:0.6;' : ''}">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                    <span style="font-size:24px; min-width:30px; text-align:center;">${medal}</span>
+                    <span style="width:16px; height:16px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
+                    <span style="color:#fff; font-weight:700; font-size:15px; flex:1;">${p.name}</span>
+                    ${status}
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-size:12px; color:#d4b896;">
+                    <div>💰 <strong style="color:${p.money < 0 ? '#dc3545' : '#28a745'};">€${p.money}</strong></div>
+                    <div>🏠 <strong style="color:#fff;">${p.properties}</strong> objektai</div>
+                    <div>🏗️ <strong style="color:#fff;">${p.houses}</strong> namai</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+}
+
+// 🆕 Automatiškai atnaujinti lyderius, kai keičiasi žaidimo būsena
+function autoUpdateLeaders() {
+    const modal = document.getElementById('leadersModal');
+    if (modal && modal.style.display === 'flex') {
+        updateLeadersDisplay();
+    }
+}
