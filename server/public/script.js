@@ -778,18 +778,29 @@ socket.on('buildingBuilt', (data) => {
     });
 
     socket.on('gameFinished', (data) => {
-        console.log('🏆 Žaidimas baigtas:', data);
-        
-        localStorage.removeItem('bancrupt_gameId');
-        localStorage.removeItem('bancrupt_playerToken');
-        
-        playWinSound();
-        playCelebrateSound();
-        
-        setTimeout(() => {
-            alert(`🏆 ŽAIDIMAS BAIGTAS!\n\nLaimėtojas: ${data.winner}`);
-        }, 500);
-    });
+    console.log('🏆 Žaidimas baigtas:', data);
+    
+    localStorage.removeItem('bancrupt_gameId');
+    localStorage.removeItem('bancrupt_playerToken');
+    
+    playWinSound();
+    playCelebrateSound();
+    
+    // 🆕 Sudaryti statistiką
+    let stats = '';
+    if (gameState && gameState.players) {
+        const winner = gameState.players.find(p => p.name === data.winner);
+        if (winner) {
+            const houses = winner.houses ? Object.values(winner.houses).reduce((a, b) => a + b, 0) : 0;
+            stats = `💰 Turėjo: €${winner.money} • 🏠 ${winner.properties.length} objektai (${houses} namai)`;
+        }
+    }
+    
+    // 🆕 Rodyti laimėjimo modalą su konfeti
+    setTimeout(() => {
+        showWinnerModal(data.winner, stats);
+    }, 500);
+});
 
     // VOTE-KICK KLAUSYMAI
 
@@ -3854,3 +3865,89 @@ propertyObserver.observe(document.body, {
 });
 
 console.log('✅ propertyObserver įjungtas');
+
+// ============================================
+// 🏆 LAIMĖJIMO EKRANAS SU KONFETI
+// ============================================
+function showWinnerModal(winnerName, stats) {
+    const modal = document.getElementById('winnerModal');
+    if (!modal) {
+        console.warn('⚠️ winnerModal nerastas');
+        return;
+    }
+    
+    const nameEl = document.getElementById('winnerName');
+    if (nameEl) nameEl.textContent = winnerName || 'Nežinomas';
+    
+    const statsEl = document.getElementById('winnerStats');
+    if (statsEl && stats) {
+        statsEl.innerHTML = stats;
+    }
+    
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    createConfetti();
+    
+    if (typeof playWinSound === 'function') playWinSound();
+    if (typeof playCelebrateSound === 'function') playCelebrateSound();
+    
+    console.log('🏆 Laimėtojas:', winnerName);
+}
+
+function closeWinnerModal() {
+    const modal = document.getElementById('winnerModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+    
+    document.querySelectorAll('.confetti-piece').forEach(c => c.remove());
+    
+    if (typeof goToMenu === 'function') {
+        goToMenu();
+    }
+    
+    if (typeof playClickSound === 'function') playClickSound();
+}
+
+function createConfetti() {
+    const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#95e1d3', '#f38181', '#aa96da', '#fcbad3', '#ffffd2'];
+    const shapes = ['rect', 'circle', 'triangle'];
+    const totalConfetti = 150;
+    
+    document.querySelectorAll('.confetti-piece').forEach(c => c.remove());
+    
+    for (let i = 0; i < totalConfetti; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            confetti.className = `confetti-piece ${shape}`;
+            confetti.style.left = Math.random() * 100 + '%';
+            
+            if (shape === 'triangle') {
+                confetti.style.borderBottomColor = color;
+            } else {
+                confetti.style.background = color;
+            }
+            
+            const size = 0.5 + Math.random() * 1.5;
+            if (shape !== 'triangle') {
+                confetti.style.transform = `scale(${size})`;
+            }
+            
+            const duration = 3 + Math.random() * 3;
+            confetti.style.animationDuration = duration + 's';
+            confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+            confetti.style.animationTimingFunction = 'linear';
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), (duration + 1) * 1000);
+        }, i * 20);
+    }
+    
+    console.log('🎊 Konfeti sukurta:', totalConfetti);
+}

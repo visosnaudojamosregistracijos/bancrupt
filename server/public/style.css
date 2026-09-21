@@ -3262,3 +3262,69 @@ body {
 .cell[data-id="50"] .cell-bg-icon {
     animation: bounce 1.5s ease-in-out infinite;
 }
+
+/* ============================================
+   🏆 LAIMĖJIMO EKRANAS SU KONFETI
+   ============================================ */
+
+@keyframes winnerBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.1); }
+}
+
+@keyframes winnerGlow {
+    0%, 100% { 
+        text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 20px rgba(0,0,0,0.9);
+        transform: scale(1);
+    }
+    50% { 
+        text-shadow: 0 0 60px rgba(255,215,0,1), 0 0 80px rgba(255,215,0,0.6), 0 4px 20px rgba(0,0,0,0.9);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.confetti-piece {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    top: -20px;
+    z-index: 99998;
+    animation: confettiFall linear forwards;
+    pointer-events: none;
+}
+
+.confetti-piece.rect {
+    width: 8px;
+    height: 16px;
+    border-radius: 2px;
+}
+
+.confetti-piece.circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.confetti-piece.triangle {
+    width: 0;
+    height: 0;
+    background: transparent !important;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 12px solid;
+}
+
+#winnerModal.active {
+    display: flex !important;
+}
