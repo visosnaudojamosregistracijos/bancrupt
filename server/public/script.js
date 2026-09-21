@@ -3554,6 +3554,9 @@ function updateUI(state) {
     
     updateBoard(state);
     
+    // 🆕 Atnaujinti lyderius, jei modalas atidarytas
+    autoUpdateLeaders();
+    
     // 🆕 Inicializuoti mini kortelių tooltip'us
     setTimeout(initMiniCardTooltips, 100);
 }
