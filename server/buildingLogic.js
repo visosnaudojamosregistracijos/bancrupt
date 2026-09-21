@@ -268,21 +268,30 @@ class BuildingLogic {
     //   Viežbutis → × 50
     // ============================================
     getRentWithHouses(playerId, fieldId) {
-    const player = this.game.players.find(p => p.id === playerId);
-    const field = this.game.board.find(f => f.id === fieldId);
-    if (!player || !field) return 0;
+        const player = this.game.players.find(p => p.id === playerId);
+        const field = this.game.board.find(f => f.id === fieldId);
+        if (!player || !field) return 0;
 
-        // Bazinė nuoma = 10% sklypo vertės
+        // 🆕 SPECIALI GRUPĖ (11, 24, 32, 48) – fiksuota nuoma
+        if (C.SPECIAL_GROUP && C.SPECIAL_GROUP.includes(fieldId)) {
+            // Suskaičiuoti, kiek langelių iš šios grupės turi savininkas
+            const ownedInGroup = player.properties.filter(id => C.SPECIAL_GROUP.includes(id)).length;
+            
+            // Fiksuota nuoma pagal turimų skaičių
+            const rent = C.SPECIAL_RENT[ownedInGroup] || 50;
+            return rent;
+        }
+
+        // Standartinė logika
         let baseRent = field.cost * C.RENT_BASE_RATIO;
         
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         
-        // Daugiklis pagal namų skaičių
         let multiplier = 1;
         if (houses >= 1 && houses <= 4) {
             multiplier = C.RENT_MULTIPLIERS[houses - 1];
         } else if (houses >= 5) {
-            multiplier = C.RENT_MULTIPLIERS[4];  // Viežbutis
+            multiplier = C.RENT_MULTIPLIERS[4];
         }
         
         const rent = Math.floor(baseRent * multiplier);

@@ -18,7 +18,19 @@ module.exports = {
         '#ff69b4': [35, 36, 38],  // Šiauliai, Kuršėnai, Radviliškis
         '#2c3e50': [39, 40, 41],  // Klaipėda, Palanga, Gargždai
         '#1a237e': [43, 45, 47],  // Kaunas, Garliava, Raudondvaris
-        '#bdc3c7': [49, 51]       // Trakai, Vilnius
+        '#bdc3c7': [49, 51],      // Trakai, Vilnius
+        '#e74c3c_special': [11, 24, 32, 48]  // 🆕 SPECIALI GRUPĖ
+    },
+
+    // 🆕 SPECIALI GRUPĖ (11, 24, 32, 48) – fiksuota nuoma
+    SPECIAL_GROUP: [11, 24, 32, 48],
+    
+    // 🆕 Fiksuota nuoma pagal turimų langelių skaičių
+    SPECIAL_RENT: {
+        1: 50,
+        2: 100,
+        3: 150,
+        4: 200
     },
 
     // ============================================

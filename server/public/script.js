@@ -1756,22 +1756,39 @@ function showCellInfo(fieldId) {
     }
     
     if (field.type === 'property' && field.color) {
-        const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
-        const baseRent = Math.floor(field.cost * 0.1);
+        // 🆕 SPECIALI GRUPĖ (11, 24, 32, 48) – fiksuota nuoma
+        const SPECIAL_GROUP = [11, 24, 32, 48];
+        const SPECIAL_RENT = { 1: 50, 2: 100, 3: 150, 4: 200 };
         
-        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
-        html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
-        
-        // Namai - daugikliai: 1→10, 2→20, 3→30, 4→40
-        const multipliers = [10, 20, 30, 40];
-        for (let i = 1; i <= 4; i++) {
-            const rent = Math.floor(baseRent * multipliers[i - 1]);
-            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
+        if (SPECIAL_GROUP.includes(field.id)) {
+            const ownedInGroup = owner ? owner.properties.filter(id => SPECIAL_GROUP.includes(id)).length : 0;
+            const currentRent = SPECIAL_RENT[ownedInGroup] || 50;
+            
+            html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA (GRUPĖ)</div>`;
+            html += `<div class="info-row"><span class="label">Turi ${ownedInGroup}/4:</span><span class="value green">€${currentRent}</span></div>`;
+            html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
+            html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
+            html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
+            html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+            html += `</div>`;
+        } else {
+            // Standartinė logika
+            const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
+            const baseRent = Math.floor(field.cost * 0.1);
+            
+            html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+            html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
+            
+            const multipliers = [10, 20, 30, 40];
+            for (let i = 1; i <= 4; i++) {
+                const rent = Math.floor(baseRent * multipliers[i - 1]);
+                html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
+            }
+            
+            const hotelRent = Math.floor(baseRent * 50);
+            html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${hotelRent}</span></div>`;
+            html += `</div>`;
         }
-        
-        const hotelRent = Math.floor(baseRent * 50);
-        html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${hotelRent}</span></div>`;
-        html += `</div>`;
     }
     
     if (field.type === 'service1') {
