@@ -3242,12 +3242,14 @@ function setMode(mode) {
     const board = document.getElementById('board');
     board.className = mode;
     
-    const adaptiveBtn = document.getElementById('modeAdaptive');
-    const fixedBtn = document.getElementById('modeFixed');
-    
-    if (adaptiveBtn && fixedBtn) {
-        adaptiveBtn.classList.toggle('active', mode === 'adaptive');
-        fixedBtn.classList.toggle('active', mode === 'fixed');
+    // 🆕 Atnaujinti mygtuko tekstą
+    const modeBtn = document.getElementById('modeBtn');
+    if (modeBtn) {
+        if (mode === 'adaptive') {
+            modeBtn.innerHTML = '📊 Režimas: Adaptyvus';
+        } else {
+            modeBtn.innerHTML = '📊 Režimas: Fiksuotas';
+        }
     }
     
     localStorage.setItem('boardMode', mode);
@@ -3255,6 +3257,20 @@ function setMode(mode) {
     
     // 🆕 Perskaičiuoti info panelės šriftą
     setTimeout(autoFitInfoFont, 300);
+}
+
+// 🆕 Perjungti režimą
+function toggleMode() {
+    const board = document.getElementById('board');
+    if (!board) return;
+    
+    // Nustatyti dabartinį režimą
+    const currentMode = localStorage.getItem('boardMode') || 'adaptive';
+    const newMode = currentMode === 'adaptive' ? 'fixed' : 'adaptive';
+    
+    setMode(newMode);
+    
+    console.log(`📊 Režimas pakeistas: ${currentMode} → ${newMode}`);
 }
 
 // ============================================
