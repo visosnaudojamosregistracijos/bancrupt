@@ -515,7 +515,6 @@ socket.on('buyPending', (data) => {
     playBuySound();
     playCashSound();
     
-    // 🆕 Skirtingas pranešimas priklausomai nuo to, kas pirko
     let msg;
     if (data.playerId === playerId) {
         msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
@@ -526,11 +525,18 @@ socket.on('buyPending', (data) => {
     addNotification(msg);
     addJournal(msg);
     
-    // 🆕 Rodyti bloką VISIEMS (ir pirkėjui, ir kitiems)
     showBuyResult(data.playerName, data.fieldName, 'buy', data.playerId === playerId);
     
     if (data.playerId !== playerId) {
         showPopupMessage(msg, 'buy');
+    }
+    
+    // 🆕 Žalias highlight – rasti fieldId pagal fieldName
+    if (data.fieldName && gameState && gameState.board) {
+        const field = gameState.board.find(f => f.name === data.fieldName);
+        if (field) {
+            highlightCell(field.id, 'green', 2000);
+        }
     }
     
     hideBuyChoice();
@@ -547,7 +553,7 @@ socket.on('buyPending', (data) => {
         msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
     }
     
-    addNotification(msg);
+  addNotification(msg);
     addJournal(msg);
     
     // 🆕 Rodyti bloką VISIEMS
@@ -2294,7 +2300,7 @@ async function animateMovement(playerId, fromPos, toPos) {
         
         if (!cell) continue;
         
-        cell.classList.add('highlight');
+        cell.classList.add('highlight-yellow');
         
         if (typeof playClickSound === 'function') {
             playClickSound();
@@ -2303,7 +2309,7 @@ async function animateMovement(playerId, fromPos, toPos) {
         await new Promise(resolve => setTimeout(resolve, stepDuration));
         
         if (i < totalSteps) {
-            cell.classList.remove('highlight');
+            cell.classList.remove('highlight-yellow');
         }
     }
     
@@ -2311,7 +2317,7 @@ async function animateMovement(playerId, fromPos, toPos) {
     const finalCell = document.getElementById(`cell-${toPos}`);
     if (finalCell) {
         await new Promise(resolve => setTimeout(resolve, 500));
-        finalCell.classList.remove('highlight');
+        finalCell.classList.remove('highlight-yellow');
     }
     
     // 🆕 3 FAZĖ: PARODYTI rutuliuką galutinėje pozicijoje
@@ -4083,4 +4089,26 @@ function animateAllPlayersMoney(state) {
             }
         });
     });
+}
+
+// ============================================
+// 🎨 SKLYPO HIGHLIGHT
+// ============================================
+function highlightCell(cellId, color = 'yellow', duration = 1500) {
+    const cell = document.getElementById(`cell-${cellId}`);
+    if (!cell) return;
+    
+    // Nuimti visus highlight
+    cell.classList.remove('highlight-yellow', 'highlight-green', 'highlight-red');
+    
+    // Pridėti naują
+    const className = `highlight-${color}`;
+    cell.classList.add(className);
+    
+    console.log(`🎨 Highlight: cell-${cellId} → ${color} (${duration}ms)`);
+    
+    // Nuimti po nurodyto laiko
+    setTimeout(() => {
+        cell.classList.remove(className);
+    }, duration);
 }
