@@ -326,6 +326,8 @@ function initSocket() {
             else if (data.field.id === 21) playLatrasSound();
             else if (data.field.id === 32) playPirtisSound();
             else if (data.field.id === 50) playBirthdaySound();
+            else if (data.field.id === 42) playJailInSound();
+            else if (data.field.id === 16) playJailSound();  // 🆕 Lankytojas kalėjime
         }
         
         if (data.field && data.result) {
