@@ -3934,16 +3934,82 @@ button:disabled,
     border-bottom: 1px solid rgba(61,43,31,0.2);
 }
 
-/* 🌙 TAMSAUS REŽIMO */
+/* ============================================
+   🌙 TAMSAUS REŽIMO SPALVOS (hibridas)
+   ============================================ */
+
 body.dark-mode {
-    filter: invert(1) hue-rotate(180deg);
+    background: #0a0a0a !important;
 }
 
-/* Išimti atgal – kad paveikslėliai ir kauliukai nebūtų apversti */
-body.dark-mode img,
-body.dark-mode .dice,
-body.dark-mode .cell-bg-icon,
-body.dark-mode .color-circle,
-body.dark-mode .player-dot {
-    filter: invert(1) hue-rotate(180deg);
+/* Langeliai */
+body.dark-mode .cell {
+    background: linear-gradient(145deg, #2a2a2a, #1f1f1f) !important;
+    color: #e0e0e0 !important;
+    border-color: #444 !important;
 }
+
+body.dark-mode .cell .cell-name,
+body.dark-mode .cell .cell-cost,
+body.dark-mode .cell .cell-number {
+    color: #e0e0e0 !important;
+}
+
+/* Vidurinės panelės */
+body.dark-mode .center-cell {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a) !important;
+    border-color: #444 !important;
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .center-cell h4 {
+    color: #e0e0e0 !important;
+    border-bottom-color: rgba(224, 224, 224, 0.2) !important;
+}
+
+/* Chat, žurnalas, pranešimai */
+body.dark-mode #chatMessages,
+body.dark-mode #journal,
+body.dark-mode #notifications,
+body.dark-mode #playersList {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .journal-item {
+    color: #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+body.dark-mode .notification-item {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .player-item {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e0e0e0 !important;
+}
+
+/* Aš (myInfo) */
+body.dark-mode #myInfo {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode #myInfo .player-money {
+    color: #fff !important;
+}
+
+body.dark-mode #myInfo .player-name {
+    color: #e0e0e0 !important;
+}
+
+/* Info panelė */
+body.dark-mode #cellInfoPanel {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e0e0e0 !important;
+}
+
+/* Property spalvų juostelė – lieka ta pati, kad būtų atpažįstama */
+
+/* Modalai, mygtukai, kauliukai – lieka savo spalvų */
