@@ -17,6 +17,52 @@ let lastVolume = 50;
 let infoMode = false;
 let lastHoveredField = null;
 
+// VOTE-KICK
+let voteKickTimerInterval = null;
+let amIKicked = false;
+
+// SPALVŲ PASIRINKIMAS
+const PLAYER_COLORS = [
+    '#9c0505', '#e2de00', '#5506d3', '#05b130',
+    '#000000', '#00adc4', '#492b1f', '#0609d6'
+];
+
+let selectedCreateColor = null;
+let selectedJoinColor = null;
+let availableJoinColors = [];
+let joinColorCheckTimeout = null;
+
+// WAITING ROOM
+let waitingRoomState = null;
+
+// VIEŠI STALAI
+let publicGamesCheckInterval = null;
+
+// INFO PANELĖS ŠRIFTAS
+let infoResizeObserver = null;
+
+// ============================================
+// 🆕 KONSTANTOS (frontend)
+// ============================================
+const SERVICE1_IDS = [2, 14, 28, 44];
+const SERVICE2_IDS = [8, 19, 37, 46];
+const SERVICE3_IDS = [11, 24, 32, 48];
+const SERVICE_RENT = { 1: 50, 2: 100, 3: 150, 4: 200 };
+
+const COLOR_GROUPS = {
+    '#ffd700': [1, 3],
+    '#4a90d9': [6, 7, 9],
+    '#2ecc71': [10, 12, 15],
+    '#9b59b6': [17, 18, 20],
+    '#e74c3c': [22, 23, 25],
+    '#8B6914': [27, 29, 30],
+    '#1abc9c': [31, 33, 34],
+    '#ff69b4': [35, 36, 38],
+    '#2c3e50': [39, 40, 41],
+    '#1a237e': [43, 45, 47],
+    '#bdc3c7': [49, 51]
+};
+
 // ============================================
 // PRISIJUNGIMAS
 // ============================================
@@ -26,7 +72,7 @@ function initSocket() {
     
     const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000'
-        : 'https://responsible-nourishment-production.up.railway.app';
+        : window.location.origin;
     
     console.log('🌐 Serverio URL:', SERVER_URL);
     
@@ -59,7 +105,7 @@ function initSocket() {
 
     socket.on('connect_error', (error) => {
         console.log('❌ Prisijungimo klaida:', error);
-        showLobbyMessage('🔴 Nepavyko prisijungti prie serverio! Įsitikink, kad serveris paleistas.', '#dc3545');
+        showLobbyMessage('🔴 Nepavyko prisijungti prie serverio!', '#dc3545');
         playErrorSound();
     });
 
@@ -122,177 +168,245 @@ function initSocket() {
     });
 
     socket.on('gameState', (state) => {
-        console.log('📊 Gauta žaidimo būsena');
-        gameState = state;
-        updateUI(state);
-        document.getElementById('bankruptModal').style.display = 'none';
+    console.log('📊 Gauta žaidimo būsena');
+    gameState = state;
+    updateUI(state);
+    document.getElementById('bankruptModal').style.display = 'none';
+    
+    // 🆕 Inicializuoti statistiką KIEKVIENAM žaidėjui
+    if (state.players && state.players.length > 0) {
+        state.players.forEach(p => {
+            if (!window.gameStats.players[p.id]) {
+                initPlayerStats(p.id, p.name, p.color);
+            }
+        });
+    }
+    
+    if (state.gameStarted) {
+        hideWaitingRoom();
+    }
+});
+
+    // SPALVŲ GAVIMAS
+    socket.on('gameColors', (data) => {
+        console.log('🎨 Gautos spalvos:', data);
+        
+        if (data.error) {
+            availableJoinColors = [...PLAYER_COLORS];
+            selectedJoinColor = null;
+            renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
+            
+            const status = document.getElementById('joinColorStatus');
+            if (status) status.textContent = '❌ ' + data.error;
+            return;
+        }
+        
+        if (!data.available || data.available.length === 0) {
+            availableJoinColors = [...PLAYER_COLORS];
+            selectedJoinColor = null;
+            renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
+            
+            const status = document.getElementById('joinColorStatus');
+            if (status) status.textContent = '⚠️ Nėra laisvų spalvų!';
+            return;
+        }
+        
+        availableJoinColors = data.available;
+        
+        if (selectedJoinColor && !availableJoinColors.includes(selectedJoinColor)) {
+            selectedJoinColor = null;
+        }
+        
+        renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
+        
+        const status = document.getElementById('joinColorStatus');
+        if (status) {
+            const totalColors = PLAYER_COLORS.length;
+            const takenCount = data.used.length;
+            status.textContent = `👥 Žaidėjai: ${takenCount}/${totalColors} • Laisvos: ${availableJoinColors.length}`;
+        }
     });
 
-    socket.on('diceRolled', (data) => {
+    // WAITING ROOM
+    socket.on('waitingRoomUpdate', (state) => {
+        console.log('⏳ Waiting room update:', state);
+        updateWaitingRoom(state);
+    });
+
+    socket.on('gameStarted', (data) => {
+        console.log('🎮 Žaidimas pradėtas:', data);
+        playStartSound();
+        
+        const msg = `🎮 Žaidimas pradėtas! Pirmas eina: ${data.firstPlayerName}`;
+        addNotification(msg);
+        addJournal(msg);
+        
+        hideWaitingRoom();
+        
+        if (gameState) updateUI(gameState);
+    });
+
+    socket.on('youWereKicked', () => {
+        console.log('❌ Buvau išmestas iš waiting room');
+        playErrorSound();
+        alert('❌ Tave išmetė kūrėjas!');
+        
+        if (typeof goToMenu === 'function') {
+            goToMenu();
+        }
+        
+        playerId = null;
+        gameId = null;
+        gameState = null;
+        myPlayer = null;
+        localStorage.removeItem('bancrupt_gameId');
+        localStorage.removeItem('bancrupt_playerToken');
+    });
+
+    socket.on('publicStatusChanged', (data) => {
+        console.log('🌐 Viešumo statusas pakeistas:', data);
+        if (data.isPublic) {
+            addNotification('🌐 Stalas dabar viešas!');
+        } else {
+            addNotification('🔒 Stalas dabar privatus');
+        }
+    });
+
+    socket.on('publicGamesList', (games) => {
+        console.log('🌐 Viešų stalų sąrašas:', games);
+        renderPublicGames(games);
+    });
+
+    socket.on('diceRolled', async (data) => {
         console.log('🎲 Kauliukai mesti:', data);
         playDiceSound();
         updateDiceDisplay(data.dice[0], data.dice[1]);
+
+        if (data.player && data.player.id !== undefined) {
+            const isDouble = data.dice[0] === data.dice[1];
+            incrementRolls(data.player.id, isDouble);
+        }
         
-        let notificationMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
-        let popupMsg = notificationMsg;
-        let popupType = 'move';
+        window.animatingPlayers = window.animatingPlayers || [];
+        if (!window.animatingPlayers.includes(data.player.id)) {
+            window.animatingPlayers.push(data.player.id);
+        }
         
+        if (data.oldPosition !== undefined && data.newPosition !== undefined) {
+            await animateMovement(data.player.id, data.oldPosition, data.newPosition);
+        }
+        
+        window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
+        
+        const isMe = data.player.id === playerId;
+
+        if (data.result && data.result.message && data.result.message.includes('neturi pakankamai pinigų')) {
+            const msg = isMe 
+                ? `❌ Neužtenka pinigų ${data.field.name} pirkti!`
+                : `❌ ${data.player.name} neužtenka pinigų ${data.field.name} pirkti!`;
+            
+            showCellAction(msg, 'tax');
+            addJournal(msg);
+            
+            updateUI(gameState);
+            return;
+        }
+        
+        // GARSO EFEKTAI
         if (data.field) {
-            notificationMsg += ` ir atsistojo ant "${data.field.name}"`;
-            popupMsg += ` ir atsistojo ant "${data.field.name}"`;
+            if (data.field.id === 2) playDujosSound();
+            else if (data.field.id === 14) playSiukslesSound();
+            else if (data.field.id === 28) playElektraSound();
+            else if (data.field.id === 44) playVanduoSound();
+            else if (data.field.id === 8) playAirPortSound();
+            else if (data.field.id === 19) playTrainSound();
+            else if (data.field.id === 37) playPortSound();
+            else if (data.field.id === 46) playBusSound();
+            else if (data.field.id === 13) playHospitalSound();
+            else if (data.field.id === 21) playLatrasSound();
+            else if (data.field.id === 32) playPirtisSound();
+            else if (data.field.id === 50) playBirthdaySound();
+            else if (data.field.id === 42) playJailInSound();
+            else if (data.field.id === 16) playJailSound();  // 🆕 Lankytojas kalėjime
+        }
+        
+        if (data.field && data.result) {
+            const fieldId = data.field.id;
             
-            // SERVICE1 GARSAI
-            if (data.field.id === 2) {
-                playDujosSound();
-            } else if (data.field.id === 14) {
-                playSiukslesSound();
-            } else if (data.field.id === 29) {
-                playElektraSound();
-            } else if (data.field.id === 45) {
-                playVanduoSound();
-            }
-            // SERVICE2 GARSAI
-            else if (data.field.id === 8) {
-                playAirPortSound();
-            } else if (data.field.id === 19) {
-                playTrainSound();
-            } else if (data.field.id === 40) {
-                playPortSound();
-            } else if (data.field.id === 47) {
-                playBusSound();
-            }
-            // LIGONINĖ
-            else if (data.field.id === 13) {
-                playHospitalSound();
-            }
-            // LATRŲ UŽEIGA, PIRTIS, GIMTADIENIS
-            else if (data.field.id === 23) {
-                playLatrasSound();
-            } else if (data.field.id === 33) {
-                playPirtisSound();
-            } else if (data.field.id === 50) {
-                playBirthdaySound();
+            const owner = gameState?.players?.find(p => 
+                p.properties?.includes(fieldId) && !p.bankrupt && !p.left && !p.kicked
+            );
+            
+            let msgKey = '';
+            let msgData = {
+                player: data.player.name,
+                field: data.field.name,
+                owner: owner?.name || '',
+                rent: data.result.rent || 0
+            };
+            
+            if (data.field.type === 'property') {
+                if (owner && owner.id === data.player.id) {
+                    msgKey = isMe ? 'visitMine' : 'visitOthers';
+                } else if (owner && owner.id !== data.player.id) {
+                    if (isMe) msgKey = 'rentPayer';
+                    else if (owner.id === playerId) msgKey = 'rentOwner';
+                    else msgKey = 'rentObserver';
+                } else if (data.result.action === 'can_buy') {
+                    updateUI(gameState);
+                    return;
+                }
+            } else if (data.field.type === 'service1' || data.field.type === 'service2' || data.field.type === 'service3') {
+                msgKey = isMe ? 'visitMine' : 'visitOthers';
+                
+                let serviceIds;
+                if (data.field.type === 'service1') serviceIds = SERVICE1_IDS;
+                else if (data.field.type === 'service2') serviceIds = SERVICE2_IDS;
+                else serviceIds = SERVICE3_IDS;
+                
+                const count = owner?.properties?.filter(id => serviceIds.includes(id)).length || 0;
+                msgData.count = count;
+                msgData.countSuffix = getCountSuffix(count);
             }
             
-            if (data.result) {
-                if (data.result.action === 'can_buy') {
-                    const buyMsg = ` 🏠 Gali nusipirkti už €${data.field.cost}!`;
-                    notificationMsg += buyMsg;
-                    popupMsg += buyMsg;
-                    popupType = 'buy';
-                } else if (data.result.action === 'pay_rent') {
-                    const rentMsg = ` 💰 Sumokėjo nuomą!`;
-                    notificationMsg += rentMsg;
-                    popupMsg += rentMsg;
-                    popupType = 'rent';
+            if (msgKey) {
+                const msg = getCellMessage(fieldId, msgKey, msgData);
+                if (msg) {
+                    addJournal(msg);
                     
-                    if (data.field.id === 8) {
-                        setTimeout(() => playAirInSound(), 800);
-                    } else {
-                        const isService1 = (data.field.id === 2 || data.field.id === 14 || 
-                                          data.field.id === 29 || data.field.id === 45);
-                        const isService2 = (data.field.id === 19 || data.field.id === 40 || 
-                                          data.field.id === 47);
-                        if (!isService1 && !isService2) {
-                            playPaySound();
-                        }
-                    }
-                } else if (data.result.action === 'pay_tax') {
-                    const taxMsg = ` 💸 Sumokėjo mokesčius!`;
-                    notificationMsg += taxMsg;
-                    popupMsg += taxMsg;
-                    popupType = 'tax';
-                    playTaxSound();
-                } else if (data.result.action === 'hospital') {
-                    const hospitalMsg = ` 🏥 Ligoninė!`;
-                    notificationMsg += hospitalMsg;
-                    popupMsg += hospitalMsg;
-                    popupType = 'tax';
-                    playHospitalSound();
-                } else if (data.result.action === 'birthday') {
-                    const birthdayMsg = ` 🎂 Gimtadienis!`;
-                    notificationMsg += birthdayMsg;
-                    popupMsg += birthdayMsg;
-                    popupType = 'chance';
-                    playBirthdaySound();
-                } else if (data.result.action === 'latras') {
-                    const latrasMsg = ` 🍺 Latrų užeiga!`;
-                    notificationMsg += latrasMsg;
-                    popupMsg += latrasMsg;
-                    popupType = 'tax';
-                    playLatrasSound();
-                } else if (data.result.action === 'pirtis') {
-                    const pirtisMsg = ` 🧖 Pirtis!`;
-                    notificationMsg += pirtisMsg;
-                    popupMsg += pirtisMsg;
-                    popupType = 'tax';
-                    playPirtisSound();
-                } else if (data.result.action === 'visiting_jail') {
-                    const visitMsg = ` 🚔 Svečiuose pas kalinius!`;
-                    notificationMsg += visitMsg;
-                    popupMsg += visitMsg;
-                    popupType = 'move';
-                } else if (data.result.action === 'go_to_jail') {
-                    const jailMsg = ` ⛓️ Keliauja į kalėjimą!`;
-                    notificationMsg += jailMsg;
-                    popupMsg += jailMsg;
-                    popupType = 'jail';
-                    playJailInSound();
-                } else if (data.result.action === 'chance') {
-                    const chanceMsg = ` 🎲 Gavosi šansas!`;
-                    notificationMsg += chanceMsg;
-                    popupMsg += chanceMsg;
-                    popupType = 'chance';
-                    playChanceSound();
-                } else if (data.result.action === 'special') {
-                    const specialMsg = ` 🎲 HORNY RP!`;
-                    notificationMsg += specialMsg;
-                    popupMsg += specialMsg;
-                    popupType = 'chance';
-                    playChanceSound();
+                    let actionType = 'info';
+                    if (data.result.action === 'pay_rent') actionType = 'rent';
+                    else if (data.result.action === 'pay_tax' || data.result.action === 'latras' || data.result.action === 'pirtis') actionType = 'tax';
+                    else if (data.result.action === 'chance' || data.result.action === 'special' || data.result.action === 'birthday') actionType = 'chance';
+                    else actionType = 'visit';
+                    
+                    showCellAction(msg, actionType);
                 }
             }
             
-            if (data.canBuy) {
-                const buyMsg = ` 🏠 Gali nusipirkti ${data.field.name} už €${data.field.cost}!`;
-                notificationMsg += buyMsg;
-                popupMsg += buyMsg;
-                popupType = 'buy';
-                playNotificationSound();
-            }
+            updateUI(gameState);
+            return;
         }
         
-        addNotification(notificationMsg);
+        const fallbackMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+        addJournal(fallbackMsg);
         
-        if (data.player.id !== playerId) {
-            showPopupMessage(popupMsg, popupType);
-        }
-        
-        if (data.result && data.result.message) {
-            addJournal(data.result.message);
-        }
-        if (data.field) {
-            addJournal(`${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total} ir atsistojo ant "${data.field.name}"`);
-        }
         updateUI(gameState);
     });
 
     socket.on('message', (msg) => {
         console.log('📢 Pranešimas:', msg);
         
-        addNotification(msg);
+        if (msg.includes('gali nusipirkti') && msg.includes('už €')) {
+            return;
+        }
+        
+        if (msg.includes('metė') && msg.includes('atsistojo ant')) {
+            return;
+        }
         
         if (msg.includes('HORNY RP') || msg.includes('gavai €200 nuo Dedo')) {
             playChanceSound();
-        }
-
-        if (msg.includes('pastatė namą')) {
-            playBuildSound();
-            showPopupMessage(msg, 'buy');
-        }
-        if (msg.includes('pastatė VIEZBUTĮ')) {
-            playHotelSound();
-            showPopupMessage(msg, 'buy');
         }
         if (msg.includes('Dabar eina')) {
             playMoveSound();
@@ -329,7 +443,7 @@ function initSocket() {
             }
             showPopupMessage(msg, 'rent');
         }
-        if (msg.includes('LATRŲ UŽEIGĄ') || msg.includes('LATRU UŽEIGĄ')) {
+        else if (msg.includes('LATRŲ BARĄ') || msg.includes('LATRŲ BARAS') || msg.includes('LATRŲ UŽEIGĄ')) {
             showPopupMessage(msg, 'tax');
         }
         else if (msg.includes('VLADUKO PIRTĮ') || msg.includes('PIRTĮ')) {
@@ -341,12 +455,6 @@ function initSocket() {
         else if (msg.includes('sumokėjo') && msg.includes('mokesčių')) {
             playTaxSound();
             showPopupMessage(msg, 'tax');
-        }
-        else if (msg.includes('LIGONINĖ') || msg.includes('ligoninėje')) {
-            showPopupMessage(msg, 'tax');
-        }
-        else if (msg.includes('užsuko į svečius pas kalinius')) {
-            showPopupMessage(msg, 'move');
         }
         else if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
             !msg.includes('GIMTADIENIS') && 
@@ -391,30 +499,77 @@ function initSocket() {
         }
     });
 
-    socket.on('buyConfirmed', (data) => {
-        console.log('✅ Pirkimas patvirtintas:', data);
-        playBuySound();
-        playCashSound();
-        const msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
-        addNotification(msg);
-        if (data.playerId !== playerId) {
-            showPopupMessage(msg, 'buy');
-        }
+    socket.on('buyPending', (data) => {
+    console.log('⏳ Laukiama sprendimo:', data);
+    
+    if (data.playerId !== playerId) {
+        const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
         addJournal(msg);
-        hideBuyChoice();
-    });
+        
+        const field = gameState.board.find(f => f.id === data.fieldId);
+        const player = gameState.players.find(p => p.id === data.playerId);
+        if (field && player) {
+            showBuyCard(field, player, 'pending');
+        }
+    }
+});
+
+    socket.on('buyConfirmed', (data) => {
+    console.log('✅ Pirkimas patvirtintas:', data);
+    playBuySound();
+    playCashSound();
+
+    if (data.playerId !== undefined) {
+        incrementBought(data.playerId);
+    }
+    
+    let msg;
+    if (data.playerId === playerId) {
+        msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
+    } else {
+        msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
+    }
+    
+    addJournal(msg);
+    
+    if (data.fieldName && gameState && gameState.board) {
+        const field = gameState.board.find(f => f.name === data.fieldName);
+        const player = gameState.players.find(p => p.id === data.playerId);
+        
+        if (field && player) {
+            highlightCell(field.id, 'green', 5000);
+            showBuyCard(field, player, 'success');
+        }
+    }
+    
+    hideBuyChoice();
+});
 
     socket.on('buyCancelled', (data) => {
-        console.log('❌ Pirkimas atšauktas:', data);
-        playMoveSound();
-        const msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
-        addNotification(msg);
-        if (data.playerId !== playerId) {
-            showPopupMessage(msg, 'move');
+    console.log('❌ Pirkimas atšauktas:', data);
+    playMoveSound();
+    
+    let msg;
+    if (data.playerId === playerId) {
+        msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
+    } else {
+        msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+    }
+    
+    addJournal(msg);
+    
+    if (data.fieldName && gameState && gameState.board) {
+        const field = gameState.board.find(f => f.name === data.fieldName);
+        const player = gameState.players.find(p => p.id === data.playerId);
+        
+        if (field && player) {
+            highlightCell(field.id, 'red', 5000);
+            showBuyCard(field, player, 'cancel');
         }
-        addJournal(msg);
-        hideBuyChoice();
-    });
+    }
+    
+    hideBuyChoice();
+});
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -435,7 +590,7 @@ function initSocket() {
         console.log('🏠 Statybos rezultatas:', data);
         if (data.can) {
             if (data.isHotel) {
-                if (confirm(`🏨 Statyti viezbutį ant "${data.fieldName}" už €${data.cost}?`)) {
+                if (confirm(`🏨 Statyti viežbutį ant "${data.fieldName}" už €${data.cost}?`)) {
                     socket.emit('buildHouse', { fieldId: data.fieldId });
                     playClickSound();
                 }
@@ -494,20 +649,11 @@ function initSocket() {
             return;
         }
         
-        const msg = `🔨 Prasidėjo aukcionas: ${data.fieldName}!`;
+        const msg = `🔨 Prasidėjo aukcionas: ${data.fieldName}! Bankas siūlo €${data.currentBid}`;
         addNotification(msg);
-        if (data.sellerId !== playerId) {
-            showPopupMessage(msg, 'buy');
-        }
         addJournal(msg);
         
-        if (data.sellerId !== playerId) {
-            showAuction(data);
-        } else {
-            const sellerMsg = `📢 Tu paskelbei aukcioną! Kiti žaidėjai siūlo kainas.`;
-            addNotification(sellerMsg);
-            addJournal(sellerMsg);
-        }
+        showAuction(data);
         
         if (gameState) updateUI(gameState);
     });
@@ -515,15 +661,29 @@ function initSocket() {
     socket.on('auctionUpdated', (data) => {
         console.log('💰 Aukciono pasiūlymas:', data);
         playTradeSound();
+        
         if (data.currentBid !== undefined) {
-            document.getElementById('auctionCurrentBid').textContent = data.currentBid;
+            document.getElementById('auctionCurrentBid').textContent = '€' + data.currentBid;
         }
+        
+        if (data.currentBidderName) {
+            document.getElementById('auctionCurrentBidder').textContent = data.currentBidderName;
+        }
+        
+        if (data.currentBid !== undefined) {
+            const plus10 = Math.ceil(data.currentBid * 1.10);
+            const plus10Btn = document.getElementById('auctionPlus10Btn');
+            if (plus10Btn) {
+                plus10Btn.textContent = `➕ +10% (€${plus10})`;
+            }
+        }
+        
         if (data.endTime) {
             startAuctionTimer(data.endTime);
         }
-        const msg = `💰 Naujas pasiūlymas: €${data.currentBid}`;
+        
+        const msg = `💰 ${data.currentBidderName || 'Kažkas'} pasiūlė €${data.currentBid}`;
         addNotification(msg);
-        showPopupMessage(msg, 'move');
         addJournal(msg);
     });
 
@@ -532,20 +692,20 @@ function initSocket() {
         
         auctionEndedSent = true;
         
-        if (data && data.winnerName) {
-            const msg = `🔨 ${data.winnerName} laimėjo aukcioną: ${data.fieldName} už €${data.finalBid}!`;
-            addNotification(msg);
-            if (data.winnerId !== playerId) {
+        if (data) {
+            if (data.winnerId === 'bank') {
+                const msg = `🏦 Bankas laimėjo aukcioną: ${data.fieldName} už €${data.finalBid}`;
+                addNotification(msg);
+                showPopupMessage(msg, 'move');
+                addJournal(msg);
+            } else if (data.winnerName) {
+                const msg = `🔨 ${data.winnerName} laimėjo aukcioną: ${data.fieldName} už €${data.finalBid}!`;
+                addNotification(msg);
                 showPopupMessage(msg, 'buy');
+                addJournal(msg);
+                playAuctionSound();
+                playCashSound();
             }
-            addJournal(msg);
-            playAuctionSound();
-            playCashSound();
-        } else if (data) {
-            const msg = `🔨 Aukcionas baigėsi be laimėtojo`;
-            addNotification(msg);
-            showPopupMessage(msg, 'move');
-            addJournal(msg);
         }
         
         closeAuction();
@@ -574,6 +734,36 @@ function initSocket() {
         if (gameState) updateUI(gameState);
     });
 
+    socket.on('buildingBuilt', (data) => {
+        console.log('🏠 Statyba:', data);
+        playBuildSound();
+        
+        window.newHouseAnimations = window.newHouseAnimations || {};
+        window.newHouseAnimations[data.fieldId] = true;
+        
+        const isMe = data.playerId === playerId;
+        
+        let msgKey = '';
+        if (data.isHotel) {
+            msgKey = isMe ? 'hotelMine' : 'hotelOthers';
+        } else {
+            msgKey = isMe ? 'buildMine' : 'buildOthers';
+        }
+        
+        const msgData = {
+            player: data.playerName,
+            field: data.fieldName
+        };
+        
+        const msg = getCellMessage(data.fieldId, msgKey, msgData);
+        if (msg) {
+            showCellAction(msg, 'visit');
+            addJournal(msg);
+        }
+        
+        updateUI(gameState);
+    });
+
     socket.on('leftGame', (data) => {
         console.log('🏃 Pasitraukei iš žaidimo:', data);
         
@@ -584,9 +774,10 @@ function initSocket() {
         addJournal(`🏃 Tu pasitraukei iš žaidimo`);
         
         setTimeout(() => {
-            document.getElementById('game').style.display = 'none';
-            document.getElementById('lobby').style.display = 'block';
-            showLobbyMessage('🏃 Pasitraukei iš žaidimo. Gali kurti naują arba jungtis prie kito.', '#ffd700');
+            if (typeof goToMenu === 'function') {
+                goToMenu();
+            }
+            showLobbyMessage('🏃 Pasitraukei iš žaidimo.', '#ffd700');
             
             playerId = null;
             gameId = null;
@@ -605,10 +796,824 @@ function initSocket() {
         playWinSound();
         playCelebrateSound();
         
+        let stats = '';
+        if (gameState && gameState.players) {
+            const winner = gameState.players.find(p => p.name === data.winner);
+            if (winner) {
+                const houses = winner.houses ? Object.values(winner.houses).reduce((a, b) => a + b, 0) : 0;
+                stats = `💰 Turėjo: €${winner.money} • 🏠 ${winner.properties.length} objektai (${houses} namai)`;
+            }
+        }
+        
         setTimeout(() => {
-            alert(`🏆 ŽAIDIMAS BAIGTAS!\n\nLaimėtojas: ${data.winner}`);
+            showWinnerModal(data.winner, stats);
         }, 500);
     });
+
+    // VOTE-KICK
+    socket.on('voteKickStarted', (data) => {
+        console.log('🗳️ Balsavimas pradėtas:', data);
+        
+        if (data.targetId === playerId) {
+            console.log('🗳️ Aš esu taikinys - nerodau nieko');
+            return;
+        }
+        
+        playNotificationSound();
+        addNotification(`🗳️ ${data.initiatorName} pradėjo balsavimą dėl "${data.targetName}" pašalinimo!`);
+        addJournal(`🗳️ ${data.initiatorName} pradėjo balsavimą dėl "${data.targetName}" pašalinimo!`);
+        
+        if (playerId !== data.initiatorId && playerId !== data.targetId) {
+            showVoteKickPrompt(data);
+        } else if (playerId === data.initiatorId) {
+            showVoteKickStatus(data);
+        }
+    });
+
+    socket.on('voteKickUpdate', (data) => {
+        console.log('🗳️ Balsavimo atnaujinimas:', data);
+        
+        if (data.targetId === playerId) return;
+        
+        if (data.timeLeft !== undefined) {
+            const timerEl = document.getElementById('voteKickTimer');
+            if (timerEl) timerEl.textContent = data.timeLeft;
+        }
+        
+        const statusEl = document.getElementById('voteKickStatus');
+        if (statusEl && data.votes) {
+            const votesFor = Object.values(data.votes).filter(v => v === true).length;
+            const votesAgainst = Object.values(data.votes).filter(v => v === false).length;
+            statusEl.innerHTML = `
+                <div class="vote-kick-timer">⏱️ ${data.timeLeft || 0}s</div>
+                <div>Balsai: <strong>${votesFor}/${data.requiredVotes}</strong> UŽ, ${votesAgainst} PRIEŠ</div>
+            `;
+        }
+        
+        if (data.votes && gameState) {
+            updateVoteKickTable(data);
+        }
+    });
+
+    socket.on('voteKickResult', (data) => {
+        console.log('🗳️ Balsavimo rezultatas:', data);
+        
+        if (voteKickTimerInterval) {
+            clearInterval(voteKickTimerInterval);
+            voteKickTimerInterval = null;
+        }
+        
+        if (data.targetId === playerId) {
+            if (data.kicked) {
+                amIKicked = true;
+                playBankruptSound();
+                showKickSummary(data);
+            }
+            return;
+        }
+        
+        closeVoteKick();
+        
+        if (data.kicked) {
+            playBankruptSound();
+            addNotification(`✅ ${data.targetName} buvo pašalintas! (${data.votesFor}/${data.requiredVotes})`);
+            addJournal(`✅ ${data.targetName} buvo pašalintas! (${data.votesFor}/${data.requiredVotes})`);
+        } else {
+            addNotification(`❌ Balsavimas dėl ${data.targetName} nepavyko (${data.votesFor}/${data.requiredVotes})`);
+            addJournal(`❌ Balsavimas dėl ${data.targetName} nepavyko (${data.votesFor}/${data.requiredVotes})`);
+        }
+        
+        if (gameState) updateUI(gameState);
+    });
+
+    socket.on('voteKickCancelled', (data) => {
+        console.log('🗳️ Balsavimas atšauktas:', data.reason);
+        
+        if (voteKickTimerInterval) {
+            clearInterval(voteKickTimerInterval);
+            voteKickTimerInterval = null;
+        }
+        
+        closeVoteKick();
+        addNotification(`🗳️ Balsavimas atšauktas: ${data.reason}`);
+        addJournal(`🗳️ Balsavimas atšauktas: ${data.reason}`);
+    });
+}
+
+// ============================================
+// AUTO INFO PANELĖS ŠRIFTAS
+// ============================================
+
+function autoFitInfoFont() {
+    const panel = document.getElementById('cellInfoPanel');
+    if (!panel || !panel.classList.contains('show')) return;
+    
+    const width = panel.clientWidth;
+    if (width === 0) return;
+    
+    let fontSize = 12;
+    
+    if (width < 200) fontSize = 10;
+    else if (width < 250) fontSize = 10;
+    else if (width < 300) fontSize = 11;
+    else if (width < 350) fontSize = 12;
+    else if (width < 400) fontSize = 13;
+    else if (width < 500) fontSize = 14;
+    else if (width < 650) fontSize = 15;
+    else fontSize = 16;
+    
+    panel.style.setProperty('--info-font-size', fontSize + 'px');
+    panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
+    panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
+}
+
+function initInfoResizeObserver() {
+    const panel = document.getElementById('cellInfoPanel');
+    if (!panel) return;
+    
+    if (infoResizeObserver) {
+        infoResizeObserver.disconnect();
+    }
+    
+    if (window.ResizeObserver) {
+        infoResizeObserver = new ResizeObserver(() => {
+            setTimeout(autoFitInfoFont, 50);
+        });
+        infoResizeObserver.observe(panel);
+    }
+    
+    window.addEventListener('resize', () => {
+        setTimeout(autoFitInfoFont, 100);
+    });
+    
+    setTimeout(autoFitInfoFont, 200);
+}
+
+// ============================================
+// SPALVŲ PASIRINKIMO FUNKCIJOS
+// ============================================
+
+function renderColorPicker(containerId, availableColors, selectedColor, onSelect) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    PLAYER_COLORS.forEach(color => {
+        const circle = document.createElement('div');
+        circle.className = 'color-circle';
+        circle.style.background = color;
+        
+        const isAvailable = availableColors === null || availableColors.includes(color);
+        const isSelected = selectedColor === color;
+        
+        if (!isAvailable) {
+            circle.classList.add('taken');
+        }
+        
+        if (isSelected) {
+            circle.classList.add('selected');
+        }
+        
+        if (isAvailable) {
+            circle.onclick = () => {
+                playClickSound();
+                onSelect(color);
+            };
+        }
+        
+        container.appendChild(circle);
+    });
+}
+
+function selectCreateColor(color) {
+    selectedCreateColor = color;
+    renderColorPicker('createColorPicker', null, selectedCreateColor, selectCreateColor);
+}
+
+function selectJoinColor(color) {
+    if (availableJoinColors.length === 0) {
+        selectedJoinColor = color;
+        renderColorPicker('joinColorPicker', PLAYER_COLORS, selectedJoinColor, selectJoinColor);
+        return;
+    }
+    
+    if (!availableJoinColors.includes(color)) {
+        playErrorSound();
+        alert('❌ Ši spalva jau užimta!');
+        return;
+    }
+    
+    selectedJoinColor = color;
+    renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
+}
+
+function checkGameColors() {
+    const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
+    if (!gid || gid.length < 4) {
+        availableJoinColors = [...PLAYER_COLORS];
+        selectedJoinColor = null;
+        renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
+        const status = document.getElementById('joinColorStatus');
+        if (status) status.textContent = 'Įvesk pilną stalo kodą';
+        return;
+    }
+    
+    socket.emit('getGameColors', { gameId: gid });
+}
+
+// ============================================
+// WAITING ROOM
+// ============================================
+
+function showWaitingRoom() {
+    const overlay = document.getElementById('waitingRoomOverlay');
+    if (overlay) overlay.style.display = 'flex';
+    
+    const codeEl = document.getElementById('waitingGameCode');
+    if (codeEl && gameId) codeEl.textContent = gameId;
+    
+    const linkEl = document.getElementById('waitingGameLink');
+    if (linkEl && gameId) {
+        linkEl.textContent = window.location.origin + '/?game=' + gameId;
+    }
+}
+
+function hideWaitingRoom() {
+    const overlay = document.getElementById('waitingRoomOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function updateWaitingRoom(state) {
+    waitingRoomState = state;
+    
+    const countEl = document.getElementById('waitingPlayerCount');
+    if (countEl) countEl.textContent = `${state.totalPlayers}/8`;
+    
+    const listEl = document.getElementById('waitingPlayersList');
+    if (listEl) {
+        if (state.players.length === 0) {
+            listEl.innerHTML = '<p style="color:#d4b896; text-align:center;">Nėra žaidėjų</p>';
+        } else {
+            listEl.innerHTML = state.players.map(p => `
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'}">
+                    <span style="width:20px; height:20px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
+                    <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' (tu)' : ''}</span>
+                    <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅ Pasiruošęs' : '⏳ Laukia'}</span>
+                    ${state.hostId === playerId && p.id !== playerId && !p.ready ? `
+                        <button onclick="kickPlayer(${p.id})" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">❌</button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+    }
+    
+    const statusEl = document.getElementById('waitingStatusText');
+    if (statusEl) {
+        if (state.canStart) {
+            statusEl.innerHTML = '🎉 <strong style="color:#28a745;">Visi pasiruošę!</strong> Galima pradėti žaidimą.';
+        } else if (state.totalPlayers < 2) {
+            statusEl.innerHTML = `👥 Reikia bent <strong>2 žaidėjų</strong> • Turim: ${state.totalPlayers}`;
+        } else {
+            const notReady = state.totalPlayers - state.readyCount;
+            statusEl.innerHTML = `✋ Dar <strong>${notReady} žaidėjas(-ai)</strong> nepasiruošęs(-ę)`;
+        }
+    }
+    
+    const readyBtn = document.getElementById('readyBtn');
+    const startBtn = document.getElementById('startGameBtn');
+    
+    if (readyBtn) {
+        const me = state.players.find(p => p.id === playerId);
+        if (me && me.ready) {
+            readyBtn.innerHTML = '✅ Pasiruošęs (spausk atšaukti)';
+            readyBtn.style.background = 'linear-gradient(145deg, #6c757d, #495057)';
+        } else {
+            readyBtn.innerHTML = '✋ Aš pasiruošęs';
+            readyBtn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';
+        }
+    }
+    
+    if (startBtn) {
+        if (playerId === state.hostId) {
+            startBtn.style.display = 'block';
+            if (state.canStart) {
+                startBtn.disabled = false;
+                startBtn.style.opacity = '1';
+                startBtn.innerHTML = '🚀 Pradėti žaidimą';
+            } else {
+                startBtn.disabled = true;
+                startBtn.style.opacity = '0.5';
+                startBtn.innerHTML = '🚀 Pradėti žaidimą (ne visi pasiruošę)';
+            }
+        } else {
+            startBtn.style.display = 'none';
+        }
+    }
+    
+    const publicCheckbox = document.getElementById('waitingIsPublic');
+    if (publicCheckbox) {
+        publicCheckbox.checked = state.isPublic === true;
+        if (playerId !== state.hostId) {
+            publicCheckbox.disabled = true;
+        } else {
+            publicCheckbox.disabled = false;
+        }
+    }
+}
+
+function toggleReady() {
+    if (!waitingRoomState) return;
+    
+    const me = waitingRoomState.players.find(p => p.id === playerId);
+    const newReady = !(me && me.ready);
+    
+    playClickSound();
+    socket.emit('playerReady', { ready: newReady });
+}
+
+function startGame() {
+    playClickSound();
+    socket.emit('startGame');
+}
+
+function leaveGameFromWaiting() {
+    if (!isConnected || !socket || !socket.connected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        playErrorSound();
+        return;
+    }
+    
+    if (!confirm('🏃 Ar tikrai nori pasitraukti iš stalo?\n\nPrarasi savo vietą!\nGalėsi kurti naują arba jungtis prie kito.')) {
+        return;
+    }
+    
+    playClickSound();
+    hideWaitingRoom();
+    socket.emit('leaveGame');
+}
+
+function kickPlayer(targetId) {
+    if (!confirm('❌ Ar tikrai nori išmesti šį žaidėją?')) return;
+    
+    playClickSound();
+    socket.emit('kickPlayer', { targetId: targetId });
+}
+
+function copyGameCode() {
+    if (!gameId) return;
+    
+    navigator.clipboard.writeText(gameId).then(() => {
+        playNotificationSound();
+        alert('📋 Kodas nukopijuotas: ' + gameId);
+    }).catch(() => {
+        prompt('Nukopijuok kodą:', gameId);
+    });
+}
+
+function copyGameLink() {
+    if (!gameId) return;
+    
+    const link = window.location.origin + '/?game=' + gameId;
+    
+    navigator.clipboard.writeText(link).then(() => {
+        playNotificationSound();
+        alert('🔗 Nuoroda nukopijuota!');
+    }).catch(() => {
+        prompt('Nukopijuok nuorodą:', link);
+    });
+}
+
+function sendWaitingChat() {
+    const input = document.getElementById('waitingChatInput');
+    if (!input) return;
+    
+    const msg = input.value.trim();
+    if (!msg) return;
+    
+    socket.emit('chatMessage', msg);
+    input.value = '';
+}
+
+function togglePublic() {
+    const checkbox = document.getElementById('waitingIsPublic');
+    if (!checkbox) return;
+    
+    playClickSound();
+    socket.emit('setGamePublic', { isPublic: checkbox.checked });
+}
+
+// ============================================
+// VIEŠI STALAI
+// ============================================
+
+function refreshPublicGames() {
+    if (!socket || !isConnected) return;
+    socket.emit('getPublicGames');
+}
+
+function renderPublicGames(games) {
+    const listEl = document.getElementById('publicGamesList');
+    if (!listEl) return;
+    
+    if (!games || games.length === 0) {
+        listEl.innerHTML = '<div class="public-games-empty">Nėra viešų stalų<br><br>Galite sukurti savo viešą stalą</div>';
+        return;
+    }
+    
+    listEl.innerHTML = games.map(g => `
+        <div class="public-game-item" onclick="joinPublicGame('${g.gameId}')">
+            <span style="font-size:24px;">🌐</span>
+            <div style="flex:1;">
+                <div class="game-host">👑 ${g.hostName}</div>
+                <div class="game-count">👥 ${g.playerCount}/${g.maxPlayers} žaidėjai</div>
+            </div>
+            <div class="game-code">${g.gameId}</div>
+        </div>
+    `).join('');
+}
+
+function joinPublicGame(gid) {
+    closePublicGamesModal();
+    
+    if (typeof showPage === 'function') {
+        showPage('page-join');
+    }
+    
+    setTimeout(() => {
+        const input = document.getElementById('gameIdInput');
+        if (input) {
+            input.value = gid;
+            checkGameColors();
+        }
+    }, 200);
+}
+
+// ============================================
+// AUKCIONO FUNKCIJOS
+// ============================================
+
+function showAuction(data) {
+    if (!data) {
+        alert('❌ Klaida: gauti neteisingi aukciono duomenys');
+        playErrorSound();
+        return;
+    }
+    
+    auctionEndedSent = false;
+    currentAuctionId = data.auctionId;
+    
+    const isSeller = data.sellerId === playerId;
+    
+    document.getElementById('auctionSeller').textContent = data.sellerName || 'Nežinomas';
+    document.getElementById('auctionFieldName').textContent = data.fieldName || 'Nežinoma kortelė';
+    document.getElementById('auctionFieldCost').textContent = '€' + (data.fieldCost || 0);
+    
+    const bankBid = data.currentBid;
+    document.getElementById('auctionBankBid').textContent = '€' + bankBid;
+    
+    document.getElementById('auctionCurrentBid').textContent = '€' + bankBid;
+    document.getElementById('auctionCurrentBidder').textContent = '🏦 Bankas';
+    
+    const plus10 = Math.ceil(bankBid * 1.10);
+    const plus10Btn = document.getElementById('auctionPlus10Btn');
+    if (plus10Btn) {
+        plus10Btn.textContent = `➕ +10% (€${plus10})`;
+    }
+    
+    const sellerNotice = document.getElementById('auctionSellerNotice');
+    const bidControls = document.getElementById('auctionBidControls');
+    const closeBtn = document.getElementById('auctionCloseBtn');
+    
+    if (isSeller) {
+        if (sellerNotice) sellerNotice.style.display = 'block';
+        if (bidControls) bidControls.style.display = 'none';
+        if (closeBtn) closeBtn.style.display = 'none';
+    } else {
+        if (sellerNotice) sellerNotice.style.display = 'none';
+        if (bidControls) bidControls.style.display = 'flex';
+        if (closeBtn) closeBtn.style.display = 'block';
+    }
+    
+    const endTime = data.endTime || (Date.now() + 60000);
+    startAuctionTimer(endTime);
+    
+    document.getElementById('auctionModal').style.display = 'flex';
+    playAuctionSound();
+}
+
+function closeAuction() {
+    document.getElementById('auctionModal').style.display = 'none';
+    if (auctionTimerInterval) {
+        clearInterval(auctionTimerInterval);
+        auctionTimerInterval = null;
+    }
+    currentAuctionId = null;
+    auctionEndedSent = true;
+    playClickSound();
+}
+
+function startAuctionTimer(endTime) {
+    if (auctionTimerInterval) {
+        clearInterval(auctionTimerInterval);
+    }
+    
+    auctionEndedSent = false;
+    
+    auctionTimerInterval = setInterval(() => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+        const timerEl = document.getElementById('auctionTimer');
+        if (timerEl) timerEl.textContent = remaining;
+        
+        if (remaining <= 0 && !auctionEndedSent) {
+            clearInterval(auctionTimerInterval);
+            auctionTimerInterval = null;
+            if (timerEl) timerEl.textContent = '0';
+            
+            auctionEndedSent = true;
+        }
+    }, 1000);
+}
+
+function placeBid() {
+    if (!currentAuctionId) {
+        alert('❌ Nėra aktyvaus aukciono!');
+        playErrorSound();
+        return;
+    }
+    
+    const input = document.getElementById('auctionBidInput');
+    const bidAmount = parseInt(input.value);
+    
+    if (isNaN(bidAmount) || bidAmount <= 0) {
+        alert('❌ Įvesk teisingą kainą!');
+        playErrorSound();
+        return;
+    }
+    
+    const currentBidText = document.getElementById('auctionCurrentBid').textContent;
+    const currentBid = parseInt(currentBidText.replace('€', '')) || 0;
+    
+    if (bidAmount <= currentBid) {
+        alert(`❌ Siūlyk daugiau nei €${currentBid}!`);
+        playErrorSound();
+        return;
+    }
+    
+    socket.emit('bidAuction', { auctionId: currentAuctionId, bidAmount });
+    input.value = '';
+    playClickSound();
+}
+
+function placeBidPlus10() {
+    if (!currentAuctionId) {
+        alert('❌ Nėra aktyvaus aukciono!');
+        playErrorSound();
+        return;
+    }
+    
+    const currentBidText = document.getElementById('auctionCurrentBid').textContent;
+    const currentBid = parseInt(currentBidText.replace('€', '')) || 0;
+    
+    const newBid = Math.ceil(currentBid * 1.10);
+    
+    socket.emit('bidAuction', { auctionId: currentAuctionId, bidAmount: newBid });
+    playClickSound();
+}
+
+// ============================================
+// VOTE-KICK
+// ============================================
+
+function openVoteKick() {
+    if (!socket || !isConnected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        return;
+    }
+    
+    if (!gameState || !gameState.players) {
+        alert('❌ Žaidimas dar neprasidėjęs!');
+        return;
+    }
+    
+    if (gameState.activeVoteKick) {
+        alert('⚠️ Balsavimas jau vyksta! Palauk kol baigsis.');
+        return;
+    }
+    
+    const modal = document.getElementById('voteKickModal');
+    const playersDiv = document.getElementById('voteKickPlayers');
+    const statusDiv = document.getElementById('voteKickStatus');
+    
+    playersDiv.innerHTML = '';
+    statusDiv.innerHTML = 'Pasirink žaidėją, kurį nori pašalinti.';
+    
+    const activePlayers = gameState.players.filter(p => 
+        p.isActive && !p.bankrupt && !p.left && !p.kicked
+    );
+    
+    if (activePlayers.length < 3) {
+        statusDiv.innerHTML = '❌ Reikia bent 3 aktyvių žaidėjų balsavimui.';
+        modal.style.display = 'flex';
+        return;
+    }
+    
+    const otherPlayers = activePlayers.filter(p => p.id !== playerId);
+    
+    if (otherPlayers.length === 0) {
+        statusDiv.innerHTML = '❌ Nėra žaidėjų, kuriuos būtų galima pašalinti.';
+    } else {
+        otherPlayers.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'vote-kick-card';
+            card.innerHTML = `
+                <div class="card-color" style="background:${p.color || '#888'}"></div>
+                <div class="card-name">${p.name}</div>
+                <div class="card-votes">🗳️ Balsuoti</div>
+            `;
+            card.onclick = () => startVoteKick(p.id, p.name);
+            playersDiv.appendChild(card);
+        });
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeVoteKick() {
+    document.getElementById('voteKickModal').style.display = 'none';
+    
+    if (voteKickTimerInterval) {
+        clearInterval(voteKickTimerInterval);
+        voteKickTimerInterval = null;
+    }
+}
+
+function startVoteKick(targetPlayerId, targetName) {
+    if (!confirm(`Ar tikrai nori pradėti balsavimą dėl "${targetName}" pašalinimo?`)) {
+        return;
+    }
+    
+    socket.emit('startVoteKick', {
+        targetPlayerId: targetPlayerId
+    });
+    
+    closeVoteKick();
+    playClickSound();
+}
+
+function voteKickAction(targetPlayerId, vote) {
+    socket.emit('voteKick', {
+        vote: vote === true
+    });
+    
+    closeVoteKick();
+    playClickSound();
+}
+
+function showVoteKickPrompt(data) {
+    const modal = document.getElementById('voteKickModal');
+    const playersDiv = document.getElementById('voteKickPlayers');
+    const statusDiv = document.getElementById('voteKickStatus');
+    
+    const requiredVotes = data.requiredVotes || 3;
+    const votesFor = data.votes ? Object.values(data.votes).filter(v => v === true).length : 1;
+    const timeLeft = data.timeLeft || 60;
+    
+    playersDiv.innerHTML = `
+        <div style="padding:15px; background:rgba(255,255,255,0.3); border-radius:8px; margin:10px 0; text-align:center;">
+            <div style="font-size:16px; font-weight:700; color:#3d2b1f; margin-bottom:10px;">
+                Ar pašalinti "${data.targetName}"?
+            </div>
+            <div style="font-size:13px; color:#6c757d; margin-bottom:15px;">
+                Balsavimą pradėjo: ${data.initiatorName}
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="voteKickAction(${data.targetId}, true)" 
+                        style="flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+                    ✅ TAIP, ŠALINTI
+                </button>
+                <button onclick="voteKickAction(${data.targetId}, false)" 
+                        style="flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                    ❌ NE, PALIKTI
+                </button>
+            </div>
+        </div>
+    `;
+    
+    statusDiv.innerHTML = `
+        <div class="vote-kick-timer" id="voteKickTimer">${timeLeft}</div>
+        <div>Balsai: <strong>${votesFor}/${requiredVotes}</strong> UŽ</div>
+    `;
+    
+    modal.style.display = 'flex';
+    
+    if (voteKickTimerInterval) clearInterval(voteKickTimerInterval);
+    voteKickTimerInterval = setInterval(() => {
+        const timerEl = document.getElementById('voteKickTimer');
+        if (timerEl) {
+            let current = parseInt(timerEl.textContent);
+            if (current > 0) {
+                timerEl.textContent = current - 1;
+            } else {
+                clearInterval(voteKickTimerInterval);
+            }
+        }
+    }, 1000);
+}
+
+function showVoteKickStatus(data) {
+    const modal = document.getElementById('voteKickModal');
+    const playersDiv = document.getElementById('voteKickPlayers');
+    const statusDiv = document.getElementById('voteKickStatus');
+    
+    playersDiv.innerHTML = `
+        <div style="padding:15px; background:rgba(255,255,255,0.3); border-radius:8px; margin:10px 0; text-align:center;">
+            <div style="font-size:16px; font-weight:700; color:#3d2b1f; margin-bottom:10px;">
+                🗳️ Tu pradėjai balsavimą dėl "${data.targetName}"
+            </div>
+            <div style="font-size:13px; color:#6c757d;">
+                Laukiame kitų žaidėjų balsų...
+            </div>
+        </div>
+    `;
+    
+    statusDiv.innerHTML = `
+        <div class="vote-kick-timer" id="voteKickTimer">${data.timeLeft || 60}</div>
+        <div>Balsai: <strong>1/${data.requiredVotes}</strong> UŽ (tu)</div>
+    `;
+    
+    modal.style.display = 'flex';
+}
+
+function updateVoteKickTable(data) {
+    const statusDiv = document.getElementById('voteKickStatus');
+    if (!statusDiv) return;
+    
+    const votesFor = Object.values(data.votes).filter(v => v === true).length;
+    const votesAgainst = Object.values(data.votes).filter(v => v === false).length;
+    
+    const voters = Object.keys(data.votes).map(pid => {
+        const p = gameState.players.find(pl => pl.id === parseInt(pid));
+        const vote = data.votes[pid];
+        return `<span style="font-size:11px;">${p?.name || '?'} ${vote ? '✅' : '❌'}</span>`;
+    }).join(', ');
+    
+    statusDiv.innerHTML = `
+        <div class="vote-kick-timer">⏱️ ${data.timeLeft || 0}s</div>
+        <div>Balsai: <strong>${votesFor}/${data.requiredVotes}</strong> UŽ, ${votesAgainst} PRIEŠ</div>
+        <div style="font-size:10px; margin-top:4px;">${voters}</div>
+    `;
+}
+
+function showKickSummary(data) {
+    const summaryHtml = data.voteSummary.map(v => {
+        const icon = v.vote ? '✅ UŽ' : '❌ PRIEŠ';
+        return `<div style="padding:4px 8px; background:rgba(255,255,255,0.2); border-radius:4px; margin:3px 0;">
+            <strong>${v.playerName}</strong>: ${icon}
+        </div>`;
+    }).join('');
+    
+    const popup = document.createElement('div');
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(145deg, #2d1b1b, #1a0f0f);
+        border: 3px solid #dc3545;
+        border-radius: 16px;
+        padding: 30px 40px;
+        max-width: 500px;
+        width: 90%;
+        z-index: 100000;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+        text-align: center;
+        color: #fff;
+    `;
+    
+    popup.innerHTML = `
+        <div style="font-size:60px; margin-bottom:10px;">🚫</div>
+        <h2 style="color:#dc3545; margin-bottom:15px;">TU BUVAI PAŠALINTAS!</h2>
+        <p style="margin-bottom:15px;">Žaidėjai nubalsavo už tavo pašalinimą nuo stalo.</p>
+        <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:15px; text-align:left;">
+            <div style="font-weight:700; margin-bottom:8px;">🗳️ Balsavimo rezultatai (${data.votesFor}/${data.requiredVotes}):</div>
+            ${summaryHtml}
+        </div>
+        <p style="font-size:13px; color:#aaa; margin-bottom:15px;">Dabar gali tik stebėti žaidimą.</p>
+        <button onclick="this.parentElement.remove();" style="
+            padding:10px 30px;
+            border:none;
+            border-radius:8px;
+            background:linear-gradient(145deg, #dc3545, #a71d2a);
+            color:#fff;
+            font-size:14px;
+            font-weight:700;
+            cursor:pointer;
+        ">OK, SUPRASTAU</button>
+    `;
+    
+    document.body.appendChild(popup);
 }
 
 // ============================================
@@ -627,18 +1632,24 @@ function toggleSoundPanel() {
     playClickSound();
 }
 
-function changeVolume(value) {
+function changeMusicVolume(value) {
     const volume = parseInt(value) / 100;
+    audioManager.setMusicVolume(volume);
     
-    if (audioManager) {
-        audioManager.setVolume(volume);
-        audioManager.isEnabled = volume > 0;
-    }
-    
-    const valueDisplay = document.getElementById('volumeValue');
+    const valueDisplay = document.getElementById('musicVolumeValue');
     if (valueDisplay) valueDisplay.textContent = value;
     
-    localStorage.setItem('bancrupt_volume', value);
+    localStorage.setItem('bancrupt_musicVolume', value);
+}
+
+function changeSfxVolume(value) {
+    const volume = parseInt(value) / 100;
+    audioManager.setSfxVolume(volume);
+    
+    const valueDisplay = document.getElementById('sfxVolumeValue');
+    if (valueDisplay) valueDisplay.textContent = value;
+    
+    localStorage.setItem('bancrupt_sfxVolume', value);
     
     const muteBtn = document.getElementById('muteBtn');
     if (muteBtn) {
@@ -651,7 +1662,7 @@ function changeVolume(value) {
 }
 
 function toggleMute() {
-    const slider = document.getElementById('volumeSlider');
+    const slider = document.getElementById('sfxVolumeSlider');
     const muteBtn = document.getElementById('muteBtn');
     
     if (!slider || !muteBtn) return;
@@ -660,13 +1671,13 @@ function toggleMute() {
         isMuted = false;
         const volume = lastVolume || 50;
         slider.value = volume;
-        changeVolume(volume);
+        changeSfxVolume(volume);
         muteBtn.textContent = '🔇 Išjungti garsą';
     } else {
         isMuted = true;
         lastVolume = parseInt(slider.value) || 50;
         slider.value = 0;
-        changeVolume(0);
+        changeSfxVolume(0);
         muteBtn.textContent = '🔊 Įjungti garsą';
     }
     playClickSound();
@@ -689,7 +1700,6 @@ function toggleInfoMode() {
         
         if (infoPanel) infoPanel.classList.add('show');
         
-        // Jei buvo hover'intas langelis - parodyti
         if (lastHoveredField !== null) {
             showCellInfo(lastHoveredField);
         } else {
@@ -713,8 +1723,8 @@ function showCellInfo(fieldId) {
     
     lastHoveredField = fieldId;
     
-    const panel = document.getElementById('cellInfoPanel');
-    if (!panel) return;
+    const tooltip = document.getElementById('cellInfoTooltip');
+    if (!tooltip) return;
     
     const field = gameState.board.find(f => f.id === fieldId);
     if (!field) {
@@ -722,11 +1732,10 @@ function showCellInfo(fieldId) {
         return;
     }
     
-    const owner = gameState.players.find(p => p.properties.includes(fieldId) && !p.bankrupt && !p.left);
+    const owner = gameState.players.find(p => p.properties.includes(fieldId) && !p.bankrupt && !p.left && !p.kicked);
     
     let html = `<div class="info-header">${field.icon || ''} ${field.name} (#${fieldId})</div>`;
     
-    // Savininkas
     if (owner) {
         html += `
             <div class="info-row">
@@ -743,7 +1752,6 @@ function showCellInfo(fieldId) {
         `;
     }
     
-    // Kaina
     if (field.cost > 0) {
         html += `
             <div class="info-row">
@@ -753,68 +1761,39 @@ function showCellInfo(fieldId) {
         `;
     }
     
-    // Sklypams (property)
     if (field.type === 'property' && field.color) {
         const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
         const baseRent = Math.floor(field.cost * 0.1);
-        const hasFullGroup = owner && gameState.board.filter(f => f.color === field.color).every(f => owner.properties.includes(f.id));
         
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
         
-        let baseRentValue = baseRent;
-        if (hasFullGroup) baseRentValue = baseRent * 2;
-        
-        html += `
-            <div class="info-row">
-                <span class="label">Bazinė:</span>
-                <span class="value">€${baseRentValue}</span>
-            </div>
-        `;
-        
-        // Namai
+        const multipliers = [10, 20, 30, 40];
         for (let i = 1; i <= 4; i++) {
-            const rent = baseRentValue + i * Math.floor(field.cost * 0.3);
-            html += `
-                <div class="info-row">
-                    <span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span>
-                    <span class="value">€${rent}</span>
-                </div>
-            `;
+            const rent = Math.floor(baseRent * multipliers[i - 1]);
+            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
         }
         
-        // Viešbutis
-        const hotelRent = baseRentValue * 3;
-        html += `
-            <div class="info-row">
-                <span class="label">🏨 Viešbutis:</span>
-                <span class="value">€${hotelRent}</span>
-            </div>
-        `;
+        const hotelRent = Math.floor(baseRent * 50);
+        html += `<div class="info-row"><span class="label">🏨 Viežbutis:</span><span class="value">€${hotelRent}</span></div>`;
         html += `</div>`;
-        
-        // Statyba
-        const buildCost = Math.floor(field.cost * 0.5);
-        const hotelCost = field.cost;
-        html += `
-            <div class="info-section">
-                <div class="info-section-title">🏗️ STATYBA</div>
-                <div class="info-row">
-                    <span class="label">Namas:</span>
-                    <span class="value">€${buildCost}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Viešbutis:</span>
-                    <span class="value">€${hotelCost}</span>
-                </div>
-            </div>
-        `;
     }
     
-    // SERVICE1
-    if (field.type === 'service1') {
-        const ids = [2, 14, 29, 45];
-        const count = owner ? owner.properties.filter(id => ids.includes(id)).length : 0;
+    // 🆕 SERVICE3 – fiksuota nuoma
+    if (field.type === 'service3' || SERVICE3_IDS.includes(field.id)) {
+        const ownedInGroup = owner ? owner.properties.filter(id => SERVICE3_IDS.includes(id)).length : 0;
+        const currentRent = SERVICE_RENT[ownedInGroup] || SERVICE_RENT[1];
         
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA (GRUPĖ)</div>`;
+        html += `<div class="info-row"><span class="label">Turi ${ownedInGroup}/4:</span><span class="value green">€${currentRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
+        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
+        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
+        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+        html += `</div>`;
+    }
+    
+    if (field.type === 'service1') {
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
         html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
         html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
@@ -823,7 +1802,6 @@ function showCellInfo(fieldId) {
         html += `</div>`;
     }
     
-    // SERVICE2
     if (field.type === 'service2') {
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
         html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
@@ -833,13 +1811,12 @@ function showCellInfo(fieldId) {
         html += `</div>`;
     }
     
-    // TAX
     if (field.type === 'tax') {
         if (field.id === 5) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€200</span></div></div>`;
-        } else if (field.id === 23) {
+        } else if (field.id === 21) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€10</span></div></div>`;
-        } else if (field.id === 33) {
+        } else if (field.id === 32) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€25</span></div></div>`;
         } else if (field.id === 50) {
             html += `<div class="info-section"><div class="info-row"><span class="label">🎁 Gausi:</span><span class="value green">€200</span></div></div>`;
@@ -848,7 +1825,6 @@ function showCellInfo(fieldId) {
         }
     }
     
-    // SPECIAL
     if (field.type === 'special') {
         if (field.id === 13) {
             html += `<div class="info-section"><div class="info-row"><span class="label">🏥 Sumokėsi:</span><span class="value red">€100</span></div></div>`;
@@ -857,97 +1833,186 @@ function showCellInfo(fieldId) {
         }
     }
     
-    panel.innerHTML = html;
+    tooltip.innerHTML = html;
+    
+    tooltip.style.display = 'block';
+    tooltip.style.left = '0px';
+    tooltip.style.top = '0px';
+    
+    const cell = document.getElementById(`cell-${fieldId}`);
+    if (!cell) return;
+    
+    const cellRect = cell.getBoundingClientRect();
+    const tooltipWidth = tooltip.offsetWidth;
+    const tooltipHeight = tooltip.offsetHeight;
+    
+    const boardRect = document.getElementById('board').getBoundingClientRect();
+    const boardCenterX = boardRect.left + boardRect.width / 2;
+    const boardCenterY = boardRect.top + boardRect.height / 2;
+    
+    const cellCenterX = cellRect.left + cellRect.width / 2;
+    const cellCenterY = cellRect.top + cellRect.height / 2;
+    
+    let top, left;
+    
+    if (cellCenterX < boardCenterX) {
+        left = cellRect.right + 10;
+    } else {
+        left = cellRect.left - tooltipWidth - 10;
+    }
+    
+    if (cellCenterY < boardCenterY) {
+        top = cellRect.top;
+    } else {
+        top = cellRect.bottom - tooltipHeight;
+    }
+    
+    if (left < 10) left = 10;
+    if (left + tooltipWidth > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipWidth - 10;
+    }
+    if (top < 10) top = 10;
+    if (top + tooltipHeight > window.innerHeight - 10) {
+        top = window.innerHeight - tooltipHeight - 10;
+    }
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
 }
 
 function hideCellInfo() {
     lastHoveredField = null;
-    const panel = document.getElementById('cellInfoPanel');
-    if (!panel) return;
-    panel.innerHTML = '';
+    const tooltip = document.getElementById('cellInfoTooltip');
+    if (tooltip) {
+        tooltip.style.display = 'none';
+        tooltip.innerHTML = '';
+    }
 }
 
-// ============================================
-// IŠŠOKANTYS PRANEŠIMAI
-// ============================================
+function initMiniCardTooltips() {
+    document.querySelectorAll('.mini-card').forEach(card => {
+        card.addEventListener('mouseenter', (e) => {
+            const fieldId = parseInt(card.dataset.fieldId);
+            if (!fieldId && fieldId !== 0) return;
+            
+            showMiniCardTooltip(fieldId, card);
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            hideMiniCardTooltip();
+        });
+    });
+}
 
-function showPopupMessage(message, type) {
-    const popup = document.createElement('div');
-    popup.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
-        border: 3px solid #c9a84c;
-        border-radius: 16px;
-        padding: 30px 40px;
-        max-width: 500px;
-        width: 90%;
-        z-index: 10000;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        text-align: center;
-        animation: popupFadeIn 0.3s ease;
-    `;
+function showMiniCardTooltip(fieldId, cardElement) {
+    if (!infoMode) return;
+    if (!gameState) return;
     
-    let icon = '🎲';
-    let color = '#1a6b3c';
-    if (type === 'buy') { icon = '🏠'; color = '#28a745'; }
-    else if (type === 'rent') { icon = '💰'; color = '#dc3545'; }
-    else if (type === 'jail') { icon = '⛓️'; color = '#6c757d'; }
-    else if (type === 'tax') { icon = '💸'; color = '#dc3545'; }
-    else if (type === 'chance') { icon = '🎲'; color = '#fd7e14'; }
-    else if (type === 'move') { icon = '🎲'; color = '#1a6b3c'; }
+    const tooltip = document.getElementById('cellInfoTooltip');
+    if (!tooltip) return;
     
-    popup.innerHTML = `
-        <div style="font-size:48px; margin-bottom:10px;">${icon}</div>
-        <div style="font-size:18px; font-weight:700; color:${color}; margin-bottom:8px; white-space:pre-line;">${message}</div>
-        <button onclick="this.parentElement.remove(); playClickSound();" style="
-            margin-top:15px;
-            padding:8px 30px;
-            border:none;
-            border-radius:8px;
-            background:linear-gradient(145deg, #1a6b3c, #0f4a2a);
-            color:#fff;
-            font-size:14px;
-            font-weight:700;
-            cursor:pointer;
-            transition:all 0.2s;
-        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            OK, SUPRASTAU
-        </button>
-    `;
+    const field = gameState.board.find(f => f.id === fieldId);
+    if (!field) return;
     
-    document.body.appendChild(popup);
-    playNotificationSound();
+    const owner = gameState.players.find(p => p.properties.includes(fieldId) && !p.bankrupt && !p.left && !p.kicked);
     
-    setTimeout(() => {
-        if (popup.parentElement) {
-            popup.style.opacity = '0';
-            popup.style.transition = 'opacity 0.5s';
-            setTimeout(() => {
-                if (popup.parentElement) popup.remove();
-            }, 500);
+    let html = `<div class="info-header">${field.icon || ''} ${field.name} (#${fieldId})</div>`;
+    
+    if (owner) {
+        html += `
+            <div class="info-row">
+                <span class="label">👤 Savininkas:</span>
+                <span class="value" style="color:${owner.color};">${owner.name}</span>
+            </div>
+        `;
+    }
+    
+    if (field.cost > 0) {
+        html += `
+            <div class="info-row">
+                <span class="label">💰 Kaina:</span>
+                <span class="value">€${field.cost}</span>
+            </div>
+        `;
+    }
+    
+    if (field.type === 'property' && field.color) {
+        const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
+        const baseRent = Math.floor(field.cost * 0.1);
+        
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
+        
+        const multipliers = [10, 20, 30, 40];
+        for (let i = 1; i <= 4; i++) {
+            const rent = Math.floor(baseRent * multipliers[i - 1]);
+            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
         }
-    }, 5000);
+        
+        const hotelRent = Math.floor(baseRent * 50);
+        html += `<div class="info-row"><span class="label">🏨 Viežbutis:</span><span class="value">€${hotelRent}</span></div>`;
+        html += `</div>`;
+        
+        if (owner) {
+            html += `<div class="info-section">`;
+            html += `<div class="info-section-title">🏠 DABARTINIS</div>`;
+            if (houses >= 5) {
+                html += `<div class="info-row"><span class="label">Statusas:</span><span class="value">🏨 VIEŽBUTIS</span></div>`;
+            } else if (houses > 0) {
+                html += `<div class="info-row"><span class="label">Namai:</span><span class="value">${houses} 🏠</span></div>`;
+            } else {
+                html += `<div class="info-row"><span class="label">Namai:</span><span class="value">0</span></div>`;
+            }
+            html += `</div>`;
+        }
+    }
+    
+    if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
+        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
+        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
+        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+        html += `</div>`;
+    }
+    
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    
+    const rect = cardElement.getBoundingClientRect();
+    const tooltipWidth = tooltip.offsetWidth;
+    const tooltipHeight = tooltip.offsetHeight;
+    
+    let left = rect.left + rect.width / 2 - tooltipWidth / 2;
+    let top = rect.top - tooltipHeight - 10;
+    
+    if (left < 10) left = 10;
+    if (left + tooltipWidth > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipWidth - 10;
+    }
+    if (top < 10) {
+        top = rect.bottom + 10;
+    }
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
 }
 
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes popupFadeIn {
-        from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+function hideMiniCardTooltip() {
+    const tooltip = document.getElementById('cellInfoTooltip');
+    if (tooltip) {
+        tooltip.style.display = 'none';
+        tooltip.innerHTML = '';
     }
-    @keyframes blink {
-        0%, 50% { opacity: 1; }
-        51%, 100% { opacity: 0.3; }
-    }
-`;
-document.head.appendChild(style);
+}
 
 // ============================================
 // PRANEŠIMAI
 // ============================================
+
+function showPopupMessage(message, type) {
+    console.log('📢 Popup:', message);
+}
 
 function addNotification(msg) {
     const container = document.getElementById('notifications');
@@ -961,12 +2026,14 @@ function addNotification(msg) {
 }
 
 function showLobbyMessage(msg, color) {
-    const el = document.getElementById('lobbyMessages');
-    el.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
+    const el1 = document.getElementById('createMessages');
+    const el2 = document.getElementById('joinMessages');
+    if (el1) el1.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
+    if (el2) el2.innerHTML = `<span style="color:${color || '#d4b896'}">${msg}</span>`;
 }
 
 function createGame() {
-    const name = document.getElementById('playerName').value.trim();
+    const name = document.getElementById('createPlayerName').value.trim();
     if (!name) {
         alert('Įvesk savo vardą!');
         playErrorSound();
@@ -978,11 +2045,22 @@ function createGame() {
         return;
     }
     playClickSound();
-    socket.emit('createGame', name);
+    
+    // 🆕 Išvalyti žurnalą naujam žaidimui
+    clearJournal();
+    
+    const isPublicCheckbox = document.getElementById('createIsPublic');
+    const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
+    
+    socket.emit('createGame', {
+        name: name,
+        color: selectedCreateColor,
+        isPublic: isPublic
+    });
 }
 
 function joinGame() {
-    const name = document.getElementById('playerName').value.trim();
+    const name = document.getElementById('joinPlayerName').value.trim();
     const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
     if (!name) {
         alert('Įvesk savo vardą!');
@@ -990,7 +2068,7 @@ function joinGame() {
         return;
     }
     if (!gid) {
-        alert('Įvesk žaidimo ID!');
+        alert('Įvesk žaidimo kodą!');
         playErrorSound();
         return;
     }
@@ -999,27 +2077,92 @@ function joinGame() {
         playErrorSound();
         return;
     }
+    
+    if (!selectedJoinColor) {
+        alert('Pasirink savo spalvą!');
+        playErrorSound();
+        return;
+    }
+    
     gameId = gid;
     playClickSound();
-    socket.emit('joinGame', { gameId: gid, playerName: name });
+    
+    // 🆕 Išvalyti žurnalą naujam žaidimui
+    clearJournal();
+    
+    socket.emit('joinGame', { 
+        gameId: gid, 
+        playerName: name,
+        color: selectedJoinColor
+    });
 }
 
 function enterGame() {
-    document.getElementById('lobby').style.display = 'none';
-    document.getElementById('game').style.display = 'flex';
+    if (typeof goToGame === 'function') {
+        goToGame();
+    }
+    
+    // 🆕 Užkrauti žurnalą iš localStorage
+    loadJournalFromStorage();
+    
+    // 🆕 Inicializuoti statistiką KIEKVIENAM žaidėjui
+    if (gameState && gameState.players && gameState.players.length > 0) {
+        gameState.players.forEach(p => {
+            if (!window.gameStats.players[p.id]) {
+                initPlayerStats(p.id, p.name, p.color);
+            }
+        });
+    }
+    
     document.getElementById('gameIdDisplay').textContent = '📋 ID: ' + gameId;
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
     
-    const savedVolume = localStorage.getItem('bancrupt_volume') || 50;
-    const slider = document.getElementById('volumeSlider');
-    const valueDisplay = document.getElementById('volumeValue');
-    if (slider) slider.value = savedVolume;
-    if (valueDisplay) valueDisplay.textContent = savedVolume;
-    changeVolume(savedVolume);
+    // 🆕 Garsumo slankikliai
+    const savedMusicVolume = localStorage.getItem('bancrupt_musicVolume') || 15;
+    const savedSfxVolume = localStorage.getItem('bancrupt_sfxVolume') || 50;
     
-    // Įkelti info režimo būseną
+    const musicSlider = document.getElementById('musicVolumeSlider');
+    const sfxSlider = document.getElementById('sfxVolumeSlider');
+    const musicValueDisplay = document.getElementById('musicVolumeValue');
+    const sfxValueDisplay = document.getElementById('sfxVolumeValue');
+    
+    if (musicSlider) musicSlider.value = savedMusicVolume;
+    if (sfxSlider) sfxSlider.value = savedSfxVolume;
+    if (musicValueDisplay) musicValueDisplay.textContent = savedMusicVolume;
+    if (sfxValueDisplay) sfxValueDisplay.textContent = savedSfxVolume;
+    
+    changeMusicVolume(savedMusicVolume);
+    changeSfxVolume(savedSfxVolume);
+    
+    // 🆕 Fono muzika
+    const savedMusic = localStorage.getItem('bancrupt_music');
+    const musicBtn = document.getElementById('musicBtn');
+    
+    if (savedMusic === 'false') {
+        backgroundMusicStarted = false;
+        if (musicBtn) {
+            musicBtn.innerHTML = '🎵 Muzika: 🔴 IŠJ.';
+        }
+    } else {
+        // 🆕 Paleisti po pirmo vartotojo veiksmo (autoplay blokavimas)
+        const startMusicOnFirstInteraction = () => {
+            startBackgroundMusic();
+            if (musicBtn) {
+                musicBtn.innerHTML = '🎵 Muzika: 🟢 ĮJ.';
+            }
+            
+            document.removeEventListener('click', startMusicOnFirstInteraction);
+            document.removeEventListener('keydown', startMusicOnFirstInteraction);
+            document.removeEventListener('touchstart', startMusicOnFirstInteraction);
+        };
+        
+        document.addEventListener('click', startMusicOnFirstInteraction, { once: true });
+        document.addEventListener('keydown', startMusicOnFirstInteraction, { once: true });
+        document.addEventListener('touchstart', startMusicOnFirstInteraction, { once: true });
+    }
+    
     const savedInfoMode = localStorage.getItem('bancrupt_infoMode');
     if (savedInfoMode === 'true') {
         infoMode = true;
@@ -1033,20 +2176,26 @@ function enterGame() {
     }
     
     socket.emit('getGameState');
+    
+    setTimeout(() => {
+        if (gameState && gameState.gameStarted) {
+            hideWaitingRoom();
+            return;
+        }
+        
+        socket.emit('getWaitingRoom');
+        showWaitingRoom();
+    }, 300);
+    
+    setTimeout(initInfoResizeObserver, 1000);
 }
 
 // ============================================
-// PASITRAUKIMAS IŠ ŽAIDIMO
+// PASITRAUKIMAS
 // ============================================
 
 function leaveGame() {
-    if (!isConnected) {
-        alert('❌ Nėra ryšio su serveriu!');
-        playErrorSound();
-        return;
-    }
-    
-    if (!socket || !socket.connected) {
+    if (!isConnected || !socket || !socket.connected) {
         alert('❌ Nėra ryšio su serveriu!');
         playErrorSound();
         return;
@@ -1074,10 +2223,22 @@ function updateDiceDisplay(value1, value2) {
     if (dice1) dice1.classList.add('rolling');
     if (dice2) dice2.classList.add('rolling');
     
+    if (navigator.vibrate) {
+        navigator.vibrate([50, 30, 50, 30, 100]);
+    }
+    
     setTimeout(() => {
-        if (dice1) dice1.classList.remove('rolling');
-        if (dice2) dice2.classList.remove('rolling');
-    }, 500);
+        if (dice1) {
+            dice1.classList.remove('rolling');
+            dice1.classList.add('settle');
+            setTimeout(() => dice1.classList.remove('settle'), 300);
+        }
+        if (dice2) {
+            dice2.classList.remove('rolling');
+            dice2.classList.add('settle');
+            setTimeout(() => dice2.classList.remove('settle'), 300);
+        }
+    }, 800);
 }
 
 function updateSingleDice(diceId, value) {
@@ -1109,6 +2270,76 @@ function updateSingleDice(diceId, value) {
 }
 
 // ============================================
+// ŽAIDĖJO JUDĖJIMO ANIMACIJA
+// ============================================
+async function animateMovement(playerId, fromPos, toPos) {
+    if (fromPos === toPos) return;
+    
+    const boardSize = 52;
+    const totalSteps = (toPos - fromPos + boardSize) % boardSize;
+    if (totalSteps === 0) return;
+    
+    console.log(`🎬 Animacija: player ${playerId} nuo ${fromPos} iki ${toPos}`);
+    
+    const stepDuration = totalSteps > 8 ? 150 : 250;
+    
+    hidePlayerDot(playerId);
+    
+    for (let i = 1; i <= totalSteps; i++) {
+        const currentPos = (fromPos + i) % boardSize;
+        const cell = document.getElementById(`cell-${currentPos}`);
+        
+        if (!cell) continue;
+        
+        cell.classList.add('highlight-yellow');
+        
+        if (typeof playClickSound === 'function') {
+            playClickSound();
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, stepDuration));
+        
+        if (i < totalSteps) {
+            cell.classList.remove('highlight-yellow');
+        }
+    }
+    
+    const finalCell = document.getElementById(`cell-${toPos}`);
+    if (finalCell) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        finalCell.classList.remove('highlight-yellow');
+    }
+    
+    showPlayerDot(playerId, toPos);
+    
+    if (finalCell) {
+        const playerDots = finalCell.querySelectorAll('.player-dot');
+        playerDots.forEach(dot => {
+            if (dot.dataset.playerId == playerId) {
+                dot.classList.add('jumping');
+                setTimeout(() => dot.classList.remove('jumping'), 300);
+            }
+        });
+    }
+}
+
+function hidePlayerDot(playerId) {
+    document.querySelectorAll('.player-dot').forEach(dot => {
+        if (dot.dataset.playerId == playerId) {
+            dot.style.display = 'none';
+        }
+    });
+}
+
+function showPlayerDot(playerId, position) {
+    document.querySelectorAll('.player-dot').forEach(dot => {
+        if (dot.dataset.playerId == playerId) {
+            dot.style.display = '';
+        }
+    });
+}
+
+// ============================================
 // PIRKIMAS
 // ============================================
 
@@ -1129,6 +2360,8 @@ function showBuyChoice(data) {
     playNotificationSound();
 }
 
+
+
 function hideBuyChoice() {
     const choice = document.getElementById('buyChoice');
     choice.style.display = 'none';
@@ -1147,6 +2380,8 @@ function cancelBuy() {
     hideBuyChoice();
 }
 
+
+
 // ============================================
 // ŽAIDIMO VALDYMAS
 // ============================================
@@ -1164,6 +2399,16 @@ function rollDice() {
         return;
     }
     
+    if (amIKicked) {
+        alert('🚫 Tu buvai pašalintas iš žaidimo!');
+        playErrorSound();
+        return;
+    }
+    
+    if (navigator.vibrate) {
+        navigator.vibrate(100);
+    }
+    
     playClickSound();
     socket.emit('rollDice');
 }
@@ -1179,8 +2424,7 @@ let selectedOfferFields = [];
 let selectedRequestFields = [];
 
 function openTrading() {
-    // Leisti atidaryti prekybą BET KADA
-    if (myPlayer && (myPlayer.bankrupt || myPlayer.left)) {
+    if (myPlayer && (myPlayer.bankrupt || myPlayer.left || myPlayer.kicked)) {
         alert('❌ Tu nebegali prekiauti!');
         playErrorSound();
         return;
@@ -1248,22 +2492,32 @@ function updateSellableProperties() {
     const container = document.getElementById('sellableProperties');
     if (!container || !gameState || !myPlayer) return;
     
-    const properties = gameState.players.find(p => p.id === playerId).properties || [];
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const properties = player.properties || [];
     let html = '';
     
     properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
-        const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
         const price = Math.floor(field.cost * 0.8);
         const checked = selectedSellFields.includes(fieldId) ? 'checked' : '';
+        
+        // 🆕 Spalva arba ikona
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const icon = isService ? (field.icon || '⚙️') : '';
+        const color = isService ? 'transparent' : (field.color || '#c9a84c');
+        
         html += `
-            <div style="padding:8px; border-bottom:1px solid #ddd;">
+            <div style="padding:8px; border-bottom:1px solid #ddd; display:flex; align-items:center; gap:8px;">
+                <div style="width:20px; height:20px; border-radius:4px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:1px solid #ccc;">${icon}</div>
                 <input type="checkbox" ${checked} onchange="toggleSellField(${fieldId})" id="sell_${fieldId}">
-                <label for="sell_${fieldId}" style="font-weight:600;">${field.name}</label>
-                <span style="float:right; color:#28a745;">€${price}</span>
+                <label for="sell_${fieldId}" style="font-weight:600; flex:1;">${field.name}</label>
+                <span style="color:#28a745;">€${price}</span>
             </div>
         `;
     });
@@ -1309,24 +2563,33 @@ function updateAuctionableProperties() {
     const container = document.getElementById('auctionableProperties');
     if (!container || !gameState || !myPlayer) return;
     
-    const properties = gameState.players.find(p => p.id === playerId).properties || [];
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const properties = player.properties || [];
     let html = '';
     let hasProperties = false;
     
     properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
-        const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
         hasProperties = true;
         const checked = (selectedAuctionField === fieldId) ? 'checked' : '';
         
+        // 🆕 Spalva arba ikona
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const icon = isService ? (field.icon || '⚙️') : '';
+        const color = isService ? 'transparent' : (field.color || '#c9a84c');
+        
         html += `
-            <div style="padding:8px; border-bottom:1px solid #ddd; cursor:pointer;" onclick="selectAuctionField(${fieldId})">
-                <input type="radio" name="auctionField" ${checked} id="auction_${fieldId}" style="margin-right:10px;">
-                <label for="auction_${fieldId}" style="font-weight:600; cursor:pointer;">${field.name}</label>
-                <span style="float:right; color:#6c757d;">€${field.cost}</span>
+            <div style="padding:8px; border-bottom:1px solid #ddd; cursor:pointer; display:flex; align-items:center; gap:8px;" onclick="selectAuctionField(${fieldId})">
+                <div style="width:20px; height:20px; border-radius:4px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:1px solid #ccc;">${icon}</div>
+                <input type="radio" name="auctionField" ${checked} id="auction_${fieldId}">
+                <label for="auction_${fieldId}" style="font-weight:600; cursor:pointer; flex:1;">${field.name}</label>
+                <span style="color:#6c757d;">€${field.cost}</span>
             </div>
         `;
     });
@@ -1357,7 +2620,7 @@ function confirmStartAuction() {
         return;
     }
     
-    if (confirm(`🔨 Skelbti aukcioną: ${field.name}?`)) {
+    if (confirm(`🔨 Skelbti aukcioną: ${field.name}?\n\nBankas siūlys 70% (€${Math.floor(field.cost * 0.7)}) startinę kainą.`)) {
         socket.emit('startAuction', { fieldId: selectedAuctionField });
         selectedAuctionField = null;
         closeTrading();
@@ -1373,13 +2636,12 @@ function updateTradePlayers() {
     const select = document.getElementById('tradeTargetPlayer');
     if (!select) return;
     if (!gameState) return;
-    
-    const currentPlayerId = myPlayer?.id !== undefined ? myPlayer.id : playerId;
+    if (playerId == null) return;
     
     select.innerHTML = '';
     let found = false;
     gameState.players.forEach(p => {
-        if (p.id !== currentPlayerId && p.isActive && !p.bankrupt && !p.left) {
+        if (p.id !== playerId && p.isActive && !p.bankrupt && !p.left && !p.kicked) {
             const option = document.createElement('option');
             option.value = p.id;
             option.textContent = `${p.name} (€${p.money})`;
@@ -1416,31 +2678,40 @@ function updateOfferFields() {
     const container = document.getElementById('tradeOfferFields');
     if (!container || !gameState || !myPlayer) return;
     
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
     let html = '';
     let count = 0;
     
-    if (myPlayer.properties.length === 0) {
+    if (player.properties.length === 0) {
         container.innerHTML = '<p style="color:#6c757d; padding:10px;">Neturi kortelių</p>';
         return;
     }
     
     html += '<div style="display:flex; flex-wrap:wrap; gap:5px; padding:5px;">';
     
-    myPlayer.properties.forEach(fieldId => {
+    player.properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
-        const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
         const checked = selectedOfferFields.includes(fieldId) ? 'checked' : '';
-        const color = field.color || '#c9a84c';
+        
+        // 🆕 Spalva arba ikona
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const icon = isService ? (field.icon || '⚙️') : '';
+        const color = isService ? '#f0e8d8' : (field.color || '#c9a84c');
+        const textColor = isService ? '#3d2b1f' : '#fff';
         
         html += `
-            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; box-shadow: ${checked ? '0 0 10px rgba(40,167,69,0.4)' : 'none'};" 
+            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s;" 
                  onclick="document.getElementById('offer_${fieldId}').click()">
+                ${icon ? `<span style="font-size:12px;">${icon}</span>` : ''}
                 <input type="checkbox" ${checked} onchange="toggleOfferField(${fieldId})" id="offer_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
-                <span style="font-size:8px; color:rgba(255,255,255,0.7);">€${field.cost}</span>
+                <span style="font-size:10px; color:${textColor}; font-weight:600;">${field.name}</span>
+                <span style="font-size:8px; color:${textColor}; opacity:0.7;">€${field.cost}</span>
             </div>
         `;
         count++;
@@ -1517,14 +2788,20 @@ function updateRequestFields() {
         if (houses > 0) return;
         
         const checked = selectedRequestFields.includes(fieldId) ? 'checked' : '';
-        const color = field.color || '#c9a84c';
+        
+        // 🆕 Spalva arba ikona
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const icon = isService ? (field.icon || '⚙️') : '';
+        const color = isService ? '#f0e8d8' : (field.color || '#c9a84c');
+        const textColor = isService ? '#3d2b1f' : '#fff';
         
         html += `
-            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; box-shadow: ${checked ? '0 0 10px rgba(40,167,69,0.4)' : 'none'};" 
+            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s;" 
                  onclick="document.getElementById('request_${fieldId}').click()">
+                ${icon ? `<span style="font-size:12px;">${icon}</span>` : ''}
                 <input type="checkbox" ${checked} onchange="toggleRequestField(${fieldId})" id="request_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
-                <span style="font-size:8px; color:rgba(255,255,255,0.7);">€${field.cost}</span>
+                <span style="font-size:10px; color:${textColor}; font-weight:600;">${field.name}</span>
+                <span style="font-size:8px; color:${textColor}; opacity:0.7;">€${field.cost}</span>
             </div>
         `;
         count++;
@@ -1648,92 +2925,6 @@ function counterTradeOffer() {
     playClickSound();
 }
 
-function showAuction(data) {
-    if (!data) {
-        alert('❌ Klaida: gauti neteisingi aukciono duomenys');
-        playErrorSound();
-        return;
-    }
-    
-    auctionEndedSent = false;
-    
-    document.getElementById('auctionSeller').textContent = data.sellerName || 'Nežinomas';
-    document.getElementById('auctionFieldName').textContent = data.fieldName || 'Nežinoma kortelė';
-    document.getElementById('auctionCurrentBid').textContent = data.currentBid || 0;
-    
-    currentAuctionId = data.auctionId;
-    
-    const endTime = data.endTime || (Date.now() + 60000);
-    startAuctionTimer(endTime);
-    
-    document.getElementById('auctionModal').style.display = 'flex';
-    playAuctionSound();
-}
-
-function closeAuction() {
-    document.getElementById('auctionModal').style.display = 'none';
-    if (auctionTimerInterval) {
-        clearInterval(auctionTimerInterval);
-        auctionTimerInterval = null;
-    }
-    currentAuctionId = null;
-    auctionEndedSent = true;
-    playClickSound();
-}
-
-function startAuctionTimer(endTime) {
-    if (auctionTimerInterval) {
-        clearInterval(auctionTimerInterval);
-    }
-    
-    auctionEndedSent = false;
-    
-    auctionTimerInterval = setInterval(() => {
-        const now = Date.now();
-        const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-        document.getElementById('auctionTimer').textContent = remaining;
-        
-        if (remaining <= 0 && !auctionEndedSent) {
-            clearInterval(auctionTimerInterval);
-            auctionTimerInterval = null;
-            document.getElementById('auctionTimer').textContent = '0';
-            
-            auctionEndedSent = true;
-            if (currentAuctionId) {
-                socket.emit('endAuction', { auctionId: currentAuctionId });
-            }
-        }
-    }, 1000);
-}
-
-function placeBid() {
-    const input = document.getElementById('auctionBidInput');
-    const bidAmount = parseInt(input.value);
-    
-    if (!currentAuctionId) {
-        alert('❌ Nėra aktyvaus aukciono!');
-        playErrorSound();
-        return;
-    }
-    
-    if (isNaN(bidAmount) || bidAmount <= 0) {
-        alert('❌ Įvesk teisingą kainą!');
-        playErrorSound();
-        return;
-    }
-    
-    const currentBid = parseInt(document.getElementById('auctionCurrentBid').textContent) || 0;
-    if (bidAmount <= currentBid) {
-        alert(`❌ Siūlyk daugiau nei dabartinė kaina (€${currentBid})!`);
-        playErrorSound();
-        return;
-    }
-    
-    socket.emit('bidAuction', { auctionId: currentAuctionId, bidAmount });
-    input.value = '';
-    playClickSound();
-}
-
 let demolishableProperties = [];
 
 function openDemolish() {
@@ -1763,7 +2954,7 @@ function updateDemolishList(properties) {
     demolishableProperties = properties;
     
     if (properties.length === 0) {
-        container.innerHTML = '<p style="color:#6c757d; padding:10px; text-align:center;">Neturi namų ar viezbučių kuriuos galėtum griauti.</p>';
+        container.innerHTML = '<p style="color:#6c757d; padding:10px; text-align:center;">Neturi namų ar viežbučių kuriuos galėtum griauti.</p>';
         return;
     }
     
@@ -1778,12 +2969,15 @@ function updateDemolishList(properties) {
             }
         }
         
-        const color = prop.color || '#c9a84c';
-        const typeText = prop.isHotel ? 'VIEZBUTIS' : `${prop.houses} namai`;
+        // 🆕 Spalva arba ikona
+        const isService = prop.type === 'service1' || prop.type === 'service2' || prop.type === 'service3';
+        const icon = isService ? (prop.icon || '⚙️') : '';
+        const color = isService ? 'transparent' : (prop.color || '#c9a84c');
+        const typeText = prop.isHotel ? 'VIEŽBUTIS' : `${prop.houses} namai`;
         
         html += `
             <div class="demolish-card" onclick="confirmDemolish(${prop.id})">
-                <div class="card-color" style="background:${color};"></div>
+                <div class="card-color" style="background:${color}; display:flex; align-items:center; justify-content:center; font-size:14px; border:1px solid rgba(0,0,0,0.2);">${icon}</div>
                 <span class="card-name">${prop.name}</span>
                 <span class="card-houses">${houseIcons}</span>
                 <span class="card-refund">+€${prop.refund}</span>
@@ -1889,7 +3083,7 @@ function confirmBankrupt() {
         return;
     }
     
-    socket.emit('bankrupt', playerId);
+    socket.emit('bankrupt');
 }
 
 function cancelBankrupt() {
@@ -1915,37 +3109,38 @@ function sendChat() {
 }
 
 function getGroupByColor(color) {
-    const groups = {
-        '#ffd700': [1, 3],
-        '#4a90d9': [6, 7, 9],
-        '#2ecc71': [10, 11, 12],
-        '#e67e22': [15, 17, 18],
-        '#9b59b6': [20, 21, 22],
-        '#e74c3c': [24, 25, 27],
-        '#8B6914': [28, 30, 31],
-        '#1abc9c': [32, 34, 35],
-        '#ff69b4': [36, 37, 38],
-        '#2c3e50': [39, 41, 43],
-        '#1a237e': [44, 46, 48],
-        '#bdc3c7': [49, 51]
-    };
-    return groups[color] || [];
+    return COLOR_GROUPS[color] || [];
 }
 
 function setMode(mode) {
     const board = document.getElementById('board');
     board.className = mode;
     
-    const adaptiveBtn = document.getElementById('modeAdaptive');
-    const fixedBtn = document.getElementById('modeFixed');
-    
-    if (adaptiveBtn && fixedBtn) {
-        adaptiveBtn.classList.toggle('active', mode === 'adaptive');
-        fixedBtn.classList.toggle('active', mode === 'fixed');
+    const modeBtn = document.getElementById('modeBtn');
+    if (modeBtn) {
+        if (mode === 'adaptive') {
+            modeBtn.innerHTML = '📊 Režimas: Adaptyvus';
+        } else {
+            modeBtn.innerHTML = '📊 Režimas: Fiksuotas';
+        }
     }
     
     localStorage.setItem('boardMode', mode);
     playClickSound();
+    
+    setTimeout(autoFitInfoFont, 300);
+}
+
+function toggleMode() {
+    const board = document.getElementById('board');
+    if (!board) return;
+    
+    const currentMode = localStorage.getItem('boardMode') || 'adaptive';
+    const newMode = currentMode === 'adaptive' ? 'fixed' : 'adaptive';
+    
+    setMode(newMode);
+    
+    console.log(`📊 Režimas pakeistas: ${currentMode} → ${newMode}`);
 }
 
 // ============================================
@@ -1955,16 +3150,53 @@ function setMode(mode) {
 function updateUI(state) {
     if (!state) return;
     
-    document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left).length}/${state.maxPlayers}`;
-    const currentPlayer = state.players[state.currentTurn];
+    document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left && !p.kicked).length}/${state.maxPlayers}`;
+    
+    // 🆕 Rasti dabartinį žaidėją pagal playerId
+    const currentPlayer = state.players.find(p => p.id === state.currentTurn);
     document.getElementById('turnDisplay').textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
+
+    // 🆕 Atnaujinti turnIndicator (5 langelyje)
+const turnIndicatorName = document.getElementById('turnIndicatorName');
+const turnIndicatorNext = document.getElementById('turnIndicatorNext');
+const indicator = document.getElementById('turnIndicator');
+
+if (currentPlayer) {
+    if (turnIndicatorName) {
+        turnIndicatorName.textContent = currentPlayer.name;
+        turnIndicatorName.style.color = currentPlayer.color || '#1a6b3c';
+    }
+    
+    if (indicator && currentPlayer.color) {
+        indicator.style.borderColor = currentPlayer.color;
+        indicator.style.background = currentPlayer.color + '20';
+    }
+    
+    // Rasti kitą žaidėją
+    const activePlayers = state.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+    const currentIndex = activePlayers.findIndex(p => p.id === currentPlayer.id);
+    
+    let nextPlayer = null;
+    if (activePlayers.length > 1) {
+        nextPlayer = activePlayers[(currentIndex + 1) % activePlayers.length];
+    }
+    
+    if (turnIndicatorNext) {
+        if (nextPlayer && nextPlayer.id !== currentPlayer.id) {
+            turnIndicatorNext.textContent = nextPlayer.name;
+            turnIndicatorNext.style.color = nextPlayer.color || '#3d2b1f';
+        } else {
+            turnIndicatorNext.textContent = '---';
+        }
+    }
+}
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft && gameId) gameIdLeft.textContent = gameId;
 
     const playerCountLeft = document.getElementById('playerCountLeft');
     if (playerCountLeft) {
-        playerCountLeft.textContent = `${state.players.filter(p => p.isActive && !p.bankrupt && !p.left).length}/${state.maxPlayers}`;
+        playerCountLeft.textContent = `${state.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked).length}/${state.maxPlayers}`;
     }
 
     const turnDisplayLeft = document.getElementById('turnDisplayLeft');
@@ -1979,7 +3211,7 @@ function updateUI(state) {
         
         let miniCardsHtml = '';
         if (me.properties.length > 0) {
-            miniCardsHtml = '<div style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center; margin-top:4px; max-height:60px; overflow-y:auto;">';
+            miniCardsHtml = '<div class="mini-cards-container">';
             
             let cardsWithPrice = [];
             me.properties.forEach(fieldId => {
@@ -1996,82 +3228,116 @@ function updateUI(state) {
             cardsWithPrice.sort((a, b) => a.field.cost - b.field.cost);
             
             cardsWithPrice.forEach(({ fieldId, field, houses }) => {
-                let houseIcon = '';
-                if (houses >= 5) houseIcon = '🏨';
-                else if (houses > 0) {
-                    for (let i = 0; i < houses; i++) houseIcon += '🏠';
-                }
-                const color = field.color || '#c9a84c';
-                miniCardsHtml += `
-                    <div style="background:${color}; padding:2px 6px; border-radius:4px; font-size:9px; color:#fff; font-weight:600; border:1px solid rgba(255,255,255,0.3); display:flex; align-items:center; gap:3px;">
-                        ${houseIcon}
-                        <span style="font-size:8px;">${field.name}</span>
-                        <span style="font-size:7px; opacity:0.7;">€${field.cost}</span>
-                    </div>
-                `;
-            });
+    let houseIcon = '';
+    if (houses >= 5) houseIcon = '🏨';
+    else if (houses > 0) {
+        for (let i = 0; i < houses; i++) houseIcon += '🏠';
+    }
+    
+    // 🆕 Jei service1/2/3 – rodom ikoną viršuje, ne spalvą
+    const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+    const color = field.color || '#c9a84c';
+    
+    const tooltip = `${field.name} (#${fieldId}) • €${field.cost}`;
+    
+    // 🆕 Viršutinė dalis – arba spalva (property), arba ikona (service)
+    const topBar = isService 
+        ? `<div class="mini-card-color mini-card-icon" style="background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;">${field.icon || '⚙️'}</div>`
+        : `<div class="mini-card-color" style="background:${color};"></div>`;
+    
+    miniCardsHtml += `
+        <div class="mini-card" title="${tooltip}" data-field-id="${fieldId}">
+            ${topBar}
+            <div class="mini-card-body">
+                <div class="mini-card-name">${field.name}</div>
+                <div class="mini-card-info">€${field.cost} • #${fieldId}</div>
+                ${houseIcon ? `<div class="mini-card-houses">${houseIcon}</div>` : ''}
+            </div>
+        </div>
+    `;
+});
             
             miniCardsHtml += '</div>';
         } else {
             miniCardsHtml = '<div style="font-size:9px; color:#6c757d; margin-top:4px;">Neturi kortelių</div>';
         }
         
+        const oldMoneyEl = document.querySelector('#myInfo .player-money');
+        const oldMoney = oldMoneyEl ? parseInt(oldMoneyEl.textContent.replace(/[^0-9-]/g, '')) : me.money;
+        const newMoney = me.money;
+        
         document.getElementById('myInfo').innerHTML = `
             <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
                 <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
                 <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
             </div>
-            <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};">💰 €${me.money}</div>
+
+            <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};" data-target="${newMoney}">💰 €${newMoney}</div>
             <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
             <div style="font-size:11px; color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
             ${me.inJail ? '<div style="color:#dc3545; font-size:11px;">⛓️ KALĖJIME</div>' : ''}
             ${me.bankrupt ? '<div style="color:#dc3545; font-size:11px;">💀 BANKROTAS</div>' : ''}
             ${me.left ? '<div style="color:#6c757d; font-size:11px;">😭 PASITRAUKEI</div>' : ''}
+            ${me.kicked ? '<div style="color:#dc3545; font-size:14px; font-weight:700;">🚫 PAŠALINTAS</div>' : ''}
             ${me.isDebtor ? '<div style="color:#dc3545; font-size:14px; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
             <div style="width:100%; border-top:1px solid rgba(61,43,31,0.1); margin-top:4px; padding-top:4px;">
                 <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px;">📋 TURIMOS KORTELĖS</div>
                 ${miniCardsHtml}
             </div>
         `;
+        
+        if (oldMoney !== newMoney) {
+            setTimeout(() => {
+                animateMoney(document.querySelector('#myInfo .player-money'), oldMoney, newMoney, 800);
+            }, 50);
+        }
     }
     
     const playersList = document.getElementById('playersList');
     playersList.innerHTML = state.players.map(p => {
         const pHouses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
         const isLeft = p.left === true;
+        const isKicked = p.kicked === true;
         const isDebtor = p.isDebtor === true;
+        
+        if (isKicked && p.id !== playerId) {
+            return '';
+        }
+        
         return `
-            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''}">
+            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''} ${isKicked ? 'left' : ''}">
                 <span class="dot" style="background:${p.color}"></span>
                 <span class="pname">${p.name} ${p.id === playerId ? '👤' : ''}</span>
                 <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
                 ${pHouses > 0 ? `🏠${pHouses}` : ''}
                 ${p.inJail ? '⛓️' : ''}
                 ${p.bankrupt ? '💀' : ''}
+                ${isKicked ? '🚫' : ''}
                 ${isDebtor && !p.bankrupt ? '⚠️' : ''}
                 ${isLeft ? '😭' : ''}
-                ${state.currentTurn === p.id && p.isActive && !p.left ? '🎯' : ''}
+                ${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}
             </div>
         `;
-    }).join('');
+    }).filter(html => html !== '').join('');
     
     const isBankrupt = myPlayer && myPlayer.bankrupt;
     const isLeft = myPlayer && myPlayer.left;
+    const isKicked = myPlayer && myPlayer.kicked;
     const isDebtor = myPlayer && myPlayer.isDebtor;
-    isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left;
+    isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left && !myPlayer.kicked;
     
-    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft || isDebtor;
+    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
     
     const tradeBtn = document.getElementById('tradeBtn');
     if (tradeBtn) {
-        tradeBtn.disabled = isBankrupt || isLeft;
+        tradeBtn.disabled = isBankrupt || isLeft || isKicked;
     }
     
-    document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || !myPlayer || !myPlayer.isActive;
+    document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || isKicked || !myPlayer || !myPlayer.isActive;
 
     const jailBtn = document.getElementById('jailBtn');
     if (jailBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && !isDebtor && myPlayer && myPlayer.inJail) {
+        if (isMyTurn && !isBankrupt && !isLeft && !isKicked && !isDebtor && myPlayer && myPlayer.inJail) {
             jailBtn.style.display = 'block';
             jailBtn.disabled = false;
         } else {
@@ -2082,7 +3348,7 @@ function updateUI(state) {
 
     const demolishBtn = document.getElementById('demolishBtn');
     if (demolishBtn) {
-        if ((isMyTurn || isDebtor) && !isBankrupt && !isLeft && myPlayer) {
+        if ((isMyTurn || isDebtor) && !isBankrupt && !isLeft && !isKicked && myPlayer) {
             const hasHouses = myPlayer.houses && Object.keys(myPlayer.houses).length > 0;
             if (hasHouses) {
                 demolishBtn.style.display = 'block';
@@ -2099,7 +3365,7 @@ function updateUI(state) {
 
     const buildBtn = document.getElementById('buildBtn');
     if (buildBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && !isDebtor && myPlayer && gameState) {
+        if (isMyTurn && !isBankrupt && !isLeft && !isKicked && !isDebtor && myPlayer && gameState) {
             const currentField = gameState.board[myPlayer.position];
             if (currentField && (currentField.type === 'property' || currentField.type === 'service2') && currentField.color) {
                 const groupFields = getGroupByColor(currentField.color);
@@ -2122,7 +3388,7 @@ function updateUI(state) {
                             const allHave4 = groupFields.every(id => (myPlayer.houses && myPlayer.houses[id] || 0) >= 4);
                             const alreadyHasHotel = currentHouses >= 5;
                             if (allHave4 && !alreadyHasHotel) {
-                                buildBtn.textContent = '🏨 Statyti viezbutį';
+                                buildBtn.textContent = '🏨 Statyti viežbutį';
                                 buildBtn.style.display = 'block';
                                 buildBtn.disabled = false;
                             } else {
@@ -2154,7 +3420,7 @@ function updateUI(state) {
     const centerCells = document.querySelectorAll('.center-cell');
     centerCells.forEach(cell => {
         if (cell.id === 'center-3') {
-            if (isBankrupt || isLeft) {
+            if (isBankrupt || isLeft || isKicked) {
                 cell.style.opacity = '1';
                 cell.style.filter = 'none';
                 cell.style.background = 'linear-gradient(145deg, #d4b896, #c4a886)';
@@ -2166,7 +3432,7 @@ function updateUI(state) {
                 cell.style.pointerEvents = 'auto';
             }
         } else {
-            if (isBankrupt || isLeft) {
+            if (isBankrupt || isLeft || isKicked) {
                 cell.style.opacity = '0.4';
                 cell.style.filter = 'grayscale(1)';
                 cell.style.pointerEvents = 'none';
@@ -2180,7 +3446,7 @@ function updateUI(state) {
         }
     });
     
-    if (isBankrupt || isLeft) {
+    if (isBankrupt || isLeft || isKicked) {
         document.getElementById('board').style.opacity = '0.5';
         document.getElementById('board').style.filter = 'grayscale(0.8)';
     } else {
@@ -2189,6 +3455,10 @@ function updateUI(state) {
     }
     
     updateBoard(state);
+    
+    autoUpdateLeaders();
+    
+    setTimeout(initMiniCardTooltips, 100);
 }
 
 // ============================================
@@ -2202,30 +3472,49 @@ function updateBoard(state) {
         const cell = document.getElementById(`cell-${index}`);
         if (!cell) return;
         
-        const playersHere = state.players.filter(p => p.position === index && p.isActive && !p.bankrupt && !p.left);
+        const playersHere = state.players.filter(p => p.position === index && p.isActive && !p.bankrupt && !p.left && !p.kicked);
         
-        let html = `<span class="cell-number">${index}</span>`;
-        
-        const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt);
+        const owner = state.players.find(p => p.properties.includes(index) && !p.bankrupt && !p.kicked);
+        let topBarHtml = '';
         if (owner) {
-            html += `<span class="cell-owner" style="background:${owner.color}"></span>`;
+            topBarHtml = `<span class="cell-owner" style="background:${owner.color}"></span>`;
         }
+        let html = `<div class="cell-top-bar">${topBarHtml}<span class="cell-number">${index}</span></div>`;
         
-        html += `<span class="cell-icon">${field.icon || ''}</span>`;
+        if (field.icon) {
+            html += `<span class="cell-bg-icon">${field.icon}</span>`;
+        }
+
         html += `<span class="cell-name">${field.name || index}</span>`;
         
         if (field.cost > 0) {
             if (owner && owner.houses && owner.houses[index] && owner.houses[index] > 0) {
                 const houseCount = owner.houses[index];
                 let houseIcons = '';
+                
+                const isNewHouse = window.newHouseAnimations && window.newHouseAnimations[index];
+                const isNewHotel = houseCount >= 5 && isNewHouse;
+                
                 if (houseCount >= 5) {
-                    houseIcons = '🏨';
+                    houseIcons = `<span class="${isNewHotel ? 'new-hotel' : ''}">🏨</span>`;
                 } else {
                     for (let i = 0; i < Math.min(houseCount, 4); i++) {
-                        houseIcons += '🏠';
+                        if (i === houseCount - 1 && isNewHouse) {
+                            houseIcons += `<span class="new-house">🏠</span>`;
+                        } else {
+                            houseIcons += '🏠';
+                        }
                     }
                 }
                 html += `<span class="cell-cost" style="font-size:14px; display:block; line-height:1.2;">${houseIcons}</span>`;
+                
+                if (isNewHouse) {
+                    setTimeout(() => {
+                        if (window.newHouseAnimations) {
+                            delete window.newHouseAnimations[index];
+                        }
+                    }, 1000);
+                }
             } else {
                 html += `<span class="cell-cost">€${field.cost}</span>`;
             }
@@ -2234,7 +3523,9 @@ function updateBoard(state) {
         if (playersHere.length > 0) {
             html += `<div class="players-on-cell">`;
             playersHere.forEach(p => {
-                html += `<span class="player-dot" style="background:${p.color}"></span>`;
+                const isAnimating = window.animatingPlayers && window.animatingPlayers.includes(p.id);
+                const displayStyle = isAnimating ? 'display:none;' : '';
+                html += `<span class="player-dot" style="background:${p.color};${displayStyle}" data-player-id="${p.id}"></span>`;
             });
             html += `</div>`;
         }
@@ -2242,13 +3533,40 @@ function updateBoard(state) {
         cell.innerHTML = html;
         
         cell.className = 'cell';
-        if (field.type === 'start') cell.classList.add('start');
-        else if (field.type === 'jail') cell.classList.add('jail');
-        else if (field.type === 'parking') cell.classList.add('parking');
-        else if (field.type === 'go-to-jail') cell.classList.add('go-to-jail');
-        else if (field.type === 'property') cell.classList.add('property');
-        else if (field.id === 0 || field.id === 16 || field.id === 26 || field.id === 42) {
-            cell.classList.add('corner');
+        if (field.type === 'start') cell.classList.add('start', 'corner');
+        else if (field.type === 'jail') cell.classList.add('jail', 'corner');
+        else if (field.type === 'parking') cell.classList.add('parking', 'corner');
+        else if (field.type === 'go-to-jail') cell.classList.add('go-to-jail', 'corner');
+        if (field.type === 'property') cell.classList.add('property');
+else if (field.type === 'service1') cell.classList.add('service1');
+else if (field.type === 'service2') cell.classList.add('service2');
+else if (field.type === 'service3') cell.classList.add('service3');
+        
+        if (field.id !== 0 && field.id !== 16 && field.id !== 26 && field.id !== 42) {
+            cell.classList.add('edge');
+        }
+        
+        // GRUPAVIMAS
+        if (field.color && field.type === 'property') {
+            cell.setAttribute('data-group', field.color);
+            cell.style.setProperty('--group-color', field.color);
+            
+            if (owner) {
+                const group = COLOR_GROUPS[field.color] || [];
+                if (group.length > 0) {
+                    const hasAll = group.every(id => owner.properties.includes(id));
+                    if (hasAll) {
+                        cell.classList.add('full-group');
+                    } else {
+                        cell.classList.remove('full-group');
+                    }
+                }
+            } else {
+                cell.classList.remove('full-group');
+            }
+        } else {
+            cell.removeAttribute('data-group');
+            cell.classList.remove('full-group');
         }
         
         if (field.color) {
@@ -2258,16 +3576,41 @@ function updateBoard(state) {
 }
 
 function addChatMessage(data) {
-    const container = document.getElementById('chatMessages');
     const time = new Date(data.timestamp).toLocaleTimeString();
-    container.innerHTML += `<div style="color:${data.color}"><b>${data.player}:</b> ${data.message} <span style="font-size:7px;color:rgba(61,43,31,0.4)">${time}</span></div>`;
-    container.scrollTop = container.scrollHeight;
+    
+    const container = document.getElementById('chatMessages');
+    if (container) {
+        container.innerHTML += `
+            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${data.color}; border:1px solid rgba(0,0,0,0.2); flex-shrink:0;"></span>
+                <b>${data.player}:</b> 
+                <span>${data.message}</span>
+                <span style="font-size:7px; color:rgba(61,43,31,0.4); margin-left:auto;">${time}</span>
+            </div>
+        `;
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    const waitingContainer = document.getElementById('waitingChatMessages');
+    if (waitingContainer) {
+        waitingContainer.innerHTML += `
+            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${data.color}; border:1px solid rgba(0,0,0,0.2); flex-shrink:0;"></span>
+                <b>${data.player}:</b> 
+                <span>${data.message}</span>
+                <span style="font-size:9px; color:rgba(61,43,31,0.4); margin-left:auto;">${time}</span>
+            </div>
+        `;
+        waitingContainer.scrollTop = waitingContainer.scrollHeight;
+    }
 }
 
 let journalCount = 0;
 
 function addJournal(msg) {
     const container = document.getElementById('journal');
+    if (!container) return;
+    
     journalCount++;
     const time = new Date().toLocaleTimeString();
     
@@ -2282,20 +3625,200 @@ function addJournal(msg) {
     container.appendChild(item);
     container.scrollTop = container.scrollHeight;
     
-    while (container.children.length > 50) {
+    // 🆕 Išsaugoti į localStorage (neribotas istorijos)
+    try {
+        const history = JSON.parse(localStorage.getItem('bancrupt_journal') || '[]');
+        history.push({ num: journalCount, text: msg, time: time });
+        localStorage.setItem('bancrupt_journal', JSON.stringify(history));
+    } catch (e) {
+        console.warn('⚠️ Nepavyko išsaugoti žurnalo:', e);
+    }
+    
+    // 🆕 Išvalyti senus iš DOM (kad nepersistengtų), bet localStorage turi viską
+    while (container.children.length > 500) {
         container.removeChild(container.firstChild);
     }
 }
 
+// 🆕 Užkrauti žurnalą iš localStorage
+function loadJournalFromStorage() {
+    try {
+        const history = JSON.parse(localStorage.getItem('bancrupt_journal') || '[]');
+        const container = document.getElementById('journal');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        journalCount = 0;
+        
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'journal-item';
+            div.innerHTML = `
+                <span class="jnum">#${item.num}</span>
+                <span class="jtext">${item.text}</span>
+                <span class="jtime">${item.time}</span>
+            `;
+            container.appendChild(div);
+            journalCount = item.num;
+        });
+        
+        container.scrollTop = container.scrollHeight;
+        console.log(`📜 Žurnalas užkrautas: ${history.length} įrašų`);
+    } catch (e) {
+        console.warn('⚠️ Nepavyko užkrauti žurnalo:', e);
+    }
+}
+
+// 🆕 Išvalyti žurnalą (naujam žaidimui)
+function clearJournal() {
+    localStorage.removeItem('bancrupt_journal');
+    const container = document.getElementById('journal');
+    if (container) container.innerHTML = '';
+    journalCount = 0;
+    console.log('📜 Žurnalas išvalytas');
+}
+
+function getCellMessage(cellId, type, data = {}) {
+    const cell = window.CELL_MESSAGES?.[cellId];
+    if (!cell) {
+        console.warn('⚠️ Nėra pranešimų langeliui:', cellId);
+        return '';
+    }
+    
+    let msg = cell.messages?.[type] || '';
+    if (!msg) return '';
+    
+    for (const [key, value] of Object.entries(data)) {
+        msg = msg.replace(new RegExp(`{${key}}`, 'g'), value);
+    }
+    
+    return msg;
+}
+
+function getCountSuffix(count) {
+    if (count === 1) return 'as';
+    return 'ai';
+}
+
+let cellActionTimeout = null;
+
+function showCellAction(message, type = 'info') {
+    const box = document.getElementById('cellActionInfo');
+    if (!box) return;
+    
+    const header = document.getElementById('cellActionHeader');
+    const body = document.getElementById('cellActionBody');
+    
+    if (!header || !body) return;
+    
+    let headerText = '📢 PRANEŠIMAS';
+    let headerColor = '#1a6b3c';
+    let borderColor = '#c9a84c';
+    
+    if (type === 'rent') {
+        headerText = '💰 NUOMA';
+        headerColor = '#28a745';
+        borderColor = '#28a745';
+    } else if (type === 'tax') {
+        headerText = '💸 MOKESČIAI';
+        headerColor = '#dc3545';
+        borderColor = '#dc3545';
+    } else if (type === 'visit') {
+        headerText = '🏠 ATVYKIMAS';
+        headerColor = '#17a2b8';
+        borderColor = '#17a2b8';
+    } else if (type === 'chance') {
+        headerText = '🎲 ŠANSAS';
+        headerColor = '#ffc107';
+        borderColor = '#ffc107';
+    }
+    
+    header.textContent = headerText;
+    header.style.color = headerColor;
+    header.style.borderBottomColor = borderColor;
+    
+    body.innerHTML = `<p>${message}</p>`;
+    
+    box.style.display = 'flex';
+    box.classList.add('show');
+    
+    if (cellActionTimeout) clearTimeout(cellActionTimeout);
+    cellActionTimeout = setTimeout(() => {
+        hideCellAction();
+        cellActionTimeout = null;
+    }, 3000);
+}
+
+function hideCellAction() {
+    const box = document.getElementById('cellActionInfo');
+    if (!box) return;
+    box.style.display = 'none';
+    box.classList.remove('show');
+}
+
+// 🌙 Tamsaus režimo funkcijos
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('themeBtn');
+    
+    if (isDark) {
+        btn.innerHTML = '☀️ Šviesus';
+        localStorage.setItem('bancrupt_theme', 'dark');
+    } else {
+        btn.innerHTML = '🌙 Tamsus';
+        localStorage.setItem('bancrupt_theme', 'light');
+    }
+    
+    playClickSound();
+}
+
+function loadTheme() {
+    const saved = localStorage.getItem('bancrupt_theme');
+    const btn = document.getElementById('themeBtn');
+    
+    if (saved === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (btn) btn.innerHTML = '☀️ Šviesus';
+    } else {
+        document.body.classList.remove('dark-mode');
+        if (btn) btn.innerHTML = '🌙 Tamsus';
+    }
+}
+
+// 🆕 Tema bus įjungta po DOM užkrovimo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadTheme);
+} else {
+    loadTheme();
+}
+
+// ============================================
+// INICIJAVIMAS
+// ============================================
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 Puslapis įkeltas');
     
-    document.getElementById('playerName').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') createGame();
-    });
-    document.getElementById('gameIdInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') joinGame();
-    });
+    const createNameInput = document.getElementById('createPlayerName');
+    if (createNameInput) {
+        createNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createGame();
+        });
+    }
+    
+    const joinNameInput = document.getElementById('joinPlayerName');
+    if (joinNameInput) {
+        joinNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinGame();
+        });
+    }
+    
+    const gameIdInputEl = document.getElementById('gameIdInput');
+    if (gameIdInputEl) {
+        gameIdInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinGame();
+        });
+    }
     
     const targetSelect = document.getElementById('tradeTargetPlayer');
     if (targetSelect) {
@@ -2308,16 +3831,47 @@ document.addEventListener('DOMContentLoaded', () => {
             updateRequestFields();
         });
     }
+
     
-    // Garso slider
-    const volumeSlider = document.getElementById('volumeSlider');
-    if (volumeSlider) {
-        volumeSlider.addEventListener('input', function() {
-            changeVolume(this.value);
+    // 🆕 Mini kortelių hover – leisti išlipti
+    document.addEventListener('mouseover', (e) => {
+        const card = e.target.closest('.mini-card');
+        if (card) {
+            const center1 = document.getElementById('center-1');
+            if (center1) center1.style.overflow = 'visible';
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        const card = e.target.closest('.mini-card');
+        if (card) {
+            const center1 = document.getElementById('center-1');
+            if (center1) {
+                setTimeout(() => {
+                    const hoveredCard = document.querySelector('.mini-card:hover');
+                    if (!hoveredCard) {
+                    center1.style.overflow = 'hidden';
+                    }
+                }, 50);
+            }
+        }
+    });
+    
+    renderColorPicker('createColorPicker', null, null, selectCreateColor);
+   
+
+    availableJoinColors = [...PLAYER_COLORS];
+    renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
+    
+    if (gameIdInputEl) {
+        gameIdInputEl.addEventListener('input', function() {
+            if (joinColorCheckTimeout) clearTimeout(joinColorCheckTimeout);
+            joinColorCheckTimeout = setTimeout(() => {
+                checkGameColors();
+            }, 500);
         });
     }
     
-    // INFO - hover ant langelių
     document.querySelectorAll('.cell').forEach(cell => {
         const fieldId = parseInt(cell.dataset.id);
         
@@ -2332,6 +3886,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideCellInfo();
             }
         });
+        
+        cell.addEventListener('touchstart', (e) => {
+            if (infoMode) {
+                e.preventDefault();
+                showCellInfo(fieldId);
+            }
+        }, { passive: false });
+        
+        cell.addEventListener('touchend', (e) => {
+            if (infoMode) {
+                setTimeout(() => hideCellInfo(), 3000);
+            }
+        });
     });
     
     const savedMode = localStorage.getItem('boardMode') || 'adaptive';
@@ -2340,8 +3907,603 @@ document.addEventListener('DOMContentLoaded', () => {
     initSocket();
     
     setTimeout(() => {
-        updateDiceDisplay(1, 1);
+        const dice1 = document.getElementById('centerDice1');
+        const dice2 = document.getElementById('centerDice2');
+        
+        if (dice1) updateSingleDice('centerDice1', 1);
+        if (dice2) updateSingleDice('centerDice2', 1);
     }, 500);
+    
+    setTimeout(initInfoResizeObserver, 800);
     
     console.log('✅ Inicijavimas baigtas');
 });
+
+// FIX: kampai
+function fixCornerClasses() {
+    const corners = {
+        'cell-0':  'cell corner start',
+        'cell-16': 'cell corner jail',
+        'cell-26': 'cell corner parking',
+        'cell-42': 'cell corner go-to-jail'
+    };
+    
+    Object.entries(corners).forEach(([id, correctClass]) => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('corner')) {
+            el.className = correctClass;
+        }
+    });
+}
+
+fixCornerClasses();
+
+// 🆕 Vienkartinis paleidimas – be observer'ių ir setInterval
+function fixPropertyClasses() {
+    const buyableIds = [11, 24, 32, 48];
+    
+    buyableIds.forEach(id => {
+        const cell = document.getElementById(`cell-${id}`);
+        if (cell) {
+            cell.classList.remove('property');
+            if (!cell.classList.contains('service3')) {
+                cell.classList.add('service3');
+            }
+            if (!cell.classList.contains('edge')) {
+                cell.classList.add('edge');
+            }
+        }
+    });
+}
+
+fixPropertyClasses();
+
+// ============================================
+// LAIMĖJIMO EKRANAS SU KONFETI
+// ============================================
+function showWinnerModal(winnerName, stats) {
+    const modal = document.getElementById('winnerModal');
+    if (!modal) return;
+    
+    const nameEl = document.getElementById('winnerName');
+    if (nameEl) nameEl.textContent = winnerName || 'Nežinomas';
+    
+    const statsEl = document.getElementById('winnerStats');
+    if (statsEl && stats) {
+        statsEl.innerHTML = stats;
+    }
+    
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    createConfetti();
+    
+    if (typeof playWinSound === 'function') playWinSound();
+    if (typeof playCelebrateSound === 'function') playCelebrateSound();
+}
+
+function closeWinnerModal() {
+    const modal = document.getElementById('winnerModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+    
+    document.querySelectorAll('.confetti-piece').forEach(c => c.remove());
+    
+    if (typeof goToMenu === 'function') {
+        goToMenu();
+    }
+    
+    if (typeof playClickSound === 'function') playClickSound();
+}
+
+function createConfetti() {
+    const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#95e1d3', '#f38181', '#aa96da', '#fcbad3', '#ffffd2'];
+    const shapes = ['rect', 'circle', 'triangle'];
+    const totalConfetti = 150;
+    
+    document.querySelectorAll('.confetti-piece').forEach(c => c.remove());
+    
+    for (let i = 0; i < totalConfetti; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            confetti.className = `confetti-piece ${shape}`;
+            confetti.style.left = Math.random() * 100 + '%';
+            
+            if (shape === 'triangle') {
+                confetti.style.borderBottomColor = color;
+            } else {
+                confetti.style.background = color;
+            }
+            
+            const size = 0.5 + Math.random() * 1.5;
+            if (shape !== 'triangle') {
+                confetti.style.transform = `scale(${size})`;
+            }
+            
+            const duration = 3 + Math.random() * 3;
+            confetti.style.animationDuration = duration + 's';
+            confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+            confetti.style.animationTimingFunction = 'linear';
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), (duration + 1) * 1000);
+        }, i * 20);
+    }
+}
+
+// ============================================
+// PINIGŲ ANIMACIJA
+// ============================================
+function animateMoney(element, from, to, duration = 800) {
+    if (!element) return;
+    if (from === to) return;
+    
+    if (element._moneyAnimFrame) {
+        cancelAnimationFrame(element._moneyAnimFrame);
+    }
+    
+    const start = performance.now();
+    const diff = to - from;
+    
+    function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(from + diff * easeOut);
+        
+        element.textContent = '💰 €' + current;
+        
+        if (current < 0) {
+            element.style.color = '#dc3545';
+        } else {
+            element.style.color = '#000000';
+        }
+        
+        if (progress < 1) {
+            element._moneyAnimFrame = requestAnimationFrame(update);
+        } else {
+            element.textContent = '💰 €' + to;
+            element._moneyAnimFrame = null;
+        }
+    }
+    
+    element._moneyAnimFrame = requestAnimationFrame(update);
+}
+
+// ============================================
+// HIGHLIGHT
+// ============================================
+function highlightCell(cellId, color = 'yellow', duration = 1500) {
+    const cell = document.getElementById(`cell-${cellId}`);
+    if (!cell) return;
+    
+    cell.classList.remove('highlight-yellow', 'highlight-green', 'highlight-red');
+    
+    const className = `highlight-${color}`;
+    cell.classList.add(className);
+    
+    setTimeout(() => {
+        cell.classList.remove(className);
+    }, duration);
+}
+
+// ============================================
+// KORTELĖS
+// ============================================
+
+// ============================================
+// 🆕 BUY CARD (5 langelyje)
+// ============================================
+let buyCardTimeout = null;
+
+function showBuyCard(field, player, type) {
+    const card = document.getElementById('buyCard');
+    if (!card || !field || !player) return;
+    
+    // Išimti visas klases
+    card.classList.remove('pending', 'success', 'cancel');
+    
+    // Nustatyti spalvą
+    const header = document.getElementById('buyCardHeader');
+    
+    if (type === 'pending') {
+        card.classList.add('pending');
+        header.textContent = '⏳ LAUKIAMA SPRENDIMO';
+    } else if (type === 'success') {
+        card.classList.add('success');
+        header.textContent = '✅ NUSIPIRKTA';
+    } else if (type === 'cancel') {
+        card.classList.add('cancel');
+        header.textContent = '❌ ATSISAKYTA';
+    }
+    
+    // Spalva arba ikona
+    const colorEl = document.getElementById('buyCardColor');
+    const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+
+    if (isService) {
+        colorEl.style.background = 'linear-gradient(145deg, #f0e8d8, #e0d5c0)';
+        colorEl.style.display = 'flex';
+        colorEl.style.alignItems = 'center';
+        colorEl.style.justifyContent = 'center';
+        colorEl.style.fontSize = '20px';
+        colorEl.textContent = field.icon || '⚙️';
+    } else {
+        colorEl.style.background = field.color || '#c9a84c';
+        colorEl.textContent = '';
+        colorEl.style.display = 'block';
+    }
+    
+    // Pavadinimas
+    document.getElementById('buyCardName').textContent = `${field.icon || ''} ${field.name}`;
+    
+    // Kaina
+    document.getElementById('buyCardPrice').textContent = `€${field.cost}`;
+    
+    // Info (nuoma)
+    let infoHtml = '';
+    if (field.type === 'property') {
+        const baseRent = Math.floor(field.cost * 0.1);
+        infoHtml = `🏘️ Nuoma: €${baseRent}`;
+    } else if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
+        infoHtml = `🏘️ Nuoma: €50 – €200`;
+    }
+    document.getElementById('buyCardInfo').textContent = infoHtml;
+    
+    // Žaidėjas
+    const playerEl = document.getElementById('buyCardPlayer');
+    if (type === 'pending') {
+        playerEl.textContent = `${player.name} gali pirkti`;
+        playerEl.style.color = '#e0a800';
+    } else if (type === 'success') {
+        playerEl.textContent = `${player.name} nusipirko`;
+        playerEl.style.color = '#28a745';
+    } else if (type === 'cancel') {
+        playerEl.textContent = `${player.name} atsisakė pirkti`;
+        playerEl.style.color = '#dc3545';
+    }
+    
+    // Rodyti
+    card.style.display = 'flex';
+    
+    // Paslėpti po 5s (arba 30s, jei pending)
+    if (buyCardTimeout) clearTimeout(buyCardTimeout);
+    const duration = type === 'pending' ? 30000 : 5000;
+    buyCardTimeout = setTimeout(() => {
+        hideBuyCard();
+    }, duration);
+}
+
+function hideBuyCard() {
+    const card = document.getElementById('buyCard');
+    if (!card) return;
+    card.style.display = 'none';
+    
+    if (buyCardTimeout) {
+        clearTimeout(buyCardTimeout);
+        buyCardTimeout = null;
+    }
+}
+
+// ============================================
+// STATISTIKA
+// ============================================
+window.gameStats = {
+    players: {},
+    gameStartTime: null,
+    totalRolls: 0,
+    totalDoubles: 0
+};
+
+function initPlayerStats(playerId, playerName, playerColor) {
+    if (!window.gameStats.players[playerId]) {
+        window.gameStats.players[playerId] = {
+            id: playerId,
+            name: playerName,
+            color: playerColor,
+            metimai: 0,
+            dubliai: 0,
+            kalėjimai: 0,
+            nusipirko: 0,
+            pastate: 0,
+            nuomaGavo: 0,
+            nuomaSumokejo: 0,
+            bankrotai: 0,
+            patekoIKalejima: 0
+        };
+    }
+}
+
+function openStats() {
+    const modal = document.getElementById('statsModal');
+    if (!modal) return;
+    
+    updateStatsDisplay();
+    modal.style.display = 'flex';
+    playClickSound();
+}
+
+function closeStats() {
+    const modal = document.getElementById('statsModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    playClickSound();
+}
+
+function updateStatsDisplay() {
+    const content = document.getElementById('statsContent');
+    if (!content) return;
+    
+    let html = '';
+    
+    if (window.gameStats.gameStartTime) {
+        const elapsed = Math.floor((Date.now() - window.gameStats.gameStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        html += `
+            <div style="background:rgba(255,255,255,0.1); border-radius:10px; padding:12px; margin-bottom:15px; text-align:center; border:2px solid #c9a84c;">
+                <div style="color:#d4b896; font-size:13px; margin-bottom:4px;">⏱️ Žaidimo trukmė</div>
+                <div style="color:#ffd700; font-size:24px; font-weight:700;">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+            </div>
+        `;
+    }
+    
+    html += `
+        <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px;">
+            <div style="color:#ffd700; font-size:14px; font-weight:700; margin-bottom:8px;">🎯 BENDRI SKAIČIAI</div>
+            <div style="display:flex; justify-content:space-between; color:#fff; font-size:13px; margin-bottom:4px;">
+                <span>🎲 Viso metimų:</span>
+                <strong>${window.gameStats.totalRolls}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#fff; font-size:13px;">
+                <span>🎲 Viso dublių:</span>
+                <strong>${window.gameStats.totalDoubles}</strong>
+            </div>
+        </div>
+    `;
+    
+    const players = Object.values(window.gameStats.players);
+    
+    if (players.length === 0) {
+        html += `<div style="color:#d4b896; text-align:center; padding:20px;">Nėra statistikos</div>`;
+    } else {
+        html += `<div style="color:#ffd700; font-size:14px; font-weight:700; margin-bottom:8px;">👥 ŽAIDĖJŲ STATISTIKA</div>`;
+        
+        players.forEach(p => {
+            html += `
+                <div style="background:rgba(255,255,255,0.1); border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid ${p.color};">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <span style="width:16px; height:16px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5);"></span>
+                        <span style="color:#fff; font-weight:700; font-size:14px;">${p.name}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px; color:#d4b896;">
+                        <div>🎲 Metimai: <strong style="color:#fff;">${p.metimai}</strong></div>
+                        <div>🎲 Dubliai: <strong style="color:#fff;">${p.dubliai}</strong></div>
+                        <div>⛓️ Kalėjimai: <strong style="color:#fff;">${p.patekoIKalejima}</strong></div>
+                        <div>🏠 Nusipirko: <strong style="color:#fff;">${p.nusipirko}</strong></div>
+                        <div>🏠 Pastatė: <strong style="color:#fff;">${p.pastate}</strong></div>
+                        <div>💰 Nuoma gavo: <strong style="color:#28a745;">€${p.nuomaGavo}</strong></div>
+                        <div>💸 Nuoma sumokėjo: <strong style="color:#dc3545;">€${p.nuomaSumokejo}</strong></div>
+                        <div>💀 Bankrotai: <strong style="color:#fff;">${p.bankrotai}</strong></div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    content.innerHTML = html;
+}
+
+function updateStatsFromGameState(state) {
+    if (!state || !state.players) return;
+    
+    state.players.forEach(p => {
+        initPlayerStats(p.id, p.name, p.color);
+    });
+    
+    if (state.gameStarted && !window.gameStats.gameStartTime) {
+        window.gameStats.gameStartTime = Date.now();
+    }
+}
+
+function incrementRolls(playerId, isDouble) {
+    if (!window.gameStats.players[playerId]) return;
+    
+    window.gameStats.players[playerId].metimai++;
+    window.gameStats.totalRolls++;
+    
+    if (isDouble) {
+        window.gameStats.players[playerId].dubliai++;
+        window.gameStats.totalDoubles++;
+    }
+}
+
+function incrementJail(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].patekoIKalejima++;
+}
+
+function incrementBought(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nusipirko++;
+}
+
+function incrementBuilt(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].pastate++;
+}
+
+function addRentReceived(playerId, amount) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nuomaGavo += amount;
+}
+
+function addRentPaid(playerId, amount) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].nuomaSumokejo += amount;
+}
+
+function incrementBankrupt(playerId) {
+    if (!window.gameStats.players[playerId]) return;
+    window.gameStats.players[playerId].bankrotai++;
+}
+
+// ============================================
+// LYDERIŲ LENTELĖ
+// ============================================
+function openLeaders() {
+    const modal = document.getElementById('leadersModal');
+    if (!modal) return;
+    
+    updateLeadersDisplay();
+    modal.style.display = 'flex';
+    playClickSound();
+}
+
+function closeLeaders() {
+    const modal = document.getElementById('leadersModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    playClickSound();
+}
+
+function updateLeadersDisplay() {
+    const content = document.getElementById('leadersContent');
+    if (!content) return;
+    
+    if (!gameState || !gameState.players) {
+        content.innerHTML = '<div style="color:#d4b896; text-align:center; padding:20px;">Nėra žaidėjų</div>';
+        return;
+    }
+    
+    const players = gameState.players
+        .filter(p => !p.kicked)
+        .map(p => {
+            const houses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
+            return {
+                id: p.id,
+                name: p.name,
+                color: p.color,
+                money: p.money,
+                properties: p.properties ? p.properties.length : 0,
+                houses: houses,
+                bankrupt: p.bankrupt,
+                left: p.left,
+                kicked: p.kicked,
+                isActive: p.isActive
+            };
+        });
+    
+    players.sort((a, b) => {
+        if (a.bankrupt !== b.bankrupt) return a.bankrupt ? 1 : -1;
+        if (a.left !== b.left) return a.left ? 1 : -1;
+        return b.money - a.money;
+    });
+    
+    let html = '';
+    
+    html += `
+        <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px; text-align:center;">
+            <div style="color:#d4b896; font-size:13px; margin-bottom:4px;">👥 Žaidėjų skaičius</div>
+            <div style="color:#ffd700; font-size:20px; font-weight:700;">${players.length}/8</div>
+        </div>
+    `;
+    
+    players.forEach((p, index) => {
+        let medal = '';
+        let bgColor = 'rgba(255,255,255,0.1)';
+        let borderColor = p.color;
+        
+        if (index === 0 && !p.bankrupt && !p.left) {
+            medal = '🥇';
+            bgColor = 'rgba(255,215,0,0.15)';
+            borderColor = '#ffd700';
+        } else if (index === 1 && !p.bankrupt && !p.left) {
+            medal = '🥈';
+            bgColor = 'rgba(192,192,192,0.15)';
+            borderColor = '#c0c0c0';
+        } else if (index === 2 && !p.bankrupt && !p.left) {
+            medal = '🥉';
+            bgColor = 'rgba(205,127,50,0.15)';
+            borderColor = '#cd7f32';
+        } else {
+            medal = `#${index + 1}`;
+        }
+        
+        let status = '';
+        if (p.bankrupt) status = '<span style="color:#dc3545; font-size:11px;">💀 BANKROTAS</span>';
+        else if (p.left) status = '<span style="color:#6c757d; font-size:11px;">😭 PASITRAUKĖ</span>';
+        else if (p.kicked) status = '<span style="color:#dc3545; font-size:11px;">🚫 PAŠALINTAS</span>';
+        else if (!p.isActive) status = '<span style="color:#6c757d; font-size:11px;">⏸️ NEAKTYVUS</span>';
+        
+        html += `
+            <div style="background:${bgColor}; border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid ${borderColor}; ${p.bankrupt || p.left ? 'opacity:0.6;' : ''}">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                    <span style="font-size:24px; min-width:30px; text-align:center;">${medal}</span>
+                    <span style="width:16px; height:16px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
+                    <span style="color:#fff; font-weight:700; font-size:15px; flex:1;">${p.name}</span>
+                    ${status}
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-size:12px; color:#d4b896;">
+                    <div>💰 <strong style="color:${p.money < 0 ? '#dc3545' : '#28a745'};">€${p.money}</strong></div>
+                    <div>🏠 <strong style="color:#fff;">${p.properties}</strong> objektai</div>
+                    <div>🏗️ <strong style="color:#fff;">${p.houses}</strong> namai</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+}
+
+function autoUpdateLeaders() {
+    const modal = document.getElementById('leadersModal');
+    if (modal && modal.style.display === 'flex') {
+        updateLeadersDisplay();
+    }
+}
+
+// 🆕 Fono muzika
+let backgroundMusicStarted = false;
+
+function startBackgroundMusic() {
+    if (backgroundMusicStarted) return;
+    
+    audioManager.playLoop('background');
+    backgroundMusicStarted = true;
+    console.log('🎵 Fono muzika įjungta');
+}
+
+function stopBackgroundMusic() {
+    audioManager.stopLoop('background');
+    backgroundMusicStarted = false;
+    console.log('🔇 Fono muzika išjungta');
+}
+
+function toggleBackgroundMusic() {
+    const btn = document.getElementById('musicBtn');
+    
+    if (backgroundMusicStarted) {
+        stopBackgroundMusic();
+        if (btn) {
+            btn.innerHTML = '🎵 Muzika: 🔴 IŠJ.';
+            btn.classList.remove('active');
+        }
+        localStorage.setItem('bancrupt_music', 'false');
+    } else {
+        startBackgroundMusic();
+        if (btn) {
+            btn.innerHTML = '🎵 Muzika: 🟢 ĮJ.';
+            btn.classList.add('active');
+        }
+        localStorage.setItem('bancrupt_music', 'true');
+    }
+    
+    playClickSound();
+}
