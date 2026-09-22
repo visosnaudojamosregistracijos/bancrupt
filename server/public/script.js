@@ -3798,12 +3798,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    const volumeSlider = document.getElementById('volumeSlider');
-    if (volumeSlider) {
-        volumeSlider.addEventListener('input', function() {
-            changeVolume(this.value);
-        });
-    }
+    
     
     renderColorPicker('createColorPicker', null, null, selectCreateColor);
     
