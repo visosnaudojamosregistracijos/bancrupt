@@ -4016,3 +4016,37 @@ body.dark-mode #cellInfoPanel {
 /* Property spalvų juostelė – lieka ta pati, kad būtų atpažįstama */
 
 /* Modalai, mygtukai, kauliukai – lieka savo spalvų */
+
+/* ============================================
+   🆕 BUY CARD (5 langelyje)
+   ============================================ */
+
+#buyCard.pending #buyCardBox {
+    border-color: #ffc107;
+    box-shadow: 0 8px 30px rgba(255, 193, 7, 0.5);
+}
+
+#buyCard.pending #buyCardHeader {
+    color: #e0a800;
+    border-bottom-color: #ffc107;
+}
+
+#buyCard.success #buyCardBox {
+    border-color: #28a745;
+    box-shadow: 0 8px 30px rgba(40, 167, 69, 0.5);
+}
+
+#buyCard.success #buyCardHeader {
+    color: #28a745;
+    border-bottom-color: #28a745;
+}
+
+#buyCard.cancel #buyCardBox {
+    border-color: #dc3545;
+    box-shadow: 0 8px 30px rgba(220, 53, 69, 0.5);
+}
+
+#buyCard.cancel #buyCardHeader {
+    color: #dc3545;
+    border-bottom-color: #dc3545;
+}

@@ -500,81 +500,76 @@ function initSocket() {
     });
 
     socket.on('buyPending', (data) => {
-        console.log('⏳ Laukiama sprendimo:', data);
+    console.log('⏳ Laukiama sprendimo:', data);
+    
+    if (data.playerId !== playerId) {
+        const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
+        addJournal(msg);
         
-        if (data.playerId !== playerId) {
-            const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
-            addNotification(msg);
-            addJournal(msg);
-            
-            showBuyPending(data);
+        const field = gameState.board.find(f => f.id === data.fieldId);
+        const player = gameState.players.find(p => p.id === data.playerId);
+        if (field && player) {
+            showBuyCard(field, player, 'pending');
         }
-    });
+    }
+});
 
     socket.on('buyConfirmed', (data) => {
-        console.log('✅ Pirkimas patvirtintas:', data);
-        playBuySound();
-        playCashSound();
+    console.log('✅ Pirkimas patvirtintas:', data);
+    playBuySound();
+    playCashSound();
 
-        if (data.playerId !== undefined) {
-            incrementBought(data.playerId);
+    if (data.playerId !== undefined) {
+        incrementBought(data.playerId);
+    }
+    
+    let msg;
+    if (data.playerId === playerId) {
+        msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
+    } else {
+        msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
+    }
+    
+    addJournal(msg);
+    
+    if (data.fieldName && gameState && gameState.board) {
+        const field = gameState.board.find(f => f.name === data.fieldName);
+        const player = gameState.players.find(p => p.id === data.playerId);
+        
+        if (field && player) {
+            highlightCell(field.id, 'green', 5000);
+            showBuyCard(field, player, 'success');
         }
-        
-        let msg;
-        if (data.playerId === playerId) {
-            msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
-        } else {
-            msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
-        }
-        
-        addNotification(msg);
-        addJournal(msg);
-        
-        showBuyResult(data.playerName, data.fieldName, 'buy', data.playerId === playerId);
-        
-        if (data.playerId !== playerId) {
-            showPopupMessage(msg, 'buy');
-        }
-        
-        if (data.fieldName && gameState && gameState.board) {
-            const field = gameState.board.find(f => f.name === data.fieldName);
-            if (field) {
-                highlightCell(field.id, 'green', 2000);
-                
-                setTimeout(() => {
-                    showCard(field.id, data.playerName);
-                    setTimeout(() => {
-                        hideCard();
-                    }, 2500);
-                }, 500);
-            }
-        }
-        
-        hideBuyChoice();
-    });
+    }
+    
+    hideBuyChoice();
+});
 
     socket.on('buyCancelled', (data) => {
-        console.log('❌ Pirkimas atšauktas:', data);
-        playMoveSound();
+    console.log('❌ Pirkimas atšauktas:', data);
+    playMoveSound();
+    
+    let msg;
+    if (data.playerId === playerId) {
+        msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
+    } else {
+        msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+    }
+    
+    addJournal(msg);
+    
+    if (data.fieldName && gameState && gameState.board) {
+        const field = gameState.board.find(f => f.name === data.fieldName);
+        const player = gameState.players.find(p => p.id === data.playerId);
         
-        let msg;
-        if (data.playerId === playerId) {
-            msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
-        } else {
-            msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+        if (field && player) {
+            highlightCell(field.id, 'red', 5000);
+            showBuyCard(field, player, 'cancel');
         }
-        
-        addNotification(msg);
-        addJournal(msg);
-        
-        showBuyResult(data.playerName, data.fieldName, 'cancel', data.playerId === playerId);
-        
-        if (data.playerId !== playerId) {
-            showPopupMessage(msg, 'move');
-        }
-        
-        hideBuyChoice();
-    });
+    }
+    
+    hideBuyChoice();
+});
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -2365,38 +2360,7 @@ function showBuyChoice(data) {
     playNotificationSound();
 }
 
-function showBuyPending(data) {
-    const box = document.getElementById('buyPendingInfo');
-    if (!box) return;
-    
-    const header = box.querySelector('.buy-pending-header');
-    const body = box.querySelector('.buy-pending-body');
-    
-    if (header) {
-        header.textContent = '⏳ LAUKIAMA SPRENDIMO';
-        header.style.color = '#e0a800';
-        header.style.borderBottomColor = '#ffc107';
-    }
-    
-    if (body) {
-        body.innerHTML = `
-            <p><strong>${data.playerName}</strong> gali pirkti</p>
-            <p><strong>${data.fieldName}</strong></p>
-            <p>Kaina: <strong>€${data.fieldCost}</strong></p>
-            <p style="font-size:10px; color:#6c757d; margin-top:6px;">⏱️ Laukiama sprendimo...</p>
-        `;
-    }
-    
-    box.style.display = 'flex';
-    box.classList.add('show');
-}
 
-function hideBuyPending() {
-    const box = document.getElementById('buyPendingInfo');
-    if (!box) return;
-    box.style.display = 'none';
-    box.classList.remove('show');
-}
 
 function hideBuyChoice() {
     const choice = document.getElementById('buyChoice');
@@ -2416,60 +2380,7 @@ function cancelBuy() {
     hideBuyChoice();
 }
 
-let buyResultTimeout = null;
 
-function showBuyResult(playerName, fieldName, result, isMe) {
-    const box = document.getElementById('buyPendingInfo');
-    if (!box) return;
-    
-    const header = box.querySelector('.buy-pending-header');
-    const body = box.querySelector('.buy-pending-body');
-    
-    if (!header || !body) return;
-    
-    if (result === 'buy') {
-        header.textContent = '✅ NUSIPIRKTA';
-        header.style.color = '#28a745';
-        header.style.borderBottomColor = '#28a745';
-        
-        if (isMe) {
-            body.innerHTML = `
-                <p><strong>Jūs nusipirkote</strong></p>
-                <p><strong>${fieldName}</strong></p>
-            `;
-        } else {
-            body.innerHTML = `
-                <p><strong>${playerName}</strong> nusipirko</p>
-                <p><strong>${fieldName}</strong></p>
-            `;
-        }
-    } else {
-        header.textContent = '❌ ATSISAKYTA';
-        header.style.color = '#dc3545';
-        header.style.borderBottomColor = '#dc3545';
-        
-        if (isMe) {
-            body.innerHTML = `
-                <p><strong>Jūs atsisakėte pirkti</strong></p>
-                <p><strong>${fieldName}</strong></p>
-            `;
-        } else {
-            body.innerHTML = `
-                <p><strong>${playerName}</strong> atsisakė pirkti</p>
-                <p><strong>${fieldName}</strong></p>
-            `;
-        }
-    }
-    
-    box.style.display = 'flex';
-    box.classList.add('show');
-    
-    if (buyResultTimeout) clearTimeout(buyResultTimeout);
-    buyResultTimeout = setTimeout(() => {
-        hideBuyPending();
-        buyResultTimeout = null;
-    }, 3000);
-}
 
 // ============================================
 // ŽAIDIMO VALDYMAS
@@ -4133,69 +4044,84 @@ function highlightCell(cellId, color = 'yellow', duration = 1500) {
 // ============================================
 // KORTELĖS
 // ============================================
-function showCard(fieldId, ownerName) {
-    const modal = document.getElementById('cardModal');
-    const content = document.getElementById('cardContent');
-    const colorEl = document.getElementById('cardColor');
-    const nameEl = document.getElementById('cardName');
-    const priceEl = document.getElementById('cardPrice');
-    const infoEl = document.getElementById('cardInfo');
-    const ownerEl = document.getElementById('cardOwner');
+
+// ============================================
+// 🆕 BUY CARD (5 langelyje)
+// ============================================
+let buyCardTimeout = null;
+
+function showBuyCard(field, player, type) {
+    const card = document.getElementById('buyCard');
+    if (!card || !field || !player) return;
     
-    if (!modal || !gameState || !gameState.board) return;
+    // Išimti visas klases
+    card.classList.remove('pending', 'success', 'cancel');
     
-    const field = gameState.board.find(f => f.id === fieldId);
-    if (!field) return;
+    // Nustatyti spalvą
+    const header = document.getElementById('buyCardHeader');
     
-    if (colorEl) {
-        colorEl.style.background = field.color || '#c9a84c';
+    if (type === 'pending') {
+        card.classList.add('pending');
+        header.textContent = '⏳ LAUKIAMA SPRENDIMO';
+    } else if (type === 'success') {
+        card.classList.add('success');
+        header.textContent = '✅ NUSIPIRKTA';
+    } else if (type === 'cancel') {
+        card.classList.add('cancel');
+        header.textContent = '❌ ATSISAKYTA';
     }
     
-    if (nameEl) {
-        nameEl.textContent = `${field.icon || ''} ${field.name}`;
+    // Spalva
+    document.getElementById('buyCardColor').style.background = field.color || '#c9a84c';
+    
+    // Pavadinimas
+    document.getElementById('buyCardName').textContent = `${field.icon || ''} ${field.name}`;
+    
+    // Kaina
+    document.getElementById('buyCardPrice').textContent = `€${field.cost}`;
+    
+    // Info (nuoma)
+    let infoHtml = '';
+    if (field.type === 'property') {
+        const baseRent = Math.floor(field.cost * 0.1);
+        infoHtml = `🏘️ Nuoma: €${baseRent}`;
+    } else if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
+        infoHtml = `🏘️ Nuoma: €50 – €200`;
+    }
+    document.getElementById('buyCardInfo').textContent = infoHtml;
+    
+    // Žaidėjas
+    const playerEl = document.getElementById('buyCardPlayer');
+    if (type === 'pending') {
+        playerEl.textContent = `${player.name} gali pirkti`;
+        playerEl.style.color = '#e0a800';
+    } else if (type === 'success') {
+        playerEl.textContent = `${player.name} nusipirko`;
+        playerEl.style.color = '#28a745';
+    } else if (type === 'cancel') {
+        playerEl.textContent = `${player.name} atsisakė pirkti`;
+        playerEl.style.color = '#dc3545';
     }
     
-    if (priceEl) {
-        priceEl.textContent = `€${field.cost}`;
-    }
+    // Rodyti
+    card.style.display = 'flex';
     
-    if (infoEl) {
-        let infoHtml = '';
-        
-        if (field.type === 'property') {
-            const baseRent = Math.floor(field.cost * 0.1);
-            infoHtml += `<div style="margin:5px 0;">🏘️ <strong>Nuoma:</strong> €${baseRent}</div>`;
-            infoHtml += `<div style="margin:5px 0; font-size:12px; color:#6c757d;">Su namais: €${baseRent * 10} – €${baseRent * 40}</div>`;
-            infoHtml += `<div style="margin:5px 0; font-size:12px; color:#6c757d;">🏨 Viežbutis: €${baseRent * 50}</div>`;
-        } else if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
-            infoHtml += `<div style="margin:5px 0;">🏘️ <strong>Nuoma:</strong> €50 – €200</div>`;
-        }
-        
-        infoEl.innerHTML = infoHtml;
-    }
-    
-    if (ownerEl) {
-        if (ownerName) {
-            ownerEl.textContent = `👤 Savininkas: ${ownerName}`;
-            ownerEl.style.color = '#28a745';
-        } else {
-            ownerEl.textContent = `👤 Laisvas sklypas`;
-            ownerEl.style.color = '#6c757d';
-        }
-    }
-    
-    modal.style.display = 'flex';
-    modal.classList.add('show');
-    
-    if (typeof playBuySound === 'function') playBuySound();
-    if (typeof playCashSound === 'function') playCashSound();
+    // Paslėpti po 5s (arba 30s, jei pending)
+    if (buyCardTimeout) clearTimeout(buyCardTimeout);
+    const duration = type === 'pending' ? 30000 : 5000;
+    buyCardTimeout = setTimeout(() => {
+        hideBuyCard();
+    }, duration);
 }
 
-function hideCard() {
-    const modal = document.getElementById('cardModal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('show');
+function hideBuyCard() {
+    const card = document.getElementById('buyCard');
+    if (!card) return;
+    card.style.display = 'none';
+    
+    if (buyCardTimeout) {
+        clearTimeout(buyCardTimeout);
+        buyCardTimeout = null;
     }
 }
 
