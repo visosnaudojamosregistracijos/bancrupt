@@ -969,7 +969,7 @@ body {
 
 /* ---------- 1 LANGELIS - AŠ ---------- */
 #myInfo {
-    font-size: 11px;
+    font-size: clamp(9px, 0.6vw, 13px);
     color: #3d2b1f;
     flex: 1;
     display: flex;
@@ -977,23 +977,23 @@ body {
     justify-content: center;
     align-items: center;
     gap: 2px;
-    overflow: visible;   /* 🆕 */
+    overflow: visible;
 }
 
 #myInfo .player-money {
-    font-size: 28px;
+    font-size: clamp(20px, 1.5vw, 34px);
     font-weight: 700;
     color: #000000;
 }
 
 #myInfo .player-name {
-    font-size: 16px;
+    font-size: clamp(12px, 0.9vw, 18px);
     font-weight: 600;
 }
 
 #myInfo .player-color {
-    width: 24px;
-    height: 24px;
+    width: clamp(18px, 1.3vw, 28px);
+    height: clamp(18px, 1.3vw, 28px);
     border-radius: 50%;
     border: 2px solid #3d2b1f;
 }
@@ -1083,7 +1083,7 @@ body {
     padding: 5px 12px;
     border: none;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: clamp(9px, 0.7vw, 13px);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -1121,7 +1121,7 @@ body {
 
 .btn-half {
     flex: 1;
-    font-size: 11px !important;
+    font-size: clamp(9px, 0.7vw, 13px) !important;
     padding: 6px 4px !important;
     width: auto !important;
     border-radius: 6px !important;
@@ -1192,7 +1192,7 @@ body {
 #chatMessages {
     flex: 1;
     overflow-y: auto;
-    font-size: clamp(11px, 1vw, 15px);
+    font-size: clamp(9px, 0.8vw, 14px);
     color: #3d2b1f;
     max-height: 100%;
     padding: clamp(5px, 0.6vw, 10px) clamp(8px, 1vw, 12px);
@@ -1233,7 +1233,7 @@ body {
     padding: clamp(3px, 0.4vw, 6px) clamp(6px, 0.7vw, 10px);
     border: 1px solid #b8966a;
     border-radius: 5px;
-    font-size: clamp(10px, 0.9vw, 13px);
+    font-size: clamp(8px, 0.7vw, 12px);
     background: rgba(255,255,255,0.5);
     outline: none;
 }
@@ -1250,7 +1250,7 @@ body {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: clamp(11px, 1vw, 14px);
+    font-size: clamp(9px, 0.8vw, 14px);
     font-weight: 700;
 }
 
@@ -1262,7 +1262,7 @@ body {
 #playersList {
     flex: 1;
     overflow-y: auto;
-    font-size: 14px;
+    font-size: clamp(10px, 0.9vw, 16px);
     max-height: 200px;
     padding: 2px 4px;
     min-height: 50px;
@@ -1289,13 +1289,13 @@ body {
 .player-item .pname {
     flex: 1;
     font-weight: 600;
-    font-size: 14px;
+    font-size: clamp(10px, 0.9vw, 16px);
 }
 
 .player-item .pmoney {
     color: #000000;
     font-weight: 700;
-    font-size: 14px;
+    font-size: clamp(10px, 0.9vw, 16px);
 }
 
 .player-item.active {
@@ -1323,7 +1323,7 @@ body {
 #notifications {
     flex: 1;
     overflow-y: auto;
-    font-size: 11px;
+    font-size: clamp(9px, 0.7vw, 13px);
     color: #3d2b1f;
     max-height: 100%;
     padding: 6px 8px;
@@ -1477,7 +1477,7 @@ body {
 #journal {
     flex: 1;
     overflow-y: auto;
-    font-size: clamp(12px, 1.1vw, 16px);
+    font-size: clamp(10px, 0.9vw, 16px);
     color: #3d2b1f;
     max-height: 100%;
     padding: clamp(5px, 0.6vw, 10px) clamp(8px, 1vw, 12px);
@@ -1496,7 +1496,7 @@ body {
     border-bottom: 1px solid rgba(61, 43, 31, 0.06);
     display: flex;
     gap: clamp(4px, 0.5vw, 8px);
-    font-size: clamp(11px, 1vw, 14px);
+    font-size: clamp(9px, 0.8vw, 14px);
     line-height: 1.4;
     color: #3d2b1f;
     background: rgba(255, 255, 255, 0.05);
@@ -1506,19 +1506,19 @@ body {
 .journal-item .jnum {
     color: rgba(61, 43, 31, 0.4);
     font-weight: 700;
-    font-size: clamp(10px, 0.9vw, 13px);
-    min-width: 28px;
+    font-size: clamp(8px, 0.7vw, 13px);
+    min-width: 24px;
 }
 
 .journal-item .jtext {
     flex: 1;
     word-wrap: break-word;
     font-weight: 500;
-    font-size: clamp(11px, 1vw, 14px);
+    font-size: clamp(9px, 0.8vw, 14px);
 }
 
 .journal-item .jtime {
-    font-size: clamp(9px, 0.8vw, 12px);
+    font-size: clamp(7px, 0.6vw, 12px);
     color: rgba(61, 43, 31, 0.4);
     white-space: nowrap;
 }
@@ -1671,8 +1671,8 @@ body {
 }
 
 .mini-card {
-    width: 52px;
-    height: 72px;
+    width: clamp(40px, 4vw, 70px);
+    height: clamp(56px, 5.5vw, 98px);
     background: #f5f0e8;
     border: 2px solid #3d2b1f;
     border-radius: 4px;
@@ -1695,7 +1695,7 @@ body {
 
 .mini-card-color {
     width: 100%;
-    height: 22px;
+    height: clamp(16px, 2vw, 30px);
     background: var(--card-color, #c9a84c);
     border-bottom: 2px solid #3d2b1f;
     flex-shrink: 0;
@@ -1713,7 +1713,7 @@ body {
 }
 
 .mini-card-name {
-    font-size: 7px;
+    font-size: clamp(5px, 0.5vw, 9px);
     font-weight: 700;
     color: #3d2b1f;
     line-height: 1.1;
@@ -1726,7 +1726,7 @@ body {
 }
 
 .mini-card-info {
-    font-size: 6px;
+    font-size: clamp(4px, 0.4vw, 7px);
     font-weight: 600;
     color: #6c757d;
     margin-top: auto;
@@ -1739,7 +1739,7 @@ body {
     position: absolute;
     bottom: 8px;
     right: 2px;
-    font-size: 8px;
+    font-size: clamp(6px, 0.6vw, 10px);
     line-height: 1;
     background: rgba(255,255,255,0.9);
     border-radius: 3px;
@@ -3804,8 +3804,8 @@ button:disabled,
 
 /* Didesni kauliukai (5) + švytėjimas (3) */
 .dice {
-    width: 70px !important;
-    height: 70px !important;
+    width: clamp(50px, 5vw, 80px) !important;
+    height: clamp(50px, 5vw, 80px) !important;
     background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.25), inset 0 -2px 5px rgba(0,0,0,0.1) !important;
     transition: transform 0.3s, box-shadow 0.3s !important;
@@ -3817,14 +3817,14 @@ button:disabled,
 }
 
 .dice-dots-container {
-    width: 50px !important;
-    height: 50px !important;
+    width: clamp(36px, 4vw, 60px) !important;
+    height: clamp(36px, 4vw, 60px) !important;
     gap: 6px !important;
 }
 
 .dice-dot {
-    width: 11px !important;
-    height: 11px !important;
+    width: clamp(8px, 0.9vw, 14px) !important;
+    height: clamp(8px, 0.9vw, 14px) !important;
     background: radial-gradient(circle at 30% 30%, #4a4a4a, #1a1a1a) !important;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.4) !important;
 }
