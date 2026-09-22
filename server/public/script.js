@@ -2506,11 +2506,18 @@ function updateSellableProperties() {
         
         const price = Math.floor(field.cost * 0.8);
         const checked = selectedSellFields.includes(fieldId) ? 'checked' : '';
+        
+        // 🆕 Spalva arba ikona
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const icon = isService ? (field.icon || '⚙️') : '';
+        const color = isService ? 'transparent' : (field.color || '#c9a84c');
+        
         html += `
-            <div style="padding:8px; border-bottom:1px solid #ddd;">
+            <div style="padding:8px; border-bottom:1px solid #ddd; display:flex; align-items:center; gap:8px;">
+                <div style="width:20px; height:20px; border-radius:4px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:1px solid #ccc;">${icon}</div>
                 <input type="checkbox" ${checked} onchange="toggleSellField(${fieldId})" id="sell_${fieldId}">
-                <label for="sell_${fieldId}" style="font-weight:600;">${field.name}</label>
-                <span style="float:right; color:#28a745;">€${price}</span>
+                <label for="sell_${fieldId}" style="font-weight:600; flex:1;">${field.name}</label>
+                <span style="color:#28a745;">€${price}</span>
             </div>
         `;
     });
@@ -2572,11 +2579,17 @@ function updateAuctionableProperties() {
         hasProperties = true;
         const checked = (selectedAuctionField === fieldId) ? 'checked' : '';
         
+        // 🆕 Spalva arba ikona
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const icon = isService ? (field.icon || '⚙️') : '';
+        const color = isService ? 'transparent' : (field.color || '#c9a84c');
+        
         html += `
-            <div style="padding:8px; border-bottom:1px solid #ddd; cursor:pointer;" onclick="selectAuctionField(${fieldId})">
-                <input type="radio" name="auctionField" ${checked} id="auction_${fieldId}" style="margin-right:10px;">
-                <label for="auction_${fieldId}" style="font-weight:600; cursor:pointer;">${field.name}</label>
-                <span style="float:right; color:#6c757d;">€${field.cost}</span>
+            <div style="padding:8px; border-bottom:1px solid #ddd; cursor:pointer; display:flex; align-items:center; gap:8px;" onclick="selectAuctionField(${fieldId})">
+                <div style="width:20px; height:20px; border-radius:4px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:1px solid #ccc;">${icon}</div>
+                <input type="radio" name="auctionField" ${checked} id="auction_${fieldId}">
+                <label for="auction_${fieldId}" style="font-weight:600; cursor:pointer; flex:1;">${field.name}</label>
+                <span style="color:#6c757d;">€${field.cost}</span>
             </div>
         `;
     });
@@ -2685,14 +2698,20 @@ function updateOfferFields() {
         if (houses > 0) return;
         
         const checked = selectedOfferFields.includes(fieldId) ? 'checked' : '';
-        const color = field.color || '#c9a84c';
+        
+        // 🆕 Spalva arba ikona
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const icon = isService ? (field.icon || '⚙️') : '';
+        const color = isService ? '#f0e8d8' : (field.color || '#c9a84c');
+        const textColor = isService ? '#3d2b1f' : '#fff';
         
         html += `
             <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s;" 
                  onclick="document.getElementById('offer_${fieldId}').click()">
+                ${icon ? `<span style="font-size:12px;">${icon}</span>` : ''}
                 <input type="checkbox" ${checked} onchange="toggleOfferField(${fieldId})" id="offer_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
-                <span style="font-size:8px; color:rgba(255,255,255,0.7);">€${field.cost}</span>
+                <span style="font-size:10px; color:${textColor}; font-weight:600;">${field.name}</span>
+                <span style="font-size:8px; color:${textColor}; opacity:0.7;">€${field.cost}</span>
             </div>
         `;
         count++;
@@ -2769,14 +2788,20 @@ function updateRequestFields() {
         if (houses > 0) return;
         
         const checked = selectedRequestFields.includes(fieldId) ? 'checked' : '';
-        const color = field.color || '#c9a84c';
+        
+        // 🆕 Spalva arba ikona
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const icon = isService ? (field.icon || '⚙️') : '';
+        const color = isService ? '#f0e8d8' : (field.color || '#c9a84c');
+        const textColor = isService ? '#3d2b1f' : '#fff';
         
         html += `
             <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s;" 
                  onclick="document.getElementById('request_${fieldId}').click()">
+                ${icon ? `<span style="font-size:12px;">${icon}</span>` : ''}
                 <input type="checkbox" ${checked} onchange="toggleRequestField(${fieldId})" id="request_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
-                <span style="font-size:8px; color:rgba(255,255,255,0.7);">€${field.cost}</span>
+                <span style="font-size:10px; color:${textColor}; font-weight:600;">${field.name}</span>
+                <span style="font-size:8px; color:${textColor}; opacity:0.7;">€${field.cost}</span>
             </div>
         `;
         count++;
@@ -2944,12 +2969,15 @@ function updateDemolishList(properties) {
             }
         }
         
-        const color = prop.color || '#c9a84c';
+        // 🆕 Spalva arba ikona
+        const isService = prop.type === 'service1' || prop.type === 'service2' || prop.type === 'service3';
+        const icon = isService ? (prop.icon || '⚙️') : '';
+        const color = isService ? 'transparent' : (prop.color || '#c9a84c');
         const typeText = prop.isHotel ? 'VIEŽBUTIS' : `${prop.houses} namai`;
         
         html += `
             <div class="demolish-card" onclick="confirmDemolish(${prop.id})">
-                <div class="card-color" style="background:${color};"></div>
+                <div class="card-color" style="background:${color}; display:flex; align-items:center; justify-content:center; font-size:14px; border:1px solid rgba(0,0,0,0.2);">${icon}</div>
                 <span class="card-name">${prop.name}</span>
                 <span class="card-houses">${houseIcons}</span>
                 <span class="card-refund">+€${prop.refund}</span>
@@ -4071,8 +4099,22 @@ function showBuyCard(field, player, type) {
         header.textContent = '❌ ATSISAKYTA';
     }
     
-    // Spalva
-    document.getElementById('buyCardColor').style.background = field.color || '#c9a84c';
+    // Spalva arba ikona
+    const colorEl = document.getElementById('buyCardColor');
+    const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+
+    if (isService) {
+        colorEl.style.background = 'linear-gradient(145deg, #f0e8d8, #e0d5c0)';
+        colorEl.style.display = 'flex';
+        colorEl.style.alignItems = 'center';
+        colorEl.style.justifyContent = 'center';
+        colorEl.style.fontSize = '20px';
+        colorEl.textContent = field.icon || '⚙️';
+    } else {
+        colorEl.style.background = field.color || '#c9a84c';
+        colorEl.textContent = '';
+        colorEl.style.display = 'block';
+    }
     
     // Pavadinimas
     document.getElementById('buyCardName').textContent = `${field.icon || ''} ${field.name}`;

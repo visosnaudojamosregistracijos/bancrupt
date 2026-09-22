@@ -55,7 +55,9 @@ class DemolishLogic {
                         cost: field.cost,
                         houses: houses,
                         isHotel: houses >= 5,
-                        refund: this.getRefundAmount(fieldId, playerId)
+                        refund: this.getRefundAmount(fieldId, playerId),
+                        type: field.type,
+                        icon: field.icon
                     });
                 }
             }
@@ -76,14 +78,16 @@ class DemolishLogic {
                 // Jei visi vienodi - galima griauti iš VISŲ
                 props.forEach(p => {
                     result.push({
-                        id: p.id,
-                        name: p.name,
-                        color: p.color,
-                        cost: p.cost,
-                        houses: p.houses,
-                        isHotel: p.isHotel,
-                        refund: p.refund
-                    });
+    id: p.id,
+    name: p.name,
+    color: p.color,
+    cost: p.cost,
+    houses: p.houses,
+    isHotel: p.isHotel,
+    refund: p.refund,
+    type: p.type,
+    icon: p.icon
+});
                 });
             } else {
                 // Jei skirtumas > 1 - galima griauti TIK iš tų, kurie turi MAX
