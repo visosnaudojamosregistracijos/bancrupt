@@ -168,15 +168,24 @@ function initSocket() {
     });
 
     socket.on('gameState', (state) => {
-        console.log('📊 Gauta žaidimo būsena');
-        gameState = state;
-        updateUI(state);
-        document.getElementById('bankruptModal').style.display = 'none';
-        
-        if (state.gameStarted) {
-            hideWaitingRoom();
-        }
-    });
+    console.log('📊 Gauta žaidimo būsena');
+    gameState = state;
+    updateUI(state);
+    document.getElementById('bankruptModal').style.display = 'none';
+    
+    // 🆕 Inicializuoti statistiką KIEKVIENAM žaidėjui
+    if (state.players && state.players.length > 0) {
+        state.players.forEach(p => {
+            if (!window.gameStats.players[p.id]) {
+                initPlayerStats(p.id, p.name, p.color);
+            }
+        });
+    }
+    
+    if (state.gameStarted) {
+        hideWaitingRoom();
+    }
+});
 
     // SPALVŲ GAVIMAS
     socket.on('gameColors', (data) => {
@@ -2081,6 +2090,15 @@ function joinGame() {
 function enterGame() {
     if (typeof goToGame === 'function') {
         goToGame();
+    }
+    
+    // 🆕 Inicializuoti statistiką KIEKVIENAM žaidėjui
+    if (gameState && gameState.players && gameState.players.length > 0) {
+        gameState.players.forEach(p => {
+            if (!window.gameStats.players[p.id]) {
+                initPlayerStats(p.id, p.name, p.color);
+            }
+        });
     }
     
     document.getElementById('gameIdDisplay').textContent = '📋 ID: ' + gameId;
