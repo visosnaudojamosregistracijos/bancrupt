@@ -2112,21 +2112,49 @@ function enterGame() {
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
     
+    // 🆕 Garsumo slankikliai
     const savedMusicVolume = localStorage.getItem('bancrupt_musicVolume') || 15;
-const savedSfxVolume = localStorage.getItem('bancrupt_sfxVolume') || 50;
-
-const musicSlider = document.getElementById('musicVolumeSlider');
-const sfxSlider = document.getElementById('sfxVolumeSlider');
-const musicValueDisplay = document.getElementById('musicVolumeValue');
-const sfxValueDisplay = document.getElementById('sfxVolumeValue');
-
-if (musicSlider) musicSlider.value = savedMusicVolume;
-if (sfxSlider) sfxSlider.value = savedSfxVolume;
-if (musicValueDisplay) musicValueDisplay.textContent = savedMusicVolume;
-if (sfxValueDisplay) sfxValueDisplay.textContent = savedSfxVolume;
-
-changeMusicVolume(savedMusicVolume);
-changeSfxVolume(savedSfxVolume);
+    const savedSfxVolume = localStorage.getItem('bancrupt_sfxVolume') || 50;
+    
+    const musicSlider = document.getElementById('musicVolumeSlider');
+    const sfxSlider = document.getElementById('sfxVolumeSlider');
+    const musicValueDisplay = document.getElementById('musicVolumeValue');
+    const sfxValueDisplay = document.getElementById('sfxVolumeValue');
+    
+    if (musicSlider) musicSlider.value = savedMusicVolume;
+    if (sfxSlider) sfxSlider.value = savedSfxVolume;
+    if (musicValueDisplay) musicValueDisplay.textContent = savedMusicVolume;
+    if (sfxValueDisplay) sfxValueDisplay.textContent = savedSfxVolume;
+    
+    changeMusicVolume(savedMusicVolume);
+    changeSfxVolume(savedSfxVolume);
+    
+    // 🆕 Fono muzika
+    const savedMusic = localStorage.getItem('bancrupt_music');
+    const musicBtn = document.getElementById('musicBtn');
+    
+    if (savedMusic === 'false') {
+        backgroundMusicStarted = false;
+        if (musicBtn) {
+            musicBtn.innerHTML = '🎵 Muzika: 🔴 IŠJ.';
+        }
+    } else {
+        // 🆕 Paleisti po pirmo vartotojo veiksmo (autoplay blokavimas)
+        const startMusicOnFirstInteraction = () => {
+            startBackgroundMusic();
+            if (musicBtn) {
+                musicBtn.innerHTML = '🎵 Muzika: 🟢 ĮJ.';
+            }
+            
+            document.removeEventListener('click', startMusicOnFirstInteraction);
+            document.removeEventListener('keydown', startMusicOnFirstInteraction);
+            document.removeEventListener('touchstart', startMusicOnFirstInteraction);
+        };
+        
+        document.addEventListener('click', startMusicOnFirstInteraction, { once: true });
+        document.addEventListener('keydown', startMusicOnFirstInteraction, { once: true });
+        document.addEventListener('touchstart', startMusicOnFirstInteraction, { once: true });
+    }
     
     const savedInfoMode = localStorage.getItem('bancrupt_infoMode');
     if (savedInfoMode === 'true') {
