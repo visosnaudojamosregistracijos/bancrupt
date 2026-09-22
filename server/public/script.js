@@ -2051,6 +2051,9 @@ function createGame() {
     }
     playClickSound();
     
+    // 🆕 Išvalyti žurnalą naujam žaidimui
+    clearJournal();
+    
     const isPublicCheckbox = document.getElementById('createIsPublic');
     const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
     
@@ -2088,6 +2091,10 @@ function joinGame() {
     
     gameId = gid;
     playClickSound();
+    
+    // 🆕 Išvalyti žurnalą naujam žaidimui
+    clearJournal();
+    
     socket.emit('joinGame', { 
         gameId: gid, 
         playerName: name,
@@ -2099,6 +2106,9 @@ function enterGame() {
     if (typeof goToGame === 'function') {
         goToGame();
     }
+    
+    // 🆕 Užkrauti žurnalą iš localStorage
+    loadJournalFromStorage();
     
     // 🆕 Inicializuoti statistiką KIEKVIENAM žaidėjui
     if (gameState && gameState.players && gameState.players.length > 0) {
@@ -3641,9 +3651,57 @@ function addJournal(msg) {
     container.appendChild(item);
     container.scrollTop = container.scrollHeight;
     
-    while (container.children.length > 50) {
+    // 🆕 Išsaugoti į localStorage (neribotas istorijos)
+    try {
+        const history = JSON.parse(localStorage.getItem('bancrupt_journal') || '[]');
+        history.push({ num: journalCount, text: msg, time: time });
+        localStorage.setItem('bancrupt_journal', JSON.stringify(history));
+    } catch (e) {
+        console.warn('⚠️ Nepavyko išsaugoti žurnalo:', e);
+    }
+    
+    // 🆕 Išvalyti senus iš DOM (kad nepersistengtų), bet localStorage turi viską
+    while (container.children.length > 500) {
         container.removeChild(container.firstChild);
     }
+}
+
+// 🆕 Užkrauti žurnalą iš localStorage
+function loadJournalFromStorage() {
+    try {
+        const history = JSON.parse(localStorage.getItem('bancrupt_journal') || '[]');
+        const container = document.getElementById('journal');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        journalCount = 0;
+        
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'journal-item';
+            div.innerHTML = `
+                <span class="jnum">#${item.num}</span>
+                <span class="jtext">${item.text}</span>
+                <span class="jtime">${item.time}</span>
+            `;
+            container.appendChild(div);
+            journalCount = item.num;
+        });
+        
+        container.scrollTop = container.scrollHeight;
+        console.log(`📜 Žurnalas užkrautas: ${history.length} įrašų`);
+    } catch (e) {
+        console.warn('⚠️ Nepavyko užkrauti žurnalo:', e);
+    }
+}
+
+// 🆕 Išvalyti žurnalą (naujam žaidimui)
+function clearJournal() {
+    localStorage.removeItem('bancrupt_journal');
+    const container = document.getElementById('journal');
+    if (container) container.innerHTML = '';
+    journalCount = 0;
+    console.log('📜 Žurnalas išvalytas');
 }
 
 function getCellMessage(cellId, type, data = {}) {

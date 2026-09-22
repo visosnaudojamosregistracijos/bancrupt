@@ -312,47 +312,67 @@
                                     <div id="playersList"></div>
                                 </div>
                                 <div id="center-5" class="center-cell notifications">
-                                    <h4>📢 PRANEŠIMAI</h4>
-                                    
-                                    <div id="buyChoice" style="display:none;">
-                                        <div class="buy-choice-box">
-                                            <div class="buy-choice-header">🏠 SKLYPAS</div>
-                                            <div class="buy-choice-body">
-                                                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
-                                                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
-                                                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
-                                            </div>
-                                            <div class="buy-choice-buttons">
-                                                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
-                                                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
-                                            </div>
-                                        </div>
-                                    </div>
+    <h4>📢 PRANEŠIMAI</h4>
+    
+    <!-- 🆕 NUOLATINIS TURINYS – kieno eilė -->
+    <div id="turnIndicator" style="
+        text-align: center;
+        padding: 8px;
+        background: rgba(255, 215, 0, 0.15);
+        border-radius: 8px;
+        border: 2px solid #ffd700;
+        font-size: 13px;
+        font-weight: 700;
+        color: #3d2b1f;
+        margin-bottom: 4px;
+        transition: opacity 0.3s ease;
+    ">
+        🎯 Eina: <span id="turnIndicatorName">---</span>
+    </div>
+    
+    <!-- 🆕 Iššokantys blokai (absoliučiai, viršuje) -->
+    <div id="buyChoice" style="display:none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); border-radius: 8px; z-index: 10; align-items: center; justify-content: center;">
+        <div class="buy-choice-box">
+            <div class="buy-choice-header">🏠 SKLYPAS</div>
+            <div class="buy-choice-body">
+                <p><strong id="choiceFieldName">Vytauto g.</strong></p>
+                <p>Kaina: <strong id="choiceFieldCost">€60</strong></p>
+                <p>Pinigai: <strong id="choicePlayerMoney">€1500</strong></p>
+            </div>
+            <div class="buy-choice-buttons">
+                <button onclick="confirmBuy()" class="choice-btn choice-buy">🏠 Pirkti</button>
+                <button onclick="cancelBuy()" class="choice-btn choice-cancel">❌ Atsisakyti</button>
+            </div>
+        </div>
+    </div>
 
-                                    <div id="buyPendingInfo" style="display:none;">
-                                        <div class="buy-pending-box">
-                                            <div class="buy-pending-header">⏳ LAUKIAMA SPRENDIMO</div>
-                                            <div class="buy-pending-body">
-                                                <p><strong id="pendingPlayerName">Žaidėjas</strong> gali pirkti</p>
-                                                <p><strong id="pendingFieldName">Sklypas</strong></p>
-                                                <p>Kaina: <strong id="pendingFieldCost">€0</strong></p>
-                                                <p style="font-size:10px; color:#6c757d; margin-top:6px;">⏱️ Laukiama sprendimo...</p>
-                                            </div>
-                                        </div>
-                                    </div>
+    <div id="buyPendingInfo" style="display:none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); border-radius: 8px; z-index: 9; align-items: center; justify-content: center;">
+        <div class="buy-pending-box">
+            <div class="buy-pending-header">⏳ LAUKIAMA SPRENDIMO</div>
+            <div class="buy-pending-body">
+                <p><strong id="pendingPlayerName">Žaidėjas</strong> gali pirkti</p>
+                <p><strong id="pendingFieldName">Sklypas</strong></p>
+                <p>Kaina: <strong id="pendingFieldCost">€0</strong></p>
+                <p style="font-size:10px; color:#6c757d; margin-top:6px;">⏱️ Laukiama sprendimo...</p>
+            </div>
+        </div>
+    </div>
 
-                                    <div id="cellActionInfo" style="display:none;">
-                                        <div class="cell-action-box">
-                                            <div class="cell-action-header" id="cellActionHeader">📢 PRANEŠIMAS</div>
-                                            <div class="cell-action-body" id="cellActionBody">
-                                                <p>Info</p>
-                                            </div>
-                                        </div>
-                                    </div>
+    <div id="cellActionInfo" style="display:none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); border-radius: 8px; z-index: 8; align-items: center; justify-content: center;">
+        <div class="cell-action-box">
+            <div class="cell-action-header" id="cellActionHeader">📢 PRANEŠIMAS</div>
+            <div class="cell-action-body" id="cellActionBody">
+                <p>Info</p>
+            </div>
+        </div>
+    </div>
 
-                                    <div id="cellInfoPanel">
-                                        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
-                                    </div>
+    <div id="cellInfoPanel">
+        <div class="info-placeholder">ℹ️ Užvesk pelę ant sklypo, kad matytum info</div>
+    </div>
+    
+    <!-- 🆕 Išimta #notifications -->
+</div>
                                     
                                     <div id="notifications"></div>
                                 </div>

@@ -1465,8 +1465,11 @@ body {
 
 #center-5 {
     position: relative;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
+}
+
+#turnIndicator.hidden {
+    opacity: 0;
 }
 
 /* ---------- 6 LANGELIS - ŽURNALAS ---------- */
