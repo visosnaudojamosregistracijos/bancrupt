@@ -3694,6 +3694,42 @@ function hideCellAction() {
     box.classList.remove('show');
 }
 
+// 🌙 Tamsaus režimo funkcijos
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('themeBtn');
+    
+    if (isDark) {
+        btn.innerHTML = '☀️ Šviesus';
+        localStorage.setItem('bancrupt_theme', 'dark');
+    } else {
+        btn.innerHTML = '🌙 Tamsus';
+        localStorage.setItem('bancrupt_theme', 'light');
+    }
+    
+    playClickSound();
+}
+
+function loadTheme() {
+    const saved = localStorage.getItem('bancrupt_theme');
+    const btn = document.getElementById('themeBtn');
+    
+    if (saved === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (btn) btn.innerHTML = '☀️ Šviesus';
+    } else {
+        document.body.classList.remove('dark-mode');
+        if (btn) btn.innerHTML = '🌙 Tamsus';
+    }
+}
+
+// 🆕 Tema bus įjungta po DOM užkrovimo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadTheme);
+} else {
+    loadTheme();
+}
+
 // ============================================
 // INICIJAVIMAS
 // ============================================

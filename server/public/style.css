@@ -3933,3 +3933,17 @@ button:disabled,
     background: linear-gradient(145deg, #f0e8d8, #e0d5c0) !important;
     border-bottom: 1px solid rgba(61,43,31,0.2);
 }
+
+/* 🌙 TAMSAUS REŽIMO */
+body.dark-mode {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+/* Išimti atgal – kad paveikslėliai ir kauliukai nebūtų apversti */
+body.dark-mode img,
+body.dark-mode .dice,
+body.dark-mode .cell-bg-icon,
+body.dark-mode .color-circle,
+body.dark-mode .player-dot {
+    filter: invert(1) hue-rotate(180deg);
+}
