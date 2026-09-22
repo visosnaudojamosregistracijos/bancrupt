@@ -3480,10 +3480,10 @@ function updateBoard(state) {
         else if (field.type === 'jail') cell.classList.add('jail', 'corner');
         else if (field.type === 'parking') cell.classList.add('parking', 'corner');
         else if (field.type === 'go-to-jail') cell.classList.add('go-to-jail', 'corner');
-        else if (field.type === 'property') cell.classList.add('property');
-        else if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
-            cell.classList.add('property');
-        }
+        if (field.type === 'property') cell.classList.add('property');
+else if (field.type === 'service1') cell.classList.add('service1');
+else if (field.type === 'service2') cell.classList.add('service2');
+else if (field.type === 'service3') cell.classList.add('service3');
         
         if (field.id !== 0 && field.id !== 16 && field.id !== 26 && field.id !== 42) {
             cell.classList.add('edge');
@@ -3795,8 +3795,10 @@ function fixPropertyClasses() {
     buyableIds.forEach(id => {
         const cell = document.getElementById(`cell-${id}`);
         if (cell) {
-            if (!cell.classList.contains('property')) {
-                cell.classList.add('property');
+            // 🆕 Vietoj 'property' – 'service3'
+            cell.classList.remove('property');  // ← pašalinti property jei yra
+            if (!cell.classList.contains('service3')) {
+                cell.classList.add('service3');
             }
             if (!cell.classList.contains('edge')) {
                 cell.classList.add('edge');

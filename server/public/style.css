@@ -1520,6 +1520,28 @@ body {
 }
 
 /* ---------- SPALVOTOS JUOSTELĖS ---------- */
+
+/* 🆕 SERVICE grupės – BE spalvotos juostelės */
+.cell.service1::before,
+.cell.service2::before,
+.cell.service3::before {
+    display: none !important;
+}
+
+/* 🆕 SERVICE grupės – šiek tiek kitoks fonas */
+.cell.service1,
+.cell.service2,
+.cell.service3 {
+    background: linear-gradient(145deg, #f0e8d8, #e0d5c0);
+}
+
+/* 🆕 SERVICE grupės – neleisti spalvotos juostelės iš property */
+.cell.service1,
+.cell.service2,
+.cell.service3 {
+    --property-color: transparent;
+}
+
 .cell.property {
     position: relative;
     overflow: hidden;
