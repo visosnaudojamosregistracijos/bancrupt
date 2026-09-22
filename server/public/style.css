@@ -952,7 +952,7 @@ body {
     min-height: 80px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;   /* 🆕 Pakeista iš hidden */
     position: relative;
     min-width: 0;
 }
@@ -977,6 +977,7 @@ body {
     justify-content: center;
     align-items: center;
     gap: 2px;
+    overflow: visible;   /* 🆕 */
 }
 
 #myInfo .player-money {
@@ -1654,7 +1655,8 @@ body {
     justify-content: center;
     margin-top: 6px;
     max-height: 140px;
-    overflow-y: auto;
+    overflow: visible;
+    overflow-x: visible;
     padding: 4px;
     width: 100%;
 }
@@ -1760,7 +1762,7 @@ body {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s, bottom 0.2s;
-    z-index: 200;
+    z-index: 99999;
     font-weight: 600;
     border: 1px solid #ffd700;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -4049,4 +4051,21 @@ body.dark-mode #cellInfoPanel {
 #buyCard.cancel #buyCardHeader {
     color: #dc3545;
     border-bottom-color: #dc3545;
+}
+
+/* ============================================
+   🆕 MINI KORTELIŲ HOVER FIX
+   ============================================ */
+
+#center-1,
+#center-1 .center-cell,
+#center-1 .mini-cards-container,
+#center-1 #myInfo,
+.row-middle-center,
+.center-row {
+    overflow: visible !important;
+}
+
+#center-1 {
+    z-index: 100;
 }
