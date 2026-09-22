@@ -3680,6 +3680,47 @@ function hideCellAction() {
 }
 
 // ============================================
+// 🆕 FONO MUZIKA
+// ============================================
+let backgroundMusicStarted = false;
+
+function startBackgroundMusic() {
+    if (backgroundMusicStarted) return;
+    
+    audioManager.playLoop('background');
+    backgroundMusicStarted = true;
+    console.log('🎵 Fono muzika įjungta');
+}
+
+function stopBackgroundMusic() {
+    audioManager.stopLoop('background');
+    backgroundMusicStarted = false;
+    console.log('🔇 Fono muzika išjungta');
+}
+
+function toggleBackgroundMusic() {
+    const btn = document.getElementById('musicBtn');
+    
+    if (backgroundMusicStarted) {
+        stopBackgroundMusic();
+        if (btn) {
+            btn.innerHTML = '🎵 Muzika: 🔴 IŠJ.';
+            btn.classList.remove('active');
+        }
+        localStorage.setItem('bancrupt_music', 'false');
+    } else {
+        startBackgroundMusic();
+        if (btn) {
+            btn.innerHTML = '🎵 Muzika: 🟢 ĮJ.';
+            btn.classList.add('active');
+        }
+        localStorage.setItem('bancrupt_music', 'true');
+    }
+    
+    playClickSound();
+}
+
+// ============================================
 // INICIJAVIMAS
 // ============================================
 
