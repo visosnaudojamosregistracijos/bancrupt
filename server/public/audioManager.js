@@ -12,6 +12,7 @@ class AudioManager {
 
     loadSounds() {
         const soundFiles = {
+            'background': 'sounds/background.mp3',  // 🆕 Fono muzika
             'air-port': 'sounds/air-port.mp3',
             'air-in': 'sounds/air-in.mp3',
             'hospital': 'sounds/hospital.mp3',
@@ -87,6 +88,39 @@ class AudioManager {
         }
     }
 
+    // 🆕 Groti fono muziką (loop)
+    playLoop(soundName) {
+        if (!this.isEnabled) return;
+        
+        const sound = this.sounds[soundName];
+        if (!sound) {
+            console.warn('⚠️ Garso nėra:', soundName);
+            return;
+        }
+        
+        try {
+            sound.loop = true;
+            sound.volume = this.volume * 0.3;
+            sound.currentTime = 0;
+            
+            const playPromise = sound.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {});
+            }
+        } catch (e) {}
+    }
+    
+    // 🆕 Sustabdyti fono muziką
+    stopLoop(soundName) {
+        const sound = this.sounds[soundName];
+        if (!sound) return;
+        
+        try {
+            sound.pause();
+            sound.currentTime = 0;
+        } catch (e) {}
+    }
+
     // 🆕 Groti garsą, kuris gali persidengti (pvz., keli clickai greitai)
     playOverlap(soundName) {
         if (!this.isEnabled) return;
@@ -105,8 +139,13 @@ class AudioManager {
 
     setVolume(volume) {
         this.volume = Math.max(0, Math.min(1, volume));
-        for (const sound of Object.values(this.sounds)) {
-            sound.volume = this.volume;
+        for (const [name, sound] of Object.entries(this.sounds)) {
+            // 🆕 Fono muzika tylesnė (30% nuo bendro)
+            if (name === 'background') {
+                sound.volume = this.volume * 0.3;
+            } else {
+                sound.volume = this.volume;
+            }
         }
     }
 
