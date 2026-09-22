@@ -1635,18 +1635,24 @@ function toggleSoundPanel() {
     playClickSound();
 }
 
-function changeVolume(value) {
+function changeMusicVolume(value) {
     const volume = parseInt(value) / 100;
+    audioManager.setMusicVolume(volume);
     
-    if (audioManager) {
-        audioManager.setVolume(volume);
-        audioManager.isEnabled = volume > 0;
-    }
-    
-    const valueDisplay = document.getElementById('volumeValue');
+    const valueDisplay = document.getElementById('musicVolumeValue');
     if (valueDisplay) valueDisplay.textContent = value;
     
-    localStorage.setItem('bancrupt_volume', value);
+    localStorage.setItem('bancrupt_musicVolume', value);
+}
+
+function changeSfxVolume(value) {
+    const volume = parseInt(value) / 100;
+    audioManager.setSfxVolume(volume);
+    
+    const valueDisplay = document.getElementById('sfxVolumeValue');
+    if (valueDisplay) valueDisplay.textContent = value;
+    
+    localStorage.setItem('bancrupt_sfxVolume', value);
     
     const muteBtn = document.getElementById('muteBtn');
     if (muteBtn) {
@@ -1659,7 +1665,7 @@ function changeVolume(value) {
 }
 
 function toggleMute() {
-    const slider = document.getElementById('volumeSlider');
+    const slider = document.getElementById('sfxVolumeSlider');
     const muteBtn = document.getElementById('muteBtn');
     
     if (!slider || !muteBtn) return;
@@ -1668,13 +1674,13 @@ function toggleMute() {
         isMuted = false;
         const volume = lastVolume || 50;
         slider.value = volume;
-        changeVolume(volume);
+        changeSfxVolume(volume);
         muteBtn.textContent = '🔇 Išjungti garsą';
     } else {
         isMuted = true;
         lastVolume = parseInt(slider.value) || 50;
         slider.value = 0;
-        changeVolume(0);
+        changeSfxVolume(0);
         muteBtn.textContent = '🔊 Įjungti garsą';
     }
     playClickSound();
@@ -2106,12 +2112,21 @@ function enterGame() {
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
     
-    const savedVolume = localStorage.getItem('bancrupt_volume') || 50;
-    const slider = document.getElementById('volumeSlider');
-    const valueDisplay = document.getElementById('volumeValue');
-    if (slider) slider.value = savedVolume;
-    if (valueDisplay) valueDisplay.textContent = savedVolume;
-    changeVolume(savedVolume);
+    const savedMusicVolume = localStorage.getItem('bancrupt_musicVolume') || 15;
+const savedSfxVolume = localStorage.getItem('bancrupt_sfxVolume') || 50;
+
+const musicSlider = document.getElementById('musicVolumeSlider');
+const sfxSlider = document.getElementById('sfxVolumeSlider');
+const musicValueDisplay = document.getElementById('musicVolumeValue');
+const sfxValueDisplay = document.getElementById('sfxVolumeValue');
+
+if (musicSlider) musicSlider.value = savedMusicVolume;
+if (sfxSlider) sfxSlider.value = savedSfxVolume;
+if (musicValueDisplay) musicValueDisplay.textContent = savedMusicVolume;
+if (sfxValueDisplay) sfxValueDisplay.textContent = savedSfxVolume;
+
+changeMusicVolume(savedMusicVolume);
+changeSfxVolume(savedSfxVolume);
     
     const savedInfoMode = localStorage.getItem('bancrupt_infoMode');
     if (savedInfoMode === 'true') {

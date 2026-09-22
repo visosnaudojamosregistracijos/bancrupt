@@ -6,13 +6,14 @@ class AudioManager {
     constructor() {
         this.sounds = {};
         this.isEnabled = true;
-        this.volume = 0.5;
+        this.musicVolume = 0.15;   // 🆕 Fono muzika (15%)
+        this.sfxVolume = 0.5;      // 🆕 Žaidimo garsai (50%)
         this.loadSounds();
     }
 
     loadSounds() {
         const soundFiles = {
-            'background': 'sounds/background.mp3',  // 🆕 Fono muzika
+            'background': 'sounds/background.mp3',
             'air-port': 'sounds/air-port.mp3',
             'air-in': 'sounds/air-in.mp3',
             'hospital': 'sounds/hospital.mp3',
@@ -56,7 +57,12 @@ class AudioManager {
 
         for (const [name, path] of Object.entries(soundFiles)) {
             const audio = new Audio(path);
-            audio.volume = this.volume;
+            // 🆕 Skirtingi volume'ai
+            if (name === 'background') {
+                audio.volume = this.musicVolume;
+            } else {
+                audio.volume = this.sfxVolume;
+            }
             audio.preload = 'auto';
             this.sounds[name] = audio;
         }
@@ -73,18 +79,14 @@ class AudioManager {
         }
         
         try {
-            // Restartuoti garsą (jei grojo)
             sound.currentTime = 0;
-            sound.volume = this.volume;
-            
+            sound.volume = this.sfxVolume;   // 🆕 SFX volume
             const playPromise = sound.play();
             if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                    // Naršyklė gali blokuoti autoplay – tai normalu
-                });
+                playPromise.catch(() => {});
             }
         } catch (e) {
-            // Ignoruoti klaidas
+            // Ignoruoti
         }
     }
 
@@ -100,7 +102,7 @@ class AudioManager {
         
         try {
             sound.loop = true;
-            sound.volume = this.volume * 0.3;
+            sound.volume = this.musicVolume;   // 🆕 Music volume
             sound.currentTime = 0;
             
             const playPromise = sound.play();
@@ -109,7 +111,7 @@ class AudioManager {
             }
         } catch (e) {}
     }
-    
+
     // 🆕 Sustabdyti fono muziką
     stopLoop(soundName) {
         const sound = this.sounds[soundName];
@@ -121,7 +123,7 @@ class AudioManager {
         } catch (e) {}
     }
 
-    // 🆕 Groti garsą, kuris gali persidengti (pvz., keli clickai greitai)
+    // 🆕 Groti garsą, kuris gali persidengti
     playOverlap(soundName) {
         if (!this.isEnabled) return;
         
@@ -130,21 +132,27 @@ class AudioManager {
         
         try {
             const clone = original.cloneNode();
-            clone.volume = this.volume;
+            clone.volume = this.sfxVolume;   // 🆕 SFX volume
             clone.play().catch(() => {});
         } catch (e) {
             // Ignoruoti
         }
     }
 
-    setVolume(volume) {
-        this.volume = Math.max(0, Math.min(1, volume));
+    // 🆕 Nustatyti fono muzikos garsumą
+    setMusicVolume(volume) {
+        this.musicVolume = Math.max(0, Math.min(1, volume));
+        const bg = this.sounds['background'];
+        if (bg) bg.volume = this.musicVolume;
+    }
+
+    // 🆕 Nustatyti žaidimo garsų garsumą
+    setSfxVolume(volume) {
+        this.sfxVolume = Math.max(0, Math.min(1, volume));
+        // Atnaujinti visus garsus, išskyrus background
         for (const [name, sound] of Object.entries(this.sounds)) {
-            // 🆕 Fono muzika tylesnė (30% nuo bendro)
-            if (name === 'background') {
-                sound.volume = this.volume * 0.3;
-            } else {
-                sound.volume = this.volume;
+            if (name !== 'background') {
+                sound.volume = this.sfxVolume;
             }
         }
     }
@@ -344,7 +352,7 @@ function playCelebrateSound() {
 }
 
 function playClickSound() {
-    audioManager.playOverlap('click'); // 🆕 overlap, kad greitai klikinėjant negestų
+    audioManager.playOverlap('click');
 }
 
 function toggleSound() {
