@@ -3927,3 +3927,9 @@ button:disabled,
         height: 6px !important;
     }
 }
+
+/* 🆕 Mini kortelės su ikona (service1/2/3) */
+.mini-card-color.mini-card-icon {
+    background: linear-gradient(145deg, #f0e8d8, #e0d5c0) !important;
+    border-bottom: 1px solid rgba(61,43,31,0.2);
+}

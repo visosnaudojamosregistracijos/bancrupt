@@ -3181,24 +3181,34 @@ function updateUI(state) {
             cardsWithPrice.sort((a, b) => a.field.cost - b.field.cost);
             
             cardsWithPrice.forEach(({ fieldId, field, houses }) => {
-                let houseIcon = '';
-                if (houses >= 5) houseIcon = '🏨';
-                else if (houses > 0) {
-                    for (let i = 0; i < houses; i++) houseIcon += '🏠';
-                }
-                const color = field.color || '#c9a84c';
-                const tooltip = `${field.name} (#${fieldId}) • €${field.cost}`;
-                miniCardsHtml += `
-                    <div class="mini-card" style="--card-color:${color};" title="${tooltip}" data-field-id="${fieldId}">
-                        <div class="mini-card-color"></div>
-                        <div class="mini-card-body">
-                            <div class="mini-card-name">${field.name}</div>
-                            <div class="mini-card-info">€${field.cost} • #${fieldId}</div>
-                            ${houseIcon ? `<div class="mini-card-houses">${houseIcon}</div>` : ''}
-                        </div>
-                    </div>
-                `;
-            });
+    let houseIcon = '';
+    if (houses >= 5) houseIcon = '🏨';
+    else if (houses > 0) {
+        for (let i = 0; i < houses; i++) houseIcon += '🏠';
+    }
+    
+    // 🆕 Jei service1/2/3 – rodom ikoną viršuje, ne spalvą
+    const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+    const color = field.color || '#c9a84c';
+    
+    const tooltip = `${field.name} (#${fieldId}) • €${field.cost}`;
+    
+    // 🆕 Viršutinė dalis – arba spalva (property), arba ikona (service)
+    const topBar = isService 
+        ? `<div class="mini-card-color mini-card-icon" style="background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;">${field.icon || '⚙️'}</div>`
+        : `<div class="mini-card-color" style="background:${color};"></div>`;
+    
+    miniCardsHtml += `
+        <div class="mini-card" title="${tooltip}" data-field-id="${fieldId}">
+            ${topBar}
+            <div class="mini-card-body">
+                <div class="mini-card-name">${field.name}</div>
+                <div class="mini-card-info">€${field.cost} • #${fieldId}</div>
+                ${houseIcon ? `<div class="mini-card-houses">${houseIcon}</div>` : ''}
+            </div>
+        </div>
+    `;
+});
             
             miniCardsHtml += '</div>';
         } else {
