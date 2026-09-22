@@ -3833,29 +3833,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     
-    // 🆕 Mini kortelių hover – leisti išlipti
-    document.addEventListener('mouseover', (e) => {
-        const card = e.target.closest('.mini-card');
-        if (card) {
-            const center1 = document.getElementById('center-1');
-            if (center1) center1.style.overflow = 'visible';
-        }
-    });
-
-    document.addEventListener('mouseout', (e) => {
-        const card = e.target.closest('.mini-card');
-       if (card) {
-            const center1 = document.getElementById('center-1');
-            if (center1) {
-                setTimeout(() => {
-                    const hoveredCard = document.querySelector('.mini-card:hover');
-                    if (!hoveredCard) {
-                    center1.style.overflow = 'hidden';
-                    }
-                }, 50);
-            }
-        }
-    });
+    
     
     renderColorPicker('createColorPicker', null, null, selectCreateColor);
    

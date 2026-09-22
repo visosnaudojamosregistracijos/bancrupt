@@ -1659,6 +1659,7 @@ body {
     overflow-x: hidden;
     padding: 4px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .mini-cards-container::-webkit-scrollbar {
@@ -1687,9 +1688,9 @@ body {
 }
 
 .mini-card:hover {
-    transform: translateY(-8px) scale(1.15);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    z-index: 99999;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 10;
     border-color: #ffd700;
 }
 
@@ -1748,29 +1749,7 @@ body {
 }
 
 .mini-card::after {
-    content: attr(title);
-    position: absolute;
-    bottom: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.9);
-    color: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 9px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s, bottom 0.2s;
-    z-index: 99999;
-    font-weight: 600;
-    border: 1px solid #ffd700;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-.mini-card:hover::after {
-    opacity: 1;
-    bottom: -36px;
+    display: none;
 }
 
 /* ---------- GRIAUTI NAMUS - KORTELĖS ---------- */
@@ -4057,17 +4036,28 @@ body.dark-mode #cellInfoPanel {
    🆕 MINI KORTELIŲ HOVER FIX
    ============================================ */
 
-#center-1,
-#center-1 .center-cell,
-#center-1 .mini-cards-container,
-#center-1 #myInfo,
-.row-middle-center,
-.center-row {
-    overflow: visible !important;
-}
-
 #center-1 {
-    overflow: hidden;
+    overflow: hidden !important;
     position: relative;
     z-index: 100;
+}
+
+#center-1 .center-cell {
+    overflow: hidden !important;
+}
+
+#center-1 .mini-cards-container {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    max-height: 120px;
+    box-sizing: border-box;
+}
+
+#center-1 #myInfo {
+    overflow: hidden !important;
+}
+
+.row-middle-center,
+.center-row {
+    overflow: visible;
 }
