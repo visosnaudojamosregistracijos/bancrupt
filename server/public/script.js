@@ -3216,6 +3216,41 @@ function updateUI(state) {
     // 🆕 Rasti dabartinį žaidėją pagal playerId
     const currentPlayer = state.players.find(p => p.id === state.currentTurn);
     document.getElementById('turnDisplay').textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
+
+    // 🆕 Atnaujinti turnIndicator (5 langelyje)
+const turnIndicatorName = document.getElementById('turnIndicatorName');
+const turnIndicatorNext = document.getElementById('turnIndicatorNext');
+const indicator = document.getElementById('turnIndicator');
+
+if (currentPlayer) {
+    if (turnIndicatorName) {
+        turnIndicatorName.textContent = currentPlayer.name;
+        turnIndicatorName.style.color = currentPlayer.color || '#1a6b3c';
+    }
+    
+    if (indicator && currentPlayer.color) {
+        indicator.style.borderColor = currentPlayer.color;
+        indicator.style.background = currentPlayer.color + '20';
+    }
+    
+    // Rasti kitą žaidėją
+    const activePlayers = state.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+    const currentIndex = activePlayers.findIndex(p => p.id === currentPlayer.id);
+    
+    let nextPlayer = null;
+    if (activePlayers.length > 1) {
+        nextPlayer = activePlayers[(currentIndex + 1) % activePlayers.length];
+    }
+    
+    if (turnIndicatorNext) {
+        if (nextPlayer && nextPlayer.id !== currentPlayer.id) {
+            turnIndicatorNext.textContent = nextPlayer.name;
+            turnIndicatorNext.style.color = nextPlayer.color || '#3d2b1f';
+        } else {
+            turnIndicatorNext.textContent = '---';
+        }
+    }
+}
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft && gameId) gameIdLeft.textContent = gameId;
