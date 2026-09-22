@@ -3844,7 +3844,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('mouseout', (e) => {
         const card = e.target.closest('.mini-card');
-        if (card) {
+       if (card) {
             const center1 = document.getElementById('center-1');
             if (center1) {
                 setTimeout(() => {

@@ -1655,8 +1655,8 @@ body {
     justify-content: center;
     margin-top: 6px;
     max-height: 140px;
-    overflow-y: auto;      /* ← Scroll, jei netelpa */
-    overflow-x: hidden;    /* ← Nerodo horizontalaus scroll */
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 4px;
     width: 100%;
 }
