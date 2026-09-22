@@ -1671,8 +1671,8 @@ body {
 }
 
 .mini-card {
-    width: clamp(40px, 4vw, 70px);
-    height: clamp(56px, 5.5vw, 98px);
+    width: clamp(40px, 3vw, 60px);
+    height: clamp(56px, 4vw, 84px);
     background: #f5f0e8;
     border: 2px solid #3d2b1f;
     border-radius: 4px;
@@ -1695,7 +1695,7 @@ body {
 
 .mini-card-color {
     width: 100%;
-    height: clamp(16px, 2vw, 30px);
+    height: clamp(16px, 1.5vw, 26px);   /* ← pakeista */
     background: var(--card-color, #c9a84c);
     border-bottom: 2px solid #3d2b1f;
     flex-shrink: 0;
@@ -1713,7 +1713,7 @@ body {
 }
 
 .mini-card-name {
-    font-size: clamp(5px, 0.5vw, 9px);
+    font-size: clamp(5px, 0.4vw, 8px); 
     font-weight: 700;
     color: #3d2b1f;
     line-height: 1.1;
@@ -1726,7 +1726,7 @@ body {
 }
 
 .mini-card-info {
-    font-size: clamp(4px, 0.4vw, 7px);
+    font-size: clamp(4px, 0.35vw, 7px);   /* ← pakeista */
     font-weight: 600;
     color: #6c757d;
     margin-top: auto;
@@ -1739,7 +1739,7 @@ body {
     position: absolute;
     bottom: 8px;
     right: 2px;
-    font-size: clamp(6px, 0.6vw, 10px);
+    font-size: clamp(6px, 0.5vw, 9px);   /* ← pakeista */
     line-height: 1;
     background: rgba(255,255,255,0.9);
     border-radius: 3px;
