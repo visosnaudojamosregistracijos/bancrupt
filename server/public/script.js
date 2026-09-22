@@ -3778,25 +3778,14 @@ function fixCornerClasses() {
 
 fixCornerClasses();
 
-const cornerObserver = new MutationObserver(() => {
-    fixCornerClasses();
-});
-cornerObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['class']
-});
-
-// FIX: property klasė perkamiems specialiems
+// 🆕 Vienkartinis paleidimas – be observer'ių ir setInterval
 function fixPropertyClasses() {
     const buyableIds = [11, 24, 32, 48];
     
     buyableIds.forEach(id => {
         const cell = document.getElementById(`cell-${id}`);
         if (cell) {
-            // 🆕 Vietoj 'property' – 'service3'
-            cell.classList.remove('property');  // ← pašalinti property jei yra
+            cell.classList.remove('property');
             if (!cell.classList.contains('service3')) {
                 cell.classList.add('service3');
             }
@@ -3808,17 +3797,6 @@ function fixPropertyClasses() {
 }
 
 fixPropertyClasses();
-setInterval(fixPropertyClasses, 500);
-
-const propertyObserver = new MutationObserver(() => {
-    fixPropertyClasses();
-});
-propertyObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['class']
-});
 
 // ============================================
 // LAIMĖJIMO EKRANAS SU KONFETI
