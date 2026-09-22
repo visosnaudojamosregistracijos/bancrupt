@@ -1,5 +1,5 @@
 // ============================================
-// PREKYBOS LOGIKA
+// server/tradingLogic.js
 // ============================================
 
 const C = require('./gameConstants');
@@ -11,10 +11,16 @@ class TradingLogic {
         this.trades = new Map();
         this.utilityIds = C.SERVICE1_IDS;
         this.serviceIds = C.SERVICE2_IDS;
+        this.specialIds = C.SERVICE3_IDS;
+    }
+
+    // 🆕 Gauti žaidėją pagal ID
+    getPlayer(playerId) {
+        return this.game.players.find(p => p.id === playerId);
     }
 
     hasHouses(playerId, fieldId) {
-        const player = this.game.players[playerId];
+        const player = this.getPlayer(playerId);
         if (!player) return false;
         return player.houses && player.houses[fieldId] && player.houses[fieldId] > 0;
     }
@@ -26,7 +32,7 @@ class TradingLogic {
     }
 
     getPlayerTradableProperties(playerId) {
-        const player = this.game.players[playerId];
+        const player = this.getPlayer(playerId);
         if (!player) return [];
 
         return player.properties.filter(fieldId => {
@@ -45,7 +51,7 @@ class TradingLogic {
     }
 
     getAllPlayerProperties(playerId) {
-        const player = this.game.players[playerId];
+        const player = this.getPlayer(playerId);
         if (!player) return [];
 
         return player.properties.map(fieldId => {
@@ -67,7 +73,7 @@ class TradingLogic {
     // 1. PARDUOTI BANKUI
     // ============================================
     sellToBank(playerId, fieldIds) {
-        const player = this.game.players[playerId];
+        const player = this.getPlayer(playerId);
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
         if (player.left) return { error: 'Žaidėjas pasitraukęs' };
         if (player.kicked) return { error: 'Žaidėjas pašalintas' };
@@ -115,7 +121,7 @@ class TradingLogic {
     // 2. PRADĖTI AUKCIONĄ
     // ============================================
     startAuction(playerId, fieldId) {
-        const player = this.game.players[playerId];
+        const player = this.getPlayer(playerId);
         if (!player || player.bankrupt) {
             return { error: 'Žaidėjas neaktyvus' };
         }
@@ -146,7 +152,7 @@ class TradingLogic {
         // BANKAS SIŪLO 70% STARTINĘ KAINĄ
         const startPrice = Math.floor(field.cost * C.AUCTION_START_RATIO);
 
-        // 🆕 BANKAS KAIP BIDDER
+        // BANKAS KAIP BIDDER
         const bankBid = {
             playerId: 'bank',
             playerName: '🏦 Bankas',
@@ -166,7 +172,7 @@ class TradingLogic {
             endTime: endTime,
             isActive: true,
             winner: null,
-            timer: null  // 🆕
+            timer: null
         });
 
         // Nuimti kortelę iš pardavėjo
@@ -177,7 +183,7 @@ class TradingLogic {
 
         this.game.addMessage(`🔨 ${player.name} paskelbė aukcioną: ${field.name}! Bankas siūlo €${startPrice}`);
 
-        // 🆕 SERVERIO PUSĖS TIMER'IS
+        // SERVERIO PUSĖS TIMER'IS
         const auction = this.auctions.get(auctionId);
         const timeLeft = endTime - Date.now();
         auction.timer = setTimeout(() => {
@@ -206,7 +212,7 @@ class TradingLogic {
         const auction = this.auctions.get(auctionId);
         if (!auction || !auction.isActive) return { error: 'Aukcionas neaktyvus' };
         
-        // 🆕 Pardavėjas negali siūlyti
+        // Pardavėjas negali siūlyti
         if (auction.sellerId === playerId) {
             return { error: 'Tu esi pardavėjas - negali siūlyti savo aukcione!' };
         }
@@ -215,18 +221,18 @@ class TradingLogic {
             return { error: 'Aukcionas jau baigėsi' };
         }
 
-        const player = this.game.players[playerId];
+        const player = this.getPlayer(playerId);
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
         if (player.left) return { error: 'Žaidėjas pasitraukęs' };
         if (player.kicked) return { error: 'Žaidėjas pašalintas' };
         if (player.money < bidAmount) return { error: 'Neturi tiek pinigų' };
         
-        // 🆕 Siūlymas turi būti DIDESNIS nei dabartinė
+        // Siūlymas turi būti DIDESNIS nei dabartinė
         if (bidAmount <= auction.currentBid) {
             return { error: `Siūlyk daugiau nei €${auction.currentBid}!` };
         }
 
-        // 🆕 Atnaujinti
+        // Atnaujinti
         auction.currentBid = bidAmount;
         auction.currentBidder = playerId;
         auction.currentBidderName = player.name;
@@ -268,7 +274,7 @@ class TradingLogic {
     }
 
     // ============================================
-    // 🆕 BAIGTI AUKCIONĄ (serverio pusės)
+    // BAIGTI AUKCIONĄ (serverio pusės)
     // ============================================
     endAuctionServerSide(auctionId) {
         const auction = this.auctions.get(auctionId);
@@ -297,24 +303,25 @@ class TradingLogic {
         const auction = this.auctions.get(auctionId);
         if (!auction) return null;
         
-        // 🆕 Sustabdyti timer'į
+        // Sustabdyti timer'į
         if (auction.timer) {
             clearTimeout(auction.timer);
             auction.timer = null;
         }
         
         auction.isActive = false;
-        const field = this.game.board.find(f => f.id === auction.fieldId);
         
         let winner = null;
         let winnerId = null;
         let winnerName = null;
 
-        const seller = this.game.players[auction.sellerId];
+        const seller = this.getPlayer(auction.sellerId);
         
-        // 🆕 Jei laimi BANKAS
+        // ============================================
+        // Jei laimi BANKAS
+        // ============================================
         if (auction.currentBidder === 'bank') {
-            // Kortelė grąžinama į laisvų sąrašą (dingsta, bet gali būti nupirkta)
+            // 🆕 KORTELĖ GRĄŽINAMA Į RINKĄ (dingsta iš pardavėjo, bet grąžinama į laisvų sąrašą)
             // Pardavėjas gauna banko pinigus
             if (seller) {
                 seller.money += auction.currentBid;
@@ -323,7 +330,7 @@ class TradingLogic {
                 }
             }
             
-            this.game.addMessage(`🏦 Bankas laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}`);
+            this.game.addMessage(`🏦 Bankas laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}. Kortelė grąžinta į rinką.`);
             
             this.auctions.delete(auctionId);
             
@@ -335,13 +342,16 @@ class TradingLogic {
                 fieldName: auction.fieldName,
                 finalBid: auction.currentBid,
                 sellerId: auction.sellerId,
-                sellerName: auction.sellerName
+                sellerName: auction.sellerName,
+                returnedToMarket: true
             };
         }
         
-        // 🆕 Jei laimi ŽAIDĖJAS
+        // ============================================
+        // Jei laimi ŽAIDĖJAS
+        // ============================================
         winnerId = auction.currentBidder;
-        winner = this.game.players[winnerId];
+        winner = this.getPlayer(winnerId);
         
         if (winner) {
             winnerName = winner.name;
@@ -371,7 +381,8 @@ class TradingLogic {
             fieldName: auction.fieldName,
             finalBid: auction.currentBid,
             sellerId: auction.sellerId,
-            sellerName: auction.sellerName
+            sellerName: auction.sellerName,
+            returnedToMarket: false
         };
     }
 
@@ -379,14 +390,14 @@ class TradingLogic {
     // 3. SIŪLYTI ŽAIDĖJUI
     // ============================================
     proposeTrade(playerId, targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney) {
-        const player = this.game.players[playerId];
+        const player = this.getPlayer(playerId);
         if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
         if (player.left) return { error: 'Žaidėjas pasitraukęs' };
         if (player.kicked) return { error: 'Žaidėjas pašalintas' };
         
         if (playerId === targetPlayerId) return { error: 'Negali siūlyti sau' };
 
-        const target = this.game.players[targetPlayerId];
+        const target = this.getPlayer(targetPlayerId);
         if (!target || target.bankrupt) return { error: 'Žaidėjas neaktyvus' };
         if (target.left) return { error: 'Žaidėjas pasitraukęs' };
         if (target.kicked) return { error: 'Žaidėjas pašalintas' };
@@ -483,8 +494,8 @@ class TradingLogic {
         if (trade.status !== 'pending') return { error: 'Pasiūlymas jau atsakytas' };
 
         if (accept) {
-            const fromPlayer = this.game.players[trade.fromPlayer];
-            const toPlayer = this.game.players[trade.toPlayer];
+            const fromPlayer = this.getPlayer(trade.fromPlayer);
+            const toPlayer = this.getPlayer(trade.toPlayer);
             
             if (!fromPlayer || fromPlayer.bankrupt) {
                 trade.status = 'rejected';
@@ -563,7 +574,7 @@ class TradingLogic {
             return { success: true, message: message };
         } else {
             trade.status = 'rejected';
-            const player = this.game.players[playerId];
+            const player = this.getPlayer(playerId);
             this.game.addMessage(`❌ ${player?.name || 'Žaidėjas'} atmetė pasiūlymą`);
             this.trades.delete(tradeId);
             return { success: false, message: 'Pasiūlymas atmestas' };
@@ -579,8 +590,8 @@ class TradingLogic {
         if (trade.toPlayer !== playerId) return { error: 'Ne tau skirtas šis pasiūlymas' };
         if (trade.status !== 'pending') return { error: 'Pasiūlymas jau atsakytas' };
 
-        const fromPlayer = this.game.players[trade.fromPlayer];
-        const toPlayer = this.game.players[trade.toPlayer];
+        const fromPlayer = this.getPlayer(trade.fromPlayer);
+        const toPlayer = this.getPlayer(trade.toPlayer);
         
         if (!fromPlayer || fromPlayer.bankrupt) return { error: 'Siūlytojas neaktyvus' };
         if (!toPlayer || toPlayer.bankrupt) return { error: 'Gavėjas neaktyvus' };
@@ -640,7 +651,7 @@ class TradingLogic {
         const result = [];
         for (const [id, trade] of this.trades) {
             if (trade.status === 'pending' && trade.toPlayer === playerId) {
-                const fromPlayer = this.game.players[trade.fromPlayer];
+                const fromPlayer = this.getPlayer(trade.fromPlayer);
                 let offerNames = 'pinigai';
                 if (trade.offerFieldIds && trade.offerFieldIds.length > 0) {
                     const names = trade.offerFieldIds.map(fid => {

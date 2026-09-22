@@ -1,5 +1,5 @@
 // ============================================
-// script.js - PILNAS
+// script.js
 // ============================================
 
 let socket;
@@ -42,6 +42,28 @@ let publicGamesCheckInterval = null;
 let infoResizeObserver = null;
 
 // ============================================
+// 🆕 KONSTANTOS (frontend)
+// ============================================
+const SERVICE1_IDS = [2, 14, 28, 44];
+const SERVICE2_IDS = [8, 19, 37, 46];
+const SERVICE3_IDS = [11, 24, 32, 48];
+const SERVICE_RENT = { 1: 50, 2: 100, 3: 150, 4: 200 };
+
+const COLOR_GROUPS = {
+    '#ffd700': [1, 3],
+    '#4a90d9': [6, 7, 9],
+    '#2ecc71': [10, 12, 15],
+    '#9b59b6': [17, 18, 20],
+    '#e74c3c': [22, 23, 25],
+    '#8B6914': [27, 29, 30],
+    '#1abc9c': [31, 33, 34],
+    '#ff69b4': [35, 36, 38],
+    '#2c3e50': [39, 40, 41],
+    '#1a237e': [43, 45, 47],
+    '#bdc3c7': [49, 51]
+};
+
+// ============================================
 // PRISIJUNGIMAS
 // ============================================
 
@@ -50,7 +72,7 @@ function initSocket() {
     
     const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000'
-        : 'https://responsible-nourishment-production.up.railway.app';
+        : window.location.origin;
     
     console.log('🌐 Serverio URL:', SERVER_URL);
     
@@ -83,7 +105,7 @@ function initSocket() {
 
     socket.on('connect_error', (error) => {
         console.log('❌ Prisijungimo klaida:', error);
-        showLobbyMessage('🔴 Nepavyko prisijungti prie serverio! Įsitikink, kad serveris paleistas.', '#dc3545');
+        showLobbyMessage('🔴 Nepavyko prisijungti prie serverio!', '#dc3545');
         playErrorSound();
     });
 
@@ -146,20 +168,15 @@ function initSocket() {
     });
 
     socket.on('gameState', (state) => {
-    console.log('📊 Gauta žaidimo būsena');
-    gameState = state;
-    updateUI(state);
-    document.getElementById('bankruptModal').style.display = 'none';
-    
-
-
-
-
-    // 🆕 Jei žaidimas prasidėjęs - paslėpti waiting room
-    if (state.gameStarted) {
-        hideWaitingRoom();
-    }
-});
+        console.log('📊 Gauta žaidimo būsena');
+        gameState = state;
+        updateUI(state);
+        document.getElementById('bankruptModal').style.display = 'none';
+        
+        if (state.gameStarted) {
+            hideWaitingRoom();
+        }
+    });
 
     // SPALVŲ GAVIMAS
     socket.on('gameColors', (data) => {
@@ -201,7 +218,7 @@ function initSocket() {
         }
     });
 
-    // WAITING ROOM (Etapas 3)
+    // WAITING ROOM
     socket.on('waitingRoomUpdate', (state) => {
         console.log('⏳ Waiting room update:', state);
         updateWaitingRoom(state);
@@ -251,159 +268,135 @@ function initSocket() {
         renderPublicGames(games);
     });
 
-   socket.on('diceRolled', async (data) => {
-    console.log('🎲 Kauliukai mesti:', data);
-    playDiceSound();
-    updateDiceDisplay(data.dice[0], data.dice[1]);
+    socket.on('diceRolled', async (data) => {
+        console.log('🎲 Kauliukai mesti:', data);
+        playDiceSound();
+        updateDiceDisplay(data.dice[0], data.dice[1]);
 
-    // 🆕 Statistika – metimai
-    if (data.player && data.player.id !== undefined) {
-        const isDouble = data.dice[0] === data.dice[1];
-        incrementRolls(data.player.id, isDouble);
-    }
-    
-    // 🆕 Pažymėti, kad žaidėjas animuojamas
-    window.animatingPlayers = window.animatingPlayers || [];
-    if (!window.animatingPlayers.includes(data.player.id)) {
-        window.animatingPlayers.push(data.player.id);
-    }
-    
-    // 🆕 Laukti animacijos pabaigos
-    if (data.oldPosition !== undefined && data.newPosition !== undefined) {
-        await animateMovement(data.player.id, data.oldPosition, data.newPosition);
-    }
-    
-    // 🆕 Nuimti žymą po animacijos
-    window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
-    
-    const isMe = data.player.id === playerId;
+        if (data.player && data.player.id !== undefined) {
+            const isDouble = data.dice[0] === data.dice[1];
+            incrementRolls(data.player.id, isDouble);
+        }
+        
+        window.animatingPlayers = window.animatingPlayers || [];
+        if (!window.animatingPlayers.includes(data.player.id)) {
+            window.animatingPlayers.push(data.player.id);
+        }
+        
+        if (data.oldPosition !== undefined && data.newPosition !== undefined) {
+            await animateMovement(data.player.id, data.oldPosition, data.newPosition);
+        }
+        
+        window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
+        
+        const isMe = data.player.id === playerId;
 
-    // 🆕 Jei neužtenka pinigų
-    if (data.result && data.result.message && data.result.message.includes('neturi pakankamai pinigų')) {
-        const msg = isMe 
-            ? `❌ Neužtenka pinigų ${data.field.name} pirkti!`
-            : `❌ ${data.player.name} neužtenka pinigų ${data.field.name} pirkti!`;
-        
-        console.log('📢 Popup:', msg);
-        showCellAction(msg, 'tax');
-        addJournal(msg);
-        
-        updateUI(gameState);
-        return;
-    }
-    
-    // 🆕 GARSO EFEKTAI (pagal langelio tipą)
-    if (data.field) {
-        if (data.field.id === 2) playDujosSound();
-        else if (data.field.id === 14) playSiukslesSound();
-        else if (data.field.id === 28) playElektraSound();
-        else if (data.field.id === 44) playVanduoSound();
-        else if (data.field.id === 8) playAirPortSound();
-        else if (data.field.id === 19) playTrainSound();
-        else if (data.field.id === 37) playPortSound();
-        else if (data.field.id === 46) playBusSound();
-        else if (data.field.id === 13) playHospitalSound();
-        else if (data.field.id === 21) playLatrasSound();
-        else if (data.field.id === 32) playPirtisSound();
-        else if (data.field.id === 50) playBirthdaySound();
-    }
-    
-    // 🆕 NAUDOTI CELL_MESSAGES
-    if (data.field && data.result) {
-        const fieldId = data.field.id;
-        
-        // Rasti savininką
-        const owner = gameState?.players?.find(p => 
-            p.properties?.includes(fieldId) && !p.bankrupt && !p.left && !p.kicked
-        );
-        
-        let msgKey = '';
-        let msgData = {
-            player: data.player.name,
-            field: data.field.name,
-            owner: owner?.name || '',
-            rent: data.result.rent || 0
-        };
-        
-        // NUOSAVYBĖ
-        if (data.field.type === 'property') {
-            if (owner && owner.id === data.player.id) {
-                msgKey = isMe ? 'visitMine' : 'visitOthers';
-            } else if (owner && owner.id !== data.player.id) {
-                if (isMe) msgKey = 'rentPayer';
-                else if (owner.id === playerId) msgKey = 'rentOwner';
-                else msgKey = 'rentObserver';
-            } else if (data.result.action === 'can_buy') {
-                // Gali pirkti - rodom per buyPending
-                updateUI(gameState);
-                return;
-            }
-        } else {
-            // SERVICE1, SERVICE2, TAX, SPECIAL
-            msgKey = isMe ? 'visitMine' : 'visitOthers';
+        if (data.result && data.result.message && data.result.message.includes('neturi pakankamai pinigų')) {
+            const msg = isMe 
+                ? `❌ Neužtenka pinigų ${data.field.name} pirkti!`
+                : `❌ ${data.player.name} neužtenka pinigų ${data.field.name} pirkti!`;
             
-            if (data.field.type === 'service1' || data.field.type === 'service2') {
-                const serviceIds = data.field.type === 'service1' 
-                    ? [2, 14, 28, 44]
-                    : [8, 19, 37, 46];
+            showCellAction(msg, 'tax');
+            addJournal(msg);
+            
+            updateUI(gameState);
+            return;
+        }
+        
+        // GARSO EFEKTAI
+        if (data.field) {
+            if (data.field.id === 2) playDujosSound();
+            else if (data.field.id === 14) playSiukslesSound();
+            else if (data.field.id === 28) playElektraSound();
+            else if (data.field.id === 44) playVanduoSound();
+            else if (data.field.id === 8) playAirPortSound();
+            else if (data.field.id === 19) playTrainSound();
+            else if (data.field.id === 37) playPortSound();
+            else if (data.field.id === 46) playBusSound();
+            else if (data.field.id === 13) playHospitalSound();
+            else if (data.field.id === 21) playLatrasSound();
+            else if (data.field.id === 32) playPirtisSound();
+            else if (data.field.id === 50) playBirthdaySound();
+        }
+        
+        if (data.field && data.result) {
+            const fieldId = data.field.id;
+            
+            const owner = gameState?.players?.find(p => 
+                p.properties?.includes(fieldId) && !p.bankrupt && !p.left && !p.kicked
+            );
+            
+            let msgKey = '';
+            let msgData = {
+                player: data.player.name,
+                field: data.field.name,
+                owner: owner?.name || '',
+                rent: data.result.rent || 0
+            };
+            
+            if (data.field.type === 'property') {
+                if (owner && owner.id === data.player.id) {
+                    msgKey = isMe ? 'visitMine' : 'visitOthers';
+                } else if (owner && owner.id !== data.player.id) {
+                    if (isMe) msgKey = 'rentPayer';
+                    else if (owner.id === playerId) msgKey = 'rentOwner';
+                    else msgKey = 'rentObserver';
+                } else if (data.result.action === 'can_buy') {
+                    updateUI(gameState);
+                    return;
+                }
+            } else if (data.field.type === 'service1' || data.field.type === 'service2' || data.field.type === 'service3') {
+                msgKey = isMe ? 'visitMine' : 'visitOthers';
+                
+                let serviceIds;
+                if (data.field.type === 'service1') serviceIds = SERVICE1_IDS;
+                else if (data.field.type === 'service2') serviceIds = SERVICE2_IDS;
+                else serviceIds = SERVICE3_IDS;
+                
                 const count = owner?.properties?.filter(id => serviceIds.includes(id)).length || 0;
                 msgData.count = count;
                 msgData.countSuffix = getCountSuffix(count);
             }
+            
+            if (msgKey) {
+                const msg = getCellMessage(fieldId, msgKey, msgData);
+                if (msg) {
+                    addJournal(msg);
+                    
+                    let actionType = 'info';
+                    if (data.result.action === 'pay_rent') actionType = 'rent';
+                    else if (data.result.action === 'pay_tax' || data.result.action === 'latras' || data.result.action === 'pirtis') actionType = 'tax';
+                    else if (data.result.action === 'chance' || data.result.action === 'special' || data.result.action === 'birthday') actionType = 'chance';
+                    else actionType = 'visit';
+                    
+                    showCellAction(msg, actionType);
+                }
+            }
+            
+            updateUI(gameState);
+            return;
         }
         
-        if (msgKey) {
-    const msg = getCellMessage(fieldId, msgKey, msgData);
-    if (msg) {
-        console.log('📢 Popup:', msg);
-        addJournal(msg);
-        
-        // 🆕 Rodyti bloką 5 langelyje
-        let actionType = 'info';
-        if (data.result.action === 'pay_rent') actionType = 'rent';
-        else if (data.result.action === 'pay_tax' || data.result.action === 'latras' || data.result.action === 'pirtis') actionType = 'tax';
-        else if (data.result.action === 'chance' || data.result.action === 'special' || data.result.action === 'birthday') actionType = 'chance';
-        else actionType = 'visit';
-        
-        showCellAction(msg, actionType);
-    }
-}
+        const fallbackMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
+        addJournal(fallbackMsg);
         
         updateUI(gameState);
-        return;
-    }
-    
-    // FALLBACK - jei nėra field/result
-    const fallbackMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
-    addJournal(fallbackMsg);
-    
-    updateUI(gameState);
-});
+    });
 
     socket.on('message', (msg) => {
-    console.log('📢 Pranešimas:', msg);
-    
-    // 🆕 PRALEISTI pranešimus, kurie jau rodomi per diceRolled
-    if (msg.includes('gali nusipirkti') && msg.includes('už €')) {
-        return;
-    }
-    
-   // 🆕 PRALEISTI metimų pranešimus (jau rodomi per diceRolled)
-    if (msg.includes('metė') && msg.includes('atsistojo ant')) {
-        return;
-    }
-    
+        console.log('📢 Pranešimas:', msg);
+        
+        if (msg.includes('gali nusipirkti') && msg.includes('už €')) {
+            return;
+        }
+        
+        if (msg.includes('metė') && msg.includes('atsistojo ant')) {
+            return;
+        }
+        
         if (msg.includes('HORNY RP') || msg.includes('gavai €200 nuo Dedo')) {
             playChanceSound();
         }
-        if (msg.includes('pastatė namą')) {
-    // playBuildSound();  ← UŽKOMENTUOTA (jau groja per buildingBuilt)
-    // showPopupMessage(msg, 'buy');
-}
-        if (msg.includes('pastatė VIEZBUTĮ')) {
-    // playHotelSound();  ← UŽKOMENTUOTA
-    // showPopupMessage(msg, 'buy');
-}
         if (msg.includes('Dabar eina')) {
             playMoveSound();
         }
@@ -438,25 +431,6 @@ function initSocket() {
                 playPaySound();
             }
             showPopupMessage(msg, 'rent');
-
-            // 🆕 Raudonas highlight nuomos mokėjimui
-            if (gameState && gameState.board && gameState.players) {
-                const fieldMatch = msg.match(/([A-ZĄČĘĖĮŠŲŪŽ][a-ząčęėįšųūž]+)/);
-                if (fieldMatch) {
-                    const fieldName = fieldMatch[1];
-                    const field = gameState.board.find(f => f.name === fieldName);
-                    if (field) {
-                        highlightCell(field.id, 'red', 2000);
-                        
-                        // 🆕 Skrendantys pinigai
-                        const amountMatch = msg.match(/sumokėjo €(\d+)/);
-                        if (amountMatch) {
-                            const amount = parseInt(amountMatch[1]);
-                            showFlyingMoney(amount, true);
-                        }
-                    }
-                }
-            }
         }
         else if (msg.includes('LATRŲ BARĄ') || msg.includes('LATRŲ BARAS') || msg.includes('LATRŲ UŽEIGĄ')) {
             showPopupMessage(msg, 'tax');
@@ -475,13 +449,6 @@ function initSocket() {
             !msg.includes('GIMTADIENIS') && 
             !msg.includes('gimtadienį')) {
             playCashSound();
-            
-            // 🆕 Skrendantys pinigai (teigiami)
-            const amountMatch = msg.match(/€(\d+)/);
-            if (amountMatch) {
-                const amount = parseInt(amountMatch[1]);
-                showFlyingMoney(amount, false);
-            }
         }
         if (msg.includes('prarado')) {
             playPaySound();
@@ -521,91 +488,82 @@ function initSocket() {
         }
     });
 
-    // 🆕 Kiti žaidėjai mato, kad laukiama sprendimo
-socket.on('buyPending', (data) => {
-    console.log('⏳ Laukiama sprendimo:', data);
-    
-    // Jei aš ne tas, kuris gali pirkti - rodyk bloką
-    if (data.playerId !== playerId) {
-        const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
+    socket.on('buyPending', (data) => {
+        console.log('⏳ Laukiama sprendimo:', data);
+        
+        if (data.playerId !== playerId) {
+            const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
+            addNotification(msg);
+            addJournal(msg);
+            
+            showBuyPending(data);
+        }
+    });
+
+    socket.on('buyConfirmed', (data) => {
+        console.log('✅ Pirkimas patvirtintas:', data);
+        playBuySound();
+        playCashSound();
+
+        if (data.playerId !== undefined) {
+            incrementBought(data.playerId);
+        }
+        
+        let msg;
+        if (data.playerId === playerId) {
+            msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
+        } else {
+            msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
+        }
+        
         addNotification(msg);
         addJournal(msg);
         
-        // 🆕 Rodyti atskirą bloką
-        showBuyPending(data);
-    }
-});
-
-    socket.on('buyConfirmed', (data) => {
-    console.log('✅ Pirkimas patvirtintas:', data);
-    playBuySound();
-    playCashSound();
-
-    // 🆕 Statistika – pirkimas
-    if (data.playerId !== undefined) {
-        incrementBought(data.playerId);
-    }
-    
-    let msg;
-    if (data.playerId === playerId) {
-        msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
-    } else {
-        msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
-    }
-    
-    addNotification(msg);
-    addJournal(msg);
-    
-    showBuyResult(data.playerName, data.fieldName, 'buy', data.playerId === playerId);
-    
-    if (data.playerId !== playerId) {
-        showPopupMessage(msg, 'buy');
-    }
-    
-    // 🆕 Žalias highlight – rasti fieldId pagal fieldName
-    if (data.fieldName && gameState && gameState.board) {
-        const field = gameState.board.find(f => f.name === data.fieldName);
-        if (field) {
-            highlightCell(field.id, 'green', 2000);
-            
-            // 🆕 Rodyti kortelę
-            setTimeout(() => {
-                showCard(field.id, data.playerName);
-                
-                // Paslėpti po 2.5s
-                setTimeout(() => {
-                    hideCard();
-                }, 2500);
-            }, 500);
+        showBuyResult(data.playerName, data.fieldName, 'buy', data.playerId === playerId);
+        
+        if (data.playerId !== playerId) {
+            showPopupMessage(msg, 'buy');
         }
-    }
-    
-    hideBuyChoice();
-});
+        
+        if (data.fieldName && gameState && gameState.board) {
+            const field = gameState.board.find(f => f.name === data.fieldName);
+            if (field) {
+                highlightCell(field.id, 'green', 2000);
+                
+                setTimeout(() => {
+                    showCard(field.id, data.playerName);
+                    setTimeout(() => {
+                        hideCard();
+                    }, 2500);
+                }, 500);
+            }
+        }
+        
+        hideBuyChoice();
+    });
 
     socket.on('buyCancelled', (data) => {
-    console.log('❌ Pirkimas atšauktas:', data);
-    playMoveSound();
-    
-    let msg;
-    if (data.playerId === playerId) {
-        msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
-    } else {
-        msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
-    }
-    
-  addNotification(msg);
-    addJournal(msg);
-    
-    // 🆕 Rodyti bloką VISIEMS
-    showBuyResult(data.playerName, data.fieldName, 'cancel', data.playerId === playerId);
-    
-    if (data.playerId !== playerId) {
-        showPopupMessage(msg, 'move');
-    }
-    
-    hideBuyChoice();
-});
+        console.log('❌ Pirkimas atšauktas:', data);
+        playMoveSound();
+        
+        let msg;
+        if (data.playerId === playerId) {
+            msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
+        } else {
+            msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+        }
+        
+        addNotification(msg);
+        addJournal(msg);
+        
+        showBuyResult(data.playerName, data.fieldName, 'cancel', data.playerId === playerId);
+        
+        if (data.playerId !== playerId) {
+            showPopupMessage(msg, 'move');
+        }
+        
+        hideBuyChoice();
+    });
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -626,7 +584,7 @@ socket.on('buyPending', (data) => {
         console.log('🏠 Statybos rezultatas:', data);
         if (data.can) {
             if (data.isHotel) {
-                if (confirm(`🏨 Statyti viezbutį ant "${data.fieldName}" už €${data.cost}?`)) {
+                if (confirm(`🏨 Statyti viežbutį ant "${data.fieldName}" už €${data.cost}?`)) {
                     socket.emit('buildHouse', { fieldId: data.fieldId });
                     playClickSound();
                 }
@@ -674,8 +632,6 @@ socket.on('buyPending', (data) => {
         closeTradeOffer();
         if (gameState) updateUI(gameState);
     });
-
-    // AUKCIONO KLAUSYMAI
 
     socket.on('auctionStarted', (data) => {
         console.log('🔨 KLIENTAS GAUNA auctionStarted EVENTĄ');
@@ -772,38 +728,35 @@ socket.on('buyPending', (data) => {
         if (gameState) updateUI(gameState);
     });
 
-// 🆕 STATYBOS PRANEŠIMAS
-socket.on('buildingBuilt', (data) => {
-    console.log('🏠 Statyba:', data);
-    playBuildSound();
-    
-    // 🆕 Pažymėti, kad namas ką tik pastatytas
-    window.newHouseAnimations = window.newHouseAnimations || {};
-    window.newHouseAnimations[data.fieldId] = true;
-    
-    const isMe = data.playerId === playerId;
-    
-    let msgKey = '';
-    if (data.isHotel) {
-        msgKey = isMe ? 'hotelMine' : 'hotelOthers';
-    } else {
-        msgKey = isMe ? 'buildMine' : 'buildOthers';
-    }
-    
-    const msgData = {
-        player: data.playerName,
-        field: data.fieldName
-    };
-    
-    const msg = getCellMessage(data.fieldId, msgKey, msgData);
-    if (msg) {
-        console.log('📢 Popup:', msg);
-        showCellAction(msg, 'visit');
-        addJournal(msg);
-    }
-    
-    updateUI(gameState);
-});
+    socket.on('buildingBuilt', (data) => {
+        console.log('🏠 Statyba:', data);
+        playBuildSound();
+        
+        window.newHouseAnimations = window.newHouseAnimations || {};
+        window.newHouseAnimations[data.fieldId] = true;
+        
+        const isMe = data.playerId === playerId;
+        
+        let msgKey = '';
+        if (data.isHotel) {
+            msgKey = isMe ? 'hotelMine' : 'hotelOthers';
+        } else {
+            msgKey = isMe ? 'buildMine' : 'buildOthers';
+        }
+        
+        const msgData = {
+            player: data.playerName,
+            field: data.fieldName
+        };
+        
+        const msg = getCellMessage(data.fieldId, msgKey, msgData);
+        if (msg) {
+            showCellAction(msg, 'visit');
+            addJournal(msg);
+        }
+        
+        updateUI(gameState);
+    });
 
     socket.on('leftGame', (data) => {
         console.log('🏃 Pasitraukei iš žaidimo:', data);
@@ -829,32 +782,29 @@ socket.on('buildingBuilt', (data) => {
     });
 
     socket.on('gameFinished', (data) => {
-    console.log('🏆 Žaidimas baigtas:', data);
-    
-    localStorage.removeItem('bancrupt_gameId');
-    localStorage.removeItem('bancrupt_playerToken');
-    
-    playWinSound();
-    playCelebrateSound();
-    
-    // 🆕 Sudaryti statistiką
-    let stats = '';
-    if (gameState && gameState.players) {
-        const winner = gameState.players.find(p => p.name === data.winner);
-        if (winner) {
-            const houses = winner.houses ? Object.values(winner.houses).reduce((a, b) => a + b, 0) : 0;
-            stats = `💰 Turėjo: €${winner.money} • 🏠 ${winner.properties.length} objektai (${houses} namai)`;
+        console.log('🏆 Žaidimas baigtas:', data);
+        
+        localStorage.removeItem('bancrupt_gameId');
+        localStorage.removeItem('bancrupt_playerToken');
+        
+        playWinSound();
+        playCelebrateSound();
+        
+        let stats = '';
+        if (gameState && gameState.players) {
+            const winner = gameState.players.find(p => p.name === data.winner);
+            if (winner) {
+                const houses = winner.houses ? Object.values(winner.houses).reduce((a, b) => a + b, 0) : 0;
+                stats = `💰 Turėjo: €${winner.money} • 🏠 ${winner.properties.length} objektai (${houses} namai)`;
+            }
         }
-    }
-    
-    // 🆕 Rodyti laimėjimo modalą su konfeti
-    setTimeout(() => {
-        showWinnerModal(data.winner, stats);
-    }, 500);
-});
+        
+        setTimeout(() => {
+            showWinnerModal(data.winner, stats);
+        }, 500);
+    });
 
-    // VOTE-KICK KLAUSYMAI
-
+    // VOTE-KICK
     socket.on('voteKickStarted', (data) => {
         console.log('🗳️ Balsavimas pradėtas:', data);
         
@@ -955,7 +905,6 @@ function autoFitInfoFont() {
     const width = panel.clientWidth;
     if (width === 0) return;
     
-    // Pradinis šriftas pagal panelės plotį
     let fontSize = 12;
     
     if (width < 200) fontSize = 10;
@@ -967,12 +916,9 @@ function autoFitInfoFont() {
     else if (width < 650) fontSize = 15;
     else fontSize = 16;
     
-    // Nustatyti CSS kintamuosius
     panel.style.setProperty('--info-font-size', fontSize + 'px');
     panel.style.setProperty('--info-header-size', (fontSize + 2) + 'px');
     panel.style.setProperty('--info-section-size', (fontSize + 1) + 'px');
-    
-    console.log(`📏 Info panel: ${width}px → ${fontSize}px`);
 }
 
 function initInfoResizeObserver() {
@@ -988,14 +934,12 @@ function initInfoResizeObserver() {
             setTimeout(autoFitInfoFont, 50);
         });
         infoResizeObserver.observe(panel);
-        console.log('✅ Info ResizeObserver inicijuotas');
     }
     
     window.addEventListener('resize', () => {
         setTimeout(autoFitInfoFont, 100);
     });
     
-    // Pirmas paleidimas
     setTimeout(autoFitInfoFont, 200);
 }
 
@@ -1073,7 +1017,7 @@ function checkGameColors() {
 }
 
 // ============================================
-// WAITING ROOM FUNKCIJOS
+// WAITING ROOM
 // ============================================
 
 function showWaitingRoom() {
@@ -1096,8 +1040,6 @@ function hideWaitingRoom() {
 
 function updateWaitingRoom(state) {
     waitingRoomState = state;
-    
-    console.log('🔄 Atnaujinu waiting room:', state);
     
     const countEl = document.getElementById('waitingPlayerCount');
     if (countEl) countEl.textContent = `${state.totalPlayers}/8`;
@@ -1190,13 +1132,7 @@ function startGame() {
 }
 
 function leaveGameFromWaiting() {
-    if (!isConnected) {
-        alert('❌ Nėra ryšio su serveriu!');
-        playErrorSound();
-        return;
-    }
-    
-    if (!socket || !socket.connected) {
+    if (!isConnected || !socket || !socket.connected) {
         alert('❌ Nėra ryšio su serveriu!');
         playErrorSound();
         return;
@@ -1207,11 +1143,7 @@ function leaveGameFromWaiting() {
     }
     
     playClickSound();
-    
-    // Paslėpti waiting room
     hideWaitingRoom();
-    
-    // Iškviesti leaveGame (serveris apdoros)
     socket.emit('leaveGame');
 }
 
@@ -1445,7 +1377,7 @@ function placeBidPlus10() {
 }
 
 // ============================================
-// VOTE-KICK FUNKCIJOS
+// VOTE-KICK
 // ============================================
 
 function openVoteKick() {
@@ -1818,39 +1750,35 @@ function showCellInfo(fieldId) {
     }
     
     if (field.type === 'property' && field.color) {
-        // 🆕 SPECIALI GRUPĖ (11, 24, 32, 48) – fiksuota nuoma
-        const SPECIAL_GROUP = [11, 24, 32, 48];
-        const SPECIAL_RENT = { 1: 50, 2: 100, 3: 150, 4: 200 };
+        const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
+        const baseRent = Math.floor(field.cost * 0.1);
         
-        if (SPECIAL_GROUP.includes(field.id)) {
-            const ownedInGroup = owner ? owner.properties.filter(id => SPECIAL_GROUP.includes(id)).length : 0;
-            const currentRent = SPECIAL_RENT[ownedInGroup] || 50;
-            
-            html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA (GRUPĖ)</div>`;
-            html += `<div class="info-row"><span class="label">Turi ${ownedInGroup}/4:</span><span class="value green">€${currentRent}</span></div>`;
-            html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
-            html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
-            html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
-            html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
-            html += `</div>`;
-        } else {
-            // Standartinė logika
-            const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
-            const baseRent = Math.floor(field.cost * 0.1);
-            
-            html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
-            html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
-            
-            const multipliers = [10, 20, 30, 40];
-            for (let i = 1; i <= 4; i++) {
-                const rent = Math.floor(baseRent * multipliers[i - 1]);
-                html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
-            }
-            
-            const hotelRent = Math.floor(baseRent * 50);
-            html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${hotelRent}</span></div>`;
-            html += `</div>`;
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
+        
+        const multipliers = [10, 20, 30, 40];
+        for (let i = 1; i <= 4; i++) {
+            const rent = Math.floor(baseRent * multipliers[i - 1]);
+            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
         }
+        
+        const hotelRent = Math.floor(baseRent * 50);
+        html += `<div class="info-row"><span class="label">🏨 Viežbutis:</span><span class="value">€${hotelRent}</span></div>`;
+        html += `</div>`;
+    }
+    
+    // 🆕 SERVICE3 – fiksuota nuoma
+    if (field.type === 'service3' || SERVICE3_IDS.includes(field.id)) {
+        const ownedInGroup = owner ? owner.properties.filter(id => SERVICE3_IDS.includes(id)).length : 0;
+        const currentRent = SERVICE_RENT[ownedInGroup] || SERVICE_RENT[1];
+        
+        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA (GRUPĖ)</div>`;
+        html += `<div class="info-row"><span class="label">Turi ${ownedInGroup}/4:</span><span class="value green">€${currentRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
+        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
+        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
+        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+        html += `</div>`;
     }
     
     if (field.type === 'service1') {
@@ -1895,7 +1823,6 @@ function showCellInfo(fieldId) {
     
     tooltip.innerHTML = html;
     
-    // Pozicionavimas - rodyk iš karto, kad galėtume išmatuoti
     tooltip.style.display = 'block';
     tooltip.style.left = '0px';
     tooltip.style.top = '0px';
@@ -1916,25 +1843,18 @@ function showCellInfo(fieldId) {
     
     let top, left;
     
-    // Horizontaliai
     if (cellCenterX < boardCenterX) {
-        // Sklypas kairėje - tooltip dešinėje
         left = cellRect.right + 10;
     } else {
-        // Sklypas dešinėje - tooltip kairėje
         left = cellRect.left - tooltipWidth - 10;
     }
     
-    // Vertikaliai
     if (cellCenterY < boardCenterY) {
-        // Sklypas viršuje - tooltip apačioje
         top = cellRect.top;
     } else {
-        // Sklypas apačioje - tooltip viršuje
         top = cellRect.bottom - tooltipHeight;
     }
     
-    // Patikrink, ar tooltip netelpa už ekrano
     if (left < 10) left = 10;
     if (left + tooltipWidth > window.innerWidth - 10) {
         left = window.innerWidth - tooltipWidth - 10;
@@ -1957,7 +1877,6 @@ function hideCellInfo() {
     }
 }
 
-// 🆕 MINI KORTELIŲ TOOLTIP
 function initMiniCardTooltips() {
     document.querySelectorAll('.mini-card').forEach(card => {
         card.addEventListener('mouseenter', (e) => {
@@ -1974,9 +1893,7 @@ function initMiniCardTooltips() {
 }
 
 function showMiniCardTooltip(fieldId, cardElement) {
-    // 🆕 Tikrinti, ar info režimas įjungtas
     if (!infoMode) return;
-    
     if (!gameState) return;
     
     const tooltip = document.getElementById('cellInfoTooltip');
@@ -2007,7 +1924,6 @@ function showMiniCardTooltip(fieldId, cardElement) {
         `;
     }
     
-    // NUOMA
     if (field.type === 'property' && field.color) {
         const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
         const baseRent = Math.floor(field.cost * 0.1);
@@ -2022,14 +1938,14 @@ function showMiniCardTooltip(fieldId, cardElement) {
         }
         
         const hotelRent = Math.floor(baseRent * 50);
-        html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${hotelRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">🏨 Viežbutis:</span><span class="value">€${hotelRent}</span></div>`;
         html += `</div>`;
         
         if (owner) {
             html += `<div class="info-section">`;
             html += `<div class="info-section-title">🏠 DABARTINIS</div>`;
             if (houses >= 5) {
-                html += `<div class="info-row"><span class="label">Statusas:</span><span class="value">🏨 VIEŠBUTIS</span></div>`;
+                html += `<div class="info-row"><span class="label">Statusas:</span><span class="value">🏨 VIEŽBUTIS</span></div>`;
             } else if (houses > 0) {
                 html += `<div class="info-row"><span class="label">Namai:</span><span class="value">${houses} 🏠</span></div>`;
             } else {
@@ -2039,18 +1955,7 @@ function showMiniCardTooltip(fieldId, cardElement) {
         }
     }
     
-    // SERVICE1
-    if (field.type === 'service1') {
-        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
-        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
-        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
-        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
-        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
-        html += `</div>`;
-    }
-    
-    // SERVICE2
-    if (field.type === 'service2') {
+    if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
         html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
         html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
@@ -2062,7 +1967,6 @@ function showMiniCardTooltip(fieldId, cardElement) {
     tooltip.innerHTML = html;
     tooltip.style.display = 'block';
     
-    // Pozicionavimas
     const rect = cardElement.getBoundingClientRect();
     const tooltipWidth = tooltip.offsetWidth;
     const tooltipHeight = tooltip.offsetHeight;
@@ -2091,35 +1995,12 @@ function hideMiniCardTooltip() {
 }
 
 // ============================================
-// IŠŠOKANTYS PRANEŠIMAI
-// ============================================
-
-// ============================================
-// PRANEŠIMAI → 5 LANGELIS
+// PRANEŠIMAI
 // ============================================
 
 function showPopupMessage(message, type) {
-    // 🆕 NEBERODYTI 5 LANGELYJE
-    // addNotification(message);
     console.log('📢 Popup:', message);
 }
-
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes popupFadeIn {
-        from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    }
-    @keyframes blink {
-        0%, 50% { opacity: 1; }
-        51%, 100% { opacity: 0.3; }
-    }
-`;
-document.head.appendChild(style);
-
-// ============================================
-// PRANEŠIMAI
-// ============================================
 
 function addNotification(msg) {
     const container = document.getElementById('notifications');
@@ -2229,9 +2110,7 @@ function enterGame() {
     socket.emit('getGameState');
     
     setTimeout(() => {
-        // 🆕 Rodyti waiting room TIK jei žaidimas dar neprasidėjęs
         if (gameState && gameState.gameStarted) {
-            console.log('🎮 Žaidimas jau prasidėjęs - nerodomas waiting room');
             hideWaitingRoom();
             return;
         }
@@ -2240,7 +2119,6 @@ function enterGame() {
         showWaitingRoom();
     }, 300);
     
-    // 🆕 Inicializuoti info panelės stebėjimą
     setTimeout(initInfoResizeObserver, 1000);
 }
 
@@ -2249,13 +2127,7 @@ function enterGame() {
 // ============================================
 
 function leaveGame() {
-    if (!isConnected) {
-        alert('❌ Nėra ryšio su serveriu!');
-        playErrorSound();
-        return;
-    }
-    
-    if (!socket || !socket.connected) {
+    if (!isConnected || !socket || !socket.connected) {
         alert('❌ Nėra ryšio su serveriu!');
         playErrorSound();
         return;
@@ -2283,7 +2155,6 @@ function updateDiceDisplay(value1, value2) {
     if (dice1) dice1.classList.add('rolling');
     if (dice2) dice2.classList.add('rolling');
     
-    // 📳 Vibracija telefone (12)
     if (navigator.vibrate) {
         navigator.vibrate([50, 30, 50, 30, 100]);
     }
@@ -2331,7 +2202,7 @@ function updateSingleDice(diceId, value) {
 }
 
 // ============================================
-// 🆕 ŽAIDĖJO JUDĖJIMO ANIMACIJA
+// ŽAIDĖJO JUDĖJIMO ANIMACIJA
 // ============================================
 async function animateMovement(playerId, fromPos, toPos) {
     if (fromPos === toPos) return;
@@ -2340,14 +2211,12 @@ async function animateMovement(playerId, fromPos, toPos) {
     const totalSteps = (toPos - fromPos + boardSize) % boardSize;
     if (totalSteps === 0) return;
     
-    console.log(`🎬 Animacija: player ${playerId} nuo ${fromPos} iki ${toPos} (${totalSteps} žingsniai)`);
+    console.log(`🎬 Animacija: player ${playerId} nuo ${fromPos} iki ${toPos}`);
     
     const stepDuration = totalSteps > 8 ? 150 : 250;
     
-    // 🆕 PASLĖPTI rutuliuką (jis bus rodomas po animacijos)
     hidePlayerDot(playerId);
     
-    // 🆕 1 FAZĖ: Langeliai paryškėja paeiliui
     for (let i = 1; i <= totalSteps; i++) {
         const currentPos = (fromPos + i) % boardSize;
         const cell = document.getElementById(`cell-${currentPos}`);
@@ -2367,17 +2236,14 @@ async function animateMovement(playerId, fromPos, toPos) {
         }
     }
     
-    // 🆕 2 FAZĖ: Paskutinis langelis lieka paryškintas 500ms
     const finalCell = document.getElementById(`cell-${toPos}`);
     if (finalCell) {
         await new Promise(resolve => setTimeout(resolve, 500));
         finalCell.classList.remove('highlight-yellow');
     }
     
-    // 🆕 3 FAZĖ: PARODYTI rutuliuką galutinėje pozicijoje
     showPlayerDot(playerId, toPos);
     
-    // „Jump" animacija
     if (finalCell) {
         const playerDots = finalCell.querySelectorAll('.player-dot');
         playerDots.forEach(dot => {
@@ -2387,11 +2253,8 @@ async function animateMovement(playerId, fromPos, toPos) {
             }
         });
     }
-    
-    console.log(`✅ Animacija baigta`);
 }
 
-// 🆕 PAGALBINĖS FUNKCIJOS
 function hidePlayerDot(playerId) {
     document.querySelectorAll('.player-dot').forEach(dot => {
         if (dot.dataset.playerId == playerId) {
@@ -2429,7 +2292,6 @@ function showBuyChoice(data) {
     playNotificationSound();
 }
 
-// 🆕 PIRKIMO LAUKIMO BLOKAS KITIEMS ŽAIDĖJAMS
 function showBuyPending(data) {
     const box = document.getElementById('buyPendingInfo');
     if (!box) return;
@@ -2481,14 +2343,12 @@ function cancelBuy() {
     hideBuyChoice();
 }
 
-// 🆕 PIRKIMO REZULTATO BLOKAS (po sprendimo)
 let buyResultTimeout = null;
 
 function showBuyResult(playerName, fieldName, result, isMe) {
     const box = document.getElementById('buyPendingInfo');
     if (!box) return;
     
-    // Pakeisti turinį
     const header = box.querySelector('.buy-pending-header');
     const body = box.querySelector('.buy-pending-body');
     
@@ -2531,7 +2391,6 @@ function showBuyResult(playerName, fieldName, result, isMe) {
     box.style.display = 'flex';
     box.classList.add('show');
     
-    // 🆕 Paslėpti po 3s
     if (buyResultTimeout) clearTimeout(buyResultTimeout);
     buyResultTimeout = setTimeout(() => {
         hideBuyPending();
@@ -2562,7 +2421,6 @@ function rollDice() {
         return;
     }
     
-    // 📳 Vibracija prieš metimą
     if (navigator.vibrate) {
         navigator.vibrate(100);
     }
@@ -2650,13 +2508,16 @@ function updateSellableProperties() {
     const container = document.getElementById('sellableProperties');
     if (!container || !gameState || !myPlayer) return;
     
-    const properties = gameState.players.find(p => p.id === playerId).properties || [];
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const properties = player.properties || [];
     let html = '';
     
     properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
-        const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
         const price = Math.floor(field.cost * 0.8);
@@ -2711,14 +2572,17 @@ function updateAuctionableProperties() {
     const container = document.getElementById('auctionableProperties');
     if (!container || !gameState || !myPlayer) return;
     
-    const properties = gameState.players.find(p => p.id === playerId).properties || [];
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const properties = player.properties || [];
     let html = '';
     let hasProperties = false;
     
     properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
-        const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
         hasProperties = true;
@@ -2775,15 +2639,12 @@ function updateTradePlayers() {
     const select = document.getElementById('tradeTargetPlayer');
     if (!select) return;
     if (!gameState) return;
-    if (playerId == null) return; // 🆕 Apsauga nuo null
-    
-    // 🆕 Saugus null handling
-    const currentPlayerId = myPlayer?.id ?? playerId;
+    if (playerId == null) return;
     
     select.innerHTML = '';
     let found = false;
     gameState.players.forEach(p => {
-        if (p.id !== currentPlayerId && p.isActive && !p.bankrupt && !p.left && !p.kicked) {
+        if (p.id !== playerId && p.isActive && !p.bankrupt && !p.left && !p.kicked) {
             const option = document.createElement('option');
             option.value = p.id;
             option.textContent = `${p.name} (€${p.money})`;
@@ -2820,27 +2681,30 @@ function updateOfferFields() {
     const container = document.getElementById('tradeOfferFields');
     if (!container || !gameState || !myPlayer) return;
     
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
     let html = '';
     let count = 0;
     
-    if (myPlayer.properties.length === 0) {
+    if (player.properties.length === 0) {
         container.innerHTML = '<p style="color:#6c757d; padding:10px;">Neturi kortelių</p>';
         return;
     }
     
     html += '<div style="display:flex; flex-wrap:wrap; gap:5px; padding:5px;">';
     
-    myPlayer.properties.forEach(fieldId => {
+    player.properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
-        const houses = myPlayer.houses && myPlayer.houses[fieldId] ? myPlayer.houses[fieldId] : 0;
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
         const checked = selectedOfferFields.includes(fieldId) ? 'checked' : '';
         const color = field.color || '#c9a84c';
         
         html += `
-            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; box-shadow: ${checked ? '0 0 10px rgba(40,167,69,0.4)' : 'none'};" 
+            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s;" 
                  onclick="document.getElementById('offer_${fieldId}').click()">
                 <input type="checkbox" ${checked} onchange="toggleOfferField(${fieldId})" id="offer_${fieldId}" style="margin:0; cursor:pointer;">
                 <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
@@ -2924,7 +2788,7 @@ function updateRequestFields() {
         const color = field.color || '#c9a84c';
         
         html += `
-            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; box-shadow: ${checked ? '0 0 10px rgba(40,167,69,0.4)' : 'none'};" 
+            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s;" 
                  onclick="document.getElementById('request_${fieldId}').click()">
                 <input type="checkbox" ${checked} onchange="toggleRequestField(${fieldId})" id="request_${fieldId}" style="margin:0; cursor:pointer;">
                 <span style="font-size:10px; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${field.name}</span>
@@ -3081,7 +2945,7 @@ function updateDemolishList(properties) {
     demolishableProperties = properties;
     
     if (properties.length === 0) {
-        container.innerHTML = '<p style="color:#6c757d; padding:10px; text-align:center;">Neturi namų ar viezbučių kuriuos galėtum griauti.</p>';
+        container.innerHTML = '<p style="color:#6c757d; padding:10px; text-align:center;">Neturi namų ar viežbučių kuriuos galėtum griauti.</p>';
         return;
     }
     
@@ -3097,7 +2961,7 @@ function updateDemolishList(properties) {
         }
         
         const color = prop.color || '#c9a84c';
-        const typeText = prop.isHotel ? 'VIEZBUTIS' : `${prop.houses} namai`;
+        const typeText = prop.isHotel ? 'VIEŽBUTIS' : `${prop.houses} namai`;
         
         html += `
             <div class="demolish-card" onclick="confirmDemolish(${prop.id})">
@@ -3233,27 +3097,13 @@ function sendChat() {
 }
 
 function getGroupByColor(color) {
-    const groups = {
-        '#ffd700': [1, 3],
-        '#4a90d9': [6, 7, 9],
-        '#2ecc71': [10, 12, 15],
-        '#9b59b6': [17, 18, 20],
-        '#e74c3c': [22, 23, 25],
-        '#8B6914': [27, 29, 30],
-        '#1abc9c': [31, 33, 34],
-        '#ff69b4': [35, 36, 38],
-        '#2c3e50': [39, 40, 41],
-        '#1a237e': [43, 45, 47],
-        '#bdc3c7': [49, 51]
-    };
-    return groups[color] || [];
+    return COLOR_GROUPS[color] || [];
 }
 
 function setMode(mode) {
     const board = document.getElementById('board');
     board.className = mode;
     
-    // 🆕 Atnaujinti mygtuko tekstą
     const modeBtn = document.getElementById('modeBtn');
     if (modeBtn) {
         if (mode === 'adaptive') {
@@ -3266,16 +3116,13 @@ function setMode(mode) {
     localStorage.setItem('boardMode', mode);
     playClickSound();
     
-    // 🆕 Perskaičiuoti info panelės šriftą
     setTimeout(autoFitInfoFont, 300);
 }
 
-// 🆕 Perjungti režimą
 function toggleMode() {
     const board = document.getElementById('board');
     if (!board) return;
     
-    // Nustatyti dabartinį režimą
     const currentMode = localStorage.getItem('boardMode') || 'adaptive';
     const newMode = currentMode === 'adaptive' ? 'fixed' : 'adaptive';
     
@@ -3292,7 +3139,9 @@ function updateUI(state) {
     if (!state) return;
     
     document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left && !p.kicked).length}/${state.maxPlayers}`;
-    const currentPlayer = state.players[state.currentTurn];
+    
+    // 🆕 Rasti dabartinį žaidėją pagal playerId
+    const currentPlayer = state.players.find(p => p.id === state.currentTurn);
     document.getElementById('turnDisplay').textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
@@ -3356,7 +3205,6 @@ function updateUI(state) {
             miniCardsHtml = '<div style="font-size:9px; color:#6c757d; margin-top:4px;">Neturi kortelių</div>';
         }
         
-        // 🆕 Išsaugoti seną pinigų sumą PRIEŠ perrašant
         const oldMoneyEl = document.querySelector('#myInfo .player-money');
         const oldMoney = oldMoneyEl ? parseInt(oldMoneyEl.textContent.replace(/[^0-9-]/g, '')) : me.money;
         const newMoney = me.money;
@@ -3366,8 +3214,6 @@ function updateUI(state) {
                 <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
                 <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
             </div>
-
-        
 
             <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};" data-target="${newMoney}">💰 €${newMoney}</div>
             <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
@@ -3383,7 +3229,6 @@ function updateUI(state) {
             </div>
         `;
         
-        // 🆕 Animuoti pinigus
         if (oldMoney !== newMoney) {
             setTimeout(() => {
                 animateMoney(document.querySelector('#myInfo .player-money'), oldMoney, newMoney, 800);
@@ -3486,7 +3331,7 @@ function updateUI(state) {
                             const allHave4 = groupFields.every(id => (myPlayer.houses && myPlayer.houses[id] || 0) >= 4);
                             const alreadyHasHotel = currentHouses >= 5;
                             if (allHave4 && !alreadyHasHotel) {
-                                buildBtn.textContent = '🏨 Statyti viezbutį';
+                                buildBtn.textContent = '🏨 Statyti viežbutį';
                                 buildBtn.style.display = 'block';
                                 buildBtn.disabled = false;
                             } else {
@@ -3554,10 +3399,8 @@ function updateUI(state) {
     
     updateBoard(state);
     
-    // 🆕 Atnaujinti lyderius, jei modalas atidarytas
     autoUpdateLeaders();
     
-    // 🆕 Inicializuoti mini kortelių tooltip'us
     setTimeout(initMiniCardTooltips, 100);
 }
 
@@ -3592,7 +3435,6 @@ function updateBoard(state) {
                 const houseCount = owner.houses[index];
                 let houseIcons = '';
                 
-                // 🆕 Patikrinti, ar namas ką tik pastatytas
                 const isNewHouse = window.newHouseAnimations && window.newHouseAnimations[index];
                 const isNewHotel = houseCount >= 5 && isNewHouse;
                 
@@ -3609,7 +3451,6 @@ function updateBoard(state) {
                 }
                 html += `<span class="cell-cost" style="font-size:14px; display:block; line-height:1.2;">${houseIcons}</span>`;
                 
-                // 🆕 Išvalyti žymą po 1 sekundės
                 if (isNewHouse) {
                     setTimeout(() => {
                         if (window.newHouseAnimations) {
@@ -3623,14 +3464,14 @@ function updateBoard(state) {
         }
         
         if (playersHere.length > 0) {
-    html += `<div class="players-on-cell">`;
-    playersHere.forEach(p => {
-        const isAnimating = window.animatingPlayers && window.animatingPlayers.includes(p.id);
-        const displayStyle = isAnimating ? 'display:none;' : '';
-        html += `<span class="player-dot" style="background:${p.color};${displayStyle}" data-player-id="${p.id}"></span>`;
-    });
-    html += `</div>`;
-}
+            html += `<div class="players-on-cell">`;
+            playersHere.forEach(p => {
+                const isAnimating = window.animatingPlayers && window.animatingPlayers.includes(p.id);
+                const displayStyle = isAnimating ? 'display:none;' : '';
+                html += `<span class="player-dot" style="background:${p.color};${displayStyle}" data-player-id="${p.id}"></span>`;
+            });
+            html += `</div>`;
+        }
         
         cell.innerHTML = html;
         
@@ -3640,52 +3481,22 @@ function updateBoard(state) {
         else if (field.type === 'parking') cell.classList.add('parking', 'corner');
         else if (field.type === 'go-to-jail') cell.classList.add('go-to-jail', 'corner');
         else if (field.type === 'property') cell.classList.add('property');
+        else if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
+            cell.classList.add('property');
+        }
         
-        // 🆕 Pridėti 'edge' klasę visiems ne kampiniams
         if (field.id !== 0 && field.id !== 16 && field.id !== 26 && field.id !== 42) {
             cell.classList.add('edge');
         }
         
-        // 🆕 Pridėti 'property' klasę specialiems perkamiems (11, 24, 32, 48)
-        if (field.id === 11 || field.id === 24 || field.id === 32 || field.id === 48) {
-            cell.classList.add('property', 'edge');
-        }
-        
-        // 🆕 GRUPAVIMAS – priskirti data-group pagal spalvą
+        // GRUPAVIMAS
         if (field.color && field.type === 'property') {
             cell.setAttribute('data-group', field.color);
             cell.style.setProperty('--group-color', field.color);
             
-            // 🆕 Patikrinti, ar savininkas turi VISĄ grupę
             if (owner) {
-                const COLOR_GROUPS = {
-                    '#ffd700': [1, 3],
-                    '#4a90d9': [6, 7, 9],
-                    '#2ecc71': [10, 12, 15],
-                    '#9b59b6': [17, 18, 20],
-                    '#e74c3c': [22, 23, 25],
-                    '#8B6914': [27, 29, 30],
-                    '#1abc9c': [31, 33, 34],
-                    '#ff69b4': [35, 36, 38],
-                    '#2c3e50': [39, 40, 41],
-                    '#1a237e': [43, 45, 47],
-                    '#bdc3c7': [49, 51]
-                };
-                
                 const group = COLOR_GROUPS[field.color] || [];
-                
-                // 🆕 Pridėti specialią grupę (11, 24, 32, 48)
-                const SPECIAL_GROUP = [11, 24, 32, 48];
-                const isSpecialGroup = SPECIAL_GROUP.includes(field.id);
-                
-                if (isSpecialGroup) {
-                    const ownedInSpecial = owner.properties.filter(id => SPECIAL_GROUP.includes(id)).length;
-                    if (ownedInSpecial === 4) {
-                        cell.classList.add('full-group');
-                    } else {
-                        cell.classList.remove('full-group');
-                    }
-                } else if (group.length > 0) {
+                if (group.length > 0) {
                     const hasAll = group.every(id => owner.properties.includes(id));
                     if (hasAll) {
                         cell.classList.add('full-group');
@@ -3710,7 +3521,6 @@ function updateBoard(state) {
 function addChatMessage(data) {
     const time = new Date(data.timestamp).toLocaleTimeString();
     
-    // Pagrindinis chat
     const container = document.getElementById('chatMessages');
     if (container) {
         container.innerHTML += `
@@ -3724,7 +3534,6 @@ function addChatMessage(data) {
         container.scrollTop = container.scrollHeight;
     }
     
-    // Laukimosi chat
     const waitingContainer = document.getElementById('waitingChatMessages');
     if (waitingContainer) {
         waitingContainer.innerHTML += `
@@ -3764,9 +3573,6 @@ function addJournal(msg) {
     }
 }
 
-// ============================================
-// 🆕 LANGELIO PRANEŠIMŲ GAVIMAS
-// ============================================
 function getCellMessage(cellId, type, data = {}) {
     const cell = window.CELL_MESSAGES?.[cellId];
     if (!cell) {
@@ -3777,7 +3583,6 @@ function getCellMessage(cellId, type, data = {}) {
     let msg = cell.messages?.[type] || '';
     if (!msg) return '';
     
-    // Pakeisti visus {key} į reikšmes
     for (const [key, value] of Object.entries(data)) {
         msg = msg.replace(new RegExp(`{${key}}`, 'g'), value);
     }
@@ -3785,15 +3590,11 @@ function getCellMessage(cellId, type, data = {}) {
     return msg;
 }
 
-// 🆕 Skaičiaus galūnė
 function getCountSuffix(count) {
     if (count === 1) return 'as';
     return 'ai';
 }
 
-// ============================================
-// 🆕 LANGELIO PRANEŠIMO BLOKAS
-// ============================================
 let cellActionTimeout = null;
 
 function showCellAction(message, type = 'info') {
@@ -3805,7 +3606,6 @@ function showCellAction(message, type = 'info') {
     
     if (!header || !body) return;
     
-    // Nustatyti spalvą pagal tipą
     let headerText = '📢 PRANEŠIMAS';
     let headerColor = '#1a6b3c';
     let borderColor = '#c9a84c';
@@ -3837,7 +3637,6 @@ function showCellAction(message, type = 'info') {
     box.style.display = 'flex';
     box.classList.add('show');
     
-    // Paslėpti po 3s
     if (cellActionTimeout) clearTimeout(cellActionTimeout);
     cellActionTimeout = setTimeout(() => {
         hideCellAction();
@@ -3899,13 +3698,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // SPALVŲ RATUKAI
     renderColorPicker('createColorPicker', null, null, selectCreateColor);
     
     availableJoinColors = [...PLAYER_COLORS];
     renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
     
-    // STALO KODO INPUT
     if (gameIdInputEl) {
         gameIdInputEl.addEventListener('input', function() {
             if (joinColorCheckTimeout) clearTimeout(joinColorCheckTimeout);
@@ -3915,7 +3712,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-     // LANGELIŲ INFO REŽIMAS
     document.querySelectorAll('.cell').forEach(cell => {
         const fieldId = parseInt(cell.dataset.id);
         
@@ -3958,15 +3754,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dice2) updateSingleDice('centerDice2', 1);
     }, 500);
     
-    // 🆕 Inicializuoti info panelės stebėjimą
     setTimeout(initInfoResizeObserver, 800);
     
     console.log('✅ Inicijavimas baigtas');
 });
 
-// ============================================
-// 🔧 FIX: Visada grąžinti 'corner' klasę kampams
-// ============================================
+// FIX: kampai
 function fixCornerClasses() {
     const corners = {
         'cell-0':  'cell corner start',
@@ -3979,15 +3772,12 @@ function fixCornerClasses() {
         const el = document.getElementById(id);
         if (el && !el.classList.contains('corner')) {
             el.className = correctClass;
-            console.log(`✅ ${id}: atstatyta klasė → "${correctClass}"`);
         }
     });
 }
 
-// Paleisti iškart
 fixCornerClasses();
 
-// Stebėti DOM pakeitimus ir visada grąžinti
 const cornerObserver = new MutationObserver(() => {
     fixCornerClasses();
 });
@@ -3998,11 +3788,7 @@ cornerObserver.observe(document.body, {
     attributeFilter: ['class']
 });
 
-console.log('✅ cornerObserver įjungtas');
-
-// ============================================
-// 🔧 FIX: Property klasė perkamiems specialiems (11, 24, 32, 48)
-// ============================================
+// FIX: property klasė perkamiems specialiems
 function fixPropertyClasses() {
     const buyableIds = [11, 24, 32, 48];
     
@@ -4011,27 +3797,20 @@ function fixPropertyClasses() {
         if (cell) {
             if (!cell.classList.contains('property')) {
                 cell.classList.add('property');
-                console.log(`✅ cell-${id}: pridėta 'property' klasė`);
             }
             if (!cell.classList.contains('edge')) {
                 cell.classList.add('edge');
-                console.log(`✅ cell-${id}: pridėta 'edge' klasė`);
             }
         }
     });
 }
 
-// Paleisti iš karto
 fixPropertyClasses();
-
-// Kartoti kas 500ms
 setInterval(fixPropertyClasses, 500);
 
-// Stebėti DOM pakeitimus
 const propertyObserver = new MutationObserver(() => {
     fixPropertyClasses();
 });
-
 propertyObserver.observe(document.body, {
     childList: true,
     subtree: true,
@@ -4039,17 +3818,12 @@ propertyObserver.observe(document.body, {
     attributeFilter: ['class']
 });
 
-console.log('✅ propertyObserver įjungtas');
-
 // ============================================
-// 🏆 LAIMĖJIMO EKRANAS SU KONFETI
+// LAIMĖJIMO EKRANAS SU KONFETI
 // ============================================
 function showWinnerModal(winnerName, stats) {
     const modal = document.getElementById('winnerModal');
-    if (!modal) {
-        console.warn('⚠️ winnerModal nerastas');
-        return;
-    }
+    if (!modal) return;
     
     const nameEl = document.getElementById('winnerName');
     if (nameEl) nameEl.textContent = winnerName || 'Nežinomas';
@@ -4066,8 +3840,6 @@ function showWinnerModal(winnerName, stats) {
     
     if (typeof playWinSound === 'function') playWinSound();
     if (typeof playCelebrateSound === 'function') playCelebrateSound();
-    
-    console.log('🏆 Laimėtojas:', winnerName);
 }
 
 function closeWinnerModal() {
@@ -4123,20 +3895,15 @@ function createConfetti() {
             setTimeout(() => confetti.remove(), (duration + 1) * 1000);
         }, i * 20);
     }
-    
-    console.log('🎊 Konfeti sukurta:', totalConfetti);
 }
 
 // ============================================
-// 💰 PINIGŲ SKAIČIAUS ANIMACIJA
+// PINIGŲ ANIMACIJA
 // ============================================
 function animateMoney(element, from, to, duration = 800) {
     if (!element) return;
-    
-    // Jei skirtumas 0 – nieko neveikti
     if (from === to) return;
     
-    // Jei jau animuojama – sustabdyti
     if (element._moneyAnimFrame) {
         cancelAnimationFrame(element._moneyAnimFrame);
     }
@@ -4147,15 +3914,11 @@ function animateMoney(element, from, to, duration = 800) {
     function update(now) {
         const elapsed = now - start;
         const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing funkcija (ease-out)
         const easeOut = 1 - Math.pow(1 - progress, 3);
-        
         const current = Math.round(from + diff * easeOut);
         
         element.textContent = '💰 €' + current;
         
-        // Spalva pagal reikšmę
         if (current < 0) {
             element.style.color = '#dc3545';
         } else {
@@ -4173,80 +3936,25 @@ function animateMoney(element, from, to, duration = 800) {
     element._moneyAnimFrame = requestAnimationFrame(update);
 }
 
-// 🆕 Animuoti VISŲ žaidėjų pinigus sąraše
-function animateAllPlayersMoney(state) {
-    if (!state || !state.players) return;
-    
-    state.players.forEach(p => {
-        // Rasti žaidėjo elementą sąraše
-        const playerItems = document.querySelectorAll('#playersList .player-item');
-        playerItems.forEach(item => {
-            const nameEl = item.querySelector('.pname');
-            const moneyEl = item.querySelector('.pmoney');
-            
-            if (!nameEl || !moneyEl) return;
-            
-            // Patikrinti, ar tai tas žaidėjas
-            const itemName = nameEl.textContent.replace(/👤/g, '').trim();
-            if (itemName.includes(p.name)) {
-                const oldText = moneyEl.textContent.replace(/[^0-9-]/g, '');
-                const oldMoney = parseInt(oldText) || 0;
-                const newMoney = p.money;
-                
-                if (oldMoney !== newMoney) {
-                    moneyEl.dataset.target = newMoney;
-                    
-                    // Animuoti
-                    const start = performance.now();
-                    const diff = newMoney - oldMoney;
-                    
-                    function update(now) {
-                        const elapsed = now - start;
-                        const progress = Math.min(elapsed / 600, 1);
-                        const easeOut = 1 - Math.pow(1 - progress, 3);
-                        const current = Math.round(oldMoney + diff * easeOut);
-                        
-                        moneyEl.textContent = '€' + current;
-                        moneyEl.style.color = current < 0 ? '#dc3545' : '#000000';
-                        
-                        if (progress < 1) {
-                            requestAnimationFrame(update);
-                        } else {
-                            moneyEl.textContent = '€' + newMoney;
-                        }
-                    }
-                    
-                    requestAnimationFrame(update);
-                }
-            }
-        });
-    });
-}
-
 // ============================================
-// 🎨 SKLYPO HIGHLIGHT
+// HIGHLIGHT
 // ============================================
 function highlightCell(cellId, color = 'yellow', duration = 1500) {
     const cell = document.getElementById(`cell-${cellId}`);
     if (!cell) return;
     
-    // Nuimti visus highlight
     cell.classList.remove('highlight-yellow', 'highlight-green', 'highlight-red');
     
-    // Pridėti naują
     const className = `highlight-${color}`;
     cell.classList.add(className);
     
-    console.log(`🎨 Highlight: cell-${cellId} → ${color} (${duration}ms)`);
-    
-    // Nuimti po nurodyto laiko
     setTimeout(() => {
         cell.classList.remove(className);
     }, duration);
 }
 
 // ============================================
-// 🎴 KORTELĖS IŠŠOKIMAS
+// KORTELĖS
 // ============================================
 function showCard(fieldId, ownerName) {
     const modal = document.getElementById('cardModal');
@@ -4262,22 +3970,18 @@ function showCard(fieldId, ownerName) {
     const field = gameState.board.find(f => f.id === fieldId);
     if (!field) return;
     
-    // Nustatyti spalvą
     if (colorEl) {
         colorEl.style.background = field.color || '#c9a84c';
     }
     
-    // Pavadinimas
     if (nameEl) {
         nameEl.textContent = `${field.icon || ''} ${field.name}`;
     }
     
-    // Kaina
     if (priceEl) {
         priceEl.textContent = `€${field.cost}`;
     }
     
-    // Info
     if (infoEl) {
         let infoHtml = '';
         
@@ -4285,15 +3989,14 @@ function showCard(fieldId, ownerName) {
             const baseRent = Math.floor(field.cost * 0.1);
             infoHtml += `<div style="margin:5px 0;">🏘️ <strong>Nuoma:</strong> €${baseRent}</div>`;
             infoHtml += `<div style="margin:5px 0; font-size:12px; color:#6c757d;">Su namais: €${baseRent * 10} – €${baseRent * 40}</div>`;
-            infoHtml += `<div style="margin:5px 0; font-size:12px; color:#6c757d;">🏨 Viešbutis: €${baseRent * 50}</div>`;
-        } else if (field.type === 'service1' || field.type === 'service2') {
+            infoHtml += `<div style="margin:5px 0; font-size:12px; color:#6c757d;">🏨 Viežbutis: €${baseRent * 50}</div>`;
+        } else if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
             infoHtml += `<div style="margin:5px 0;">🏘️ <strong>Nuoma:</strong> €50 – €200</div>`;
         }
         
         infoEl.innerHTML = infoHtml;
     }
     
-    // Savininkas
     if (ownerEl) {
         if (ownerName) {
             ownerEl.textContent = `👤 Savininkas: ${ownerName}`;
@@ -4304,15 +4007,11 @@ function showCard(fieldId, ownerName) {
         }
     }
     
-    // Rodyti modalą
     modal.style.display = 'flex';
     modal.classList.add('show');
     
-    // Garso efektas
     if (typeof playBuySound === 'function') playBuySound();
     if (typeof playCashSound === 'function') playCashSound();
-    
-    console.log(`🎴 Kortelė: ${field.name}`);
 }
 
 function hideCard() {
@@ -4324,73 +4023,8 @@ function hideCard() {
 }
 
 // ============================================
-// 💸 SKRENDANTYS PINIGAI
+// STATISTIKA
 // ============================================
-function showFlyingMoney(amount, isNegative = true, fromElement = null) {
-    const moneyEl = document.createElement('div');
-    moneyEl.className = `flying-money ${isNegative ? 'negative' : 'positive'}`;
-    moneyEl.textContent = `${isNegative ? '-' : '+'}€${amount}`;
-    
-    // Pradinė pozicija
-    let startX = window.innerWidth / 2;
-    let startY = window.innerHeight / 2;
-    
-    if (fromElement) {
-        const rect = fromElement.getBoundingClientRect();
-        startX = rect.left + rect.width / 2;
-        startY = rect.top + rect.height / 2;
-    } else {
-        // Naudoti #myInfo elementą
-        const myInfo = document.getElementById('myInfo');
-        if (myInfo) {
-            const rect = myInfo.getBoundingClientRect();
-            startX = rect.left + rect.width / 2;
-            startY = rect.top + rect.height / 2;
-        }
-    }
-    
-    // Nustatyti pradinę poziciją
-    moneyEl.style.left = startX + 'px';
-    moneyEl.style.top = startY + 'px';
-    
-    // Skrydžio kryptis
-    const flyX = (Math.random() - 0.5) * 200;
-    const flyY = -200 - Math.random() * 100;
-    
-    moneyEl.style.setProperty('--fly-x', flyX + 'px');
-    moneyEl.style.setProperty('--fly-y', flyY + 'px');
-    
-    document.body.appendChild(moneyEl);
-    
-    // Pašalinti po animacijos
-    setTimeout(() => {
-        moneyEl.remove();
-    }, 1300);
-    
-    console.log(`💸 Skrendantys pinigai: ${isNegative ? '-' : '+'}€${amount}`);
-}
-
-// 🆕 Parodyti pinigus nuo konkretaus žaidėjo
-function showMoneyFromPlayer(playerName, amount, isNegative = true) {
-    // Rasti žaidėjo elementą
-    const playerItems = document.querySelectorAll('#playersList .player-item');
-    let targetElement = null;
-    
-    playerItems.forEach(item => {
-        const nameEl = item.querySelector('.pname');
-        if (nameEl && nameEl.textContent.includes(playerName)) {
-            targetElement = item;
-        }
-    });
-    
-    showFlyingMoney(amount, isNegative, targetElement);
-}
-
-// ============================================
-// 📊 STATISTIKA
-// ============================================
-
-// 🆕 Statistikos objektas
 window.gameStats = {
     players: {},
     gameStartTime: null,
@@ -4398,7 +4032,6 @@ window.gameStats = {
     totalDoubles: 0
 };
 
-// 🆕 Inicializuoti žaidėjo statistiką
 function initPlayerStats(playerId, playerName, playerColor) {
     if (!window.gameStats.players[playerId]) {
         window.gameStats.players[playerId] = {
@@ -4418,7 +4051,6 @@ function initPlayerStats(playerId, playerName, playerColor) {
     }
 }
 
-// 🆕 Atidaryti statistikos modalą
 function openStats() {
     const modal = document.getElementById('statsModal');
     if (!modal) return;
@@ -4428,7 +4060,6 @@ function openStats() {
     playClickSound();
 }
 
-// 🆕 Uždaryti statistikos modalą
 function closeStats() {
     const modal = document.getElementById('statsModal');
     if (!modal) return;
@@ -4436,14 +4067,12 @@ function closeStats() {
     playClickSound();
 }
 
-// 🆕 Atnaujinti statistikos rodymą
 function updateStatsDisplay() {
     const content = document.getElementById('statsContent');
     if (!content) return;
     
     let html = '';
     
-    // 🆕 Žaidimo trukmė
     if (window.gameStats.gameStartTime) {
         const elapsed = Math.floor((Date.now() - window.gameStats.gameStartTime) / 1000);
         const minutes = Math.floor(elapsed / 60);
@@ -4456,7 +4085,6 @@ function updateStatsDisplay() {
         `;
     }
     
-    // 🆕 Bendri skaičiai
     html += `
         <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px;">
             <div style="color:#ffd700; font-size:14px; font-weight:700; margin-bottom:8px;">🎯 BENDRI SKAIČIAI</div>
@@ -4471,7 +4099,6 @@ function updateStatsDisplay() {
         </div>
     `;
     
-    // 🆕 Kiekvieno žaidėjo statistika
     const players = Object.values(window.gameStats.players);
     
     if (players.length === 0) {
@@ -4504,22 +4131,18 @@ function updateStatsDisplay() {
     content.innerHTML = html;
 }
 
-// 🆕 Atnaujinti statistiką iš gameState
 function updateStatsFromGameState(state) {
     if (!state || !state.players) return;
     
-    // Inicializuoti žaidėjus
     state.players.forEach(p => {
         initPlayerStats(p.id, p.name, p.color);
     });
     
-    // 🆕 Nustatyti žaidimo pradžios laiką
     if (state.gameStarted && !window.gameStats.gameStartTime) {
         window.gameStats.gameStartTime = Date.now();
     }
 }
 
-// 🆕 Padidinti metimų skaičių
 function incrementRolls(playerId, isDouble) {
     if (!window.gameStats.players[playerId]) return;
     
@@ -4532,47 +4155,39 @@ function incrementRolls(playerId, isDouble) {
     }
 }
 
-// 🆕 Padidinti kalėjimų skaičių
 function incrementJail(playerId) {
     if (!window.gameStats.players[playerId]) return;
     window.gameStats.players[playerId].patekoIKalejima++;
 }
 
-// 🆕 Padidinti pirkimų skaičių
 function incrementBought(playerId) {
     if (!window.gameStats.players[playerId]) return;
     window.gameStats.players[playerId].nusipirko++;
 }
 
-// 🆕 Padidinti statybų skaičių
 function incrementBuilt(playerId) {
     if (!window.gameStats.players[playerId]) return;
     window.gameStats.players[playerId].pastate++;
 }
 
-// 🆕 Pridėti nuomą (gautą)
 function addRentReceived(playerId, amount) {
     if (!window.gameStats.players[playerId]) return;
     window.gameStats.players[playerId].nuomaGavo += amount;
 }
 
-// 🆕 Pridėti nuomą (sumokėtą)
 function addRentPaid(playerId, amount) {
     if (!window.gameStats.players[playerId]) return;
     window.gameStats.players[playerId].nuomaSumokejo += amount;
 }
 
-// 🆕 Padidinti bankrotų skaičių
 function incrementBankrupt(playerId) {
     if (!window.gameStats.players[playerId]) return;
     window.gameStats.players[playerId].bankrotai++;
 }
 
 // ============================================
-// 🏆 LYDERIŲ LENTELĖ
+// LYDERIŲ LENTELĖ
 // ============================================
-
-// 🆕 Atidaryti lyderių modalą
 function openLeaders() {
     const modal = document.getElementById('leadersModal');
     if (!modal) return;
@@ -4582,7 +4197,6 @@ function openLeaders() {
     playClickSound();
 }
 
-// 🆕 Uždaryti lyderių modalą
 function closeLeaders() {
     const modal = document.getElementById('leadersModal');
     if (!modal) return;
@@ -4590,7 +4204,6 @@ function closeLeaders() {
     playClickSound();
 }
 
-// 🆕 Atnaujinti lyderių rodymą
 function updateLeadersDisplay() {
     const content = document.getElementById('leadersContent');
     if (!content) return;
@@ -4600,9 +4213,8 @@ function updateLeadersDisplay() {
         return;
     }
     
-    // 🆕 Surinkti visus žaidėjus
     const players = gameState.players
-        .filter(p => !p.kicked)  // Neišmesti
+        .filter(p => !p.kicked)
         .map(p => {
             const houses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
             return {
@@ -4619,19 +4231,14 @@ function updateLeadersDisplay() {
             };
         });
     
-    // 🆕 Rikiuoti pagal pinigus (nuo didžiausio)
     players.sort((a, b) => {
-        // Bankrutavę – į apačią
         if (a.bankrupt !== b.bankrupt) return a.bankrupt ? 1 : -1;
         if (a.left !== b.left) return a.left ? 1 : -1;
-        
-        // Pagal pinigus
         return b.money - a.money;
     });
     
     let html = '';
     
-    // 🆕 Bendras skaičius
     html += `
         <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px; text-align:center;">
             <div style="color:#d4b896; font-size:13px; margin-bottom:4px;">👥 Žaidėjų skaičius</div>
@@ -4639,9 +4246,7 @@ function updateLeadersDisplay() {
         </div>
     `;
     
-    // 🆕 Lyderių sąrašas
     players.forEach((p, index) => {
-        // Medaliai
         let medal = '';
         let bgColor = 'rgba(255,255,255,0.1)';
         let borderColor = p.color;
@@ -4662,7 +4267,6 @@ function updateLeadersDisplay() {
             medal = `#${index + 1}`;
         }
         
-        // Statusas
         let status = '';
         if (p.bankrupt) status = '<span style="color:#dc3545; font-size:11px;">💀 BANKROTAS</span>';
         else if (p.left) status = '<span style="color:#6c757d; font-size:11px;">😭 PASITRAUKĖ</span>';
@@ -4689,7 +4293,6 @@ function updateLeadersDisplay() {
     content.innerHTML = html;
 }
 
-// 🆕 Automatiškai atnaujinti lyderius, kai keičiasi žaidimo būsena
 function autoUpdateLeaders() {
     const modal = document.getElementById('leadersModal');
     if (modal && modal.style.display === 'flex') {

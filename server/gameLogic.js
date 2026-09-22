@@ -9,7 +9,7 @@ class Game {
     constructor() {
         this.players = [];
         this.board = boardData;
-        this.currentTurn = 0;
+        this.currentTurn = 0;          // 🆕 Dabar visada playerId
         this.gameStarted = false;
         this.turnHistory = [];
         this.maxPlayers = C.MAX_PLAYERS;
@@ -27,12 +27,12 @@ class Game {
         // VOTE-KICK
         this.activeVoteKick = null;
         this.voteKickTimer = null;
-        // VIEŠI STALAI (Etapas 6)
+        // VIEŠI STALAI
         this.isPublic = false;
         this.lastActivity = Date.now();
-        // URBAN KODAS (Etapas 5)
+        // URBAN KODAS
         this.gameId = null;
-        // 🆕 BUY TIMEOUT
+        // BUY TIMEOUT
         this.buyTimeoutTimer = null;
     }
 
@@ -42,6 +42,20 @@ class Game {
 
     setGameId(id) {
         this.gameId = id;
+    }
+
+    // ============================================
+    // PAGALBINĖS FUNKCIJOS
+    // ============================================
+    
+    // 🆕 Gauti žaidėją pagal ID
+    getPlayerById(playerId) {
+        return this.players.find(p => p.id === playerId);
+    }
+
+    // 🆕 Gauti aktyvius žaidėjus
+    getActivePlayers() {
+        return this.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
     }
 
     // ============================================
@@ -139,7 +153,7 @@ class Game {
     // ============================================
 
     setPlayerReady(playerId, ready) {
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player || player.bankrupt || player.left || player.kicked) {
             return { error: 'Žaidėjas neaktyvus' };
         }
@@ -161,7 +175,7 @@ class Game {
     }
 
     canStartGame() {
-        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         
         if (activePlayers.length < 2) {
             return { can: false, reason: 'Reikia bent 2 žaidėjų' };
@@ -192,7 +206,7 @@ class Game {
             return { error: canStart.reason };
         }
         
-        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         
         const shuffled = [...activePlayers];
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -204,7 +218,7 @@ class Game {
         this.gameStarted = true;
         this.lastActivity = Date.now();
         
-        this.addMessage(`🎮 Žaidimas pradėtas! Pirmas eina: ${this.players[this.currentTurn].name}`);
+        this.addMessage(`🎮 Žaidimas pradėtas! Pirmas eina: ${shuffled[0].name}`);
         
         return {
             success: true,
@@ -214,7 +228,7 @@ class Game {
                 color: p.color
             })),
             firstPlayerId: this.currentTurn,
-            firstPlayerName: this.players[this.currentTurn].name
+            firstPlayerName: shuffled[0].name
         };
     }
 
@@ -234,7 +248,7 @@ class Game {
             return { error: 'Negali išmesti savęs' };
         }
         
-        const target = this.players[targetId];
+        const target = this.getPlayerById(targetId);
         if (!target || target.left || target.kicked) {
             return { error: 'Žaidėjas jau neaktyvus' };
         }
@@ -258,7 +272,7 @@ class Game {
     }
 
     getWaitingRoomState() {
-        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         const hostPlayer = this.players.find(p => p.isHost === true);
         const hostId = hostPlayer ? hostPlayer.id : 0;
         
@@ -292,7 +306,7 @@ class Game {
     }
 
     isAlive() {
-        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         const fiveMinutes = 5 * 60 * 1000;
         const timeSinceActivity = Date.now() - this.lastActivity;
         
@@ -300,7 +314,7 @@ class Game {
     }
 
     getPublicInfo() {
-        const activePlayers = this.players.filter(p => !p.left && !p.bankrupt && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         
         return {
             gameId: this.gameId,
@@ -318,7 +332,7 @@ class Game {
     // ============================================
 
     checkDebtor(playerId) {
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player) return;
         if (player.bankrupt || player.left || player.kicked) return;
         
@@ -338,7 +352,7 @@ class Game {
         if (this.isRolling) return { error: 'Palaukite, kauliukai metami...' };
         if (this.waitingForBuy) return { error: 'Pirmiausia nusipirk sklypą!' };
         
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player || !player.isActive || player.bankrupt || player.left || player.kicked) {
             return { error: 'Žaidėjas neaktyvus' };
         }
@@ -582,6 +596,7 @@ class Game {
         };
     }
 
+    // 🆕 Gauti service nuomą (service1, service2, service3)
     getServiceRent(owner, serviceType) {
         if (!owner || !owner.properties) return 0;
         
@@ -590,6 +605,8 @@ class Game {
             ids = C.SERVICE1_IDS;
         } else if (serviceType === 'service2') {
             ids = C.SERVICE2_IDS;
+        } else if (serviceType === 'service3') {
+            ids = C.SERVICE3_IDS;
         } else {
             return 0;
         }
@@ -619,7 +636,7 @@ class Game {
                         player.money -= rent;
                         propOwner.money += rent;
                         result.action = 'pay_rent';
-                        result.rent = rent;   // 🆕 PRIDĖTA
+                        result.rent = rent;
                         result.message = `${player.name} sumokėjo €${rent} nuomos ${propOwner.name}`;
                         this.addMessage(result.message);
                         
@@ -641,55 +658,25 @@ class Game {
                 break;
             }
                 
-            case 'service1': {
-                const utilOwner = this.players.find(p => p.properties.includes(field.id) && !p.bankrupt && !p.left && !p.kicked);
+            case 'service1':
+            case 'service2':
+            case 'service3': {
+                const serviceOwner = this.players.find(p => p.properties.includes(field.id) && !p.bankrupt && !p.left && !p.kicked);
                 
-                let specialAction = 'service1';
+                // Specialus action pavadinimas
+                let specialAction = field.type;
                 if (field.id === 2) specialAction = 'dujos';
                 else if (field.id === 14) specialAction = 'siuksles';
                 else if (field.id === 28) specialAction = 'elektra';
                 else if (field.id === 44) specialAction = 'vanduo';
-                
-                if (utilOwner) {
-                    if (utilOwner.id === player.id) {
-                        result.message = `${player.name} stovi ant savo ${field.name}`;
-                        this.addMessage(result.message);
-                        result.action = specialAction;
-                    } else {
-                        const rent = this.getServiceRent(utilOwner, 'service1');
-                        player.money -= rent;
-                        utilOwner.money += rent;
-                        result.action = specialAction;
-                        result.message = `${player.name} sumokėjo €${rent} nuomos ${utilOwner.name} už ${field.name}`;
-                        this.addMessage(result.message);
-                        
-                        if (player.money < 0) {
-                            this.checkDebtor(player.id);
-                        }
-                    }
-                } else {
-                    if (player.money >= field.cost) {
-                        result.action = 'can_buy';
-                        result.message = `${player.name} gali nusipirkti ${field.name} už €${field.cost}`;
-                        result.field = field;
-                        this.addMessage(result.message);
-                    } else {
-                        result.action = specialAction;
-                        result.message = `${player.name} neturi pakankamai pinigų ${field.name} pirkti`;
-                        this.addMessage(result.message);
-                    }
-                }
-                break;
-            }
-                
-            case 'service2': {
-                const serviceOwner = this.players.find(p => p.properties.includes(field.id) && !p.bankrupt && !p.left && !p.kicked);
-                
-                let specialAction = 'service2';
-                if (field.id === 8) specialAction = 'airport';
+                else if (field.id === 8) specialAction = 'airport';
                 else if (field.id === 19) specialAction = 'train';
                 else if (field.id === 37) specialAction = 'port';
                 else if (field.id === 46) specialAction = 'bus';
+                else if (field.id === 11) specialAction = 'cirkas';
+                else if (field.id === 24) specialAction = 'veterinorius';
+                else if (field.id === 32) specialAction = 'sauna';
+                else if (field.id === 48) specialAction = 'akropolis';
                 
                 if (serviceOwner) {
                     if (serviceOwner.id === player.id) {
@@ -697,11 +684,12 @@ class Game {
                         this.addMessage(result.message);
                         result.action = specialAction;
                     } else {
-                        const rent = this.getServiceRent(serviceOwner, 'service2');
+                        const rent = this.getServiceRent(serviceOwner, field.type);
                         player.money -= rent;
                         serviceOwner.money += rent;
                         result.action = specialAction;
-                        result.message = `${player.name} sumokėjo €${rent} nuomos ${serviceOwner.name}`;
+                        result.rent = rent;
+                        result.message = `${player.name} sumokėjo €${rent} nuomos ${serviceOwner.name} už ${field.name}`;
                         this.addMessage(result.message);
                         
                         if (player.money < 0) {
@@ -852,7 +840,10 @@ class Game {
         }
     }
 
-// 🆕 BUY TIMEOUT
+    // ============================================
+    // BUY TIMEOUT
+    // ============================================
+    
     startBuyTimeout(playerId) {
         if (this.buyTimeoutTimer) {
             clearTimeout(this.buyTimeoutTimer);
@@ -861,9 +852,9 @@ class Game {
         
         this.buyTimeoutTimer = setTimeout(() => {
             console.log(`⏰ Buy timeout - auto-cancel (player ${playerId})`);
-            this.cancelBuy(playerId);
+            this.cancelBuy(playerId, true); // true = timeout
             this.buyTimeoutTimer = null;
-        }, 30000);
+        }, C.BUY_TIMEOUT);
     }
 
     clearBuyTimeout() {
@@ -880,11 +871,11 @@ class Game {
             return { error: 'Čia negalima pirkti' };
         }
         
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
         
         const field = this.board[player.position];
-        if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2') {
+        if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2' && field.type !== 'service3') {
             this.waitingForBuy = false;
             return { error: 'Čia negalima pirkti' };
         }
@@ -927,14 +918,15 @@ class Game {
         return { success: true, message: `${field.name} nupirktas!`, double: false };
     }
 
-    cancelBuy(playerId) {
+    // 🆕 cancelBuy su isTimeout flag'u
+    cancelBuy(playerId, isTimeout = false) {
         this.clearBuyTimeout();
 
         if (!this.waitingForBuy) {
             return { error: 'Nėra ką pirkti' };
         }
         
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player) return { error: 'Žaidėjas nerastas' };
         
         const field = this.board[player.position];
@@ -951,7 +943,8 @@ class Game {
             });
         }
         
-        if (this.doubleRoll) {
+        // 🆕 Jei dublis IR ne timeout → žaidėjas meta dar kartą
+        if (this.doubleRoll && !isTimeout) {
             return { 
                 success: true, 
                 message: 'Atsisakyta pirkti. Gali mesti dar kartą (dublis)!',
@@ -959,16 +952,18 @@ class Game {
             };
         }
         
+        // Timeout arba ne dublis → pereina prie kito
         this.endTurn();
         return { 
             success: true, 
-            message: 'Atsisakyta pirkti',
-            double: false
+            message: isTimeout ? 'Laikas baigėsi - praleistas ėjimas' : 'Atsisakyta pirkti',
+            double: false,
+            timeout: isTimeout
         };
     }
 
     bankruptPlayer(playerId) {
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player || player.bankrupt) return { error: 'Žaidėjas jau bankrutavęs' };
         
         player.bankrupt = true;
@@ -985,7 +980,7 @@ class Game {
             this.cancelVoteKick('Žaidėjas bankrutavo');
         }
         
-        const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         if (activePlayers.length <= 1) {
             this.endGame();
         }
@@ -1000,7 +995,7 @@ class Game {
     }
 
     leaveGame(playerId) {
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player) return { error: 'Žaidėjas nerastas' };
         if (player.bankrupt) return { error: 'Jau bankrutavęs' };
         if (player.left) return { error: 'Jau pasitraukęs' };
@@ -1033,7 +1028,7 @@ class Game {
             this.endTurn();
         }
 
-        const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         
         let winner = null;
         let winnerId = null;
@@ -1058,29 +1053,52 @@ class Game {
         };
     }
 
+    // 🆕 endTurn per playerId
     endTurn() {
-        let nextPlayer = this.currentTurn;
+        const activePlayers = this.getActivePlayers();
+        
+        if (activePlayers.length <= 1) {
+            this.endGame();
+            return { error: 'Žaidimas baigtas' };
+        }
+
+        // Rasti dabartinį žaidėją
+        const currentPlayer = this.getPlayerById(this.currentTurn);
+        let currentIndex = currentPlayer ? this.players.indexOf(currentPlayer) : -1;
+        
+        if (currentIndex === -1) {
+            // Jei nerastas - pradėk nuo 0
+            currentIndex = 0;
+        }
+
+        // Eiti per žaidėjus ratu
+        let nextIndex = currentIndex;
         let attempts = 0;
+        
         do {
-            nextPlayer = (nextPlayer + 1) % this.players.length;
+            nextIndex = (nextIndex + 1) % this.players.length;
             attempts++;
             if (attempts > this.players.length) break;
-        } while (!this.players[nextPlayer].isActive || this.players[nextPlayer].bankrupt || this.players[nextPlayer].left || this.players[nextPlayer].kicked);
+        } while (!this.players[nextIndex].isActive || 
+                 this.players[nextIndex].bankrupt || 
+                 this.players[nextIndex].left || 
+                 this.players[nextIndex].kicked);
         
         if (attempts > this.players.length) {
             this.endGame();
             return { error: 'Žaidimas baigtas' };
         }
         
-        this.currentTurn = nextPlayer;
+        this.currentTurn = this.players[nextIndex].id;
         this.doubleRoll = false;
-        this.addMessage(`🔄 Dabar eina ${this.players[nextPlayer].name}`);
-        return { nextPlayer: nextPlayer };
+        this.addMessage(`🔄 Dabar eina ${this.players[nextIndex].name}`);
+        return { nextPlayer: this.currentTurn };
     }
 
     endGame() {
         this.gameStarted = false;
-        const winner = this.players.find(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+        const activePlayers = this.getActivePlayers();
+        const winner = activePlayers[0];
         if (winner) {
             this.addMessage(`🏆 ${winner.name} LAIMĖJO! 🎉`);
         }
@@ -1123,8 +1141,8 @@ class Game {
     }
 
     startVoteKick(initiatorId, targetId) {
-        const initiator = this.players[initiatorId];
-        const target = this.players[targetId];
+        const initiator = this.getPlayerById(initiatorId);
+        const target = this.getPlayerById(targetId);
 
         if (!initiator || !initiator.isActive || initiator.bankrupt || initiator.left || initiator.kicked) {
             return { error: 'Tu negali pradėti balsavimo' };
@@ -1139,7 +1157,7 @@ class Game {
             return { error: 'Balsavimas jau vyksta!' };
         }
 
-        const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         
         if (activePlayers.length < 3) {
             return { error: 'Reikia bent 3 aktyvių žaidėjų balsavimui' };
@@ -1181,7 +1199,7 @@ class Game {
         }
 
         const vk = this.activeVoteKick;
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
 
         if (!player || !player.isActive || player.bankrupt || player.left || player.kicked) {
             return { error: 'Tu negali balsuoti' };
@@ -1248,7 +1266,7 @@ class Game {
         const shouldKick = forceResult === true || votesFor >= vk.requiredVotes;
 
         const voteSummary = Object.keys(vk.votes).map(pid => {
-            const p = this.players[parseInt(pid)];
+            const p = this.getPlayerById(parseInt(pid));
             return {
                 playerId: parseInt(pid),
                 playerName: p ? p.name : 'Nežinomas',
@@ -1281,7 +1299,7 @@ class Game {
         if (this.emitFunction) {
             this.emitFunction('voteKickResult', resultData);
             
-            const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+            const activePlayers = this.getActivePlayers();
             if (activePlayers.length <= 1 && activePlayers.length > 0) {
                 this.emitFunction('gameFinished', {
                     winner: activePlayers[0].name,
@@ -1316,7 +1334,7 @@ class Game {
     }
 
     removeKickedPlayer(playerId) {
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player) return;
 
         player.money = 0;
@@ -1331,7 +1349,7 @@ class Game {
             this.endTurn();
         }
 
-        const activePlayers = this.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+        const activePlayers = this.getActivePlayers();
         if (activePlayers.length <= 1) {
             this.endGame();
         }
@@ -1421,7 +1439,7 @@ class Game {
     }
 
     payJailFine(playerId) {
-        const player = this.players[playerId];
+        const player = this.getPlayerById(playerId);
         if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
         if (!player.inJail) return { error: 'Žaidėjas nėra kalėjime' };
         if (this.currentTurn !== playerId) return { error: 'Ne tavo eilė' };

@@ -39,9 +39,9 @@ window.CELL_MESSAGES = {
             buildOthers: '🏠 {player} pastatė namą Telšiuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Telšiuose.',
             
-            hotelMine: '🏨 Sklypas Telšiai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Telšiai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Telšiai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Telšiai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Telšiai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Telšiai jau pilnai užstatytas – stovi viežbutis.',
             
             fullGroupMine: '🏘️ Turi pilną geltoną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną geltoną gatvę ir jau gali pradėti statybas.'
@@ -82,9 +82,9 @@ window.CELL_MESSAGES = {
             buildOthers: '🏠 {player} pastatė namą Plungėje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Plungėje.',
             
-            hotelMine: '🏨 Sklypas Plungė pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Plungė jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Plungė jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Plungė pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Plungė jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Plungė jau pilnai užstatytas – stovi viežbutis.',
             
             fullGroupMine: '🏘️ Turi pilną geltoną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną geltoną gatvę ir jau gali pradėti statybas.'
@@ -127,9 +127,9 @@ window.CELL_MESSAGES = {
             buildOthers: '🏠 {player} pastatė namą Kėdainiuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Kėdainiuose.',
             
-            hotelMine: '🏨 Sklypas Kėdainiai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Kėdainiai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Kėdainiai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Kėdainiai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Kėdainiai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Kėdainiai jau pilnai užstatytas – stovi viežbutis.',
             
             fullGroupMine: '🏘️ Turi pilną mėlyną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną mėlyną gatvę ir jau gali pradėti statybas.'
@@ -154,9 +154,9 @@ window.CELL_MESSAGES = {
             buildOthers: '🏠 {player} pastatė namą Ariogaloje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Ariogaloje.',
             
-            hotelMine: '🏨 Sklypas Ariogala pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Ariogala jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Ariogala jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Ariogala pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Ariogala jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Ariogala jau pilnai užstatytas – stovi viežbutis.',
             
             fullGroupMine: '🏘️ Turi pilną mėlyną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną mėlyną gatvę ir jau gali pradėti statybas.'
@@ -197,9 +197,9 @@ window.CELL_MESSAGES = {
             buildOthers: '🏠 {player} pastatė namą Ramygaloje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Ramygaloje.',
             
-            hotelMine: '🏨 Sklypas Ramygala pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Ramygala jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Ramygala jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Ramygala pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Ramygala jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Ramygala jau pilnai užstatytas – stovi viežbutis.',
             
             fullGroupMine: '🏘️ Turi pilną mėlyną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną mėlyną gatvę ir jau gali pradėti statybas.'
@@ -224,21 +224,29 @@ window.CELL_MESSAGES = {
             buildOthers: '🏠 {player} pastatė namą Utenoje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Utenoje.',
             
-            hotelMine: '🏨 Sklypas Utena pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Utena jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Utena jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Utena pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Utena jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Utena jau pilnai užstatytas – stovi viežbutis.',
             
             fullGroupMine: '🏘️ Turi pilną žalią gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną žalią gatvę ir jau gali pradėti statybas.'
         }
     },
+    // 🆕 11 CIRKAS – service3
     11: {
         name: 'Cirkas',
-        type: 'special',
+        type: 'service3',
         messages: {
-            visitMine: '🎪 Atvykai į CIRKĄ – nieko neįvyko.',
-            visitOthers: '🎪 {player} atvyko į CIRKĄ – nieko neįvyko.',
-            visitObserver: '🎪 {player} atvyko į CIRKĄ – nieko neįvyko.'
+            buyMine: '✅ Jūs nusipirkote CIRKĄ! 🎪',
+            buyOthers: '✅ {player} nusipirko CIRKĄ! 🎪',
+            
+            visitMine: '🎪 Atvykai į CIRKĄ – tai tavo nuosavybė.',
+            visitOthers: '🎪 {player} atvyko į CIRKĄ – savo nuosavybę.',
+            visitObserver: '🎪 {player} atvyko į CIRKĄ – savo nuosavybę.',
+            
+            rentOwner: '🎪 {player} atvyko į CIRKĄ ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
+            rentPayer: '🎪 Tu atvykai į CIRKĄ ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
+            rentObserver: '🎪 {player} atvyko į CIRKĄ ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
         }
     },
     12: {
@@ -260,9 +268,9 @@ window.CELL_MESSAGES = {
             buildOthers: '🏠 {player} pastatė namą Anykščiuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Anykščiuose.',
             
-            hotelMine: '🏨 Sklypas Anykščiai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Anykščiai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Anykščiai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Anykščiai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Anykščiai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Anykščiai jau pilnai užstatytas – stovi viežbutis.',
             
             fullGroupMine: '🏘️ Turi pilną žalią gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną žalią gatvę ir jau gali pradėti statybas.'
@@ -312,9 +320,9 @@ window.CELL_MESSAGES = {
             buildOthers: '🏠 {player} pastatė namą Zarasuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Zarasuose.',
             
-            hotelMine: '🏨 Sklypas Zarasai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Zarasai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Zarasai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Zarasai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Zarasai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Zarasai jau pilnai užstatytas – stovi viežbutis.',
             
             fullGroupMine: '🏘️ Turi pilną žalią gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną žalią gatvę ir jau gali pradėti statybas.'
@@ -344,9 +352,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Mažeikiuose.',
             buildOthers: '🏠 {player} pastatė namą Mažeikiuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Mažeikiuose.',
-            hotelMine: '🏨 Sklypas Mažeikiai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Mažeikiai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Mažeikiai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Mažeikiai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Mažeikiai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Mažeikiai jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną violetinę gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną violetinę gatvę ir jau gali pradėti statybas.'
         }
@@ -366,9 +374,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Skuode.',
             buildOthers: '🏠 {player} pastatė namą Skuode. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Skuode.',
-            hotelMine: '🏨 Sklypas Skuodas pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Skuodas jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Skuodas jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Skuodas pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Skuodas jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Skuodas jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną violetinę gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną violetinę gatvę ir jau gali pradėti statybas.'
         }
@@ -402,9 +410,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą N.Akmenėje.',
             buildOthers: '🏠 {player} pastatė namą N.Akmenėje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą N.Akmenėje.',
-            hotelMine: '🏨 Sklypas N.Akmenė pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas N.Akmenė jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas N.Akmenė jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas N.Akmenė pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas N.Akmenė jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas N.Akmenė jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną violetinę gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną violetinę gatvę ir jau gali pradėti statybas.'
         }
@@ -433,9 +441,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Marijampolėje.',
             buildOthers: '🏠 {player} pastatė namą Marijampolėje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Marijampolėje.',
-            hotelMine: '🏨 Sklypas Marijampolė pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Marijampolė jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Marijampolė jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Marijampolė pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Marijampolė jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Marijampolė jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną raudoną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną raudoną gatvę ir jau gali pradėti statybas.'
         }
@@ -455,20 +463,28 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Vilkaviškyje.',
             buildOthers: '🏠 {player} pastatė namą Vilkaviškyje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Vilkaviškyje.',
-            hotelMine: '🏨 Sklypas Vilkaviškis pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Vilkaviškis jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Vilkaviškis jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Vilkaviškis pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Vilkaviškis jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Vilkaviškis jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną raudoną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną raudoną gatvę ir jau gali pradėti statybas.'
         }
     },
+    // 🆕 24 VETERINORIUS – service3
     24: {
         name: 'Veterinorius',
-        type: 'special',
+        type: 'service3',
         messages: {
-            visitMine: '🐕 Atvykai pas VETERINORIŲ – nieko neįvyko.',
-            visitOthers: '🐕 {player} atvyko pas VETERINORIŲ – nieko neįvyko.',
-            visitObserver: '🐕 {player} atvyko pas VETERINORIŲ – nieko neįvyko.'
+            buyMine: '✅ Jūs nusipirkote VETERINORIŲ! 🐕',
+            buyOthers: '✅ {player} nusipirko VETERINORIŲ! 🐕',
+            
+            visitMine: '🐕 Atvykai pas VETERINORIŲ – tai tavo nuosavybė.',
+            visitOthers: '🐕 {player} atvyko pas VETERINORIŲ – savo nuosavybę.',
+            visitObserver: '🐕 {player} atvyko pas VETERINORIŲ – savo nuosavybę.',
+            
+            rentOwner: '🐕 {player} atvyko pas VETERINORIŲ ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
+            rentPayer: '🐕 Tu atvykai pas VETERINORIŲ ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
+            rentObserver: '🐕 {player} atvyko pas VETERINORIŲ ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
         }
     },
     25: {
@@ -486,9 +502,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Kalvarijoje.',
             buildOthers: '🏠 {player} pastatė namą Kalvarijoje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Kalvarijoje.',
-            hotelMine: '🏨 Sklypas Kalvarija pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Kalvarija jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Kalvarija jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Kalvarija pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Kalvarija jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Kalvarija jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną raudoną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną raudoną gatvę ir jau gali pradėti statybas.'
         }
@@ -517,9 +533,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Alytuje.',
             buildOthers: '🏠 {player} pastatė namą Alytuje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Alytuje.',
-            hotelMine: '🏨 Sklypas Alytus pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Alytus jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Alytus jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Alytus pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Alytus jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Alytus jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną rudą gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną rudą gatvę ir jau gali pradėti statybas.'
         }
@@ -553,9 +569,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Lazdijuose.',
             buildOthers: '🏠 {player} pastatė namą Lazdijuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Lazdijuose.',
-            hotelMine: '🏨 Sklypas Lazdijai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Lazdijai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Lazdijai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Lazdijai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Lazdijai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Lazdijai jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną rudą gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną rudą gatvę ir jau gali pradėti statybas.'
         }
@@ -575,9 +591,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Druskininkuose.',
             buildOthers: '🏠 {player} pastatė namą Druskininkuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Druskininkuose.',
-            hotelMine: '🏨 Sklypas Druskininkai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Druskininkai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Druskininkai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Druskininkai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Druskininkai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Druskininkai jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną rudą gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną rudą gatvę ir jau gali pradėti statybas.'
         }
@@ -597,20 +613,28 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Panevėžyje.',
             buildOthers: '🏠 {player} pastatė namą Panevėžyje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Panevėžyje.',
-            hotelMine: '🏨 Sklypas Panevėžys pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Panevėžys jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Panevėžys jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Panevėžys pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Panevėžys jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Panevėžys jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną turkio gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną turkio gatvę ir jau gali pradėti statybas.'
         }
     },
+    // 🆕 32 SAUNA – service3 (anksčiau buvo VLADUKO PIRTIS tax)
     32: {
-        name: 'VLADUKO PIRTIS',
-        type: 'tax',
+        name: 'SAUNA',
+        type: 'service3',
         messages: {
-            visitMine: '🧖 Atvykai į VLADUKO PIRTĮ ir sumokėjai €25! 🧖',
-            visitOthers: '🧖 {player} atvyko į VLADUKO PIRTĮ ir sumokėjo €25! 🧖',
-            visitObserver: '🧖 {player} atvyko į VLADUKO PIRTĮ ir sumokėjo €25! 🧖'
+            buyMine: '✅ Jūs nusipirkote SAUNĄ! 🧖',
+            buyOthers: '✅ {player} nusipirko SAUNĄ! 🧖',
+            
+            visitMine: '🧖 Atvykai į SAUNĄ – tai tavo nuosavybė.',
+            visitOthers: '🧖 {player} atvyko į SAUNĄ – savo nuosavybę.',
+            visitObserver: '🧖 {player} atvyko į SAUNĄ – savo nuosavybę.',
+            
+            rentOwner: '🧖 {player} atvyko į SAUNĄ ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
+            rentPayer: '🧖 Tu atvykai į SAUNĄ ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
+            rentObserver: '🧖 {player} atvyko į SAUNĄ ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
         }
     },
     33: {
@@ -628,9 +652,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Pasvalyje.',
             buildOthers: '🏠 {player} pastatė namą Pasvalyje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Pasvalyje.',
-            hotelMine: '🏨 Sklypas Pasvalys pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Pasvalys jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Pasvalys jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Pasvalys pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Pasvalys jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Pasvalys jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną turkio gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną turkio gatvę ir jau gali pradėti statybas.'
         }
@@ -650,9 +674,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Kupiškyje.',
             buildOthers: '🏠 {player} pastatė namą Kupiškyje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Kupiškyje.',
-            hotelMine: '🏨 Sklypas Kupiškis pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Kupiškis jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Kupiškis jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Kupiškis pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Kupiškis jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Kupiškis jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną turkio gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną turkio gatvę ir jau gali pradėti statybas.'
         }
@@ -672,9 +696,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Šiauliuose.',
             buildOthers: '🏠 {player} pastatė namą Šiauliuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Šiauliuose.',
-            hotelMine: '🏨 Sklypas Šiauliai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Šiauliai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Šiauliai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Šiauliai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Šiauliai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Šiauliai jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną rožinę gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną rožinę gatvę ir jau gali pradėti statybas.'
         }
@@ -694,9 +718,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Kuršėnuose.',
             buildOthers: '🏠 {player} pastatė namą Kuršėnuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Kuršėnuose.',
-            hotelMine: '🏨 Sklypas Kuršėnai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Kuršėnai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Kuršėnai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Kuršėnai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Kuršėnai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Kuršėnai jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną rožinę gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną rožinę gatvę ir jau gali pradėti statybas.'
         }
@@ -730,9 +754,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Radviliškyje.',
             buildOthers: '🏠 {player} pastatė namą Radviliškyje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Radviliškyje.',
-            hotelMine: '🏨 Sklypas Radviliškis pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Radviliškis jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Radviliškis jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Radviliškis pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Radviliškis jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Radviliškis jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną rožinę gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną rožinę gatvę ir jau gali pradėti statybas.'
         }
@@ -752,9 +776,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Klaipėdoje.',
             buildOthers: '🏠 {player} pastatė namą Klaipėdoje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Klaipėdoje.',
-            hotelMine: '🏨 Sklypas Klaipėda pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Klaipėda jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Klaipėda jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Klaipėda pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Klaipėda jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Klaipėda jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną tamsiai mėlyną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną tamsiai mėlyną gatvę ir jau gali pradėti statybas.'
         }
@@ -774,9 +798,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Palangoje.',
             buildOthers: '🏠 {player} pastatė namą Palangoje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Palangoje.',
-            hotelMine: '🏨 Sklypas Palanga pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Palanga jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Palanga jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Palanga pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Palanga jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Palanga jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną tamsiai mėlyną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną tamsiai mėlyną gatvę ir jau gali pradėti statybas.'
         }
@@ -796,9 +820,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Gargžduose.',
             buildOthers: '🏠 {player} pastatė namą Gargžduose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Gargžduose.',
-            hotelMine: '🏨 Sklypas Gargždai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Gargždai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Gargždai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Gargždai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Gargždai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Gargždai jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną tamsiai mėlyną gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną tamsiai mėlyną gatvę ir jau gali pradėti statybas.'
         }
@@ -827,9 +851,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Kaune.',
             buildOthers: '🏠 {player} pastatė namą Kaune. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Kaune.',
-            hotelMine: '🏨 Sklypas Kaunas pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Kaunas jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Kaunas jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Kaunas pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Kaunas jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Kaunas jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną tamsiai žalią gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną tamsiai žalią gatvę ir jau gali pradėti statybas.'
         }
@@ -863,9 +887,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Garliavoje.',
             buildOthers: '🏠 {player} pastatė namą Garliavoje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Garliavoje.',
-            hotelMine: '🏨 Sklypas Garliava pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Garliava jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Garliava jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Garliava pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Garliava jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Garliava jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną tamsiai žalią gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną tamsiai žalią gatvę ir jau gali pradėti statybas.'
         }
@@ -899,20 +923,28 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Raudondvaryje.',
             buildOthers: '🏠 {player} pastatė namą Raudondvaryje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Raudondvaryje.',
-            hotelMine: '🏨 Sklypas Raudondvaris pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Raudondvaris jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Raudondvaris jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Raudondvaris pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Raudondvaris jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Raudondvaris jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną tamsiai žalią gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną tamsiai žalią gatvę ir jau gali pradėti statybas.'
         }
     },
+    // 🆕 48 AKROPOLIS – service3
     48: {
         name: 'Akropolis',
-        type: 'special',
+        type: 'service3',
         messages: {
-            visitMine: '🛒 Atvykai į AKROPOLĮ – nieko neįvyko.',
-            visitOthers: '🛒 {player} atvyko į AKROPOLĮ – nieko neįvyko.',
-            visitObserver: '🛒 {player} atvyko į AKROPOLĮ – nieko neįvyko.'
+            buyMine: '✅ Jūs nusipirkote AKROPOLĮ! 🛒',
+            buyOthers: '✅ {player} nusipirko AKROPOLĮ! 🛒',
+            
+            visitMine: '🛒 Atvykai į AKROPOLĮ – tai tavo nuosavybė.',
+            visitOthers: '🛒 {player} atvyko į AKROPOLĮ – savo nuosavybę.',
+            visitObserver: '🛒 {player} atvyko į AKROPOLĮ – savo nuosavybę.',
+            
+            rentOwner: '🛒 {player} atvyko į AKROPOLĮ ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
+            rentPayer: '🛒 Tu atvykai į AKROPOLĮ ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
+            rentObserver: '🛒 {player} atvyko į AKROPOLĮ ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
         }
     },
     49: {
@@ -930,9 +962,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Trakuose.',
             buildOthers: '🏠 {player} pastatė namą Trakuose. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Trakuose.',
-            hotelMine: '🏨 Sklypas Trakai pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Trakai jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Trakai jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Trakai pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Trakai jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Trakai jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną pilką gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną pilką gatvę ir jau gali pradėti statybas.'
         }
@@ -961,9 +993,9 @@ window.CELL_MESSAGES = {
             buildMine: '🏠 Jūs pastatėte namą Vilniuje.',
             buildOthers: '🏠 {player} pastatė namą Vilniuje. Nuoma brangesnė.',
             buildObserver: '🏠 {player} pastatė namą Vilniuje.',
-            hotelMine: '🏨 Sklypas Vilnius pilnai užstatytas – stovi viešbutis.',
-            hotelOthers: '🏨 Sklypas Vilnius jau pilnai užstatytas – stovi viešbutis.',
-            hotelObserver: '🏨 Sklypas Vilnius jau pilnai užstatytas – stovi viešbutis.',
+            hotelMine: '🏨 Sklypas Vilnius pilnai užstatytas – stovi viežbutis.',
+            hotelOthers: '🏨 Sklypas Vilnius jau pilnai užstatytas – stovi viežbutis.',
+            hotelObserver: '🏨 Sklypas Vilnius jau pilnai užstatytas – stovi viežbutis.',
             fullGroupMine: '🏘️ Turi pilną pilką gatvę! Jau gali pradėti statybas.',
             fullGroupOthers: '🏘️ {player} įsigijo pilną pilką gatvę ir jau gali pradėti statybas.'
         }

@@ -8,39 +8,38 @@ module.exports = {
     // SPALVŲ GRUPĖS (sklypai pagal spalvą)
     // ============================================
     COLOR_GROUPS: {
-        '#ffd700': [1, 3],        // Telšiai, Plungė
-        '#4a90d9': [6, 7, 9],     // Kėdainiai, Ariogala, Ramygala
-        '#2ecc71': [10, 12, 15],  // Utena, Anykščiai, Zarasai
-        '#9b59b6': [17, 18, 20],  // Mažeikiai, Skuodas, N.Akmenė
-        '#e74c3c': [22, 23, 25],  // Marijampolė, Vilkaviškis, Kalvarija
-        '#8B6914': [27, 29, 30],  // Alytus, Lazdijai, Druskininkai
-        '#1abc9c': [31, 33, 34],  // Panevėžys, Pasvalys, Kupiškis
-        '#ff69b4': [35, 36, 38],  // Šiauliai, Kuršėnai, Radviliškis
-        '#2c3e50': [39, 40, 41],  // Klaipėda, Palanga, Gargždai
-        '#1a237e': [43, 45, 47],  // Kaunas, Garliava, Raudondvaris
-        '#bdc3c7': [49, 51],      // Trakai, Vilnius
-        '#e74c3c_special': [11, 24, 32, 48]  // 🆕 SPECIALI GRUPĖ
-    },
-
-    // 🆕 SPECIALI GRUPĖ (11, 24, 32, 48) – fiksuota nuoma
-    SPECIAL_GROUP: [11, 24, 32, 48],
-    
-    // 🆕 Fiksuota nuoma pagal turimų langelių skaičių
-    SPECIAL_RENT: {
-        1: 50,
-        2: 100,
-        3: 150,
-        4: 200
+        '#ffd700': [1, 3],           // Telšiai, Plungė
+        '#4a90d9': [6, 7, 9],        // Kėdainiai, Ariogala, Ramygala
+        '#2ecc71': [10, 12, 15],     // Utena, Anykščiai, Zarasai
+        '#9b59b6': [17, 18, 20],     // Mažeikiai, Skuodas, N.Akmenė
+        '#e74c3c': [22, 23, 25],     // Marijampolė, Vilkaviškis, Kalvarija
+        '#8B6914': [27, 29, 30],     // Alytus, Lazdijai, Druskininkai
+        '#1abc9c': [31, 33, 34],     // Panevėžys, Pasvalys, Kupiškis
+        '#ff69b4': [35, 36, 38],     // Šiauliai, Kuršėnai, Radviliškis
+        '#2c3e50': [39, 40, 41],     // Klaipėda, Palanga, Gargždai
+        '#1a237e': [43, 45, 47],     // Kaunas, Garliava, Raudondvaris
+        '#bdc3c7': [49, 51]          // Trakai, Vilnius
     },
 
     // ============================================
-    // PASLAUGŲ GRUPĖS
+    // SERVICE GRUPĖS
     // ============================================
     // SERVICE1: DUJOS, ŠIUKŠLĖS, ELEKTRA, VANDUO
     SERVICE1_IDS: [2, 14, 28, 44],
     
     // SERVICE2: ORO UOSTAS, GEL. STOTIS, UOSTAS, AUTOBUSŲ STOTIS
     SERVICE2_IDS: [8, 19, 37, 46],
+
+    // SERVICE3: CIRKAS, VETERINORIUS, SAUNA, AKROPOLIS
+    SERVICE3_IDS: [11, 24, 32, 48],
+
+    // Fiksuota nuoma pagal turimų langelių skaičių (service1, service2, service3)
+    SERVICE_RENT: {
+        1: 50,
+        2: 100,
+        3: 150,
+        4: 200
+    },
 
     // ============================================
     // KAINŲ KOEFICIENTAI
@@ -104,6 +103,12 @@ module.exports = {
     
     // Pratęsimas po kiekvieno bid'o (ms)
     AUCTION_EXTENSION: 10000,
+
+    // ============================================
+    // PIRKIMO TIMEOUT
+    // ============================================
+    // Kiek laiko žaidėjas turi nuspręsti pirkti (ms)
+    BUY_TIMEOUT: 30000,
 
     // ============================================
     // ŽAIDĖJŲ SPALVOS

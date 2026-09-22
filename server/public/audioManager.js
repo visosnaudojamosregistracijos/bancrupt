@@ -26,47 +26,82 @@ class AudioManager {
             'latras': 'sounds/latras.mp3',
             'pirtis': 'sounds/pirtis.mp3',
             'birthday': 'sounds/birthday.mp3',
-            auction: 'sounds/auction.mp3',
-            bankrupt: 'sounds/bankrupt.mp3',
-            build: 'sounds/build.mp3',
-            buy: 'sounds/buy.mp3',
-            cash: 'sounds/cash.mp3',
-            click: 'sounds/click.mp3',
-            demolish: 'sounds/demolish.mp3',
-            dice: 'sounds/dice.mp3',
-            hotel: 'sounds/hotel.mp3',
-            jail_in: 'sounds/jail_in.mp3',
-            jail_out: 'sounds/jail_out.mp3',
-            jail: 'sounds/jail.mp3',
-            move: 'sounds/move.mp3',
-            pay: 'sounds/pay.mp3',
-            roll: 'sounds/roll.mp3',
-            trade: 'sounds/trade.mp3',
-            win: 'sounds/win.mp3',
-            tax: 'sounds/tax.mp3',
-            chance: 'sounds/chance.mp3',
-            special: 'sounds/special.mp3',
-            notification: 'sounds/notification.mp3',
-            error: 'sounds/error.mp3',
-            start: 'sounds/start.mp3',
-            gameover: 'sounds/gameover.mp3',
-            celebrate: 'sounds/celebrate.mp3'
+            'auction': 'sounds/auction.mp3',
+            'bankrupt': 'sounds/bankrupt.mp3',
+            'build': 'sounds/build.mp3',
+            'buy': 'sounds/buy.mp3',
+            'cash': 'sounds/cash.mp3',
+            'click': 'sounds/click.mp3',
+            'demolish': 'sounds/demolish.mp3',
+            'dice': 'sounds/dice.mp3',
+            'hotel': 'sounds/hotel.mp3',
+            'jail_in': 'sounds/jail_in.mp3',
+            'jail_out': 'sounds/jail_out.mp3',
+            'jail': 'sounds/jail.mp3',
+            'move': 'sounds/move.mp3',
+            'pay': 'sounds/pay.mp3',
+            'roll': 'sounds/roll.mp3',
+            'trade': 'sounds/trade.mp3',
+            'win': 'sounds/win.mp3',
+            'tax': 'sounds/tax.mp3',
+            'chance': 'sounds/chance.mp3',
+            'special': 'sounds/special.mp3',
+            'notification': 'sounds/notification.mp3',
+            'error': 'sounds/error.mp3',
+            'start': 'sounds/start.mp3',
+            'gameover': 'sounds/gameover.mp3',
+            'celebrate': 'sounds/celebrate.mp3'
         };
 
         for (const [name, path] of Object.entries(soundFiles)) {
-            this.sounds[name] = new Audio(path);
-            this.sounds[name].volume = this.volume;
+            const audio = new Audio(path);
+            audio.volume = this.volume;
+            audio.preload = 'auto';
+            this.sounds[name] = audio;
         }
     }
 
+    // 🆕 Groti vieną kartą (restart + play)
     play(soundName) {
-    if (!this.isEnabled) return;
-    try {
-        const sound = new Audio(`sounds/${soundName}.mp3`);
-        sound.volume = this.volume;
-        sound.play().catch(e => {});
-    } catch (e) {}
-}
+        if (!this.isEnabled) return;
+        
+        const sound = this.sounds[soundName];
+        if (!sound) {
+            console.warn('⚠️ Garso nėra:', soundName);
+            return;
+        }
+        
+        try {
+            // Restartuoti garsą (jei grojo)
+            sound.currentTime = 0;
+            sound.volume = this.volume;
+            
+            const playPromise = sound.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // Naršyklė gali blokuoti autoplay – tai normalu
+                });
+            }
+        } catch (e) {
+            // Ignoruoti klaidas
+        }
+    }
+
+    // 🆕 Groti garsą, kuris gali persidengti (pvz., keli clickai greitai)
+    playOverlap(soundName) {
+        if (!this.isEnabled) return;
+        
+        const original = this.sounds[soundName];
+        if (!original) return;
+        
+        try {
+            const clone = original.cloneNode();
+            clone.volume = this.volume;
+            clone.play().catch(() => {});
+        } catch (e) {
+            // Ignoruoti
+        }
+    }
 
     setVolume(volume) {
         this.volume = Math.max(0, Math.min(1, volume));
@@ -96,7 +131,7 @@ function playSound(soundName) {
 }
 
 // ============================================
-// SERVICE1 GARSAI (DUJOS, ŠIUKŠLĖS, ELEKTRA, VANDUO)
+// SERVICE1 GARSAI
 // ============================================
 
 function playDujosSound() {
@@ -118,7 +153,7 @@ function playVanduoSound() {
 }
 
 // ============================================
-// SERVICE2 GARSAI (ORO UOSTAS, TRAUKINIŲ STOTIS, UOSTAS, AUTOBUSŲ STOTIS)
+// SERVICE2 GARSAI
 // ============================================
 
 function playAirPortSound() {
@@ -150,7 +185,7 @@ function playHospitalSound() {
 }
 
 // ============================================
-// SPECIALŪS GARSAI (LATRŲ UŽEIGA, PIRTIS, GIMTADIENIS)
+// SPECIALŪS GARSAI
 // ============================================
 
 function playLatrasSound() {
@@ -270,7 +305,7 @@ function playCelebrateSound() {
 }
 
 function playClickSound() {
-    audioManager.play('click');
+    audioManager.playOverlap('click'); // 🆕 overlap, kad greitai klikinėjant negestų
 }
 
 function toggleSound() {
