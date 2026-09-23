@@ -2178,12 +2178,6 @@ function joinGame() {
         playerName: name,
         color: selectedJoinColor
     });
-
-    socket.emit('joinGame', { 
-        gameId: gid, 
-        playerName: name,
-        color: selectedJoinColor
-    });
 }
 
 function enterGame() {
