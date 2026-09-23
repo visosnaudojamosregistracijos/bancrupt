@@ -1679,10 +1679,10 @@ body {
 .mini-card {
     width: clamp(40px, 3vw, 60px);
     height: clamp(56px, 4vw, 84px);
-    min-width: 40px;              /* 🆕 */
-    max-width: 40px;              /* 🆕 */
-    min-height: 56px;             /* 🆕 */
-    max-height: 56px;             /* 🆕 */
+    min-width: 35px;              /* 🆕 */
+    max-width: 35px;              /* 🆕 */
+    min-height: 60px;             /* 🆕 */
+    max-height: 60px;             /* 🆕 */
     flex: 0 0 auto !important;    /* 🆕 FIKSUOJA DYDĮ */
     background: #f5f0e8;
     border: 2px solid #3d2b1f;
