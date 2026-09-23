@@ -645,102 +645,99 @@ class Game {
                         }
                     }
                 } else {
-                    if (player.money >= field.cost) {
-                        result.action = 'can_buy';
-                        result.message = `${player.name} gali nusipirkti ${field.name} už €${field.cost}`;
-                        result.field = field;
-                        this.addMessage(result.message);
-                    } else {
-                        result.message = `${player.name} neturi pakankamai pinigų ${field.name} pirkti`;
-                        this.addMessage(result.message);
-                    }
-                }
+    if (player.money >= field.cost) {
+        result.action = 'can_buy';
+        result.message = `${player.name} gali nusipirkti ${field.name} už €${field.cost}`;
+        result.field = field;
+        this.addMessage(result.message);
+    } else {
+        result.action = specialAction;
+        result.rent = 0;              // 🆕 Aiškiai nustatyti, kad nuomos nėra
+        result.field = field;          // 🆕 Pridėti field, kad frontend'as galėtų rodyti info
+        result.message = `${player.name} neturi pakankamai pinigų ${field.name} pirkti`;
+        this.addMessage(result.message);
+    }
+}
                 break;
             }
                 
             case 'service1':
-            case 'service2':
-            case 'service3': {
-                const serviceOwner = this.players.find(p => p.properties.includes(field.id) && !p.bankrupt && !p.left && !p.kicked);
-                
-                // Specialus action pavadinimas
-                let specialAction = field.type;
-                if (field.id === 2) specialAction = 'dujos';
-                else if (field.id === 14) specialAction = 'siuksles';
-                else if (field.id === 28) specialAction = 'elektra';
-                else if (field.id === 44) specialAction = 'vanduo';
-                else if (field.id === 8) specialAction = 'airport';
-                else if (field.id === 19) specialAction = 'train';
-                else if (field.id === 37) specialAction = 'port';
-                else if (field.id === 46) specialAction = 'bus';
-                else if (field.id === 11) specialAction = 'cirkas';
-                else if (field.id === 24) specialAction = 'veterinorius';
-                else if (field.id === 32) specialAction = 'sauna';
-                else if (field.id === 48) specialAction = 'akropolis';
-                
-                if (serviceOwner) {
-                    if (serviceOwner.id === player.id) {
-                        result.message = `${player.name} stovi ant savo ${field.name}`;
-                        this.addMessage(result.message);
-                        result.action = specialAction;
-                    } else {
-                        const rent = this.getServiceRent(serviceOwner, field.type);
-                        player.money -= rent;
-                        serviceOwner.money += rent;
-                        result.action = specialAction;
-                        result.rent = rent;
-                        result.message = `${player.name} sumokėjo €${rent} nuomos ${serviceOwner.name} už ${field.name}`;
-                        this.addMessage(result.message);
-                        
-                        if (player.money < 0) {
-                            this.checkDebtor(player.id);
-                        }
-                    }
-                } else {
-                    if (player.money >= field.cost) {
-                        result.action = 'can_buy';
-                        result.message = `${player.name} gali nusipirkti ${field.name} už €${field.cost}`;
-                        result.field = field;
-                        this.addMessage(result.message);
-                    } else {
-                        result.action = specialAction;
-                        result.message = `${player.name} neturi pakankamai pinigų ${field.name} pirkti`;
-                        this.addMessage(result.message);
-                    }
-                }
-                break;
+case 'service2':
+case 'service3': {
+    const serviceOwner = this.players.find(p => p.properties.includes(field.id) && !p.bankrupt && !p.left && !p.kicked);
+    
+    // Specialus action pavadinimas
+    let specialAction = field.type;
+    if (field.id === 2) specialAction = 'dujos';
+    else if (field.id === 14) specialAction = 'siuksles';
+    else if (field.id === 28) specialAction = 'elektra';
+    else if (field.id === 44) specialAction = 'vanduo';
+    else if (field.id === 8) specialAction = 'airport';
+    else if (field.id === 19) specialAction = 'train';
+    else if (field.id === 37) specialAction = 'port';
+    else if (field.id === 46) specialAction = 'bus';
+    else if (field.id === 11) specialAction = 'cirkas';
+    else if (field.id === 24) specialAction = 'veterinorius';
+    else if (field.id === 32) specialAction = 'sauna';
+    else if (field.id === 48) specialAction = 'akropolis';
+    
+    if (serviceOwner) {
+        if (serviceOwner.id === player.id) {
+            result.message = `${player.name} stovi ant savo ${field.name}`;
+            this.addMessage(result.message);
+            result.action = specialAction;
+        } else {
+            const rent = this.getServiceRent(serviceOwner, field.type);
+            player.money -= rent;
+            serviceOwner.money += rent;
+            result.action = specialAction;
+            result.rent = rent;
+            result.message = `${player.name} sumokėjo €${rent} nuomos ${serviceOwner.name} už ${field.name}`;
+            this.addMessage(result.message);
+            
+            if (player.money < 0) {
+                this.checkDebtor(player.id);
             }
+        }
+    } else {
+        if (player.money >= field.cost) {
+            result.action = 'can_buy';
+            result.message = `${player.name} gali nusipirkti ${field.name} už €${field.cost}`;
+            result.field = field;
+            this.addMessage(result.message);
+        } else {
+            result.action = specialAction;
+            result.message = `${player.name} neturi pakankamai pinigų ${field.name} pirkti`;
+            this.addMessage(result.message);
+        }
+    }
+    break;
+}
                 
             case 'tax': {
-                if (field.id === 5) {
-                    player.money -= 200;
-                    result.action = 'pay_tax';
-                    result.message = `${player.name} sumokėjo €200 VMI mokesčių! 💰`;
-                    this.addMessage(result.message);
-                }
-                else if (field.id === 21) {
-                    player.money -= 10;
-                    result.action = 'latras';
-                    result.message = `${player.name} užsuko į LATRŲ BARĄ ir išleido €10! 🍺`;
-                    this.addMessage(result.message);
-                }
-                else if (field.id === 32) {
-                    player.money -= 25;
-                    result.action = 'pirtis';
-                    result.message = `${player.name} nuėjo į VLADUKO PIRTĮ ir sumokėjo €25! 🧖`;
-                    this.addMessage(result.message);
-                }
-                else {
-                    player.money -= field.cost;
-                    result.action = 'pay_tax';
-                    result.message = `${player.name} sumokėjo €${field.cost} mokesčių`;
-                    this.addMessage(result.message);
-                }
-                if (player.money < 0) {
-                    this.checkDebtor(player.id);
-                }
-                break;
-            }
+    if (field.id === 5) {
+        player.money -= 200;
+        result.action = 'pay_tax';
+        result.message = `${player.name} sumokėjo €200 VMI mokesčių! 💰`;
+        this.addMessage(result.message);
+    }
+    else if (field.id === 21) {
+        player.money -= 10;
+        result.action = 'latras';
+        result.message = `${player.name} užsuko į LATRŲ BARĄ ir išleido €10! 🍺`;
+        this.addMessage(result.message);
+    }
+    else {
+        player.money -= field.cost;
+        result.action = 'pay_tax';
+        result.message = `${player.name} sumokėjo €${field.cost} mokesčių`;
+        this.addMessage(result.message);
+    }
+    if (player.money < 0) {
+        this.checkDebtor(player.id);
+    }
+    break;
+}
                 
             case 'jail':
                 result.action = 'visiting_jail';

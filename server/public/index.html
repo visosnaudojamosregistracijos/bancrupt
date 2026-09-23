@@ -608,7 +608,10 @@
 
             <div id="sellToBankPanel" style="display:none;">
                 <h3 style="color:#3d2b1f;">🏦 Parduoti bankui</h3>
-                <p style="color:#6c757d; font-size:14px;">Gauni 80% kortelės vertės</p>
+                <p style="color:#6c757d; font-size:14px; line-height:1.5;">
+                    ✅ <strong>Saugu:</strong> Gauni <strong style="color:#28a745;">80%</strong> vertės iškart.<br>
+                    <span style="color:#dc3545;">💡 Jei nori daugiau – bandyk aukcioną (70% startinė, bet gali gauti daugiau).</span>
+                </p>
                 <div id="sellableProperties" style="margin:10px 0; text-align:left;"></div>
                 <button onclick="confirmSellToBank()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
                     ✅ Patvirtinti pardavimą
@@ -620,7 +623,12 @@
 
             <div id="auctionPanel" style="display:none;">
                 <h3 style="color:#3d2b1f;">🔨 Skelbti aukcioną</h3>
-                <p style="color:#6c757d; font-size:13px;">Bankas siūlys 70% startinę kainą.<br>Kiti žaidėjai gali siūlyti daugiau.</p>
+                <p style="color:#6c757d; font-size:13px; line-height:1.5;">
+                    ⚠️ <strong>Rizikinga:</strong> Bankas siūlo tik <strong style="color:#dc3545;">70%</strong> vertės.<br>
+                    ✅ Jei kas persiūlo – gausi <strong style="color:#28a745;">daugiau</strong>.<br>
+                    ❌ Jei niekas – gausi tik 70% ir kortelė <strong>dingsta</strong>.<br>
+                    <span style="color:#28a745;">💡 Norėdamas saugiai – parduok bankui (80%).</span>
+                </p>
                 <div id="auctionableProperties" style="margin:10px 0; text-align:left;"></div>
                 <button onclick="confirmStartAuction()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
                     🔨 Pradėti aukcioną

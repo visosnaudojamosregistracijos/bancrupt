@@ -376,11 +376,6 @@ body {
 }
 
 /* ---------- LOBBY ---------- */
-#lobby {
-    width: 100%;
-    max-width: 550px;
-}
-
 .lobby-container {
     background: linear-gradient(145deg, #1a6b3c, #0f4a2a);
     padding: 40px;
@@ -388,6 +383,8 @@ body {
     box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 2px 0 rgba(255,255,255,0.1);
     text-align: center;
     border: 2px solid #c9a84c;
+    max-width: 550px;
+    width: 100%;
 }
 
 .lobby-container h1 {
@@ -466,20 +463,9 @@ body {
     box-shadow: 0 4px 20px rgba(108,117,125,0.4);
 }
 
-.join-section {
-    margin-top: 10px;
-}
-
 #gameIdInput {
     text-transform: uppercase;
     letter-spacing: 2px;
-}
-
-#lobbyMessages {
-    margin-top: 20px;
-    color: #d4b896;
-    font-size: 14px;
-    min-height: 30px;
 }
 
 /* ---------- SPALVŲ PASIRINKIMAS ---------- */
@@ -721,7 +707,7 @@ body {
 #board.adaptive {
     width: 100%;
     max-width: 100vw;
-    overflow: auto !important;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y pinch-zoom;
 }
@@ -730,7 +716,7 @@ body {
     width: 100%;
     max-width: 1500px;
     margin: 0 auto;
-    overflow: auto !important;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y pinch-zoom;
 }
@@ -789,7 +775,7 @@ body {
     flex: 1 1 0;
     min-width: 0;
     min-height: clamp(20px, 4vh, 50px);
-    overflow: visible !important;
+    overflow: visible;
 }
 
 .cell:hover {
@@ -800,14 +786,20 @@ body {
 
 .cell.corner {
     flex: 0 0 175px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 175px;
     width: 175px;
     height: 175px;
     min-width: 175px;
     max-width: 175px;
-    aspect-ratio: 1;
+    min-height: 175px;
+    max-height: 175px;
+    aspect-ratio: 1 / 1;
     font-size: 8px;
     border-width: 3px;
     font-weight: 700;
+    box-sizing: border-box;
 }
 
 .row-top .cell.corner:first-child {
@@ -832,7 +824,7 @@ body {
 }
 .cell.start .cell-name,
 .cell.start .cell-cost {
-    color: #fff !important;
+    color: #fff;
 }
 
 .cell.jail {
@@ -841,7 +833,7 @@ body {
 }
 .cell.jail .cell-name,
 .cell.jail .cell-cost {
-    color: #fff !important;
+    color: #fff;
 }
 
 .cell.parking {
@@ -850,7 +842,7 @@ body {
 }
 .cell.parking .cell-name,
 .cell.parking .cell-cost {
-    color: #fff !important;
+    color: #fff;
 }
 
 .cell.go-to-jail {
@@ -859,7 +851,7 @@ body {
 }
 .cell.go-to-jail .cell-name,
 .cell.go-to-jail .cell-cost {
-    color: #fff !important;
+    color: #fff;
 }
 
 .cell .cell-icon {
@@ -1019,59 +1011,100 @@ body {
 }
 
 .dice {
-    width: 60px;
-    height: 60px;
-    background: #ffffff;
+    width: clamp(50px, 5vw, 80px);
+    height: clamp(50px, 5vw, 80px);
+    background: linear-gradient(145deg, #ffffff, #f0f0f0);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25), inset 0 -2px 5px rgba(0,0,0,0.1);
     border: 2px solid #3d2b1f;
     transition: transform 0.3s, box-shadow 0.3s;
     user-select: none;
     position: relative;
+    perspective: 1000px;
+    transform-style: preserve-3d;
 }
 
 .dice:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.35);
+    transform: scale(1.08);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.35), 0 0 20px rgba(255,215,0,0.4);
 }
 
 .dice-dots-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    gap: 5px;
-    width: 42px;
-    height: 42px;
+    gap: 6px;
+    width: clamp(36px, 4vw, 60px);
+    height: clamp(36px, 4vw, 60px);
     padding: 3px;
 }
 
 .dice-dot {
-    width: 9px;
-    height: 9px;
-    background: #2d2d2d;
+    width: clamp(8px, 0.9vw, 14px);
+    height: clamp(8px, 0.9vw, 14px);
+    background: radial-gradient(circle at 30% 30%, #4a4a4a, #1a1a1a);
     border-radius: 50%;
     opacity: 0;
     transition: opacity 0.15s ease;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
 }
 
 .dice-dot.visible {
     opacity: 1;
 }
 
-.dice.rolling {
-    animation: diceRoll 0.5s ease;
+@keyframes diceRollEnhanced {
+    0% {
+        transform: rotate(0deg) scale(1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+    20% {
+        transform: rotate(72deg) scale(1.15);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    40% {
+        transform: rotate(144deg) scale(0.9);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+    60% {
+        transform: rotate(216deg) scale(1.2);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    80% {
+        transform: rotate(288deg) scale(0.95);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
 }
 
-@keyframes diceRoll {
-    0% { transform: rotate(0deg) scale(1); }
-    25% { transform: rotate(90deg) scale(1.2); }
-    50% { transform: rotate(180deg) scale(0.9); }
-    75% { transform: rotate(270deg) scale(1.1); }
-    100% { transform: rotate(360deg) scale(1); }
+@keyframes diceGlow {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 5px rgba(255,215,0,0.3);
+    }
+    50% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 25px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4);
+    }
+}
+
+.dice.rolling {
+    animation: diceRollEnhanced 0.8s cubic-bezier(0.4, 0.0, 0.2, 1), diceGlow 0.8s ease-in-out;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+}
+
+@keyframes diceSettle {
+    0% { transform: scale(1.1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+.dice.settle {
+    animation: diceSettle 0.3s ease-out;
 }
 
 .control-buttons {
@@ -1123,10 +1156,10 @@ body {
 
 .btn-half {
     flex: 1;
-    font-size: clamp(9px, 0.7vw, 13px) !important;
-    padding: 6px 4px !important;
-    width: auto !important;
-    border-radius: 6px !important;
+    font-size: clamp(9px, 0.7vw, 13px);
+    padding: 6px 4px;
+    width: auto;
+    border-radius: 6px;
     border: none;
     font-weight: 700;
     cursor: pointer;
@@ -1134,28 +1167,14 @@ body {
     color: #fff;
 }
 
-.btn-bankrupt {
-    background: linear-gradient(145deg, #dc3545, #a71d2a);
-    color: #fff;
-}
-.btn-bankrupt:hover:not(:disabled) {
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-}
-
-.btn-jail {
-    background: linear-gradient(145deg, #dc3545, #a71d2a);
-    color: #fff;
-}
-.btn-jail:hover:not(:disabled) {
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-}
-
+.btn-bankrupt,
+.btn-jail,
 .btn-build {
     background: linear-gradient(145deg, #dc3545, #a71d2a);
     color: #fff;
 }
+.btn-bankrupt:hover:not(:disabled),
+.btn-jail:hover:not(:disabled),
 .btn-build:hover:not(:disabled) {
     transform: scale(1.05);
     box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
@@ -1314,13 +1333,6 @@ body {
     background: rgba(40, 167, 69, 0.2);
 }
 
-.player-item.left {
-    opacity: 0.4;
-    background: rgba(108, 117, 125, 0.2);
-    border-left: 3px solid #6c757d;
-    text-decoration: line-through;
-}
-
 /* ---------- 5 LANGELIS - PRANEŠIMAI ---------- */
 #notifications {
     flex: 1;
@@ -1372,7 +1384,7 @@ body {
 }
 
 #buyChoice.show {
-    display: flex !important;
+    display: flex;
 }
 
 @keyframes choiceFadeIn {
@@ -1527,24 +1539,17 @@ body {
 
 /* ---------- SPALVOTOS JUOSTELĖS ---------- */
 
-/* 🆕 SERVICE grupės – BE spalvotos juostelės */
+/* SERVICE grupės – BE spalvotos juostelės */
 .cell.service1::before,
 .cell.service2::before,
 .cell.service3::before {
-    display: none !important;
+    display: none;
 }
 
-/* 🆕 SERVICE grupės – šiek tiek kitoks fonas */
 .cell.service1,
 .cell.service2,
 .cell.service3 {
     background: linear-gradient(145deg, #f0e8d8, #e0d5c0);
-}
-
-/* 🆕 SERVICE grupės – neleisti spalvotos juostelės iš property */
-.cell.service1,
-.cell.service2,
-.cell.service3 {
     --property-color: transparent;
 }
 
@@ -1641,12 +1646,17 @@ body {
     position: absolute;
     width: 14px;
     height: 14px;
+    min-width: 14px;
+    max-width: 14px;
     border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.9);
+    border: 2px solid rgba(255,255,255,0.95);
     pointer-events: none;
     z-index: 5;
     opacity: 0.9;
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    margin: 0;
+    padding: 0;
+    flex: 0 0 auto;
 }
 
 /* ---------- MINI KORTELĖS ---------- */
@@ -1668,22 +1678,31 @@ body {
 }
 
 .mini-cards-container::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
+}
+
+.mini-cards-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
 }
 
 .mini-cards-container::-webkit-scrollbar-thumb {
     background: #c9a84c;
-    border-radius: 2px;
+    border-radius: 3px;
+}
+
+.mini-cards-container::-webkit-scrollbar-thumb:hover {
+    background: #ffd700;
 }
 
 .mini-card {
-    width: clamp(40px, 3vw, 60px);
-    height: clamp(56px, 4vw, 84px);
-    min-width: 40px;              /* 🆕 */
-    max-width: 40px;              /* 🆕 */
-    min-height: 60px;             /* 🆕 */
-    max-height: 60px;             /* 🆕 */
-    flex: 0 0 auto !important;    /* 🆕 FIKSUOJA DYDĮ */
+    width: 40px;
+    height: 60px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 60px;
+    max-height: 60px;
+    flex: 0 0 auto;
     background: #f5f0e8;
     border: 2px solid #3d2b1f;
     border-radius: 4px;
@@ -1706,10 +1725,15 @@ body {
 
 .mini-card-color {
     width: 100%;
-    height: clamp(16px, 1.5vw, 26px);   /* ← pakeista */
+    height: 20px;
     background: var(--card-color, #c9a84c);
     border-bottom: 2px solid #3d2b1f;
     flex-shrink: 0;
+}
+
+.mini-card-color.mini-card-icon {
+    background: linear-gradient(145deg, #f0e8d8, #e0d5c0);
+    border-bottom: 1px solid rgba(61,43,31,0.2);
 }
 
 .mini-card-body {
@@ -1724,7 +1748,7 @@ body {
 }
 
 .mini-card-name {
-    font-size: clamp(5px, 0.4vw, 8px); 
+    font-size: 6px;
     font-weight: 700;
     color: #3d2b1f;
     line-height: 1.1;
@@ -1737,7 +1761,7 @@ body {
 }
 
 .mini-card-info {
-    font-size: clamp(4px, 0.35vw, 7px);   /* ← pakeista */
+    font-size: 5px;
     font-weight: 600;
     color: #6c757d;
     margin-top: auto;
@@ -1750,16 +1774,12 @@ body {
     position: absolute;
     bottom: 8px;
     right: 2px;
-    font-size: clamp(6px, 0.5vw, 9px);   /* ← pakeista */
+    font-size: 7px;
     line-height: 1;
     background: rgba(255,255,255,0.9);
     border-radius: 3px;
     padding: 1px 2px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.mini-card::after {
-    display: none;
 }
 
 /* ---------- GRIAUTI NAMUS - KORTELĖS ---------- */
@@ -2106,20 +2126,20 @@ body {
         margin-bottom: 2px;
     }
     .dice {
-        width: 42px;
-        height: 42px;
+        width: 50px;
+        height: 50px;
         border-radius: 8px;
         border-width: 1.5px;
     }
     .dice-dots-container {
-        width: 30px;
-        height: 30px;
-        gap: 3px;
+        width: 36px;
+        height: 36px;
+        gap: 4px;
         padding: 2px;
     }
     .dice-dot {
-        width: 7px;
-        height: 7px;
+        width: 8px;
+        height: 8px;
     }
     .dice-container {
         gap: 12px;
@@ -2136,8 +2156,8 @@ body {
         margin-bottom: 3px;
     }
     .btn-half {
-        font-size: 9px !important;
-        padding: 4px 3px !important;
+        font-size: 9px;
+        padding: 4px 3px;
     }
     #myInfo .player-money {
         font-size: 24px;
@@ -2308,20 +2328,20 @@ body {
         margin-bottom: 1px;
     }
     .dice {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
         border-radius: 6px;
         border-width: 1.5px;
     }
     .dice-dots-container {
-        width: 24px;
-        height: 24px;
-        gap: 2px;
+        width: 28px;
+        height: 28px;
+        gap: 3px;
         padding: 2px;
     }
     .dice-dot {
-        width: 5px;
-        height: 5px;
+        width: 6px;
+        height: 6px;
     }
     .dice-container {
         gap: 8px;
@@ -2338,8 +2358,8 @@ body {
         margin-bottom: 2px;
     }
     .btn-half {
-        font-size: 8px !important;
-        padding: 3px 2px !important;
+        font-size: 8px;
+        padding: 3px 2px;
     }
     #myInfo .player-money {
         font-size: 11px;
@@ -2502,7 +2522,9 @@ body {
 }
 
 /* ---------- GARSO SLIDER ---------- */
-#volumeSlider {
+#volumeSlider,
+#musicVolumeSlider,
+#sfxVolumeSlider {
     -webkit-appearance: none;
     appearance: none;
     height: 6px;
@@ -2511,7 +2533,9 @@ body {
     outline: none;
 }
 
-#volumeSlider::-webkit-slider-thumb {
+#volumeSlider::-webkit-slider-thumb,
+#musicVolumeSlider::-webkit-slider-thumb,
+#sfxVolumeSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 18px;
@@ -2523,7 +2547,9 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
-#volumeSlider::-moz-range-thumb {
+#volumeSlider::-moz-range-thumb,
+#musicVolumeSlider::-moz-range-thumb,
+#sfxVolumeSlider::-moz-range-thumb {
     width: 18px;
     height: 18px;
     background: #ffd700;
@@ -2543,8 +2569,8 @@ body {
 }
 
 #muteBtn:hover {
-    background: #ffd700 !important;
-    color: #0d1f0d !important;
+    background: #ffd700;
+    color: #0d1f0d;
 }
 
 /* ---------- INFO MYGTUKAS ---------- */
@@ -2787,11 +2813,12 @@ body {
     gap: 6px;
     z-index: 5;
     pointer-events: none;
+    flex-direction: row;
 }
 
 .row-top .cell-top-bar {
-    top: 4px;
-    right: 6px;
+    top: 2px;
+    left: 2px;
 }
 
 .row-bottom .cell-top-bar {
@@ -2923,66 +2950,7 @@ body {
     margin-bottom: 3px;
 }
 
-/* ---------- PIRKIMO LAUKIMO BLOKAS ---------- */
-#buyPendingInfo {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 8px;
-    z-index: 9;
-    animation: choiceFadeIn 0.25s ease;
-}
-
-#buyPendingInfo.show {
-    display: flex !important;
-}
-
-.buy-pending-box {
-    background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
-    border-radius: 10px;
-    padding: 12px 14px 14px;
-    width: 85%;
-    max-width: 220px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    border: 2px solid #ffc107;
-}
-
-.buy-pending-header {
-    text-align: center;
-    font-size: 13px;
-    font-weight: 700;
-    color: #e0a800;
-    border-bottom: 2px solid #ffc107;
-    padding-bottom: 5px;
-    margin-bottom: 6px;
-}
-
-.buy-pending-body {
-    text-align: center;
-    margin-bottom: 8px;
-}
-
-.buy-pending-body p {
-    font-size: 11px;
-    color: #3d2b1f;
-    margin: 2px 0;
-}
-
 /* ---------- ŽAIDĖJO JUDĖJIMO ANIMACIJA ---------- */
-.cell.highlight {
-    background: rgba(255, 215, 0, 0.5) !important;
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5);
-    transform: scale(1.08);
-    z-index: 100;
-    transition: all 0.12s ease;
-}
-
 .player-dot.jumping {
     transform: scale(1.4);
     box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
@@ -3007,7 +2975,7 @@ body {
 }
 
 #cellActionInfo.show {
-    display: flex !important;
+    display: flex;
 }
 
 .cell-action-box {
@@ -3042,99 +3010,6 @@ body {
 }
 
 /* ============================================
-   🔧 ULTIMATE FIX – kampai VISADA 175px
-   (PATI PASKUTINĖ TAISYKLĖ FAilE)
-   ============================================ */
-#board .row-top > .cell.corner,
-#board .row-bottom > .cell.corner,
-#board .cell.corner {
-    flex: 0 0 175px !important;
-    width: 175px !important;
-    min-width: 175px !important;
-    max-width: 175px !important;
-    height: 175px !important;
-    min-height: 175px !important;
-    max-height: 175px !important;
-    aspect-ratio: 1 / 1 !important;
-    box-sizing: border-box !important;
-}
-
-/* 🔧 ABSOLIUTUS FIX */
-#board .cell.corner,
-#board .row-top > .cell.corner,
-#board .row-top > .cell.corner:first-child,
-#board .row-top > .cell.corner:last-child,
-#board .row-bottom > .cell.corner,
-#board .row-bottom > .cell.corner:first-child,
-#board .row-bottom > .cell.corner:last-child {
-    flex: 0 0 175px !important;
-    flex-grow: 0 !important;
-    flex-shrink: 0 !important;
-    flex-basis: 175px !important;
-    width: 175px !important;
-    min-width: 175px !important;
-    max-width: 175px !important;
-    height: 175px !important;
-    min-height: 175px !important;
-    max-height: 175px !important;
-    aspect-ratio: 1 / 1 !important;
-    box-sizing: border-box !important;
-}
-
-/* 🔧 FIX: savininko rutuliukas – PRIEŠINGAME kampe nuo skaičiaus */
-
-/* Bazinis – absoliutus, kad nestumtų */
-.cell .cell-owner {
-    position: absolute !important;
-    width: 14px !important;
-    height: 14px !important;
-    min-width: 14px !important;
-    max-width: 14px !important;
-    border-radius: 50% !important;
-    border: 2px solid rgba(255,255,255,0.95) !important;
-    pointer-events: none !important;
-    z-index: 5 !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    flex: 0 0 auto !important;
-}
-
-/* .cell-top-bar – absoliutus, kad nestumtų */
-.cell .cell-top-bar {
-    position: absolute !important;
-    display: flex !important;
-    gap: 3px !important;
-    z-index: 5 !important;
-    pointer-events: none !important;
-    flex-direction: row !important;
-    align-items: center !important;
-}
-
-/* ============================================
-   SAVININKO POZICIJA PAGAL PUSĘ
-   (priešingas kampas nuo skaičiaus)
-   ============================================ */
-
-/* ─────────────────────────────────────────
-   VIRŠUTINĖ EILUTĖ (langeliai 1–15)
-   Rutuliukas: VIRŠUJE DEŠINĖJE
-   Skaičius: apačioje (savo vietoje)
-   ───────────────────────────────────────── */
-.row-top .cell .cell-top-bar {
-    top: 2px !important;       /* ← atstumas nuo VIRŠAUS krašto */
-    right: auto !important;     /* ← atstumas nuo DEŠINIO krašto */
-    left: 2px !important;     /* ← išjungia kairę (kad netemptų į kairę) */
-    bottom: auto !important;   /* ← išjungia apačią */
-}
-
-/* ─────────────────────────────────────────
-   APATINĖ EILUTĖ (langeliai 27–41)
-   Rutuliukas: APAČIOJE DEŠINĖJE
-   Skaičius: viršuje (savo vietoje)
-   ───────────────────────────────────────── */
-
-/* ============================================
    🎨 EMODŽIŲ ANIMACIJOS
    ============================================ */
 
@@ -3146,11 +3021,6 @@ body {
 @keyframes spin {
     from { transform: translate(-50%, -50%) rotate(0deg); }
     to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-@keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0.3; }
 }
 
 @keyframes wave {
@@ -3174,110 +3044,27 @@ body {
     }
 }
 
-/* 🏁 START – pulsavimas */
-.cell[data-id="0"] .cell-bg-icon {
-    animation: pulse 2s ease-in-out infinite;
-}
-
-/* 🔥 DUJOS – spindėjimas */
-.cell[data-id="2"] .cell-bg-icon {
-    animation: glow 1.5s ease-in-out infinite;
-}
-
-/* 💋 HORNY RP – pulsavimas */
-.cell[data-id="4"] .cell-bg-icon {
-    animation: pulse 1.8s ease-in-out infinite;
-}
-
-/* 💰 VMI – mirgėjimas */
-.cell[data-id="5"] .cell-bg-icon {
-    animation: blink 1.2s ease-in-out infinite;
-}
-
-/* ✈️ ORO UOSTAS – banga */
-.cell[data-id="8"] .cell-bg-icon {
-    animation: wave 3s ease-in-out infinite;
-}
-
-/* 🎪 Cirkas – šokinėjimas */
-.cell[data-id="11"] .cell-bg-icon {
-    animation: bounce 1.5s ease-in-out infinite;
-}
-
-/* 🏥 LIGONINĖ – pulsavimas */
-.cell[data-id="13"] .cell-bg-icon {
-    animation: pulse 2s ease-in-out infinite;
-}
-
-/* 🗑️ ŠIUKŠLĖS – banga */
-.cell[data-id="14"] .cell-bg-icon {
-    animation: wave 3s ease-in-out infinite;
-}
-
-/* ⛓️ Kalėjimas – mirgėjimas */
-.cell[data-id="16"] .cell-bg-icon {
-    animation: blink 1.5s ease-in-out infinite;
-}
-
-/* 🚂 GEL. STOTIS – banga */
-.cell[data-id="19"] .cell-bg-icon {
-    animation: wave 3s ease-in-out infinite;
-}
-
-/* 🍺 LATRŲ BARAS – šokinėjimas */
-.cell[data-id="21"] .cell-bg-icon {
-    animation: bounce 1.8s ease-in-out infinite;
-}
-
-/* 🛠️ Dirbtuvės – sukimasis */
-.cell[data-id="24"] .cell-bg-icon {
-    animation: spin 8s linear infinite;
-}
-
-/* 🅿️ PARKINGAS – banga */
-.cell[data-id="26"] .cell-bg-icon {
-    animation: wave 3s ease-in-out infinite;
-}
-
-/* 💡 ELEKTRA – mirgėjimas */
-.cell[data-id="28"] .cell-bg-icon {
-    animation: blink 1s ease-in-out infinite;
-}
-
-/* 🧖 SAUNA – pulsavimas */
-.cell[data-id="32"] .cell-bg-icon {
-    animation: pulse 2.5s ease-in-out infinite;
-}
-
-/* ⚓ UOSTAS – banga */
-.cell[data-id="37"] .cell-bg-icon {
-    animation: wave 3s ease-in-out infinite;
-}
-
-/* 🚨 Keliauk į kalėjimą – mirgėjimas */
-.cell[data-id="42"] .cell-bg-icon {
-    animation: blink 0.8s ease-in-out infinite;
-}
-
-/* 💧 VANDUO – banga */
-.cell[data-id="44"] .cell-bg-icon {
-    animation: wave 2.5s ease-in-out infinite;
-}
-
-/* 🚌 AUTOBUSŲ STOTIS – banga */
-.cell[data-id="46"] .cell-bg-icon {
-    animation: wave 3s ease-in-out infinite;
-}
-
-/* 🛒 Akropolis – pulsavimas */
-.cell[data-id="48"] .cell-bg-icon {
-    animation: pulse 2s ease-in-out infinite;
-}
-
-/* 🎂 TAVO GIMTADIENIS – šokinėjimas */
-.cell[data-id="50"] .cell-bg-icon {
-    animation: bounce 1.5s ease-in-out infinite;
-}
+.cell[data-id="0"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
+.cell[data-id="2"] .cell-bg-icon { animation: glow 1.5s ease-in-out infinite; }
+.cell[data-id="4"] .cell-bg-icon { animation: pulse 1.8s ease-in-out infinite; }
+.cell[data-id="5"] .cell-bg-icon { animation: blink 1.2s ease-in-out infinite; }
+.cell[data-id="8"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="11"] .cell-bg-icon { animation: bounce 1.5s ease-in-out infinite; }
+.cell[data-id="13"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
+.cell[data-id="14"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="16"] .cell-bg-icon { animation: blink 1.5s ease-in-out infinite; }
+.cell[data-id="19"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="21"] .cell-bg-icon { animation: bounce 1.8s ease-in-out infinite; }
+.cell[data-id="24"] .cell-bg-icon { animation: spin 8s linear infinite; }
+.cell[data-id="26"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="28"] .cell-bg-icon { animation: blink 1s ease-in-out infinite; }
+.cell[data-id="32"] .cell-bg-icon { animation: pulse 2.5s ease-in-out infinite; }
+.cell[data-id="37"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="42"] .cell-bg-icon { animation: blink 0.8s ease-in-out infinite; }
+.cell[data-id="44"] .cell-bg-icon { animation: wave 2.5s ease-in-out infinite; }
+.cell[data-id="46"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="48"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
+.cell[data-id="50"] .cell-bg-icon { animation: bounce 1.5s ease-in-out infinite; }
 
 /* ============================================
    🏆 LAIMĖJIMO EKRANAS SU KONFETI
@@ -3335,14 +3122,14 @@ body {
 .confetti-piece.triangle {
     width: 0;
     height: 0;
-    background: transparent !important;
+    background: transparent;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
     border-bottom: 12px solid;
 }
 
 #winnerModal.active {
-    display: flex !important;
+    display: flex;
 }
 
 /* ============================================
@@ -3350,18 +3137,9 @@ body {
    ============================================ */
 
 @keyframes houseGrow {
-    0% {
-        transform: scale(0) rotate(-180deg);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.3) rotate(0deg);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-    }
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    50% { transform: scale(1.3) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 @keyframes houseBounce {
@@ -3370,18 +3148,9 @@ body {
 }
 
 @keyframes hotelGrow {
-    0% {
-        transform: scale(0) rotate(180deg);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.5) rotate(0deg);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1.1) rotate(0deg);
-        opacity: 1;
-    }
+    0% { transform: scale(0) rotate(180deg); opacity: 0; }
+    50% { transform: scale(1.5) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1.1) rotate(0deg); opacity: 1; }
 }
 
 .cell-houses span.new-house {
@@ -3403,37 +3172,33 @@ body {
    🎨 SKLYPO HIGHLIGHT
    ============================================ */
 
-/* 🟡 GELTONAS – kai kas nors atsistoja */
 .cell.highlight-yellow {
-    background: rgba(255, 215, 0, 0.5) !important;
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5) !important;
+    background: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5);
     transform: scale(1.08);
     z-index: 100;
     transition: all 0.12s ease;
     animation: highlightPulse 0.6s ease-in-out infinite alternate;
 }
 
-/* 🟢 ŽALIAS – kai nusiperki sklypą */
 .cell.highlight-green {
-    background: rgba(40, 167, 69, 0.5) !important;
-    box-shadow: 0 0 30px rgba(40, 167, 69, 0.9), inset 0 0 20px rgba(40, 167, 69, 0.5) !important;
+    background: rgba(40, 167, 69, 0.5);
+    box-shadow: 0 0 30px rgba(40, 167, 69, 0.9), inset 0 0 20px rgba(40, 167, 69, 0.5);
     transform: scale(1.1);
     z-index: 100;
     transition: all 0.15s ease;
     animation: highlightGreenPulse 0.5s ease-in-out infinite alternate;
 }
 
-/* 🔴 RAUDONAS – kai moki nuomą */
 .cell.highlight-red {
-    background: rgba(220, 53, 69, 0.5) !important;
-    box-shadow: 0 0 30px rgba(220, 53, 69, 0.9), inset 0 0 20px rgba(220, 53, 69, 0.5) !important;
+    background: rgba(220, 53, 69, 0.5);
+    box-shadow: 0 0 30px rgba(220, 53, 69, 0.9), inset 0 0 20px rgba(220, 53, 69, 0.5);
     transform: scale(1.08);
     z-index: 100;
     transition: all 0.12s ease;
     animation: highlightRedBlink 0.4s ease-in-out infinite;
 }
 
-/* 🟡 Geltonas pulsavimas */
 @keyframes highlightPulse {
     0% { 
         box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5);
@@ -3445,7 +3210,6 @@ body {
     }
 }
 
-/* 🟢 Žalias pulsavimas */
 @keyframes highlightGreenPulse {
     0% { 
         box-shadow: 0 0 30px rgba(40, 167, 69, 0.9), inset 0 0 20px rgba(40, 167, 69, 0.5);
@@ -3457,7 +3221,6 @@ body {
     }
 }
 
-/* 🔴 Raudonas mirgėjimas */
 @keyframes highlightRedBlink {
     0%, 100% { 
         opacity: 1;
@@ -3470,56 +3233,22 @@ body {
 }
 
 /* ============================================
-   🎨 SKLYPO HIGHLIGHT
-   ============================================ */
-
-.cell.highlight-yellow {
-    background: rgba(255, 215, 0, 0.5) !important;
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5) !important;
-    transform: scale(1.08);
-    z-index: 100;
-    transition: all 0.12s ease;
-}
-
-.cell.highlight-green {
-    background: rgba(40, 167, 69, 0.5) !important;
-    box-shadow: 0 0 30px rgba(40, 167, 69, 0.9), inset 0 0 20px rgba(40, 167, 69, 0.5) !important;
-    transform: scale(1.1);
-    z-index: 100;
-    transition: all 0.15s ease;
-}
-
-.cell.highlight-red {
-    background: rgba(220, 53, 69, 0.5) !important;
-    box-shadow: 0 0 30px rgba(220, 53, 69, 0.9), inset 0 0 20px rgba(220, 53, 69, 0.5) !important;
-    transform: scale(1.08);
-    z-index: 100;
-    transition: all 0.12s ease;
-}
-
-/* ============================================
    🎨 SKLYPŲ GRUPAVIMAS
    ============================================ */
 
-/* Visi sklypai su spalva – storesnis rėmelis */
 .cell.property[data-group] {
     border-width: 3px;
     position: relative;
 }
 
-/* Grupės spalva – viršutinė juostelė */
-
-
-/* Pilnos grupės – auksinis rėmelis */
 .cell.property.full-group {
-    border-color: #ffd700 !important;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.3) !important;
+    border-color: #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.3);
     animation: fullGroupPulse 2s ease-in-out infinite;
 }
 
-/* Auksinė juostelė pilnai grupei */
 .cell.property.full-group::after {
-    background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700) !important;
+    background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700);
     height: 5px;
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
 }
@@ -3533,45 +3262,8 @@ body {
     }
 }
 
-/* Sklypai be grupės – plonesnis rėmelis */
 .cell.property:not([data-group]) {
     border-width: 2px;
-}
-
-/* ============================================
-   🎴 KORTELĖS IŠŠOKIMAS
-   ============================================ */
-
-@keyframes cardFlip {
-    0% {
-        transform: scale(0) rotateY(-180deg);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.1) rotateY(0deg);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1) rotateY(0deg);
-        opacity: 1;
-    }
-}
-
-@keyframes cardGlow {
-    0%, 100% {
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(255, 215, 0, 0.5);
-    }
-    50% {
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 50px rgba(255, 215, 0, 0.8);
-    }
-}
-
-#cardContent {
-    animation: cardFlip 0.6s ease-out, cardGlow 2s ease-in-out infinite;
-}
-
-#cardModal.show {
-    display: flex !important;
 }
 
 /* ============================================
@@ -3617,7 +3309,6 @@ body {
    🖱️ MYGTUKŲ HOVER EFEKTAI
    ============================================ */
 
-/* Visi mygtukai – bazinis transition */
 button,
 .btn,
 .menu-btn,
@@ -3627,11 +3318,10 @@ button,
 .control-buttons button,
 .choice-btn,
 .action-row button {
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
 }
 
-/* Landing mygtukai */
 .landing-btn {
     position: relative;
     overflow: hidden;
@@ -3668,7 +3358,6 @@ button,
     box-shadow: 0 10px 30px rgba(23, 162, 184, 0.5);
 }
 
-/* Menu mygtukai */
 .menu-btn {
     position: relative;
     overflow: hidden;
@@ -3698,89 +3387,81 @@ button,
     border-color: #ffd700;
 }
 
-/* Header mygtukai */
 .header-btn:hover {
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
 }
 
-/* Kairės panelės mygtukai */
 .left-btn:hover {
     transform: translateY(-2px) scale(1.03);
     box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
 }
 
 .leave-btn:hover {
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
 }
 
-/* Valdymo mygtukai */
 .control-buttons button:hover:not(:disabled) {
     transform: translateY(-2px) scale(1.08);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .btn-dice:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
 }
 
 .btn-trade:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
 }
 
-/* Action mygtukai */
 .action-row button:hover:not(:disabled) {
     transform: translateY(-2px) scale(1.05);
 }
 
 .btn-bankrupt:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
 }
 
 .btn-demolish:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
 }
 
-/* Choice mygtukai */
 .choice-btn:hover {
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .choice-buy:hover {
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
 }
 
 .choice-cancel:hover {
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
 }
 
-/* Bendri .btn */
 .btn:hover {
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 .btn-primary:hover {
-    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5) !important;
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
 }
 
 .btn-secondary:hover {
-    box-shadow: 0 10px 30px rgba(108, 117, 125, 0.5) !important;
+    box-shadow: 0 10px 30px rgba(108, 117, 125, 0.5);
 }
 
-/* Mygtukų paspaudimas (active) */
 button:active:not(:disabled),
 .btn:active,
 .menu-btn:active,
 .landing-btn:active,
 .header-btn:active,
 .left-btn:active {
-    transform: translateY(0) scale(0.98) !important;
-    transition: all 0.1s !important;
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s;
 }
 
-/* Išjungti mygtukai */
 button:disabled,
 .btn:disabled {
     cursor: not-allowed;
@@ -3788,225 +3469,75 @@ button:disabled,
 }
 
 /* ============================================
-   🎲 KAULIUKŲ PATOBULINIMAI
-   ============================================ */
-
-/* Didesni kauliukai (5) + švytėjimas (3) */
-.dice {
-    width: clamp(50px, 5vw, 80px) !important;
-    height: clamp(50px, 5vw, 80px) !important;
-    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.25), inset 0 -2px 5px rgba(0,0,0,0.1) !important;
-    transition: transform 0.3s, box-shadow 0.3s !important;
-}
-
-.dice:hover {
-    transform: scale(1.08) !important;
-    box-shadow: 0 6px 25px rgba(0,0,0,0.35), 0 0 20px rgba(255,215,0,0.4) !important;
-}
-
-.dice-dots-container {
-    width: clamp(36px, 4vw, 60px) !important;
-    height: clamp(36px, 4vw, 60px) !important;
-    gap: 6px !important;
-}
-
-.dice-dot {
-    width: clamp(8px, 0.9vw, 14px) !important;
-    height: clamp(8px, 0.9vw, 14px) !important;
-    background: radial-gradient(circle at 30% 30%, #4a4a4a, #1a1a1a) !important;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4) !important;
-}
-
-/* 🎬 Sukimosi animacija (4) + Metimo animacija (8) */
-@keyframes diceRollEnhanced {
-    0% {
-        transform: rotate(0deg) scale(1);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-    }
-    20% {
-        transform: rotate(72deg) scale(1.15);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-    }
-    40% {
-        transform: rotate(144deg) scale(0.9);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-    }
-    60% {
-        transform: rotate(216deg) scale(1.2);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-    }
-    80% {
-        transform: rotate(288deg) scale(0.95);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    }
-    100% {
-        transform: rotate(360deg) scale(1);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-    }
-}
-
-.dice.rolling {
-    animation: diceRollEnhanced 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
-}
-
-/* ✨ Švytėjimo efektas (10) */
-@keyframes diceGlow {
-    0%, 100% {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 5px rgba(255,215,0,0.3);
-    }
-    50% {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 25px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4);
-    }
-}
-
-.dice.rolling {
-    animation: diceRollEnhanced 0.8s cubic-bezier(0.4, 0.0, 0.2, 1), diceGlow 0.8s ease-in-out !important;
-}
-
-/* 🎲 3D efektas (13) */
-.dice {
-    perspective: 1000px;
-    transform-style: preserve-3d;
-}
-
-.dice.rolling {
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
-}
-
-/* Kai sustoja - trumpas efektas */
-@keyframes diceSettle {
-    0% { transform: scale(1.1); }
-    50% { transform: scale(0.95); }
-    100% { transform: scale(1); }
-}
-
-.dice.settle {
-    animation: diceSettle 0.3s ease-out;
-}
-
-/* 📱 Telefono versija */
-@media (max-width: 768px) {
-    .dice {
-        width: 50px !important;
-        height: 50px !important;
-    }
-    
-    .dice-dots-container {
-        width: 36px !important;
-        height: 36px !important;
-        gap: 4px !important;
-    }
-    
-    .dice-dot {
-        width: 8px !important;
-        height: 8px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .dice {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    
-    .dice-dots-container {
-        width: 28px !important;
-        height: 28px !important;
-        gap: 3px !important;
-    }
-    
-    .dice-dot {
-        width: 6px !important;
-        height: 6px !important;
-    }
-}
-
-/* 🆕 Mini kortelės su ikona (service1/2/3) */
-.mini-card-color.mini-card-icon {
-    background: linear-gradient(145deg, #f0e8d8, #e0d5c0) !important;
-    border-bottom: 1px solid rgba(61,43,31,0.2);
-}
-
-/* ============================================
-   🌙 TAMSAUS REŽIMO SPALVOS (hibridas)
+   🌙 TAMSAUS REŽIMO SPALVOS
    ============================================ */
 
 body.dark-mode {
-    background: #0a0a0a !important;
+    background: #0a0a0a;
 }
 
-/* Langeliai */
 body.dark-mode .cell {
-    background: linear-gradient(145deg, #2a2a2a, #1f1f1f) !important;
-    color: #e0e0e0 !important;
-    border-color: #444 !important;
+    background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+    color: #e0e0e0;
+    border-color: #444;
 }
 
 body.dark-mode .cell .cell-name,
 body.dark-mode .cell .cell-cost,
 body.dark-mode .cell .cell-number {
-    color: #e0e0e0 !important;
+    color: #e0e0e0;
 }
 
-/* Vidurinės panelės */
 body.dark-mode .center-cell {
-    background: linear-gradient(145deg, #2a2a2a, #1a1a1a) !important;
-    border-color: #444 !important;
-    color: #e0e0e0 !important;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-color: #444;
+    color: #e0e0e0;
 }
 
 body.dark-mode .center-cell h4 {
-    color: #e0e0e0 !important;
-    border-bottom-color: rgba(224, 224, 224, 0.2) !important;
+    color: #e0e0e0;
+    border-bottom-color: rgba(224, 224, 224, 0.2);
 }
 
-/* Chat, žurnalas, pranešimai */
 body.dark-mode #chatMessages,
 body.dark-mode #journal,
 body.dark-mode #notifications,
 body.dark-mode #playersList {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
 }
 
 body.dark-mode .journal-item {
-    color: #e0e0e0 !important;
-    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 body.dark-mode .notification-item {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
 }
 
 body.dark-mode .player-item {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
 }
 
-/* Aš (myInfo) */
 body.dark-mode #myInfo {
-    color: #e0e0e0 !important;
+    color: #e0e0e0;
 }
 
 body.dark-mode #myInfo .player-money {
-    color: #fff !important;
+    color: #fff;
 }
 
 body.dark-mode #myInfo .player-name {
-    color: #e0e0e0 !important;
+    color: #e0e0e0;
 }
 
-/* Info panelė */
 body.dark-mode #cellInfoPanel {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
 }
-
-/* Property spalvų juostelė – lieka ta pati, kad būtų atpažįstama */
-
-/* Modalai, mygtukai, kauliukai – lieka savo spalvų */
 
 /* ============================================
    🆕 BUY CARD (5 langelyje)
@@ -4047,7 +3578,7 @@ body.dark-mode #cellInfoPanel {
    ============================================ */
 
 #center-1 {
-    overflow: hidden !important;
+    overflow: hidden;
     position: relative;
     z-index: 100;
     min-height: 0;
@@ -4056,41 +3587,22 @@ body.dark-mode #cellInfoPanel {
 }
 
 #center-1 .center-cell {
-    overflow: hidden !important;
+    overflow: hidden;
 }
 
 #center-1 .mini-cards-container {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow-y: auto;
+    overflow-x: hidden;
     box-sizing: border-box;
     flex: 1 1 45%;
     min-height: 0;
 }
 
 #center-1 #myInfo {
-    overflow: hidden !important;
+    overflow: hidden;
 }
 
 .row-middle-center,
 .center-row {
     overflow: visible;
-}
-
-/* 🆕 Scrollbar stilizavimas */
-.mini-cards-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.mini-cards-container::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1);
-    border-radius: 3px;
-}
-
-.mini-cards-container::-webkit-scrollbar-thumb {
-    background: #c9a84c;
-    border-radius: 3px;
-}
-
-.mini-cards-container::-webkit-scrollbar-thumb:hover {
-    background: #ffd700;
 }
