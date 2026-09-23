@@ -253,10 +253,6 @@ io.on('connection', (socket) => {
         
         // 🆕 Išsaugoti IP
         player.ip = socket.clientIp;
-        // 🆕 Patvirtinti spalvos rezervaciją
-        if (color) {
-            game.confirmColorReservation(color, socket.id);
-        }
         
         games.set(gameId, game);
         socket.join(gameId);
