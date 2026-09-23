@@ -421,17 +421,33 @@ function initSocket() {
                     return;
                 }
             } else if (data.field.type === 'service1' || data.field.type === 'service2' || data.field.type === 'service3') {
-                msgKey = isMe ? 'visitMine' : 'visitOthers';
-                
-                let serviceIds;
-                if (data.field.type === 'service1') serviceIds = SERVICE1_IDS;
-                else if (data.field.type === 'service2') serviceIds = SERVICE2_IDS;
-                else serviceIds = SERVICE3_IDS;
-                
-                const count = owner?.properties?.filter(id => serviceIds.includes(id)).length || 0;
-                msgData.count = count;
-                msgData.countSuffix = getCountSuffix(count);
-            }
+    // 🆕 Jei ką tik nusipirkai – nerodyti "visitMine" pranešimo
+    if (data.result.action === 'can_buy') {
+        updateUI(gameState);
+        return;  // ← ← ← NUTRAUKTI – pirks per buyChoice
+    }
+    
+    // 🆕 Jei serviceOwner yra TU – rodyti "visitMine"
+    // Jei ne – rodyti "visitOthers" arba "rentPayer"
+    if (owner && owner.id === data.player.id) {
+        msgKey = 'visitMine';
+    } else if (owner && owner.id === playerId) {
+        msgKey = 'rentOwner';  // ← ← ← KAI KITAS ATVYKO, O AŠ SAVININKAS
+    } else if (isMe) {
+        msgKey = 'rentPayer';  // ← ← ← KAI AŠ ATVYKAU IR MOKU NUOMĄ
+    } else {
+        msgKey = 'rentObserver';
+    }
+    
+    let serviceIds;
+    if (data.field.type === 'service1') serviceIds = SERVICE1_IDS;
+    else if (data.field.type === 'service2') serviceIds = SERVICE2_IDS;
+    else serviceIds = SERVICE3_IDS;
+    
+    const count = owner?.properties?.filter(id => serviceIds.includes(id)).length || 0;
+    msgData.count = count;
+    msgData.countSuffix = getCountSuffix(count);
+}
             
             if (msgKey) {
                 const msg = getCellMessage(fieldId, msgKey, msgData);
