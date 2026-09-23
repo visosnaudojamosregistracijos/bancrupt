@@ -508,40 +508,41 @@ class Game {
         const result = this.handleField(player, currentField);
         
         if (result.action === 'can_buy') {
-            this.waitingForBuy = true;
-            this.isRolling = false;
-            
-            if (this.emitFunction) {
-                this.emitFunction('showBuy', {
-                    fieldId: currentField.id,
-                    playerId: player.id,
-                    fieldName: currentField.name,
-                    fieldCost: currentField.cost
-                }, player.socketId);
-                
-                this.emitFunction('buyPending', {
-                    playerId: player.id,
-                    playerName: player.name,
-                    fieldName: currentField.name,
-                    fieldCost: currentField.cost
-                });
-            }
-            
-            this.startBuyTimeout(playerId);
-            
-            return { 
-                dice: [dice1, dice2], 
-                total, 
-                player, 
-                field: currentField,
-                result,
-                double: this.doubleRoll,
-                oldPosition: oldPosition,
-                newPosition: newPosition,
-                canBuy: true,
-                message: `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`
-            };
-        }
+    this.waitingForBuy = true;
+    this.isRolling = false;
+    
+    if (this.emitFunction) {
+        // 🆕 Siųsti VISIEMS – klientas pats nuspręs, ar rodyti
+        this.emitFunction('showBuy', {
+            fieldId: currentField.id,
+            playerId: player.id,
+            fieldName: currentField.name,
+            fieldCost: currentField.cost
+        });  // ← ← ← BE socketId!
+        
+        this.emitFunction('buyPending', {
+            playerId: player.id,
+            playerName: player.name,
+            fieldName: currentField.name,
+            fieldCost: currentField.cost
+        });
+    }
+    
+    this.startBuyTimeout(playerId);
+    
+    return { 
+        dice: [dice1, dice2], 
+        total, 
+        player, 
+        field: currentField,
+        result,
+        double: this.doubleRoll,
+        oldPosition: oldPosition,
+        newPosition: newPosition,
+        canBuy: true,
+        message: `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`
+    };
+}
 
         this.turnHistory.push({
             player: player.name,
@@ -640,7 +641,7 @@ class Game {
                     playerId: player.id,
                     fieldName: currentField.name,
                     fieldCost: currentField.cost
-                }, player.socketId);
+                });
                 
                 this.emitFunction('buyPending', {
                     playerId: player.id,

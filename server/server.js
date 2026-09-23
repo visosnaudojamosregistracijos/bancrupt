@@ -233,6 +233,8 @@ io.on('connection', (socket) => {
         
         // 🆕 Išsaugoti IP
         player.ip = socket.clientIp;
+        // 🆕 Išsaugoti socketId
+        player.socketId = socket.id;
         
         games.set(gameId, game);
         socket.join(gameId);
@@ -285,6 +287,8 @@ io.on('connection', (socket) => {
         
         // 🆕 Išsaugoti IP
         player.ip = socket.clientIp;
+        // 🆕 Išsaugoti socketId
+        player.socketId = socket.id;
 
         socket.join(gameId.toUpperCase());
         socket.leave('lobby');
