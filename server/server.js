@@ -92,21 +92,6 @@ setInterval(() => {
     }
 }, 60000);
 
-// ============================================
-// SISTEMOS APKROVOS TIKRINIMAS
-// ============================================
-function checkSystemLoad() {
-    const totalMem = os.totalmem();
-    const freeMem = os.freemem();
-    const usedMem = totalMem - freeMem;
-    const memPercent = (usedMem / totalMem) * 100;
-    
-    const cpus = os.cpus();
-    const loadAvg = os.loadavg()[0];
-    const cpuPercent = (loadAvg / cpus.length) * 100;
-    
-    return { memPercent, cpuPercent, totalMem, freeMem };
-}
 
 // ============================================
 // AR GALIMA KURTI NAUJĄ STALĄ?
@@ -159,13 +144,8 @@ function canCreateGame(socket, isPublic) {
         return { can: false, reason: `Serveris pilnas (max ${LIMITS.MAX_PLAYERS_TOTAL} žaidėjų)` };
     }
     
-    const load = checkSystemLoad();
-    if (load.memPercent > LIMITS.RAM_LIMIT) {
-        return { can: false, reason: `RAM ${load.memPercent.toFixed(0)}% (max ${LIMITS.RAM_LIMIT}%)` };
-    }
-    if (load.cpuPercent > LIMITS.CPU_LIMIT) {
-        return { can: false, reason: `CPU ${load.cpuPercent.toFixed(0)}% (max ${LIMITS.CPU_LIMIT}%)` };
-    }
+    // 🆕 CPU/RAM patikrinimas IŠIMTAS – Railway pats tvarko resursus
+    // os.loadavg() Railway container'iuose rodo neteisingus duomenis
     
     return { can: true };
 }
