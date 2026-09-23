@@ -1859,19 +1859,24 @@ function showCellInfo(fieldId) {
     
     if (field.type === 'property' && field.color) {
         const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
-        const baseRent = Math.floor(field.cost * 0.1);
+        
+        // 🆕 NAUJA FORMULĖ
+        const baseRent = Math.round(field.cost * 0.10);
+        const fullGroupRent = Math.round(field.cost * 0.20);
+        const rent1 = Math.round(field.cost * 1.00);
+        const rent2 = Math.round(field.cost * 2.00);
+        const rent3 = Math.round(field.cost * 3.00);
+        const rent4 = Math.round(field.cost * 4.00);
+        const rentHotel = Math.round(field.cost * 5.00);
         
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
-        html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
-        
-        const multipliers = [10, 20, 30, 40];
-        for (let i = 1; i <= 4; i++) {
-            const rent = Math.floor(baseRent * multipliers[i - 1]);
-            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
-        }
-        
-        const hotelRent = Math.floor(baseRent * 50);
-        html += `<div class="info-row"><span class="label">🏨 Viežbutis:</span><span class="value">€${hotelRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">Vienas sklypas:</span><span class="value">€${baseRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">Pilna gatvė:</span><span class="value">€${fullGroupRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">Su 1 namu:</span><span class="value">€${rent1}</span></div>`;
+        html += `<div class="info-row"><span class="label">Su 2 namais:</span><span class="value">€${rent2}</span></div>`;
+        html += `<div class="info-row"><span class="label">Su 3 namais:</span><span class="value">€${rent3}</span></div>`;
+        html += `<div class="info-row"><span class="label">Su 4 namais:</span><span class="value">€${rent4}</span></div>`;
+        html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${rentHotel}</span></div>`;
         html += `</div>`;
     }
     
@@ -2034,19 +2039,24 @@ function showMiniCardTooltip(fieldId, cardElement) {
     
     if (field.type === 'property' && field.color) {
         const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
-        const baseRent = Math.floor(field.cost * 0.1);
+        
+        // 🆕 NAUJA FORMULĖ
+        const baseRent = Math.round(field.cost * 0.10);
+        const fullGroupRent = Math.round(field.cost * 0.20);
+        const rent1 = Math.round(field.cost * 1.00);
+        const rent2 = Math.round(field.cost * 2.00);
+        const rent3 = Math.round(field.cost * 3.00);
+        const rent4 = Math.round(field.cost * 4.00);
+        const rentHotel = Math.round(field.cost * 5.00);
         
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
-        html += `<div class="info-row"><span class="label">Bazinė:</span><span class="value">€${baseRent}</span></div>`;
-        
-        const multipliers = [10, 20, 30, 40];
-        for (let i = 1; i <= 4; i++) {
-            const rent = Math.floor(baseRent * multipliers[i - 1]);
-            html += `<div class="info-row"><span class="label">Su ${i} nam${i === 1 ? 'u' : 'ais'}:</span><span class="value">€${rent}</span></div>`;
-        }
-        
-        const hotelRent = Math.floor(baseRent * 50);
-        html += `<div class="info-row"><span class="label">🏨 Viežbutis:</span><span class="value">€${hotelRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">Vienas sklypas:</span><span class="value">€${baseRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">Pilna gatvė:</span><span class="value">€${fullGroupRent}</span></div>`;
+        html += `<div class="info-row"><span class="label">Su 1 namu:</span><span class="value">€${rent1}</span></div>`;
+        html += `<div class="info-row"><span class="label">Su 2 namais:</span><span class="value">€${rent2}</span></div>`;
+        html += `<div class="info-row"><span class="label">Su 3 namais:</span><span class="value">€${rent3}</span></div>`;
+        html += `<div class="info-row"><span class="label">Su 4 namais:</span><span class="value">€${rent4}</span></div>`;
+        html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${rentHotel}</span></div>`;
         html += `</div>`;
         
         if (owner) {

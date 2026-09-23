@@ -334,19 +334,37 @@ class BuildingLogic {
             return rent;
         }
 
-        // Standartinė logika
-        const baseRent = field.cost * C.RENT_BASE_RATIO;
-        
+        // 🆕 NAUJA FORMULĖ
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         
-        let multiplier = 1;
-        if (houses >= 1 && houses <= 4) {
-            multiplier = C.RENT_MULTIPLIERS[houses - 1];
-        } else if (houses >= 5) {
-            multiplier = C.RENT_MULTIPLIERS[4];
-        }
+        // Patikrinti, ar žaidėjas turi pilną grupę
+        const fieldColor = field.color;
+        const groupFields = C.COLOR_GROUPS[fieldColor] || [];
+        const hasFullGroup = groupFields.every(id => player.properties.includes(id));
         
-        const rent = Math.floor(baseRent * multiplier);
+        let rent = 0;
+        
+        if (houses === 0) {
+            // Be namų
+            if (hasFullGroup) {
+                // Pilna gatvė be namų
+                rent = Math.round(field.cost * 0.20);
+            } else {
+                // Vienas sklypas be namų
+                rent = Math.round(field.cost * 0.10);
+            }
+        } else if (houses === 1) {
+            rent = Math.round(field.cost * 1.00);
+        } else if (houses === 2) {
+            rent = Math.round(field.cost * 2.00);
+        } else if (houses === 3) {
+            rent = Math.round(field.cost * 3.00);
+        } else if (houses === 4) {
+            rent = Math.round(field.cost * 4.00);
+        } else if (houses >= 5) {
+            // Viešbutis
+            rent = Math.round(field.cost * 5.00);
+        }
         
         return rent;
     }

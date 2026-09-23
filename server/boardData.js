@@ -12,23 +12,23 @@ const boardData = [
     { id: 3, name: 'Plungė', type: 'property', color: '#ffd700', cost: 70, icon: '' },
     { id: 4, name: 'HORNY RP', type: 'special', color: null, cost: 0, icon: '💋' },
     { id: 5, name: 'VMI', type: 'tax', color: '#dc3545', cost: 100, icon: '💰' },
-    { id: 6, name: 'Kėdainiai', type: 'property', color: '#4a90d9', cost: 100, icon: '' },
+    { id: 6, name: 'Kėdainiai', type: 'property', color: '#4a90d9', cost: 90, icon: '' },
     { id: 7, name: 'Ariogala', type: 'property', color: '#4a90d9', cost: 110, icon: '' },
     { id: 8, name: 'ORO UOSTAS', type: 'service2', color: null, cost: 200, icon: '✈️' },
     { id: 9, name: 'Ramygala', type: 'property', color: '#4a90d9', cost: 120, icon: '' },
     { id: 10, name: 'Utena', type: 'property', color: '#2ecc71', cost: 140, icon: '' },
     { id: 11, name: 'Cirkas', type: 'service3', color: null, cost: 100, icon: '🎪' },
-    { id: 12, name: 'Anykščiai', type: 'property', color: '#2ecc71', cost: 150, icon: '' },
+    { id: 12, name: 'Anykščiai', type: 'property', color: '#2ecc71', cost: 160, icon: '' },
     { id: 13, name: 'LIGONINĖ', type: 'special', color: null, cost: 100, icon: '🏥' },
     { id: 14, name: 'ŠIUKŠLĖS', type: 'service1', color: null, cost: 150, icon: '🗑️' },
-    { id: 15, name: 'Zarasai', type: 'property', color: '#2ecc71', cost: 160, icon: '' },
+    { id: 15, name: 'Zarasai', type: 'property', color: '#2ecc71', cost: 170, icon: '' },
         
     // KAMPAS 2: KALĖJIMAS
     { id: 16, name: 'Kaleimas', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
     
     // DEŠINĖ
     { id: 17, name: 'Mažeikiai', type: 'property', color: '#9b59b6', cost: 180, icon: '' },
-    { id: 18, name: 'Skuodas', type: 'property', color: '#9b59b6', cost: 200, icon: '' },
+    { id: 18, name: 'Skuodas', type: 'property', color: '#9b59b6', cost: 190, icon: '' },
     { id: 19, name: 'GEL. STOTIS', type: 'service2', color: null, cost: 200, icon: '🚂' },
     { id: 20, name: 'N.Akmenė', type: 'property', color: '#9b59b6', cost: 220, icon: '' },
     { id: 21, name: 'LATRŲ BARAS', type: 'tax', color: '#dc3545', cost: 0, icon: '🍺' },

@@ -50,8 +50,8 @@ module.exports = {
     // Aukciono startinė kaina (70% kortelės vertės)
     AUCTION_START_RATIO: 0.7,
     
-    // Namo statyba (50% sklypo vertės)
-    BUILD_COST_RATIO: 0.5,
+    // Namo statyba (100% sklypo vertės)
+    BUILD_COST_RATIO: 1.0,
     
     // Viešbučio statyba (100% sklypo vertės)
     HOTEL_COST_RATIO: 1.0,
@@ -65,8 +65,8 @@ module.exports = {
     // Bazinė nuoma (10% sklypo vertės)
     RENT_BASE_RATIO: 0.1,
     
-    // Nuomos daugikliai: [1 namas, 2, 3, 4, viešbutis]
-    RENT_MULTIPLIERS: [10, 20, 30, 40, 50],
+    // Nuomos daugikliai (nebereikalingi, nes naudojama nauja formulė)
+    // RENT_MULTIPLIERS: [10, 20, 30, 40, 50],
 
     // ============================================
     // ŽAIDIMO KONSTANTOS
