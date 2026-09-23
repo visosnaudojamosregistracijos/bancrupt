@@ -227,6 +227,53 @@ function initSocket() {
         }
     });
 
+     // 🆕 Rezervacijos rezultatas
+    socket.on('reserveColorResult', (data) => {
+        if (data.error) {
+            console.log('⚠️ Rezervacija nepavyko:', data.error);
+            playErrorSound();
+        } else {
+            console.log('✅ Spalva rezervuota:', data.color);
+        }
+    });
+
+    // 🆕 Spalvų sąrašas atsinaujino (kažkas rezervavo/atlaisvino)
+    socket.on('gameColorsUpdated', (data) => {
+        console.log('🎨 Spalvos atsinaujino:', data);
+        
+        // Patikrinti, ar šis update skirtas mūsų žaidimui
+        const currentGameId = document.getElementById('gameIdInput')?.value.trim().toUpperCase();
+        if (!currentGameId || currentGameId !== data.gameId) return;
+        
+        // Jei esame join puslapyje – atnaujinti spalvas
+        if (document.getElementById('page-join')?.classList.contains('active')) {
+            availableJoinColors = data.available;
+            
+            // Jei mūsų pasirinkta spalva dingo – atšaukti
+            if (selectedJoinColor && !availableJoinColors.includes(selectedJoinColor)) {
+                selectedJoinColor = null;
+            }
+            
+            renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
+            
+            const status = document.getElementById('joinColorStatus');
+            if (status) {
+                const totalColors = PLAYER_COLORS.length;
+                status.textContent = `👥 Laisvos: ${availableJoinColors.length}/${totalColors}`;
+            }
+        }
+    });
+
+    // 🆕 Rezervacija baigėsi (30s)
+    socket.on('colorReservationExpired', (data) => {
+        console.log('⏰ Spalvos rezervacija baigėsi:', data.color);
+        // Refresh – iš naujo gauti spalvas
+        const gid = document.getElementById('gameIdInput')?.value.trim().toUpperCase();
+        if (gid) {
+            socket.emit('getGameColors', { gameId: gid });
+        }
+    });
+
     // WAITING ROOM
     socket.on('waitingRoomUpdate', (state) => {
         console.log('⏳ Waiting room update:', state);
@@ -1004,8 +1051,22 @@ function selectJoinColor(color) {
         return;
     }
     
+    // 🆕 Atlaisvinti seną rezervaciją
+    if (selectedJoinColor && selectedJoinColor !== color) {
+        const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
+        if (gid && socket) {
+            socket.emit('releaseColor', { gameId: gid, color: selectedJoinColor });
+        }
+    }
+    
     selectedJoinColor = color;
     renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
+    
+    // 🆕 Rezervuoti naują spalvą
+    const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
+    if (gid && socket) {
+        socket.emit('reserveColor', { gameId: gid, color: color });
+    }
 }
 
 function checkGameColors() {
@@ -2052,6 +2113,8 @@ function createGame() {
     const isPublicCheckbox = document.getElementById('createIsPublic');
     const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
     
+
+
     socket.emit('createGame', {
         name: name,
         color: selectedCreateColor,
@@ -2090,6 +2153,15 @@ function joinGame() {
     // 🆕 Išvalyti žurnalą naujam žaidimui
     clearJournal();
     
+// 🆕 Rezervacija bus patvirtinta serverio pusėje
+    // (joinGame handler'is iškviečia confirmColorReservation)
+    
+    socket.emit('joinGame', { 
+        gameId: gid, 
+        playerName: name,
+        color: selectedJoinColor
+    });
+
     socket.emit('joinGame', { 
         gameId: gid, 
         playerName: name,
@@ -2387,6 +2459,13 @@ function cancelBuy() {
 // ============================================
 
 function rollDice() {
+    const rollBtn = document.getElementById('rollBtn');
+    if (rollBtn && rollBtn.dataset.blockedByAction === 'true') {
+        alert('⏳ Palauk, kol baigsis pranešimas!');
+        playErrorSound();
+        return;
+    }
+    
     if (!isMyTurn) {
         alert('⏳ Ne tavo eilė!');
         playErrorSound();
@@ -3342,7 +3421,16 @@ if (me.properties.length > 0) {
     const isDebtor = myPlayer && myPlayer.isDebtor;
     isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left && !myPlayer.kicked;
     
-    document.getElementById('rollBtn').disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
+    const rollBtn = document.getElementById('rollBtn');
+    if (rollBtn) {
+        const blockedByAction = rollBtn.dataset.blockedByAction === 'true';
+        
+        if (blockedByAction) {
+            rollBtn.disabled = true;
+        } else {
+            rollBtn.disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
+        }
+    }
     
     const tradeBtn = document.getElementById('tradeBtn');
     if (tradeBtn) {
@@ -3741,6 +3829,16 @@ function showCellAction(message, type = 'info') {
     
     if (!header || !body) return;
     
+    // 🆕 SUSTABDYTI seną timeout'ą IR PASLĖPTI seną pranešimą
+    if (cellActionTimeout) {
+        clearTimeout(cellActionTimeout);
+        cellActionTimeout = null;
+    }
+    
+    // 🆕 PASLĖPTI seną pranešimą (kad naujas išstumtų)
+    box.style.display = 'none';
+    box.classList.remove('show');
+    
     let headerText = '📢 PRANEŠIMAS';
     let headerColor = '#1a6b3c';
     let borderColor = '#c9a84c';
@@ -3769,10 +3867,24 @@ function showCellAction(message, type = 'info') {
     
     body.innerHTML = `<p>${message}</p>`;
     
-    box.style.display = 'flex';
-    box.classList.add('show');
+    // 🆕 BLOKUOTI "Mesti" mygtuką, kol rodomas pranešimas
+    const rollBtn = document.getElementById('rollBtn');
+    if (rollBtn) {
+        rollBtn.disabled = true;
+        rollBtn.dataset.blockedByAction = 'true';
+    }
     
-    if (cellActionTimeout) clearTimeout(cellActionTimeout);
+    // 🆕 Rodyti naują pranešimą (kartu su animacija)
+    requestAnimationFrame(() => {
+        box.style.display = 'flex';
+        box.classList.add('show');
+        
+        box.style.animation = 'none';
+        void box.offsetHeight;
+        box.style.animation = 'choiceFadeIn 0.25s ease';
+    });
+    
+    // 🆕 3 sekundžių timeout'as
     cellActionTimeout = setTimeout(() => {
         hideCellAction();
         cellActionTimeout = null;
@@ -3784,6 +3896,21 @@ function hideCellAction() {
     if (!box) return;
     box.style.display = 'none';
     box.classList.remove('show');
+    
+    // 🆕 Išvalyti timeout'ą
+    if (cellActionTimeout) {
+        clearTimeout(cellActionTimeout);
+        cellActionTimeout = null;
+    }
+    
+    // 🆕 ATBLOKUOTI "Mesti" mygtuką
+    const rollBtn = document.getElementById('rollBtn');
+    if (rollBtn && rollBtn.dataset.blockedByAction === 'true') {
+        delete rollBtn.dataset.blockedByAction;
+        if (gameState) {
+            updateUI(gameState);
+        }
+    }
 }
 
 // 🌙 Tamsaus režimo funkcijos

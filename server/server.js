@@ -253,6 +253,10 @@ io.on('connection', (socket) => {
         
         // 🆕 Išsaugoti IP
         player.ip = socket.clientIp;
+        // 🆕 Patvirtinti spalvos rezervaciją
+        if (color) {
+            game.confirmColorReservation(color, socket.id);
+        }
         
         games.set(gameId, game);
         socket.join(gameId);
@@ -1021,6 +1025,58 @@ io.on('connection', (socket) => {
         const game = games.get(socket.gameId);
         if (!game) return;
         socket.emit('waitingRoomUpdate', game.getWaitingRoomState());
+    });
+
+// ============================================
+    // 🆕 SPALVŲ REZERVACIJA
+    // ============================================
+    socket.on('reserveColor', ({ gameId, color }) => {
+        if (!gameId || !color) {
+            socket.emit('reserveColorResult', { error: 'Trūksta duomenų' });
+            return;
+        }
+        
+        const game = games.get(gameId.toUpperCase());
+        if (!game) {
+            socket.emit('reserveColorResult', { error: 'Žaidimas nerastas' });
+            return;
+        }
+        
+        const result = game.reserveColor(color, socket.id);
+        socket.emit('reserveColorResult', result);
+        
+        // 🆕 Pranešti visiems, kad spalva pasikeitė
+        if (result.success) {
+            // Broadcast atnaujintą spalvų sąrašą visiems, kurie žiūri šį žaidimą
+            const used = game.getUsedColors();
+            const available = game.getAvailableColors();
+            
+            io.emit('gameColorsUpdated', {
+                gameId: gameId.toUpperCase(),
+                available: available,
+                used: used
+            });
+        }
+    });
+
+    socket.on('releaseColor', ({ gameId, color }) => {
+        if (!gameId || !color) return;
+        
+        const game = games.get(gameId.toUpperCase());
+        if (!game) return;
+        
+        const result = game.releaseColor(color, socket.id);
+        
+        if (result.success) {
+            const used = game.getUsedColors();
+            const available = game.getAvailableColors();
+            
+            io.emit('gameColorsUpdated', {
+                gameId: gameId.toUpperCase(),
+                available: available,
+                used: used
+            });
+        }
     });
 
     // ============================================

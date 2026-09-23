@@ -34,6 +34,8 @@ class Game {
         this.gameId = null;
         // BUY TIMEOUT
         this.buyTimeoutTimer = null;
+        // 🆕 SPALVŲ REZERVACIJA
+        this.reservedColors = new Map(); // color -> { socketId, timeout, timestamp }
     }
 
     setEmitFunction(emitFn) {
@@ -138,9 +140,92 @@ class Game {
     // ============================================
 
     getUsedColors() {
-        return this.players
+        const playerColors = this.players
             .filter(p => !p.left && !p.bankrupt && !p.kicked)
             .map(p => p.color);
+        
+        // 🆕 Pridėti rezervuotas spalvas (kurios dar neprisijungusios)
+        const reservedColors = Array.from(this.reservedColors.keys())
+            .filter(color => !playerColors.includes(color));
+        
+        return [...playerColors, ...reservedColors];
+    }
+
+    // 🆕 Rezervuoti spalvą
+    reserveColor(color, socketId) {
+        if (!color) return { error: 'Nėra spalvos' };
+        
+        // Patikrinti, ar spalva jau užimta žaidėjo
+        const isTaken = this.players.some(p => 
+            p.color === color && !p.left && !p.bankrupt && !p.kicked
+        );
+        
+        if (isTaken) {
+            return { error: 'Ši spalva jau užimta!' };
+        }
+        
+        // Išvalyti seną rezervaciją šiam socketId
+        for (const [c, data] of this.reservedColors) {
+            if (data.socketId === socketId && c !== color) {
+                if (data.timeout) clearTimeout(data.timeout);
+                this.reservedColors.delete(c);
+            }
+        }
+        
+        // Išvalyti seną timeout'ą tai pačiai spalvai
+        const existing = this.reservedColors.get(color);
+        if (existing && existing.timeout) {
+            clearTimeout(existing.timeout);
+        }
+        
+        // Nustatyti naują rezervaciją su 30s timeout'u
+        const timeout = setTimeout(() => {
+            this.reservedColors.delete(color);
+            console.log(`⏰ Spalvos rezervacija baigėsi: ${color}`);
+            
+            // 🆕 Pranešti visiems žaidėjams, kad spalva vėl laisva
+            if (this.emitFunction) {
+                this.emitFunction('colorReservationExpired', { color });
+            }
+        }, 30000);
+        
+        this.reservedColors.set(color, {
+            socketId: socketId,
+            timeout: timeout,
+            timestamp: Date.now()
+        });
+        
+        console.log(`🎨 Spalva rezervuota: ${color} (socket: ${socketId})`);
+        
+        return { success: true, color: color };
+    }
+
+    // 🆕 Atlaisvinti rezervaciją
+    releaseColor(color, socketId) {
+        const reservation = this.reservedColors.get(color);
+        
+        if (reservation && reservation.socketId === socketId) {
+            if (reservation.timeout) clearTimeout(reservation.timeout);
+            this.reservedColors.delete(color);
+            console.log(`🎨 Spalvos rezervacija atšaukta: ${color}`);
+            return { success: true };
+        }
+        
+        return { error: 'Rezervacija nerasta' };
+    }
+
+    // 🆕 Patvirtinti rezervaciją (kai žaidėjas prisijungia)
+    confirmColorReservation(color, socketId) {
+        const reservation = this.reservedColors.get(color);
+        
+        if (reservation && reservation.socketId === socketId) {
+            if (reservation.timeout) clearTimeout(reservation.timeout);
+            this.reservedColors.delete(color);
+            console.log(`🎨 Spalvos rezervacija patvirtinta: ${color}`);
+            return { success: true };
+        }
+        
+        return { error: 'Rezervacija nerasta' };
     }
 
     getAvailableColors() {
