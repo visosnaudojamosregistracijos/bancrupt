@@ -4336,9 +4336,9 @@ function showBuyCard(field, player, type) {
     // Rodyti
     card.style.display = 'flex';
     
-    // Paslėpti po 5s (arba 30s, jei pending)
+    // Paslėpti po 3s (arba 30s, jei pending)
     if (buyCardTimeout) clearTimeout(buyCardTimeout);
-    const duration = type === 'pending' ? 30000 : 5000;
+    const duration = type === 'pending' ? 30000 : 3000;
     buyCardTimeout = setTimeout(() => {
         hideBuyCard();
     }, duration);
