@@ -374,6 +374,7 @@ io.on('connection', (socket) => {
     // KAULIUKŲ METIMAS
     // ============================================
     socket.on('rollDice', () => {
+    try {
         if (!socket.gameId || socket.playerId === undefined) {
             socket.emit('error', 'Neprisijungei prie žaidimo!');
             return;
@@ -398,7 +399,11 @@ io.on('connection', (socket) => {
         if (messageToSend) {
             io.to(socket.gameId).emit('message', messageToSend);
         }
-    });
+    } catch (err) {
+        console.error('❌ rollDice klaida:', err);
+        socket.emit('error', 'Serverio klaida: ' + err.message);
+    }
+});
 
     socket.on('buyProperty', () => {
         if (!socket.gameId || socket.playerId === undefined) {

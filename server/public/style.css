@@ -1484,7 +1484,7 @@ body {
 }
 
 #turnIndicator.hidden {
-    opacity: 0;
+    display: none;
 }
 
 /* ---------- 6 LANGELIS - ŽURNALAS ---------- */

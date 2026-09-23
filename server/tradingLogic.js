@@ -25,6 +25,20 @@ class TradingLogic {
         return player.houses && player.houses[fieldId] && player.houses[fieldId] > 0;
     }
 
+    // 🆕 Patikrinti, ar grupėje yra namų
+    hasHousesInGroup(playerId, fieldId) {
+        const player = this.getPlayer(playerId);
+        if (!player) return false;
+        
+        const field = this.game.board.find(f => f.id === fieldId);
+        if (!field || !field.color) return false;
+        
+        const groupFields = C.COLOR_GROUPS[field.color] || [];
+        return groupFields.some(id => {
+            return player.houses && player.houses[id] && player.houses[id] > 0;
+        });
+    }
+
     getBankBuybackPrice(fieldId) {
         const field = this.game.board.find(f => f.id === fieldId);
         if (!field) return 0;
@@ -37,7 +51,12 @@ class TradingLogic {
 
         return player.properties.filter(fieldId => {
             const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
-            return houses === 0;
+            if (houses > 0) return false;
+            
+            // 🆕 Patikrinti, ar grupėje nėra namų
+            if (this.hasHousesInGroup(playerId, fieldId)) return false;
+            
+            return true;
         }).map(fieldId => {
             const field = this.game.board.find(f => f.id === fieldId);
             return {
@@ -90,6 +109,13 @@ class TradingLogic {
                 const field = this.game.board.find(f => f.id === fieldId);
                 return { error: `Negali parduoti ${field ? field.name : 'kortelės'} - turi namų!` };
             }
+            
+            // 🆕 Patikrinti, ar grupėje nėra namų
+            if (this.hasHousesInGroup(playerId, fieldId)) {
+                const field = this.game.board.find(f => f.id === fieldId);
+                return { error: `Negali parduoti ${field ? field.name : 'kortelės'} – grupėje yra pastatytų namų!` };
+            }
+            
             const price = this.getBankBuybackPrice(fieldId);
             totalPrice += price;
             soldFields.push(fieldId);
@@ -139,6 +165,11 @@ class TradingLogic {
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) {
             return { error: 'Negali aukcionuoti kortelės su namais!' };
+        }
+        
+        // 🆕 Patikrinti, ar grupėje nėra namų
+        if (this.hasHousesInGroup(playerId, fieldId)) {
+            return { error: 'Negali aukcionuoti – grupėje yra pastatytų namų!' };
         }
 
         const field = this.game.board.find(f => f.id === fieldId);
@@ -321,7 +352,7 @@ class TradingLogic {
         // Jei laimi BANKAS
         // ============================================
         if (auction.currentBidder === 'bank') {
-            // 🆕 KORTELĖ GRĄŽINAMA Į RINKĄ (dingsta iš pardavėjo, bet grąžinama į laisvų sąrašą)
+            // KORTELĖ GRĄŽINAMA Į RINKĄ (dingsta iš pardavėjo, bet grąžinama į laisvų sąrašą)
             // Pardavėjas gauna banko pinigus
             if (seller) {
                 seller.money += auction.currentBid;
@@ -412,6 +443,12 @@ class TradingLogic {
                     const field = this.game.board.find(f => f.id === fieldId);
                     return { error: `Negali siūlyti kortelės su namais: ${field ? field.name : fieldId}` };
                 }
+                
+                // 🆕 Patikrinti, ar grupėje nėra namų
+                if (this.hasHousesInGroup(playerId, fieldId)) {
+                    const field = this.game.board.find(f => f.id === fieldId);
+                    return { error: `Negali siūlyti ${field ? field.name : fieldId} – grupėje yra pastatytų namų!` };
+                }
             }
         }
 
@@ -424,6 +461,12 @@ class TradingLogic {
                 if (this.hasHouses(targetPlayerId, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
                     return { error: `Negali prašyti kortelės su namais: ${field ? field.name : fieldId}` };
+                }
+                
+                // 🆕 Patikrinti, ar grupėje nėra namų
+                if (this.hasHousesInGroup(targetPlayerId, fieldId)) {
+                    const field = this.game.board.find(f => f.id === fieldId);
+                    return { error: `Negali prašyti ${field ? field.name : fieldId} – grupėje yra pastatytų namų!` };
                 }
             }
         }
