@@ -620,8 +620,7 @@ function initSocket() {
         
         if (field && player) {
             highlightCell(field.id, 'green', 5000);
-            // 🆕 LAIKINAI NUIMTA – testuojam, kas po apačia
-            // showBuyCard(field, player, 'success');
+            showBuyCard(field, player, 'success');
         }
     }
     
