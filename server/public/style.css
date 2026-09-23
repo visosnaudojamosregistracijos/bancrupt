@@ -971,7 +971,7 @@ body {
 #myInfo {
     font-size: clamp(9px, 0.6vw, 13px);
     color: #3d2b1f;
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -979,6 +979,7 @@ body {
     gap: 2px;
     overflow: hidden;
     min-height: 0;
+    max-height: 100%;
     width: 100%;
 }
 
