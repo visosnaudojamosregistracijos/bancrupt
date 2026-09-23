@@ -971,7 +971,7 @@ body {
 #myInfo {
     font-size: clamp(9px, 0.6vw, 13px);
     color: #3d2b1f;
-    flex: 0 0 66%;
+    flex: 0 0 55%;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1657,7 +1657,7 @@ body {
     justify-content: center;
     align-content: flex-start;
     margin-top: 4px;
-    flex: 1 1 34%;
+    flex: 1 1 45%;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
@@ -4062,12 +4062,9 @@ body.dark-mode #cellInfoPanel {
 #center-1 .mini-cards-container {
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    max-height: 100% !important;
-    height: 100% !important;
     box-sizing: border-box;
-    flex: 1 1 auto;
-    min-height: 80px;
-    padding-bottom: 70px;
+    flex: 1 1 45%;
+    min-height: 0;
 }
 
 #center-1 #myInfo {
