@@ -485,10 +485,12 @@ function initSocket() {
             showPopupMessage(msg, 'buy');
         }
         if (msg.includes('nusipirko')) {
-            playBuySound();
-            playCashSound();
-            showPopupMessage(msg, 'buy');
-        }
+    playBuySound();
+    playCashSound();
+    // 🆕 NErodyti pranešimo – jau rodomas #buyCard
+    // showPopupMessage(msg, 'buy');
+    return;  // 🆕 Nutraukti toliau
+}
         if (msg.includes('nugriovė')) {
             playDemolishSound();
             playCashSound();
