@@ -3280,11 +3280,27 @@ if (currentPlayer) {
             ${me.left ? '<div style="color:#6c757d; font-size:11px;">😭 PASITRAUKEI</div>' : ''}
             ${me.kicked ? '<div style="color:#dc3545; font-size:14px; font-weight:700;">🚫 PAŠALINTAS</div>' : ''}
             ${me.isDebtor ? '<div style="color:#dc3545; font-size:14px; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
-            <div style="width:100%; border-top:1px solid rgba(61,43,31,0.1); margin-top:4px; padding-top:4px;">
-                <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px;">📋 TURIMOS KORTELĖS</div>
-                ${miniCardsHtml}
-            </div>
         `;
+
+// 🆕 Atskiras mini kortelių konteineris (NE #myInfo viduje)
+const center1 = document.getElementById('center-1');
+let miniCardsContainer = center1.querySelector('.mini-cards-container');
+
+if (!miniCardsContainer) {
+    miniCardsContainer = document.createElement('div');
+    miniCardsContainer.className = 'mini-cards-container';
+    center1.appendChild(miniCardsContainer);
+}
+
+// 🆕 Pridėti "TURIMOS KORTELĖS" antraštę + korteles
+if (me.properties.length > 0) {
+    miniCardsContainer.innerHTML = `
+        <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px; width:100%;">📋 TURIMOS KORTELĖS</div>
+        ${miniCardsHtml}
+    `;
+} else {
+    miniCardsContainer.innerHTML = `<div style="font-size:9px; color:#6c757d; margin-top:4px; text-align:center; width:100%;">Neturi kortelių</div>`;
+}
         
         if (oldMoney !== newMoney) {
             setTimeout(() => {
