@@ -3685,6 +3685,9 @@ else if (field.type === 'service3') cell.classList.add('service3');
             cell.style.setProperty('--group-color', field.color);
             
             if (owner) {
+                // 🆕 Nustatyti savininko spalvą
+                cell.style.setProperty('--owner-color', owner.color || '#ffd700');
+                
                 const group = COLOR_GROUPS[field.color] || [];
                 if (group.length > 0) {
                     const hasAll = group.every(id => owner.properties.includes(id));
@@ -3696,10 +3699,12 @@ else if (field.type === 'service3') cell.classList.add('service3');
                 }
             } else {
                 cell.classList.remove('full-group');
+                cell.style.removeProperty('--owner-color');
             }
         } else {
             cell.removeAttribute('data-group');
             cell.classList.remove('full-group');
+            cell.style.removeProperty('--owner-color');
         }
         
         if (field.color) {

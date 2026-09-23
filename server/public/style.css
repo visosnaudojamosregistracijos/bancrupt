@@ -3241,24 +3241,32 @@ body {
     position: relative;
 }
 
+/* Pilnos grupės – ŽAIDĖJO spalvos rėmelis */
 .cell.property.full-group {
-    border-color: #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.3);
+    border-color: var(--owner-color, #ffd700);
+    box-shadow: 
+        0 0 15px var(--owner-color, #ffd700), 
+        inset 0 0 10px var(--owner-color, #ffd700);
     animation: fullGroupPulse 2s ease-in-out infinite;
 }
 
+/* Žaidėjo spalvos juostelė pilnai grupei */
 .cell.property.full-group::after {
-    background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700);
+    background: var(--owner-color, #ffd700);
     height: 5px;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    box-shadow: 0 0 10px var(--owner-color, #ffd700);
 }
 
 @keyframes fullGroupPulse {
     0%, 100% { 
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.3);
+        box-shadow: 
+            0 0 15px var(--owner-color, #ffd700), 
+            inset 0 0 10px var(--owner-color, #ffd700);
     }
     50% { 
-        box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5);
+        box-shadow: 
+            0 0 25px var(--owner-color, #ffd700), 
+            inset 0 0 15px var(--owner-color, #ffd700);
     }
 }
 
