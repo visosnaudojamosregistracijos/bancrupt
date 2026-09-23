@@ -1660,7 +1660,7 @@ body {
     margin-top: 6px;
     flex: 1 1 auto;
     min-height: 80px;
-    max-height: 100%;
+    max-height: calc(100% - 100px);
     overflow-y: auto;
     overflow-x: hidden;
     padding: 4px;
