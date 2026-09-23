@@ -249,12 +249,29 @@ function initSocket() {
         if (document.getElementById('page-join')?.classList.contains('active')) {
             availableJoinColors = data.available;
             
-            // Jei mūsų pasirinkta spalva dingo – atšaukti
+            // 🆕 NEATŠAUKTI spalvos, jei ji yra mūsų rezervuota
+            // (serveris grąžina available be mūsų spalvos, nes ji "used")
+            // Tikriname, ar spalva vis dar yra mūsų pasirinkta ir ar jos nėra available
+            // Jei mūsų spalva dingo iš available – tai reiškia, kad kažkas kitas ją paėmė
+            // BET jei mes patys ją rezervavome – ji bus used, ne available
+            
+            // 🆕 Sprendimas: jei selectedJoinColor yra mūsų, paliekam
+            // Tikrinam tik tada, kai selectedJoinColor nėra mūsų rezervuota
             if (selectedJoinColor && !availableJoinColors.includes(selectedJoinColor)) {
-                selectedJoinColor = null;
+                // Patikrinti, ar tai mūsų rezervacija (mes ją turime)
+                // Jei taip – paliekam, jei ne – atšaukim
+                // Šiuo atveju tiesiog paliekam, nes serveris patvirtins per joinGame
+                console.log('⚠️ Mūsų spalva dingo iš available, bet paliekam:', selectedJoinColor);
             }
             
-            renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
+            // 🆕 Užtikrinti, kad mūsų spalva būtų rodoma kaip "selected"
+            // Pridedam mūsų spalvą atgal į available tik render'inimui
+            const colorsToRender = [...availableJoinColors];
+            if (selectedJoinColor && !colorsToRender.includes(selectedJoinColor)) {
+                colorsToRender.push(selectedJoinColor);
+            }
+            
+            renderColorPicker('joinColorPicker', colorsToRender, selectedJoinColor, selectJoinColor);
             
             const status = document.getElementById('joinColorStatus');
             if (status) {
