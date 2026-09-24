@@ -1202,8 +1202,10 @@ class Game {
     }
 
     getGameState() {
-        return {
-            players: this.players.map(p => ({
+    return {
+        players: this.players
+            .filter(p => !p.left)   // 🆕 FILTRUOTI left žaidėjus
+            .map(p => ({
                 ...p,
                 isDebtor: p.isDebtor || false,
                 kicked: p.kicked || false,

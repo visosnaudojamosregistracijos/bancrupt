@@ -3434,12 +3434,18 @@ if (me.properties.length > 0) {
         const isKicked = p.kicked === true;
         const isDebtor = p.isDebtor === true;
         
+        // 🆕 Nerodyti left žaidėjų
+        if (isLeft) {
+            return '';
+        }
+        
+        // 🆕 Nerodyti kicked žaidėjų (išskyrus save)
         if (isKicked && p.id !== playerId) {
             return '';
         }
         
         return `
-            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isLeft ? 'left' : ''} ${isKicked ? 'left' : ''}">
+            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isKicked ? 'left' : ''}">
                 <span class="dot" style="background:${p.color}"></span>
                 <span class="pname">${p.name} ${p.id === playerId ? '👤' : ''}</span>
                 <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
@@ -3448,7 +3454,6 @@ if (me.properties.length > 0) {
                 ${p.bankrupt ? '💀' : ''}
                 ${isKicked ? '🚫' : ''}
                 ${isDebtor && !p.bankrupt ? '⚠️' : ''}
-                ${isLeft ? '😭' : ''}
                 ${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}
             </div>
         `;
