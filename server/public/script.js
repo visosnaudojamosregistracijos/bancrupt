@@ -16,6 +16,10 @@ let isMuted = false;
 let lastVolume = 50;
 let infoMode = false;
 let lastHoveredField = null;
+// 🆕 GARSŲ REŽIMAS
+let soundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
+// 'my' = tik mano, 'all' = visi
+
 
 // VOTE-KICK
 let voteKickTimerInterval = null;
@@ -353,7 +357,7 @@ socket.on('yourTurn', (data) => {
 
     socket.on('diceRolled', async (data) => {
         console.log('🎲 Kauliukai mesti:', data);
-        playDiceSound();
+        playSoundForPlayer('dice', data.player.id);
         updateDiceDisplay(data.dice[0], data.dice[1]);
 
         if (data.player && data.player.id !== undefined) {
@@ -388,20 +392,22 @@ socket.on('yourTurn', (data) => {
         
         // GARSO EFEKTAI
         if (data.field) {
-            if (data.field.id === 2) playDujosSound();
-            else if (data.field.id === 14) playSiukslesSound();
-            else if (data.field.id === 28) playElektraSound();
-            else if (data.field.id === 44) playVanduoSound();
-            else if (data.field.id === 8) playAirPortSound();
-            else if (data.field.id === 19) playTrainSound();
-            else if (data.field.id === 37) playPortSound();
-            else if (data.field.id === 46) playBusSound();
-            else if (data.field.id === 13) playHospitalSound();
-            else if (data.field.id === 21) playLatrasSound();
-            else if (data.field.id === 32) playPirtisSound();
-            else if (data.field.id === 50) playBirthdaySound();
-            else if (data.field.id === 42) playJailInSound();
-            else if (data.field.id === 16) playJailSound();  // 🆕 Lankytojas kalėjime
+            const fpId = data.player.id;
+            
+            if (data.field.id === 2) playSoundForPlayer('dujos', fpId);
+            else if (data.field.id === 14) playSoundForPlayer('siuksles', fpId);
+            else if (data.field.id === 28) playSoundForPlayer('elektra', fpId);
+            else if (data.field.id === 44) playSoundForPlayer('vanduo', fpId);
+            else if (data.field.id === 8) playSoundForPlayer('air-port', fpId);
+            else if (data.field.id === 19) playSoundForPlayer('train', fpId);
+            else if (data.field.id === 37) playSoundForPlayer('port', fpId);
+            else if (data.field.id === 46) playSoundForPlayer('bus', fpId);
+            else if (data.field.id === 13) playSoundForPlayer('hospital', fpId);
+            else if (data.field.id === 21) playSoundForPlayer('latras', fpId, true);
+            else if (data.field.id === 32) playSoundForPlayer('pirtis', fpId);
+            else if (data.field.id === 50) playSoundForPlayer('birthday', fpId, true);
+            else if (data.field.id === 42) playSoundForPlayer('jail_in', fpId, true);
+            else if (data.field.id === 16) playSoundForPlayer('jail', fpId);
         }
         
         if (data.field && data.result) {
@@ -499,15 +505,15 @@ socket.on('yourTurn', (data) => {
             playChanceSound();
         }
         if (msg.includes('Dabar eina')) {
-            playMoveSound();
+            playSoundForPlayer('move', null);
         }
         if (msg.includes('bankrotavo')) {
-            playBankruptSound();
+            playSoundForPlayer('bankrupt', null, true);
             showPopupMessage(msg, 'rent');
         }
         if (msg.includes('laimėjo aukcioną')) {
-            playAuctionSound();
-            playCashSound();
+            playSoundForPlayer('auction', null, true);
+            playSoundForPlayer('cash', null, true);
             showPopupMessage(msg, 'buy');
         }
         if (msg.includes('nusipirko')) {
@@ -518,8 +524,8 @@ socket.on('yourTurn', (data) => {
     return;  // 🆕 Nutraukti toliau
 }
         if (msg.includes('nugriovė')) {
-            playDemolishSound();
-            playCashSound();
+            playSoundForPlayer('demolish', null, true);
+            playSoundForPlayer('cash', null, true);
             showPopupMessage(msg, 'move');
         }
         if (msg.includes('sumokėjo €') && msg.includes('nuomos')) {
@@ -531,7 +537,7 @@ socket.on('yourTurn', (data) => {
                                msg.includes('AUTOBUSŲ STOTIS');
             
             if (!isService1 && !isOroUostas && !isService2) {
-                playPaySound();
+                playSoundForPlayer('pay', null);
             }
             showPopupMessage(msg, 'rent');
         }
@@ -545,34 +551,34 @@ socket.on('yourTurn', (data) => {
             showPopupMessage(msg, 'chance');
         }
         else if (msg.includes('sumokėjo') && msg.includes('mokesčių')) {
-            playTaxSound();
+            playSoundForPlayer('tax', null);
             showPopupMessage(msg, 'tax');
         }
         else if ((msg.includes('gavo €') || msg.includes('laimėjo')) && 
             !msg.includes('GIMTADIENIS') && 
             !msg.includes('gimtadienį')) {
-            playCashSound();
+            playSoundForPlayer('cash', null);
         }
         if (msg.includes('prarado')) {
-            playPaySound();
+            playSoundForPlayer('pay', null);
         }
         if (msg.includes('išėjo iš kalėjimo')) {
-            playJailOutSound();
+            playSoundForPlayer('jail_out', null, true);
         }
         if (msg.includes('LAIMĖJO')) {
-            playCelebrateSound();
-            playWinSound();
+            playSoundForPlayer('celebrate', null, true);
+            playSoundForPlayer('win', null, true);
         }
         if (msg.includes('pabėgo į kampą')) {
-            playBankruptSound();
+            playSoundForPlayer('bankrupt', null, true);
             showPopupMessage(msg, 'rent');
         }
         if (msg.includes('skolingas')) {
-            playErrorSound();
+            playSoundForPlayer('error', null);
             showPopupMessage(msg, 'rent');
         }
         if (msg.includes('grįžo į žaidimą')) {
-            playStartSound();
+            playSoundForPlayer('start', null, true);
         }
         
         addJournal(msg);
@@ -608,8 +614,8 @@ socket.on('yourTurn', (data) => {
 
     socket.on('buyConfirmed', (data) => {
     console.log('✅ Pirkimas patvirtintas:', data);
-    playBuySound();
-    playCashSound();
+    playSoundForPlayer('buy', data.playerId);
+    playSoundForPlayer('cash', data.playerId);
 
     if (data.playerId !== undefined) {
         incrementBought(data.playerId);
@@ -733,7 +739,7 @@ socket.on('yourTurn', (data) => {
 
     socket.on('auctionStarted', (data) => {
         console.log('🔨 KLIENTAS GAUNA auctionStarted EVENTĄ');
-        playAuctionSound();
+        playSoundForPlayer('auction', null, true);
         
         if (!data || !data.fieldName) {
             addJournal('❌ Klaida: aukciono duomenys neteisingi');
@@ -795,8 +801,8 @@ socket.on('yourTurn', (data) => {
                 addNotification(msg);
                 showPopupMessage(msg, 'buy');
                 addJournal(msg);
-                playAuctionSound();
-                playCashSound();
+                playSoundForPlayer('auction', null, true);
+                playSoundForPlayer('cash', null, true);
             }
         }
         
@@ -821,14 +827,19 @@ socket.on('yourTurn', (data) => {
         addNotification(msg);
         showPopupMessage(msg, 'move');
         addJournal(msg);
-        playDemolishSound();
-        playCashSound();
+        playSoundForPlayer('demolish', null, true);
+        playSoundForPlayer('cash', null, true);
         if (gameState) updateUI(gameState);
     });
 
     socket.on('buildingBuilt', (data) => {
         console.log('🏠 Statyba:', data);
-        playBuildSound();
+        
+        if (data.isHotel) {
+            playSoundForPlayer('hotel', data.playerId);
+        } else {
+            playSoundForPlayer('build', data.playerId);
+        }
         
         window.newHouseAnimations = window.newHouseAnimations || {};
         window.newHouseAnimations[data.fieldId] = true;
@@ -1738,6 +1749,52 @@ function toggleSoundPanel() {
     playClickSound();
 }
 
+// 🆕 Garsų režimo perjungimas
+function toggleSoundMode() {
+    const btn = document.getElementById('soundModeBtn');
+    
+    if (soundMode === 'my') {
+        soundMode = 'all';
+        if (btn) {
+            btn.innerHTML = '🔊 Garsai: Visi';
+            btn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';
+            btn.style.borderColor = '#4ade80';
+        }
+    } else {
+        soundMode = 'my';
+        if (btn) {
+            btn.innerHTML = '🎧 Garsai: Tik mano';
+            btn.style.background = 'linear-gradient(145deg, #17a2b8, #138496)';
+            btn.style.borderColor = '#4dd0e1';
+        }
+    }
+    
+    localStorage.setItem('bancrupt_soundMode', soundMode);
+    playClickSound();
+}
+
+// 🆕 Groti garsą pagal režimą
+function playSoundForPlayer(soundName, soundPlayerId = null, isPublicSound = false) {
+    // Vieši garsai – visada groti
+    if (isPublicSound) {
+        audioManager.play(soundName);
+        return;
+    }
+    
+    // Režimas 'all' – groti viską
+    if (soundMode === 'all') {
+        audioManager.play(soundName);
+        return;
+    }
+    
+    // Režimas 'my' – groti tik savo
+    if (soundMode === 'my') {
+        if (soundPlayerId === null || soundPlayerId === playerId) {
+            audioManager.play(soundName);
+        }
+    }
+}
+
 function changeMusicVolume(value) {
     const volume = parseInt(value) / 100;
     audioManager.setMusicVolume(volume);
@@ -2225,6 +2282,23 @@ function enterGame() {
     
     // 🆕 Užkrauti žurnalą iš localStorage
     loadJournalFromStorage();
+
+    // 🆕 Įkelti garsų režimą
+    const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
+    soundMode = savedSoundMode;
+    
+    const soundModeBtn = document.getElementById('soundModeBtn');
+    if (soundModeBtn) {
+        if (soundMode === 'all') {
+            soundModeBtn.innerHTML = '🔊 Garsai: Visi';
+            soundModeBtn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';
+            soundModeBtn.style.borderColor = '#4ade80';
+        } else {
+            soundModeBtn.innerHTML = '🎧 Garsai: Tik mano';
+            soundModeBtn.style.background = 'linear-gradient(145deg, #17a2b8, #138496)';
+            soundModeBtn.style.borderColor = '#4dd0e1';
+        }
+    }
     
     // 🆕 Inicializuoti statistiką KIEKVIENAM žaidėjui
     if (gameState && gameState.players && gameState.players.length > 0) {
