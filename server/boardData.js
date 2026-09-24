@@ -43,7 +43,7 @@ const boardData = [
     // APAČIA
     { id: 27, name: 'Alytus', type: 'property', color: '#8B6914', cost: 270, icon: '' },
     { id: 28, name: 'ELEKTRA', type: 'service1', color: null, cost: 150, icon: '💡' },
-    { id: 29, name: 'Lazdijai', type: 'property', color: '#8B6914', cost: 28, icon: '' },
+    { id: 29, name: 'Lazdijai', type: 'property', color: '#8B6914', cost: 280, icon: '' },
     { id: 30, name: 'Druskininkai', type: 'property', color: '#8B6914', cost: 290, icon: '' },
     { id: 31, name: 'Panevėžys', type: 'property', color: '#1abc9c', cost: 310, icon: '' },
     { id: 32, name: 'SAUNA', type: 'service3', color: null, cost: 100, icon: '🧖' },
