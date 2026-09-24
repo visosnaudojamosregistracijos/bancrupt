@@ -2036,11 +2036,11 @@ body {
 @media (max-width: 768px) {
     #board {
         width: 900px;
-        height: 700px;
+        height: 720px;
         min-width: 900px;
         max-width: 900px;
-        min-height: 700px;
-        max-height: 700px;
+        min-height: 720px;
+        max-height: 720px;
         overflow: auto;
         padding: 6px;
         gap: 1px;
