@@ -306,17 +306,19 @@ socket.on('yourTurn', (data) => {
     });
 
     socket.on('gameStarted', (data) => {
-        console.log('🎮 Žaidimas pradėtas:', data);
-        playStartSound();
-        
-        const msg = `🎮 Žaidimas pradėtas! Pirmas eina: ${data.firstPlayerName}`;
-        addNotification(msg);
-        addJournal(msg);
-        
-        hideWaitingRoom();
-        
-        if (gameState) updateUI(gameState);
-    });
+    console.log('🎮 Žaidimas pradėtas:', data);
+    
+    // 🆕 Groti game-start garsą VISIEMS
+    playGameStartSound();
+    
+    const msg = `🎮 Žaidimas pradėtas! Pirmas eina: ${data.firstPlayerName}`;
+    addNotification(msg);
+    addJournal(msg);
+    
+    hideWaitingRoom();
+    
+    if (gameState) updateUI(gameState);
+});
 
     socket.on('youWereKicked', () => {
         console.log('❌ Buvau išmestas iš waiting room');

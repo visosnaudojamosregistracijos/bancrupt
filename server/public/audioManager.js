@@ -53,7 +53,8 @@ class AudioManager {
             'start': 'sounds/start.mp3',
             'gameover': 'sounds/gameover.mp3',
             'celebrate': 'sounds/celebrate.mp3',
-    'your-turn': 'sounds/your-turn.mp3'
+    'your-turn': 'sounds/your-turn.mp3',      // 🆕
+    'game-start': 'sounds/game-start.mp3'
         };
 
         for (const [name, path] of Object.entries(soundFiles)) {
@@ -297,6 +298,10 @@ function playWinSound() {
 }
 function playYourTurnSound() {
     audioManager.play('your-turn');
+}
+// 🆕 Žaidimo pradžia
+function playGameStartSound() {
+    audioManager.play('game-start');
 }
 
 // ============================================
