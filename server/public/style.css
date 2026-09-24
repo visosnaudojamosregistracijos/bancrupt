@@ -2035,14 +2035,14 @@ body {
 
 @media (max-width: 768px) {
     #board {
-        width: 1100px;
-        height: 800px;
-        min-width: 1100px;
-        max-width: 1100px;
-        min-height: 800px;
-        max-height: 800px;
+        width: 900px;
+        height: 700px;
+        min-width: 900px;
+        max-width: 900px;
+        min-height: 700px;
+        max-height: 700px;
         overflow: auto;
-        padding: 8px;
+        padding: 6px;
         gap: 1px;
     }
     
@@ -2066,14 +2066,14 @@ body {
         min-width: 0;
     }
     .cell.corner {
-        flex: 0 0 175px;
-        width: 175px;
-        height: 175px;
-        min-width: 175px;
-        max-width: 175px;
+        flex: 0 0 130px;
+        width: 130px;
+        height: 130px;
+        min-width: 130px;
+        max-width: 130px;
         aspect-ratio: 1;
-        font-size: 8px;
-        border-width: 3px;
+        font-size: 7px;
+        border-width: 2px;
     }
     .cell .cell-icon {
         font-size: 18px;
@@ -2095,10 +2095,10 @@ body {
     }
     .row-middle-left,
     .row-middle-right {
-        flex: 0 0 175px;
-        width: 175px;
-        min-width: 175px;
-        max-width: 175px;
+        flex: 0 0 130px;
+        width: 130px;
+        min-width: 130px;
+        max-width: 130px;
     }
     .row-middle {
         gap: 1px;
