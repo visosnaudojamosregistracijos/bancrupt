@@ -2035,12 +2035,12 @@ body {
 
 @media (max-width: 768px) {
     #board {
-        width: 1100px;
-        height: 715px;
-        min-width: 1100px;
-        max-width: 1100px;
-        min-height: 715px;
-        max-height: 715px;
+        width: 1200px;
+        height: 800px;
+        min-width: 1200px;
+        max-width: 1200px;
+        min-height: 800px;
+        max-height: 800px;
         overflow: auto;
         padding: 6px;
         gap: 1px;
