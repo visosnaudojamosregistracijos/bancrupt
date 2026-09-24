@@ -187,6 +187,14 @@ function initSocket() {
     }
 });
 
+// 🆕 Tavo eilė – groti garsą (ATS KIRAI!)
+socket.on('yourTurn', (data) => {
+    console.log('🎵 Tavo eilė!', data);
+    
+    playYourTurnSound();
+    addNotification(`🎵 Tavo eilė! Mesk kauliukus!`);
+});
+
     // SPALVŲ GAVIMAS
     socket.on('gameColors', (data) => {
         console.log('🎨 Gautos spalvos:', data);

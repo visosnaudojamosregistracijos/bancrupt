@@ -1183,6 +1183,16 @@ class Game {
         
         this.currentTurn = this.players[nextIndex].id;
         this.doubleRoll = false;
+
+        // 🆕 Siųsti pranešimą TIK tam žaidėjui
+    const nextPlayer = this.players[nextIndex];
+    if (this.emitFunction && nextPlayer.socketId) {
+        this.emitFunction('yourTurn', {
+            playerId: nextPlayer.id,
+            playerName: nextPlayer.name
+        }, nextPlayer.socketId);   // ← ← ← TIK TAM SOCKET'UI
+    }
+
         this.addMessage(`🔄 Dabar eina ${this.players[nextIndex].name}`);
         return { nextPlayer: this.currentTurn };
     }

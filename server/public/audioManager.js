@@ -52,7 +52,8 @@ class AudioManager {
             'error': 'sounds/error.mp3',
             'start': 'sounds/start.mp3',
             'gameover': 'sounds/gameover.mp3',
-            'celebrate': 'sounds/celebrate.mp3'
+            'celebrate': 'sounds/celebrate.mp3',
+    'your-turn': 'sounds/your-turn.mp3'
         };
 
         for (const [name, path] of Object.entries(soundFiles)) {
@@ -293,6 +294,9 @@ function playJailOutSound() {
 
 function playWinSound() {
     audioManager.play('win');
+}
+function playYourTurnSound() {
+    audioManager.play('your-turn');
 }
 
 // ============================================
