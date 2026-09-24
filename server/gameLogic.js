@@ -305,6 +305,17 @@ class Game {
         
         this.addMessage(`🎮 Žaidimas pradėtas! Pirmas eina: ${shuffled[0].name}`);
         
+        // 🆕 Po 4s siųsti yourTurn pirmam žaidėjui
+        const firstPlayer = shuffled[0];
+        if (this.emitFunction && firstPlayer.socketId) {
+            setTimeout(() => {
+                this.emitFunction('yourTurn', {
+                    playerId: firstPlayer.id,
+                    playerName: firstPlayer.name
+                }, firstPlayer.socketId);
+            }, 4000);
+        }
+        
         return {
             success: true,
             order: shuffled.map(p => ({
@@ -1183,16 +1194,16 @@ class Game {
         
         this.currentTurn = this.players[nextIndex].id;
         this.doubleRoll = false;
-
-        // 🆕 Siųsti pranešimą TIK tam žaidėjui
-    const nextPlayer = this.players[nextIndex];
-    if (this.emitFunction && nextPlayer.socketId) {
-        this.emitFunction('yourTurn', {
-            playerId: nextPlayer.id,
-            playerName: nextPlayer.name
-        }, nextPlayer.socketId);   // ← ← ← TIK TAM SOCKET'UI
-    }
-
+        
+        // 🆕 Siųsti yourTurn IŠKART (be pauzės)
+        const nextPlayer = this.players[nextIndex];
+        if (this.emitFunction && nextPlayer.socketId) {
+            this.emitFunction('yourTurn', {
+                playerId: nextPlayer.id,
+                playerName: nextPlayer.name
+            }, nextPlayer.socketId);
+        }
+        
         this.addMessage(`🔄 Dabar eina ${this.players[nextIndex].name}`);
         return { nextPlayer: this.currentTurn };
     }
@@ -1212,15 +1223,15 @@ class Game {
     }
 
     getGameState() {
-    return {
-        players: this.players
-            .filter(p => !p.left)   // 🆕 FILTRUOTI left žaidėjus
-            .map(p => ({
-                ...p,
-                isDebtor: p.isDebtor || false,
-                kicked: p.kicked || false,
-                ready: p.ready || false
-            })),
+        return {
+            players: this.players
+                .filter(p => !p.left)
+                .map(p => ({
+                    ...p,
+                    isDebtor: p.isDebtor || false,
+                    kicked: p.kicked || false,
+                    ready: p.ready || false
+                })),
             board: this.board,
             currentTurn: this.currentTurn,
             gameStarted: this.gameStarted,
