@@ -689,29 +689,55 @@ class Game {
 
         if (bot.money < 0) {
             console.log(`🤖 ${bot.name}: skolingas €${Math.abs(bot.money)}`);
-            const decision = this.botDecideAction(bot);
+            
+            // 🆕 1. PIRMIAU – GRIAUTI NAMUS
+            const housesToDemolish = Object.keys(bot.houses)
+                .filter(id => bot.houses[id] > 0)
+                .map(id => parseInt(id));
 
-            if (decision.action === 'sell') {
-                const result = this.sellToBank(bot.id, [decision.fieldId]);
-                console.log(`🤖 ${bot.name} pardavė sklypą:`, result);
-                await this.botSleep(1500);
-
-                if (bot.money >= 0) {
-                    return { action: 'sold', message: `${bot.name} pardavė turtą` };
-                }
-            } else if (decision.action === 'demolish') {
-                const result = this.demolishHouse(bot.id, decision.fieldId);
+            if (housesToDemolish.length > 0) {
+                housesToDemolish.sort((a, b) => (bot.houses[a] || 0) - (bot.houses[b] || 0));
+                
+                const fieldId = housesToDemolish[0];
+                const field = this.board.find(f => f.id === fieldId);
+                
+                console.log(`🤖 ${bot.name}: bando griauti namą ant ${field ? field.name : fieldId}`);
+                
+                const result = this.demolishHouse(bot.id, fieldId);
                 console.log(`🤖 ${bot.name} nugriovė namą:`, result);
                 await this.botSleep(1500);
 
                 if (bot.money >= 0) {
                     return { action: 'demolished', message: `${bot.name} nugriovė namą` };
                 }
-            } else {
-                console.log(`🤖 ${bot.name} bankrutuoja!`);
-                const result = this.bankruptPlayer(bot.id);
-                return { action: 'bankrupt', result };
+                
+                // Jei vis dar minuse – tęsti
+                console.log(`🤖 ${bot.name}: vis dar minuse (€${bot.money}), tęsia...`);
             }
+            
+            // 🆕 2. TADA – PARDUOTI SKLYPUS BE NAMŲ
+            const sellable = bot.properties
+                .filter(id => !bot.houses[id] || bot.houses[id] === 0)
+                .map(id => this.board.find(f => f.id === id))
+                .filter(f => f)
+                .sort((a, b) => a.cost - b.cost);
+
+            if (sellable.length > 0) {
+                console.log(`🤖 ${bot.name}: bando parduoti ${sellable[0].name}`);
+                
+                const result = this.sellToBank(bot.id, [sellable[0].id]);
+                console.log(`🤖 ${bot.name} pardavė sklypą:`, result);
+                await this.botSleep(1500);
+
+                if (bot.money >= 0) {
+                    return { action: 'sold', message: `${bot.name} pardavė turtą` };
+                }
+            }
+            
+            // 🆕 3. BANKROTAS
+            console.log(`🤖 ${bot.name}: NEGALI IŠEITI IŠ MINUSO – bankrutuoja!`);
+            const result = this.bankruptPlayer(bot.id);
+            return { action: 'bankrupt', result };
         }
 
         if (bot.inJail) {

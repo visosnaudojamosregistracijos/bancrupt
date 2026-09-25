@@ -105,10 +105,7 @@ class TradingLogic {
                 return { error: `Negali parduoti ${field ? field.name : 'kortelės'} - turi namų!` };
             }
             
-            if (this.hasHousesInGroup(playerId, fieldId)) {
-                const field = this.game.board.find(f => f.id === fieldId);
-                return { error: `Negali parduoti ${field ? field.name : 'kortelės'} – grupėje yra pastatytų namų!` };
-            }
+            
             
             const price = this.getBankBuybackPrice(fieldId);
             totalPrice += price;

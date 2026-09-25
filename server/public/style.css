@@ -1868,6 +1868,7 @@ body {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     padding: 0 1px;
 }
@@ -1999,10 +2000,10 @@ body {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     padding: 0 1px;
 }
-
 .trade-mini-cards .mini-card-info {
     font-size: 7px;
     font-weight: 700;
