@@ -687,6 +687,12 @@ class Game {
 
         console.log(`🤖 ${bot.name} pradeda ėjimą...`);
 
+        // 🆕 Išvalyti isDebtor, jei botas turi pinigų
+        if (bot.money >= 0 && bot.isDebtor === true) {
+            console.log(`✅ ${bot.name}: isDebtor → false (money: €${bot.money})`);
+            bot.isDebtor = false;
+        }
+
         if (bot.money < 0) {
             console.log(`🤖 ${bot.name}: skolingas €${Math.abs(bot.money)}`);
             
@@ -1123,6 +1129,10 @@ class Game {
             player.isDebtor = true;
             this.addMessage(`⚠️ ${player.name} skolingas €${Math.abs(player.money)}! Parduok turtą!`);
         } else {
+            // 🆕 Išvalyti isDebtor, kai money >= 0
+            if (player.isDebtor === true) {
+                console.log(`✅ ${player.name}: isDebtor → false (money: €${player.money})`);
+            }
             player.isDebtor = false;
         }
     }
@@ -1876,6 +1886,17 @@ class Game {
         }
 
         this.addMessage(`🔄 Dabar eina ${this.players[nextIndex].name}`);
+
+        // 🆕 Išvalyti isDebtor visiems, kurie turi pinigų
+        this.players.forEach(p => {
+            if (p.isActive && !p.bankrupt && !p.left && !p.kicked) {
+                if (p.money >= 0 && p.isDebtor === true) {
+                    console.log(`✅ ${p.name}: isDebtor → false (money: €${p.money})`);
+                    p.isDebtor = false;
+                }
+            }
+        });
+
         return { nextPlayer: this.currentTurn };
     }
 
