@@ -96,6 +96,9 @@ body {
     cursor: pointer;
     transition: all 0.3s;
     color: #fff;
+    box-sizing: border-box;
+    width: 100%;
+    text-align: center;
 }
 
 .landing-btn-primary {
@@ -167,6 +170,9 @@ body {
     transition: all 0.3s;
     background: rgba(255,255,255,0.1);
     color: #ffd700;
+    box-sizing: border-box;
+    width: 100%;
+    text-align: center;
 }
 
 .menu-btn:hover {
@@ -442,6 +448,11 @@ body {
     cursor: pointer;
     transition: all 0.3s;
     color: #fff;
+    box-sizing: border-box;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .btn-primary {
@@ -609,16 +620,26 @@ body {
     border-radius: 8px;
     background: #0d1f0d;
     color: #ffd700;
-    font-size: 12px;
+    font-size: clamp(10px, 0.8vw, 12px);
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .left-btn:hover {
     background: #ffd700;
     color: #0d1f0d;
     transform: scale(1.03);
+}
+
+.left-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .leave-btn {
@@ -656,17 +677,19 @@ body {
 }
 
 .header-btn {
-    padding: 6px 14px;
+    padding: 8px 14px;
     border: 2px solid #ffd700;
     border-radius: 6px;
     background: #0d1f0d;
     color: #ffd700;
-    font-size: 13px;
+    font-size: clamp(10px, 0.8vw, 13px);
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     min-width: 70px;
     text-align: center;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .header-btn:hover {
@@ -1112,17 +1135,20 @@ body {
     gap: 4px;
     flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
 }
 
 .control-buttons button {
-    padding: 5px 12px;
+    padding: 6px 12px;
     border: none;
     border-radius: 6px;
     font-size: clamp(9px, 0.7vw, 13px);
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
     color: #fff;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .control-buttons button:disabled {
@@ -1152,51 +1178,78 @@ body {
     gap: 4px;
     width: 100%;
     margin-bottom: 4px;
+    flex-wrap: nowrap;
 }
 
 .btn-half {
     flex: 1;
     font-size: clamp(9px, 0.7vw, 13px);
-    padding: 6px 4px;
+    padding: 8px 4px;
     width: auto;
+    min-width: 0;
     border-radius: 6px;
     border: none;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
     color: #fff;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
+/* 🆕 VISI ACTION MYGTUKAI – vienoda išvaizda */
 .btn-bankrupt,
 .btn-jail,
 .btn-build {
     background: linear-gradient(145deg, #dc3545, #a71d2a);
     color: #fff;
+    width: 100%;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 6px;
+    font-size: clamp(9px, 0.7vw, 13px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 2px;
+    box-sizing: border-box;
 }
+
 .btn-bankrupt:hover:not(:disabled),
 .btn-jail:hover:not(:disabled),
 .btn-build:hover:not(:disabled) {
-    transform: scale(1.05);
+    transform: scale(1.03);
     box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
 }
 
+.btn-bankrupt:disabled,
+.btn-jail:disabled,
+.btn-build:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* 🆕 Griauti mygtukas – tokia pati išvaizda kaip bankrotas */
 .btn-demolish {
-    background: linear-gradient(145deg, #ff6b35, #e55a2b);
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
     color: #fff;
-    font-size: 13px;
-    padding: 6px 12px;
     width: 100%;
-    border-radius: 8px;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 6px;
+    font-size: clamp(9px, 0.7vw, 13px);
     font-weight: 700;
     cursor: pointer;
-    border: none;
-    transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    transition: all 0.2s;
+    margin-bottom: 2px;
+    box-sizing: border-box;
 }
 
 .btn-demolish:hover:not(:disabled) {
-    transform: scale(1.02);
-    box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5);
+    transform: scale(1.03);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
 }
 
 .btn-demolish:disabled {
@@ -1448,18 +1501,25 @@ body {
 }
 
 .choice-btn {
-    padding: 5px 12px;
+    padding: 8px 12px;
     border: none;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: clamp(10px, 0.8vw, 13px);
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
     flex: 1;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .choice-btn:hover {
     transform: scale(1.04);
+}
+
+.choice-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .choice-buy {
@@ -2579,6 +2639,10 @@ body {
     color: #fff;
     border-color: #ff6b6b;
     transition: all 0.3s;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .info-btn.active {
@@ -2694,8 +2758,12 @@ body {
     background: linear-gradient(145deg, #6f42c1, #5a32a3);
     color: #fff;
     border-color: #8b5cf6;
-    font-size: 11px;
+    font-size: clamp(9px, 0.7vw, 11px);
     padding: 8px 6px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .vote-kick-btn:hover {
