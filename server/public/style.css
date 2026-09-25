@@ -1894,6 +1894,149 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
+/* ============================================
+   🆕 PREKYBOS MINI KORTELĖS
+   ============================================ */
+
+.trade-mini-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    align-content: flex-start;
+    padding: 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    min-height: 80px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.trade-mini-cards::-webkit-scrollbar {
+    width: 6px;
+}
+
+.trade-mini-cards::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
+}
+
+.trade-mini-cards::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 3px;
+}
+
+.trade-mini-cards::-webkit-scrollbar-thumb:hover {
+    background: #ffd700;
+}
+
+.trade-mini-cards .mini-card {
+    width: 50px;
+    height: 75px;
+    min-width: 50px;
+    max-width: 50px;
+    min-height: 75px;
+    max-height: 75px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    border: 2px solid #3d2b1f;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f5f0e8;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.trade-mini-cards .mini-card:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    z-index: 10;
+    border-color: #ffd700;
+}
+
+.trade-mini-cards .mini-card.selected {
+    border-color: #28a745;
+    border-width: 3px;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.trade-mini-cards .mini-card-color {
+    width: 100%;
+    height: 22px;
+    border-bottom: 2px solid #3d2b1f;
+    flex-shrink: 0;
+}
+
+.trade-mini-cards .mini-card-color.mini-card-icon {
+    background: linear-gradient(145deg, #f0e8d8, #e0d5c0);
+    border-bottom: 1px solid rgba(61,43,31,0.2);
+}
+
+.trade-mini-cards .mini-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2px;
+    text-align: center;
+    background: #f5f0e8;
+    position: relative;
+    min-height: 0;
+}
+
+.trade-mini-cards .mini-card-name {
+    font-size: 6px;
+    font-weight: 700;
+    color: #3d2b1f;
+    line-height: 1.1;
+    word-wrap: break-word;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    padding: 0 1px;
+}
+
+.trade-mini-cards .mini-card-info {
+    font-size: 7px;
+    font-weight: 700;
+    color: #28a745;
+    margin-top: auto;
+    padding-top: 1px;
+    border-top: 1px solid rgba(61,43,31,0.2);
+    line-height: 1;
+}
+
+.trade-mini-cards .mini-card-houses {
+    position: absolute;
+    bottom: 18px;
+    right: 1px;
+    font-size: 8px;
+    line-height: 1;
+    background: rgba(255,255,255,0.95);
+    border-radius: 3px;
+    padding: 1px 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.trade-mini-cards .mini-card input[type="checkbox"],
+.trade-mini-cards .mini-card input[type="radio"] {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    z-index: 10;
+    accent-color: #28a745;
+}
+
 /* ---------- GRIAUTI NAMUS - KORTELĖS ---------- */
 .demolish-card {
     display: flex;

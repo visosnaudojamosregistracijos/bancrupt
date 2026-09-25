@@ -2057,6 +2057,67 @@ function hideCellInfo() {
     }
 }
 
+// ============================================
+// 🆕 PREKYBOS MINI KORTELĖS
+// ============================================
+
+function renderMiniCardForTrade(field, options = {}) {
+    const {
+        selected = false,
+        showCheckbox = false,
+        showRadio = false,
+        fieldId = field.id,
+        onClick = null,
+        houses = 0
+    } = options;
+    
+    const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+    const color = field.color || '#c9a84c';
+    const icon = field.icon || '';
+    
+    let houseIcon = '';
+    if (houses >= 5) houseIcon = '🏨';
+    else if (houses > 0) {
+        for (let i = 0; i < houses; i++) houseIcon += '🏠';
+    }
+    
+    const topBar = isService 
+        ? `<div class="mini-card-color mini-card-icon" style="background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;">${icon}</div>`
+        : `<div class="mini-card-color" style="background:${color};"></div>`;
+    
+    return `
+        <div class="mini-card ${selected ? 'selected' : ''}" 
+             data-field-id="${fieldId}" 
+             title="${field.name} • €${field.cost}"
+             ${onClick ? `onclick="${onClick}"` : ''}>
+            ${topBar}
+            <div class="mini-card-body">
+                <div class="mini-card-name">${field.name}</div>
+                <div class="mini-card-info">€${field.cost}</div>
+                ${houseIcon ? `<div class="mini-card-houses">${houseIcon}</div>` : ''}
+            </div>
+            ${showCheckbox ? `<input type="checkbox" ${selected ? 'checked' : ''} style="position:absolute; top:2px; right:2px; width:14px; height:14px; z-index:10;">` : ''}
+            ${showRadio ? `<input type="radio" ${selected ? 'checked' : ''} style="position:absolute; top:2px; right:2px; width:14px; height:14px; z-index:10;">` : ''}
+        </div>
+    `;
+}
+
+// 🆕 Prekybos mini kortelių tooltip'ai
+function initTradeMiniCardTooltips() {
+    document.querySelectorAll('.trade-mini-cards .mini-card').forEach(card => {
+        card.addEventListener('mouseenter', (e) => {
+            const fieldId = parseInt(card.dataset.fieldId);
+            if (!fieldId && fieldId !== 0) return;
+            
+            showMiniCardTooltip(fieldId, card);
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            hideMiniCardTooltip();
+        });
+    });
+}
+
 function initMiniCardTooltips() {
     document.querySelectorAll('.mini-card').forEach(card => {
         card.addEventListener('mouseenter', (e) => {
@@ -2697,8 +2758,15 @@ function updateSellableProperties() {
     const player = gameState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    const properties = player.properties || [];
-    let html = '';
+    // 🆕 Rikiuoti nuo pigiausios iki brangiausios
+    const properties = [...(player.properties || [])].sort((a, b) => {
+        const fieldA = gameState.board.find(f => f.id === a);
+        const fieldB = gameState.board.find(f => f.id === b);
+        return (fieldA?.cost || 0) - (fieldB?.cost || 0);
+    });
+    
+    let html = '<div class="trade-mini-cards">';
+    let count = 0;
     
     properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
@@ -2706,28 +2774,26 @@ function updateSellableProperties() {
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
-        const price = Math.floor(field.cost * 0.8);
-        const checked = selectedSellFields.includes(fieldId) ? 'checked' : '';
+        const checked = selectedSellFields.includes(fieldId);
         
-        // 🆕 Spalva arba ikona
-        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
-        const icon = isService ? (field.icon || '⚙️') : '';
-        const color = isService ? 'transparent' : (field.color || '#c9a84c');
-        
-        html += `
-            <div style="padding:8px; border-bottom:1px solid #ddd; display:flex; align-items:center; gap:8px;">
-                <div style="width:20px; height:20px; border-radius:4px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:1px solid #ccc;">${icon}</div>
-                <input type="checkbox" ${checked} onchange="toggleSellField(${fieldId})" id="sell_${fieldId}">
-                <label for="sell_${fieldId}" style="font-weight:600; flex:1;">${field.name}</label>
-                <span style="color:#28a745;">€${price}</span>
-            </div>
-        `;
+        html += renderMiniCardForTrade(field, {
+            selected: checked,
+            showCheckbox: true,
+            fieldId: fieldId,
+            onClick: `toggleSellField(${fieldId})`,
+            houses: houses
+        });
+        count++;
     });
     
-    if (!html) {
-        html = '<p style="color:#6c757d;">Neturi kortelių be namų</p>';
+    html += '</div>';
+    
+    if (count === 0) {
+        html = '<p style="color:#6c757d; padding:10px;">Neturi kortelių be namų</p>';
     }
     container.innerHTML = html;
+    
+    setTimeout(initTradeMiniCardTooltips, 50);
 }
 
 function toggleSellField(fieldId) {
@@ -2768,9 +2834,15 @@ function updateAuctionableProperties() {
     const player = gameState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    const properties = player.properties || [];
-    let html = '';
-    let hasProperties = false;
+    // 🆕 Rikiuoti nuo pigiausios iki brangiausios
+    const properties = [...(player.properties || [])].sort((a, b) => {
+        const fieldA = gameState.board.find(f => f.id === a);
+        const fieldB = gameState.board.find(f => f.id === b);
+        return (fieldA?.cost || 0) - (fieldB?.cost || 0);
+    });
+    
+    let html = '<div class="trade-mini-cards">';
+    let count = 0;
     
     properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
@@ -2778,28 +2850,26 @@ function updateAuctionableProperties() {
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
-        hasProperties = true;
-        const checked = (selectedAuctionField === fieldId) ? 'checked' : '';
+        const checked = (selectedAuctionField === fieldId);
         
-        // 🆕 Spalva arba ikona
-        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
-        const icon = isService ? (field.icon || '⚙️') : '';
-        const color = isService ? 'transparent' : (field.color || '#c9a84c');
-        
-        html += `
-            <div style="padding:8px; border-bottom:1px solid #ddd; cursor:pointer; display:flex; align-items:center; gap:8px;" onclick="selectAuctionField(${fieldId})">
-                <div style="width:20px; height:20px; border-radius:4px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:1px solid #ccc;">${icon}</div>
-                <input type="radio" name="auctionField" ${checked} id="auction_${fieldId}">
-                <label for="auction_${fieldId}" style="font-weight:600; cursor:pointer; flex:1;">${field.name}</label>
-                <span style="color:#6c757d;">€${field.cost}</span>
-            </div>
-        `;
+        html += renderMiniCardForTrade(field, {
+            selected: checked,
+            showRadio: true,
+            fieldId: fieldId,
+            onClick: `selectAuctionField(${fieldId})`,
+            houses: houses
+        });
+        count++;
     });
     
-    if (!hasProperties) {
+    html += '</div>';
+    
+    if (count === 0) {
         html = '<p style="color:#6c757d; padding:10px;">Neturi kortelių be namų</p>';
     }
     container.innerHTML = html;
+    
+    setTimeout(initTradeMiniCardTooltips, 50);
 }
 
 function selectAuctionField(fieldId) {
@@ -2883,39 +2953,31 @@ function updateOfferFields() {
     const player = gameState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    let html = '';
+    // 🆕 Rikiuoti nuo pigiausios iki brangiausios
+    const properties = [...(player.properties || [])].sort((a, b) => {
+        const fieldA = gameState.board.find(f => f.id === a);
+        const fieldB = gameState.board.find(f => f.id === b);
+        return (fieldA?.cost || 0) - (fieldB?.cost || 0);
+    });
+    
+    let html = '<div class="trade-mini-cards">';
     let count = 0;
     
-    if (player.properties.length === 0) {
-        container.innerHTML = '<p style="color:#6c757d; padding:10px;">Neturi kortelių</p>';
-        return;
-    }
-    
-    html += '<div style="display:flex; flex-wrap:wrap; gap:5px; padding:5px;">';
-    
-    player.properties.forEach(fieldId => {
+    properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) return;
         
-        const checked = selectedOfferFields.includes(fieldId) ? 'checked' : '';
+        const checked = selectedOfferFields.includes(fieldId);
         
-        // 🆕 Spalva arba ikona
-        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
-        const icon = isService ? (field.icon || '⚙️') : '';
-        const color = isService ? '#f0e8d8' : (field.color || '#c9a84c');
-        const textColor = isService ? '#3d2b1f' : '#fff';
-        
-        html += `
-            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s;" 
-                 onclick="document.getElementById('offer_${fieldId}').click()">
-                ${icon ? `<span style="font-size:12px;">${icon}</span>` : ''}
-                <input type="checkbox" ${checked} onchange="toggleOfferField(${fieldId})" id="offer_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:10px; color:${textColor}; font-weight:600;">${field.name}</span>
-                <span style="font-size:8px; color:${textColor}; opacity:0.7;">€${field.cost}</span>
-            </div>
-        `;
+        html += renderMiniCardForTrade(field, {
+            selected: checked,
+            showCheckbox: true,
+            fieldId: fieldId,
+            onClick: `toggleOfferField(${fieldId})`,
+            houses: houses
+        });
         count++;
     });
     
@@ -2925,6 +2987,8 @@ function updateOfferFields() {
         html = '<p style="color:#6c757d; padding:10px;">Neturi kortelių be namų</p>';
     }
     container.innerHTML = html;
+    
+    setTimeout(initTradeMiniCardTooltips, 50);
 }
 
 function toggleOfferField(fieldId) {
@@ -2979,33 +3043,31 @@ function updateRequestFields() {
         return;
     }
     
-    let html = '';
-    let count = 0;
-    html += '<div style="display:flex; flex-wrap:wrap; gap:5px; padding:5px;">';
+    // 🆕 Rikiuoti nuo pigiausios iki brangiausios
+    const properties = [...(target.properties || [])].sort((a, b) => {
+        const fieldA = gameState.board.find(f => f.id === a);
+        const fieldB = gameState.board.find(f => f.id === b);
+        return (fieldA?.cost || 0) - (fieldB?.cost || 0);
+    });
     
-    target.properties.forEach(fieldId => {
+    let html = '<div class="trade-mini-cards">';
+    let count = 0;
+    
+    properties.forEach(fieldId => {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
         const houses = target.houses && target.houses[fieldId] ? target.houses[fieldId] : 0;
         if (houses > 0) return;
         
-        const checked = selectedRequestFields.includes(fieldId) ? 'checked' : '';
+        const checked = selectedRequestFields.includes(fieldId);
         
-        // 🆕 Spalva arba ikona
-        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
-        const icon = isService ? (field.icon || '⚙️') : '';
-        const color = isService ? '#f0e8d8' : (field.color || '#c9a84c');
-        const textColor = isService ? '#3d2b1f' : '#fff';
-        
-        html += `
-            <div style="background:${color}; padding:4px 8px; border-radius:6px; border:2px solid ${checked ? '#28a745' : 'rgba(255,255,255,0.3)'}; display:flex; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s;" 
-                 onclick="document.getElementById('request_${fieldId}').click()">
-                ${icon ? `<span style="font-size:12px;">${icon}</span>` : ''}
-                <input type="checkbox" ${checked} onchange="toggleRequestField(${fieldId})" id="request_${fieldId}" style="margin:0; cursor:pointer;">
-                <span style="font-size:10px; color:${textColor}; font-weight:600;">${field.name}</span>
-                <span style="font-size:8px; color:${textColor}; opacity:0.7;">€${field.cost}</span>
-            </div>
-        `;
+        html += renderMiniCardForTrade(field, {
+            selected: checked,
+            showCheckbox: true,
+            fieldId: fieldId,
+            onClick: `toggleRequestField(${fieldId})`,
+            houses: houses
+        });
         count++;
     });
     
@@ -3015,6 +3077,8 @@ function updateRequestFields() {
         html = '<p style="color:#6c757d; padding:10px;">Šis žaidėjas neturi kortelių be namų</p>';
     }
     container.innerHTML = html;
+    
+    setTimeout(initTradeMiniCardTooltips, 50);
 }
 
 function confirmProposeTrade() {
@@ -3160,8 +3224,13 @@ function updateDemolishList(properties) {
         return;
     }
     
+    // 🆕 Rikiuoti nuo pigiausio iki brangiausio
+    const sorted = [...properties].sort((a, b) => {
+        return (a.cost || 0) - (b.cost || 0);
+    });
+    
     let html = '';
-    properties.forEach(prop => {
+    sorted.forEach(prop => {
         let houseIcons = '';
         if (prop.isHotel) {
             houseIcons = '🏨';
@@ -3171,7 +3240,6 @@ function updateDemolishList(properties) {
             }
         }
         
-        // 🆕 Spalva arba ikona
         const isService = prop.type === 'service1' || prop.type === 'service2' || prop.type === 'service3';
         const icon = isService ? (prop.icon || '⚙️') : '';
         const color = isService ? 'transparent' : (prop.color || '#c9a84c');
