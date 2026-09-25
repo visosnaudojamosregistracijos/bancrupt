@@ -1172,16 +1172,25 @@ function updateWaitingRoom(state) {
         if (state.players.length === 0) {
             listEl.innerHTML = '<p style="color:#d4b896; text-align:center;">Nėra žaidėjų</p>';
         } else {
-            listEl.innerHTML = state.players.map(p => `
-                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'}">
-                    <span style="width:20px; height:20px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
-                    <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' (tu)' : ''}</span>
-                    <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅ Pasiruošęs' : '⏳ Laukia'}</span>
-                    ${state.hostId === playerId && p.id !== playerId && !p.ready ? `
-                        <button onclick="kickPlayer(${p.id})" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">❌</button>
-                    ` : ''}
-                </div>
-            `).join('');
+            listEl.innerHTML = state.players.map(p => {
+    // 🆕 Boto žyma
+    const isBot = p.isBot === true;
+    const botIcon = isBot ? '🤖 ' : '';
+    const botBadge = isBot ? '<span style="font-size:11px; color:#8b5cf6; font-weight:700; background:rgba(111,66,193,0.2); padding:2px 6px; border-radius:4px;">BOTAS</span>' : '';
+    const botAvatar = isBot ? '🤖' : '';
+    
+    return `
+        <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'} ${isBot ? 'border-left-color:#8b5cf6;' : ''}">
+            <span style="width:20px; height:20px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
+            <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${botIcon}${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' (tu)' : ''}</span>
+            ${botBadge}
+            <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅' : '⏳'}</span>
+            ${!isBot && state.hostId === playerId && p.id !== playerId && !p.ready ? `
+                <button onclick="kickPlayer(${p.id})" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">❌</button>
+            ` : ''}
+        </div>
+    `;
+}).join('');
         }
     }
     
@@ -1247,6 +1256,57 @@ function toggleReady() {
     
     playClickSound();
     socket.emit('playerReady', { ready: newReady });
+}
+
+// ============================================
+// 🤖 BOTŲ FUNKCIJOS
+// ============================================
+
+// 🆕 Pridėti botą prie žaidimo
+function addBot() {
+    if (!socket || !isConnected) {
+        alert('❌ Nėra ryšio su serveriu!');
+        playErrorSound();
+        return;
+    }
+    
+    if (!gameId) {
+        alert('❌ Nesi žaidime!');
+        playErrorSound();
+        return;
+    }
+    
+    if (!waitingRoomState) {
+        alert('❌ Nėra waiting room būsenos!');
+        playErrorSound();
+        return;
+    }
+    
+    // 🆕 Patikrinti ar yra vietos
+    const activePlayers = waitingRoomState.players.length;
+    if (activePlayers >= 8) {
+        alert('❌ Stalas pilnas! (max 8 žaidėjai)');
+        playErrorSound();
+        return;
+    }
+    
+    // 🆕 Patikrinti ar aš hostas
+    if (playerId !== waitingRoomState.hostId) {
+        alert('❌ Tik žaidimo kūrėjas gali pridėti botus!');
+        playErrorSound();
+        return;
+    }
+    
+    if (waitingRoomState.gameStarted) {
+        alert('❌ Žaidimas jau prasidėjo!');
+        playErrorSound();
+        return;
+    }
+    
+    console.log('🤖 Pridedamas botas...');
+    playClickSound();
+    
+    socket.emit('addBot');
 }
 
 function startGame() {

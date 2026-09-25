@@ -463,21 +463,25 @@
             </div>
             
             <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-                <button id="readyBtn" onclick="toggleReady()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; transition:all 0.3s;">
-                    ✋ Aš pasiruošęs
-                </button>
-                
-                <button id="startGameBtn" onclick="startGame()" style="display:none; padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
-                    🚀 Pradėti žaidimą
-                </button>
-                
-                <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;">
-                    <input type="checkbox" id="waitingIsPublic" onchange="togglePublic()" style="width:18px; height:18px; cursor:pointer;">
-                    <label for="waitingIsPublic" style="color:#d4b896; font-size:13px; font-weight:600; cursor:pointer;">
-                        🌐 Viešas stalas
-                    </label>
-                </div>
-            </div>
+    <button id="readyBtn" onclick="toggleReady()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; transition:all 0.3s;">
+        ✋ Aš pasiruošęs
+    </button>
+    
+    <button id="addBotBtn" onclick="addBot()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6f42c1, #5a32a3); color:#fff; transition:all 0.3s;">
+        ➕ Pridėti botą
+    </button>
+    
+    <button id="startGameBtn" onclick="startGame()" style="display:none; padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
+        🚀 Pradėti žaidimą
+    </button>
+    
+    <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;">
+        <input type="checkbox" id="waitingIsPublic" onchange="togglePublic()" style="width:18px; height:18px; cursor:pointer;">
+        <label for="waitingIsPublic" style="color:#d4b896; font-size:13px; font-weight:600; cursor:pointer;">
+            🌐 Viešas stalas
+        </label>
+    </div>
+</div>
             
             <button onclick="leaveGameFromWaiting()" style="width:100%; padding:12px; margin-bottom:20px; border:2px solid #ff6b6b; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
                 🏃 Pasitraukti iš stalo

@@ -136,6 +136,384 @@ class Game {
     }
 
     // ============================================
+// 🤖 BOTŲ FUNKCIJOS
+// ============================================
+
+// 🆕 Pridėti botą prie žaidimo
+addBot() {
+    if (this.players.length >= C.MAX_PLAYERS) {
+        return { error: `Daugiausiai ${C.MAX_PLAYERS} žaidėjai` };
+    }
+    
+    if (this.gameStarted) {
+        return { error: 'Žaidimas jau prasidėjo! Negalima pridėti boto.' };
+    }
+    
+    // 🆕 Botų vardai
+    const BOT_NAMES = ['Jonas', 'Petras', 'Antanas', 'Ona', 'Marytė', 'Stasys', 'Birutė'];
+    
+    // 🆕 Rasti laisvą vardą
+    const usedNames = this.players.map(p => p.name);
+    const availableName = BOT_NAMES.find(n => !usedNames.includes(n));
+    
+    if (!availableName) {
+        return { error: 'Nėra laisvų botų vardų!' };
+    }
+    
+    // 🆕 Rasti laisvą spalvą
+    const usedColors = this.players
+        .filter(p => !p.left && !p.bankrupt && !p.kicked)
+        .map(p => p.color);
+    
+    const availableColor = C.PLAYER_COLORS.find(c => !usedColors.includes(c));
+    
+    if (!availableColor) {
+        return { error: 'Nėra laisvų spalvų!' };
+    }
+    
+    // 🆕 Sukurti botą
+    const bot = {
+        id: this.players.length,
+        name: availableName,
+        position: 0,
+        money: C.START_MONEY,
+        color: availableColor,
+        properties: [],
+        houses: {},
+        inJail: false,
+        jailTurns: 0,
+        isActive: true,
+        bankrupt: false,
+        left: false,
+        kicked: false,
+        isDebtor: false,
+        ready: true,              // 🆕 Botai visada pasiruošę
+        socketId: null,
+        token: 'bot_' + Math.random().toString(36).substring(2),
+        joinedAt: Date.now(),
+        isHost: false,
+        isBot: true               // 🆕 Boto žymė
+    };
+    
+    this.players.push(bot);
+    this.lastActivity = Date.now();
+    
+    console.log(`🤖 Botas pridėtas: ${availableName} (${availableColor})`);
+    
+    return bot;
+}
+
+// 🆕 Patikrinti, ar žaidėjas yra botas
+isBot(playerId) {
+    const player = this.getPlayerById(playerId);
+    return player && player.isBot === true;
+}
+
+// 🆕 Gauti visus botus
+getBots() {
+    return this.players.filter(p => p.isBot === true && !p.bankrupt && !p.left && !p.kicked);
+}
+
+// 🆕 Boto sprendimas – ar pirkti sklypą?
+botShouldBuyProperty(bot, field) {
+    if (!bot || !field) return false;
+    
+    // 1. Ar turi pakankamai pinigų? (bent 1.5× kainos)
+    if (bot.money < field.cost * 1.5) {
+        console.log(`🤖 ${bot.name}: nepakanka pinigų ${field.name}`);
+        return false;
+    }
+    
+    // 2. Ar tai verta? (ROI analizė)
+    const baseRent = field.cost * C.RENT_BASE_RATIO;
+    const roi = (baseRent * 10) / field.cost;  // ~10 apsisukimų
+    
+    // 3. Ar tai service1/2/3 (visada verta)?
+    const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+    if (isService) {
+        console.log(`🤖 ${bot.name}: perka service ${field.name}`);
+        return true;
+    }
+    
+    // 4. Ar tai property?
+    if (field.type === 'property') {
+        // Ar turi kitų tos pačios spalvos sklypų?
+        const group = C.COLOR_GROUPS[field.color] || [];
+        const ownedInGroup = bot.properties.filter(id => group.includes(id)).length;
+        
+        // Jei turi 1+ tos pačios spalvos – verta
+        if (ownedInGroup >= 1) {
+            console.log(`🤖 ${bot.name}: perka ${field.name} (turi ${ownedInGroup} tos pačios spalvos)`);
+            return true;
+        }
+        
+        // Jei pinigų daug (> 3× kainos) – verta bet kokiu atveju
+        if (bot.money > field.cost * 3) {
+            console.log(`🤖 ${bot.name}: perka ${field.name} (daug pinigų)`);
+            return true;
+        }
+        
+        // Jei ROI geras – verta
+        if (roi > 0.5) {
+            console.log(`🤖 ${bot.name}: perka ${field.name} (ROI ${roi.toFixed(2)})`);
+            return true;
+        }
+    }
+    
+    // 5. Nuspręsta – nepirkti (taupo pinigus)
+    console.log(`🤖 ${bot.name}: NEperka ${field.name}`);
+    return false;
+}
+
+// 🆕 Boto sprendimas – ar statyti namą?
+botShouldBuildHouse(bot, fieldId) {
+    if (!bot || !fieldId) return false;
+    
+    const field = this.board.find(f => f.id === fieldId);
+    if (!field || !field.color) return false;
+    
+    // 1. Ar turi visą grupę?
+    const group = C.COLOR_GROUPS[field.color] || [];
+    const hasAll = group.every(id => bot.properties.includes(id));
+    if (!hasAll) return false;
+    
+    // 2. Ar jau yra viežbutis?
+    const currentHouses = bot.houses[fieldId] || 0;
+    if (currentHouses >= 5) return false;
+    
+    // 3. Ar pinigų pakanka? (bent 2× namo kainos)
+    const buildCost = Math.floor(field.cost * C.BUILD_COST_RATIO);
+    if (bot.money < buildCost * 2) {
+        console.log(`🤖 ${bot.name}: nepakanka pinigų namui statyti`);
+        return false;
+    }
+    
+    // 4. Ar tai tolygu? (max-min ≤ 1)
+    const housesInGroup = group.map(id => bot.houses[id] || 0);
+    const minHouses = Math.min(...housesInGroup);
+    const maxHouses = Math.max(...housesInGroup);
+    
+    if (maxHouses - minHouses > 1) return false;
+    
+    // 5. Ar šis sklypas turi mažiausiai namų?
+    if (currentHouses > minHouses) return false;
+    
+    console.log(`🤖 ${bot.name}: stato namą ant ${field.name}`);
+    return true;
+}
+
+// 🆕 Boto sprendimas – ką daryti su skola?
+botHandleDebt(bot) {
+    if (!bot || bot.money >= 0) return { action: 'none' };
+    
+    console.log(`🤖 ${bot.name}: skolingas €${Math.abs(bot.money)} – bando parduoti`);
+    
+    // 1. Parduoti pigiausią sklypą be namų
+    const sellable = bot.properties
+        .filter(id => !bot.houses[id] || bot.houses[id] === 0)
+        .map(id => this.board.find(f => f.id === id))
+        .filter(f => f)
+        .sort((a, b) => a.cost - b.cost);
+    
+    if (sellable.length > 0) {
+        return { action: 'sell', fieldId: sellable[0].id };
+    }
+    
+    // 2. Parduoti sklypą su namais
+    const withHouses = bot.properties
+        .map(id => this.board.find(f => f.id === id))
+        .filter(f => f)
+        .sort((a, b) => a.cost - b.cost);
+    
+    if (withHouses.length > 0) {
+        return { action: 'demolish', fieldId: withHouses[0].id };
+    }
+    
+    // 3. Bankrotas
+    return { action: 'bankrupt' };
+}
+
+// 🆕 Boto sprendimas – ką daryti jo ėjimo metu?
+botDecideAction(bot) {
+    if (!bot || !bot.isActive || bot.bankrupt) return { action: 'none' };
+    
+    // 1. Ar skolingas?
+    if (bot.money < 0) {
+        return this.botHandleDebt(bot);
+    }
+    
+    // 2. Ar kalėjime?
+    if (bot.inJail) {
+        if (bot.money >= C.JAIL_FINE * 2) {
+            return { action: 'pay_jail' };
+        }
+    }
+    
+    // 3. Ar gali statyti?
+    const field = this.board[bot.position];
+    if (field && field.type === 'property' && field.color) {
+        if (this.botShouldBuildHouse(bot, field.id)) {
+            return { action: 'build', fieldId: field.id };
+        }
+    }
+    
+    // 4. Nieko
+    return { action: 'none' };
+}
+
+// 🆕 Boto ėjimas – pagrindinė funkcija
+async botTurn(botId, emitFunction) {
+    const bot = this.getPlayerById(botId);
+    
+    if (!bot || !bot.isBot) {
+        return { error: 'Ne botas' };
+    }
+    
+    if (this.currentTurn !== botId) {
+        return { error: 'Ne boto eilė' };
+    }
+    
+    if (!this.gameStarted) {
+        return { error: 'Žaidimas neprasidėjęs' };
+    }
+    
+    if (bot.bankrupt || bot.left || bot.kicked) {
+        return { error: 'Botas neaktyvus' };
+    }
+    
+    console.log(`🤖 ${bot.name} pradeda ėjimą...`);
+    
+    // 🆕 1. Ar skolingas?
+    if (bot.money < 0) {
+        console.log(`🤖 ${bot.name}: skolingas €${Math.abs(bot.money)}`);
+        const decision = this.botDecideAction(bot);
+        
+        if (decision.action === 'sell') {
+            // Parduoti sklypą bankui
+            const result = this.sellToBank(bot.id, [decision.fieldId]);
+            console.log(`🤖 ${bot.name} pardavė sklypą:`, result);
+            await this.botSleep(1500);
+            
+            if (bot.money >= 0) {
+                return { action: 'sold', message: `${bot.name} pardavė turtą` };
+            }
+        } else if (decision.action === 'demolish') {
+            // Nugriauti namą
+            const result = this.demolishHouse(bot.id, decision.fieldId);
+            console.log(`🤖 ${bot.name} nugriovė namą:`, result);
+            await this.botSleep(1500);
+            
+            if (bot.money >= 0) {
+                return { action: 'demolished', message: `${bot.name} nugriovė namą` };
+            }
+        } else {
+            // Bankrotas
+            console.log(`🤖 ${bot.name} bankrutuoja!`);
+            const result = this.bankruptPlayer(bot.id);
+            return { action: 'bankrupt', result };
+        }
+    }
+    
+    // 🆕 2. Ar kalėjime?
+    if (bot.inJail) {
+        if (bot.money >= C.JAIL_FINE * 2) {
+            console.log(`🤖 ${bot.name}: moka €${C.JAIL_FINE} iš kalėjimo`);
+            this.payJailFine(bot.id);
+            await this.botSleep(1000);
+            return { action: 'paid_jail', message: `${bot.name} išėjo iš kalėjimo` };
+        } else {
+            console.log(`🤖 ${bot.name}: lieka kalėjime`);
+            this.isRolling = false;
+            this.endTurn();
+            return { action: 'stayed_jail', message: `${bot.name} lieka kalėjime` };
+        }
+    }
+    
+    // 🆕 3. Mesti kauliukus
+    await this.botSleep(500);
+    
+    console.log(`🤖 ${bot.name}: meta kauliukus`);
+    const rollResult = this.rollDice(botId, null);
+    
+    if (rollResult.error) {
+        console.log(`🤖 ${bot.name}: klaida metant kauliukus:`, rollResult.error);
+        return { error: rollResult.error };
+    }
+    
+    // 🆕 4. Jei gali pirkti – nuspręsti
+    if (this.waitingForBuy) {
+        await this.botSleep(1500);
+        
+        const field = this.board[bot.position];
+        const shouldBuy = this.botShouldBuyProperty(bot, field);
+        
+        if (shouldBuy) {
+            console.log(`🤖 ${bot.name}: perka ${field.name}`);
+            const buyResult = this.buyProperty(bot.id);
+            return { 
+                action: 'bought', 
+                field: field.name,
+                result: buyResult,
+                rollResult 
+            };
+        } else {
+            console.log(`🤖 ${bot.name}: atsisako pirkti ${field.name}`);
+            const cancelResult = this.cancelBuy(bot.id);
+            return { 
+                action: 'cancelled', 
+                field: field.name,
+                result: cancelResult,
+                rollResult 
+            };
+        }
+    }
+    
+    // 🆕 5. Jei gali statyti – nuspręsti
+    await this.botSleep(500);
+    
+    const currentField = this.board[bot.position];
+    if (currentField && currentField.type === 'property' && currentField.color) {
+        if (this.botShouldBuildHouse(bot, currentField.id)) {
+            console.log(`🤖 ${bot.name}: stato namą ant ${currentField.name}`);
+            const buildResult = this.buildHouse(bot.id, currentField.id);
+            return { 
+                action: 'built', 
+                field: currentField.name,
+                result: buildResult,
+                rollResult 
+            };
+        }
+    }
+    
+    // 🆕 6. Baigti ėjimą
+    return { 
+        action: 'roll', 
+        rollResult,
+        message: `${bot.name} baigė ėjimą`
+    };
+}
+
+// 🆕 Pagalbinė – miegojimas (kad botas nežaistų per greitai)
+botSleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// 🆕 Ar dabar boto eilė?
+isBotTurn() {
+    const currentPlayer = this.getPlayerById(this.currentTurn);
+    return currentPlayer && currentPlayer.isBot === true;
+}
+
+// 🆕 Gauti dabartinį botą
+getCurrentBot() {
+    const currentPlayer = this.getPlayerById(this.currentTurn);
+    if (currentPlayer && currentPlayer.isBot === true) {
+        return currentPlayer;
+    }
+    return null;
+}
+
+    // ============================================
     // SPALVŲ FUNKCIJOS
     // ============================================
 
@@ -375,13 +753,14 @@ class Game {
         return {
             gameStarted: this.gameStarted,
             players: activePlayers.map(p => ({
-                id: p.id,
-                name: p.name,
-                color: p.color,
-                ready: p.ready === true,
-                isHost: p.id === hostId,
-                isActive: p.isActive
-            })),
+    id: p.id,
+    name: p.name,
+    color: p.color,
+    ready: p.ready === true,
+    isHost: p.id === hostId,
+    isActive: p.isActive,
+    isBot: p.isBot === true    // 🆕 Boto žyma
+})),
             totalPlayers: activePlayers.length,
             readyCount: activePlayers.filter(p => p.ready).length,
             canStart: this.canStartGame().can,
