@@ -747,17 +747,33 @@ class Game {
         }
 
         if (bot.inJail) {
+            // 🆕 1. Jei turi pakankamai pinigų – moka ir išeina
             if (bot.money >= C.JAIL_FINE * 2) {
                 console.log(`🤖 ${bot.name}: moka €${C.JAIL_FINE} iš kalėjimo`);
                 this.payJailFine(bot.id);
                 await this.botSleep(1000);
                 return { action: 'paid_jail', message: `${bot.name} išėjo iš kalėjimo` };
-            } else {
-                console.log(`🤖 ${bot.name}: lieka kalėjime`);
-                this.isRolling = false;
-                this.endTurn();
-                return { action: 'stayed_jail', message: `${bot.name} lieka kalėjime` };
             }
+            
+            // 🆕 2. Jei neturi €100 – META KAULIUKUS (bando išmesti dubliką)
+            console.log(`🤖 ${bot.name}: meta kauliukus kalėjime (bandymas ${(bot.jailTurns || 0) + 1}/3)`);
+            const rollResult = this.rollDice(botId, null);
+            
+            if (rollResult.error) {
+                console.log(`🤖 ${bot.name}: klaida metant:`, rollResult.error);
+                return { error: rollResult.error };
+            }
+            
+            // 🆕 Jei išmetė dubliką – išėjo (handleJailRoll tai apdoroja)
+            // 🆕 Jei neišmetė – jailTurns padidėjo
+            // 🆕 Jei pasiekė 3 – handleJailRoll apdoroja
+            await this.botSleep(1000);
+            
+            return { 
+                action: 'jail_roll', 
+                rollResult,
+                message: `${bot.name} metė kauliukus kalėjime`
+            };
         }
 
         await this.botSleep(500);
@@ -1300,6 +1316,18 @@ class Game {
             this.addMessage(`${player.name} išėjo iš kalėjimo! 🎉`);
             return this.continueAfterJail(player, dice1, dice2);
         } else if (player.jailTurns >= 3) {
+            // 🆕 Patikrinti, ar turi €50
+            if (player.money < C.JAIL_FINE) {
+                console.log(`💀 ${player.name}: neturi €${C.JAIL_FINE} – BANKROTAS!`);
+                this.addMessage(`💀 ${player.name} neturi €${C.JAIL_FINE} – bankrotuoja!`);
+                this.bankruptPlayer(player.id);
+                return { 
+                    action: 'bankrupt', 
+                    player, 
+                    message: `${player.name} bankrotavo (neturėjo €${C.JAIL_FINE})` 
+                };
+            }
+            
             player.money -= C.JAIL_FINE;
             player.inJail = false;
             player.jailTurns = 0;
@@ -1901,13 +1929,32 @@ class Game {
     }
 
     endGame() {
-        this.gameStarted = false;
-        const activePlayers = this.getActivePlayers();
-        const winner = activePlayers[0];
-        if (winner) {
-            this.addMessage(`🏆 ${winner.name} LAIMĖJO! 🎉`);
+    this.gameStarted = false;
+    const activePlayers = this.getActivePlayers();
+    const winner = activePlayers[0];
+    
+    if (winner) {
+        this.addMessage(`🏆 ${winner.name} LAIMĖJO! 🎉`);
+        
+        // 🆕 Išsiųsti gameFinished eventą klientui
+        if (this.emitFunction) {
+            this.emitFunction('gameFinished', {
+                winner: winner.name,
+                winnerId: winner.id
+            });
+        }
+    } else {
+        // 🆕 Jei nėra winner (visi bankrutavo)
+        this.addMessage(`🏁 Žaidimas baigtas – nėra laimėtojo`);
+        
+        if (this.emitFunction) {
+            this.emitFunction('gameFinished', {
+                winner: 'Niekas',
+                winnerId: null
+            });
         }
     }
+}
 
     addMessage(message) {
         this.lastMessage = message;
