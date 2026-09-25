@@ -16,16 +16,11 @@ let isMuted = false;
 let lastVolume = 50;
 let infoMode = false;
 let lastHoveredField = null;
-// 🆕 GARSŲ REŽIMAS
 let soundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
-// 'my' = tik mano, 'all' = visi
 
-
-// VOTE-KICK
 let voteKickTimerInterval = null;
 let amIKicked = false;
 
-// SPALVŲ PASIRINKIMAS
 const PLAYER_COLORS = [
     '#9c0505', '#e2de00', '#5506d3', '#05b130',
     '#000000', '#00adc4', '#492b1f', '#0609d6'
@@ -36,17 +31,12 @@ let selectedJoinColor = null;
 let availableJoinColors = [];
 let joinColorCheckTimeout = null;
 
-// WAITING ROOM
 let waitingRoomState = null;
-
-// VIEŠI STALAI
 let publicGamesCheckInterval = null;
-
-// INFO PANELĖS ŠRIFTAS
 let infoResizeObserver = null;
 
 // ============================================
-// 🆕 KONSTANTOS (frontend)
+// KONSTANTOS (frontend)
 // ============================================
 const SERVICE1_IDS = [2, 14, 28, 44];
 const SERVICE2_IDS = [8, 19, 37, 46];
@@ -172,34 +162,31 @@ function initSocket() {
     });
 
     socket.on('gameState', (state) => {
-    console.log('📊 Gauta žaidimo būsena');
-    gameState = state;
-    updateUI(state);
-    document.getElementById('bankruptModal').style.display = 'none';
-    
-    // 🆕 Inicializuoti statistiką KIEKVIENAM žaidėjui
-    if (state.players && state.players.length > 0) {
-        state.players.forEach(p => {
-            if (!window.gameStats.players[p.id]) {
-                initPlayerStats(p.id, p.name, p.color);
-            }
-        });
-    }
-    
-    if (state.gameStarted) {
-        hideWaitingRoom();
-    }
-});
+        console.log('📊 Gauta žaidimo būsena');
+        gameState = state;
+        updateUI(state);
+        document.getElementById('bankruptModal').style.display = 'none';
+        
+        if (state.players && state.players.length > 0) {
+            state.players.forEach(p => {
+                if (!window.gameStats.players[p.id]) {
+                    initPlayerStats(p.id, p.name, p.color);
+                }
+            });
+        }
+        
+        if (state.gameStarted) {
+            hideWaitingRoom();
+        }
+    });
 
-// 🆕 Tavo eilė – groti garsą (ATS KIRAI!)
-socket.on('yourTurn', (data) => {
-    console.log('🎵 Tavo eilė!', data);
-    
-    playYourTurnSound();
-    addNotification(`🎵 Tavo eilė! Mesk kauliukus!`);
-});
+    socket.on('yourTurn', (data) => {
+        console.log('🎵 Tavo eilė!', data);
+        
+        playYourTurnSound();
+        addNotification(`🎵 Tavo eilė! Mesk kauliukus!`);
+    });
 
-    // SPALVŲ GAVIMAS
     socket.on('gameColors', (data) => {
         console.log('🎨 Gautos spalvos:', data);
         
@@ -239,7 +226,6 @@ socket.on('yourTurn', (data) => {
         }
     });
 
-     // 🆕 Rezervacijos rezultatas
     socket.on('reserveColorResult', (data) => {
         if (data.error) {
             console.log('⚠️ Rezervacija nepavyko:', data.error);
@@ -249,35 +235,19 @@ socket.on('yourTurn', (data) => {
         }
     });
 
-    // 🆕 Spalvų sąrašas atsinaujino (kažkas rezervavo/atlaisvino)
     socket.on('gameColorsUpdated', (data) => {
         console.log('🎨 Spalvos atsinaujino:', data);
         
-        // Patikrinti, ar šis update skirtas mūsų žaidimui
         const currentGameId = document.getElementById('gameIdInput')?.value.trim().toUpperCase();
         if (!currentGameId || currentGameId !== data.gameId) return;
         
-        // Jei esame join puslapyje – atnaujinti spalvas
         if (document.getElementById('page-join')?.classList.contains('active')) {
             availableJoinColors = data.available;
             
-            // 🆕 NEATŠAUKTI spalvos, jei ji yra mūsų rezervuota
-            // (serveris grąžina available be mūsų spalvos, nes ji "used")
-            // Tikriname, ar spalva vis dar yra mūsų pasirinkta ir ar jos nėra available
-            // Jei mūsų spalva dingo iš available – tai reiškia, kad kažkas kitas ją paėmė
-            // BET jei mes patys ją rezervavome – ji bus used, ne available
-            
-            // 🆕 Sprendimas: jei selectedJoinColor yra mūsų, paliekam
-            // Tikrinam tik tada, kai selectedJoinColor nėra mūsų rezervuota
             if (selectedJoinColor && !availableJoinColors.includes(selectedJoinColor)) {
-                // Patikrinti, ar tai mūsų rezervacija (mes ją turime)
-                // Jei taip – paliekam, jei ne – atšaukim
-                // Šiuo atveju tiesiog paliekam, nes serveris patvirtins per joinGame
                 console.log('⚠️ Mūsų spalva dingo iš available, bet paliekam:', selectedJoinColor);
             }
             
-            // 🆕 Užtikrinti, kad mūsų spalva būtų rodoma kaip "selected"
-            // Pridedam mūsų spalvą atgal į available tik render'inimui
             const colorsToRender = [...availableJoinColors];
             if (selectedJoinColor && !colorsToRender.includes(selectedJoinColor)) {
                 colorsToRender.push(selectedJoinColor);
@@ -293,36 +263,32 @@ socket.on('yourTurn', (data) => {
         }
     });
 
-    // 🆕 Rezervacija baigėsi (30s)
     socket.on('colorReservationExpired', (data) => {
         console.log('⏰ Spalvos rezervacija baigėsi:', data.color);
-        // Refresh – iš naujo gauti spalvas
         const gid = document.getElementById('gameIdInput')?.value.trim().toUpperCase();
         if (gid) {
             socket.emit('getGameColors', { gameId: gid });
         }
     });
 
-    // WAITING ROOM
     socket.on('waitingRoomUpdate', (state) => {
         console.log('⏳ Waiting room update:', state);
         updateWaitingRoom(state);
     });
 
     socket.on('gameStarted', (data) => {
-    console.log('🎮 Žaidimas pradėtas:', data);
-    
-    // 🆕 Groti game-start garsą VISIEMS
-    playGameStartSound();
-    
-    const msg = `🎮 Žaidimas pradėtas! Pirmas eina: ${data.firstPlayerName}`;
-    addNotification(msg);
-    addJournal(msg);
-    
-    hideWaitingRoom();
-    
-    if (gameState) updateUI(gameState);
-});
+        console.log('🎮 Žaidimas pradėtas:', data);
+        
+        playGameStartSound();
+        
+        const msg = `🎮 Žaidimas pradėtas! Pirmas eina: ${data.firstPlayerName}`;
+        addNotification(msg);
+        addJournal(msg);
+        
+        hideWaitingRoom();
+        
+        if (gameState) updateUI(gameState);
+    });
 
     socket.on('youWereKicked', () => {
         console.log('❌ Buvau išmestas iš waiting room');
@@ -390,7 +356,6 @@ socket.on('yourTurn', (data) => {
             return;
         }
         
-        // GARSO EFEKTAI
         if (data.field) {
             const fpId = data.player.id;
             
@@ -437,33 +402,30 @@ socket.on('yourTurn', (data) => {
                     return;
                 }
             } else if (data.field.type === 'service1' || data.field.type === 'service2' || data.field.type === 'service3') {
-    // 🆕 Jei ką tik nusipirkai – nerodyti "visitMine" pranešimo
-    if (data.result.action === 'can_buy') {
-        updateUI(gameState);
-        return;  // ← ← ← NUTRAUKTI – pirks per buyChoice
-    }
-    
-    // 🆕 Jei serviceOwner yra TU – rodyti "visitMine"
-    // Jei ne – rodyti "visitOthers" arba "rentPayer"
-    if (owner && owner.id === data.player.id) {
-        msgKey = 'visitMine';
-    } else if (owner && owner.id === playerId) {
-        msgKey = 'rentOwner';  // ← ← ← KAI KITAS ATVYKO, O AŠ SAVININKAS
-    } else if (isMe) {
-        msgKey = 'rentPayer';  // ← ← ← KAI AŠ ATVYKAU IR MOKU NUOMĄ
-    } else {
-        msgKey = 'rentObserver';
-    }
-    
-    let serviceIds;
-    if (data.field.type === 'service1') serviceIds = SERVICE1_IDS;
-    else if (data.field.type === 'service2') serviceIds = SERVICE2_IDS;
-    else serviceIds = SERVICE3_IDS;
-    
-    const count = owner?.properties?.filter(id => serviceIds.includes(id)).length || 0;
-    msgData.count = count;
-    msgData.countSuffix = getCountSuffix(count);
-}
+                if (data.result.action === 'can_buy') {
+                    updateUI(gameState);
+                    return;
+                }
+                
+                if (owner && owner.id === data.player.id) {
+                    msgKey = 'visitMine';
+                } else if (owner && owner.id === playerId) {
+                    msgKey = 'rentOwner';
+                } else if (isMe) {
+                    msgKey = 'rentPayer';
+                } else {
+                    msgKey = 'rentObserver';
+                }
+                
+                let serviceIds;
+                if (data.field.type === 'service1') serviceIds = SERVICE1_IDS;
+                else if (data.field.type === 'service2') serviceIds = SERVICE2_IDS;
+                else serviceIds = SERVICE3_IDS;
+                
+                const count = owner?.properties?.filter(id => serviceIds.includes(id)).length || 0;
+                msgData.count = count;
+                msgData.countSuffix = getCountSuffix(count);
+            }
             
             if (msgKey) {
                 const msg = getCellMessage(fieldId, msgKey, msgData);
@@ -517,12 +479,10 @@ socket.on('yourTurn', (data) => {
             showPopupMessage(msg, 'buy');
         }
         if (msg.includes('nusipirko')) {
-    playBuySound();
-    playCashSound();
-    // 🆕 NErodyti pranešimo – jau rodomas #buyCard
-    // showPopupMessage(msg, 'buy');
-    return;  // 🆕 Nutraukti toliau
-}
+            playBuySound();
+            playCashSound();
+            return;
+        }
         if (msg.includes('nugriovė')) {
             playSoundForPlayer('demolish', null, true);
             playSoundForPlayer('cash', null, true);
@@ -598,76 +558,76 @@ socket.on('yourTurn', (data) => {
     });
 
     socket.on('buyPending', (data) => {
-    console.log('⏳ Laukiama sprendimo:', data);
-    
-    if (data.playerId !== playerId) {
-        const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
-        addJournal(msg);
+        console.log('⏳ Laukiama sprendimo:', data);
         
-        const field = gameState.board.find(f => f.id === data.fieldId);
-        const player = gameState.players.find(p => p.id === data.playerId);
-        if (field && player) {
-            showBuyCard(field, player, 'pending');
+        if (data.playerId !== playerId) {
+            const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
+            addJournal(msg);
+            
+            const field = gameState.board.find(f => f.id === data.fieldId);
+            const player = gameState.players.find(p => p.id === data.playerId);
+            if (field && player) {
+                showBuyCard(field, player, 'pending');
+            }
         }
-    }
-});
+    });
 
     socket.on('buyConfirmed', (data) => {
-    console.log('✅ Pirkimas patvirtintas:', data);
-    playSoundForPlayer('buy', data.playerId);
-    playSoundForPlayer('cash', data.playerId);
+        console.log('✅ Pirkimas patvirtintas:', data);
+        playSoundForPlayer('buy', data.playerId);
+        playSoundForPlayer('cash', data.playerId);
 
-    if (data.playerId !== undefined) {
-        incrementBought(data.playerId);
-    }
-    
-    let msg;
-    if (data.playerId === playerId) {
-        msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
-    } else {
-        msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
-    }
-    
-    addJournal(msg);
-    
-    if (data.fieldName && gameState && gameState.board) {
-        const field = gameState.board.find(f => f.name === data.fieldName);
-        const player = gameState.players.find(p => p.id === data.playerId);
-        
-        if (field && player) {
-            highlightCell(field.id, 'green', 5000);
-            showBuyCard(field, player, 'success');
+        if (data.playerId !== undefined) {
+            incrementBought(data.playerId);
         }
-    }
-    
-    hideBuyChoice();
-});
+        
+        let msg;
+        if (data.playerId === playerId) {
+            msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
+        } else {
+            msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
+        }
+        
+        addJournal(msg);
+        
+        if (data.fieldName && gameState && gameState.board) {
+            const field = gameState.board.find(f => f.name === data.fieldName);
+            const player = gameState.players.find(p => p.id === data.playerId);
+            
+            if (field && player) {
+                highlightCell(field.id, 'green', 5000);
+                showBuyCard(field, player, 'success');
+            }
+        }
+        
+        hideBuyChoice();
+    });
 
     socket.on('buyCancelled', (data) => {
-    console.log('❌ Pirkimas atšauktas:', data);
-    playMoveSound();
-    
-    let msg;
-    if (data.playerId === playerId) {
-        msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
-    } else {
-        msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
-    }
-    
-    addJournal(msg);
-    
-    if (data.fieldName && gameState && gameState.board) {
-        const field = gameState.board.find(f => f.name === data.fieldName);
-        const player = gameState.players.find(p => p.id === data.playerId);
+        console.log('❌ Pirkimas atšauktas:', data);
+        playMoveSound();
         
-        if (field && player) {
-            highlightCell(field.id, 'red', 5000);
-            showBuyCard(field, player, 'cancel');
+        let msg;
+        if (data.playerId === playerId) {
+            msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
+        } else {
+            msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
         }
-    }
-    
-    hideBuyChoice();
-});
+        
+        addJournal(msg);
+        
+        if (data.fieldName && gameState && gameState.board) {
+            const field = gameState.board.find(f => f.name === data.fieldName);
+            const player = gameState.players.find(p => p.id === data.playerId);
+            
+            if (field && player) {
+                highlightCell(field.id, 'red', 5000);
+                showBuyCard(field, player, 'cancel');
+            }
+        }
+        
+        hideBuyChoice();
+    });
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -913,7 +873,9 @@ socket.on('yourTurn', (data) => {
         }, 500);
     });
 
+    // ============================================
     // VOTE-KICK
+    // ============================================
     socket.on('voteKickStarted', (data) => {
         console.log('🗳️ Balsavimas pradėtas:', data);
         
@@ -1107,7 +1069,6 @@ function selectJoinColor(color) {
         return;
     }
     
-    // 🆕 Atlaisvinti seną rezervaciją
     if (selectedJoinColor && selectedJoinColor !== color) {
         const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
         if (gid && socket) {
@@ -1118,7 +1079,6 @@ function selectJoinColor(color) {
     selectedJoinColor = color;
     renderColorPicker('joinColorPicker', availableJoinColors, selectedJoinColor, selectJoinColor);
     
-    // 🆕 Rezervuoti naują spalvą
     const gid = document.getElementById('gameIdInput').value.trim().toUpperCase();
     if (gid && socket) {
         socket.emit('reserveColor', { gameId: gid, color: color });
@@ -1173,24 +1133,22 @@ function updateWaitingRoom(state) {
             listEl.innerHTML = '<p style="color:#d4b896; text-align:center;">Nėra žaidėjų</p>';
         } else {
             listEl.innerHTML = state.players.map(p => {
-    // 🆕 Boto žyma
-    const isBot = p.isBot === true;
-    const botIcon = isBot ? '🤖 ' : '';
-    const botBadge = isBot ? '<span style="font-size:11px; color:#8b5cf6; font-weight:700; background:rgba(111,66,193,0.2); padding:2px 6px; border-radius:4px;">BOTAS</span>' : '';
-    const botAvatar = isBot ? '🤖' : '';
-    
-    return `
-        <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'} ${isBot ? 'border-left-color:#8b5cf6;' : ''}">
-            <span style="width:20px; height:20px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
-            <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${botIcon}${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' (tu)' : ''}</span>
-            ${botBadge}
-            <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅' : '⏳'}</span>
-            ${!isBot && state.hostId === playerId && p.id !== playerId && !p.ready ? `
-                <button onclick="kickPlayer(${p.id})" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">❌</button>
-            ` : ''}
-        </div>
-    `;
-}).join('');
+                const isBot = p.isBot === true;
+                const botIcon = isBot ? '🤖 ' : '';
+                const botBadge = isBot ? '<span style="font-size:11px; color:#8b5cf6; font-weight:700; background:rgba(111,66,193,0.2); padding:2px 6px; border-radius:4px;">BOTAS</span>' : '';
+                
+                return `
+                    <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'} ${isBot ? 'border-left-color:#8b5cf6;' : ''}">
+                        <span style="width:20px; height:20px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
+                        <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${botIcon}${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' (tu)' : ''}</span>
+                        ${botBadge}
+                        <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅' : '⏳'}</span>
+                        ${!isBot && state.hostId === playerId && p.id !== playerId && !p.ready ? `
+                            <button onclick="kickPlayer(${p.id})" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">❌</button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
         }
     }
     
@@ -1262,7 +1220,6 @@ function toggleReady() {
 // 🤖 BOTŲ FUNKCIJOS
 // ============================================
 
-// 🆕 Pridėti botą prie žaidimo
 function addBot() {
     if (!socket || !isConnected) {
         alert('❌ Nėra ryšio su serveriu!');
@@ -1282,7 +1239,6 @@ function addBot() {
         return;
     }
     
-    // 🆕 Patikrinti ar yra vietos
     const activePlayers = waitingRoomState.players.length;
     if (activePlayers >= 8) {
         alert('❌ Stalas pilnas! (max 8 žaidėjai)');
@@ -1290,7 +1246,6 @@ function addBot() {
         return;
     }
     
-    // 🆕 Patikrinti ar aš hostas
     if (playerId !== waitingRoomState.hostId) {
         alert('❌ Tik žaidimo kūrėjas gali pridėti botus!');
         playErrorSound();
@@ -1445,6 +1400,32 @@ function showAuction(data) {
     document.getElementById('auctionSeller').textContent = data.sellerName || 'Nežinomas';
     document.getElementById('auctionFieldName').textContent = data.fieldName || 'Nežinoma kortelė';
     document.getElementById('auctionFieldCost').textContent = '€' + (data.fieldCost || 0);
+    
+    // 🆕 AUKCIONO MINI KORTELĖ
+    const miniCardContainer = document.getElementById('auctionMiniCardContainer');
+    if (miniCardContainer) {
+        if (data.fieldIcon || data.fieldColor) {
+            const isService = data.fieldType === 'service1' || data.fieldType === 'service2' || data.fieldType === 'service3';
+            const color = data.fieldColor || '#c9a84c';
+            const icon = data.fieldIcon || '';
+            
+            const topBar = isService 
+                ? `<div class="mini-card-color mini-card-icon" style="background:transparent; display:flex; align-items:center; justify-content:center; font-size:24px;">${icon}</div>`
+                : `<div class="mini-card-color" style="background:${color};"></div>`;
+            
+            miniCardContainer.innerHTML = `
+                <div class="mini-card">
+                    ${topBar}
+                    <div class="mini-card-body">
+                        <div class="mini-card-name">${data.fieldName || ''}</div>
+                        <div class="mini-card-info">€${data.fieldCost || 0}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            miniCardContainer.innerHTML = '';
+        }
+    }
     
     const bankBid = data.currentBid;
     document.getElementById('auctionBankBid').textContent = '€' + bankBid;
@@ -1809,7 +1790,6 @@ function toggleSoundPanel() {
     playClickSound();
 }
 
-// 🆕 Muzikos panelės atidarymas
 function toggleMusicPanel() {
     const panel = document.getElementById('musicPanel');
     if (!panel) return;
@@ -1822,7 +1802,6 @@ function toggleMusicPanel() {
     playClickSound();
 }
 
-// 🆕 Garsų režimo perjungimas
 function toggleSoundMode() {
     const btn = document.getElementById('soundModeBtn');
     
@@ -1846,21 +1825,17 @@ function toggleSoundMode() {
     playClickSound();
 }
 
-// 🆕 Groti garsą pagal režimą
 function playSoundForPlayer(soundName, soundPlayerId = null, isPublicSound = false) {
-    // Vieši garsai – visada groti
     if (isPublicSound) {
         audioManager.play(soundName);
         return;
     }
     
-    // Režimas 'all' – groti viską
     if (soundMode === 'all') {
         audioManager.play(soundName);
         return;
     }
     
-    // Režimas 'my' – groti tik savo
     if (soundMode === 'my') {
         if (soundPlayerId === null || soundPlayerId === playerId) {
             audioManager.play(soundName);
@@ -1998,9 +1973,6 @@ function showCellInfo(fieldId) {
     }
     
     if (field.type === 'property' && field.color) {
-        const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
-        
-        // 🆕 NAUJA FORMULĖ
         const baseRent = Math.round(field.cost * 0.10);
         const fullGroupRent = Math.round(field.cost * 0.20);
         const rent1 = Math.round(field.cost * 1.00);
@@ -2020,7 +1992,6 @@ function showCellInfo(fieldId) {
         html += `</div>`;
     }
     
-    // 🆕 SERVICE3 – fiksuota nuoma
     if (field.type === 'service3' || SERVICE3_IDS.includes(field.id)) {
         const ownedInGroup = owner ? owner.properties.filter(id => SERVICE3_IDS.includes(id)).length : 0;
         const currentRent = SERVICE_RENT[ownedInGroup] || SERVICE_RENT[1];
@@ -2034,16 +2005,7 @@ function showCellInfo(fieldId) {
         html += `</div>`;
     }
     
-    if (field.type === 'service1') {
-        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
-        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
-        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
-        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
-        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
-        html += `</div>`;
-    }
-    
-    if (field.type === 'service2') {
+    if (field.type === 'service1' || field.type === 'service2') {
         html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
         html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
         html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
@@ -2057,10 +2019,6 @@ function showCellInfo(fieldId) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€200</span></div></div>`;
         } else if (field.id === 21) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€10</span></div></div>`;
-        } else if (field.id === 32) {
-            html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€25</span></div></div>`;
-        } else if (field.id === 50) {
-            html += `<div class="info-section"><div class="info-row"><span class="label">🎁 Gausi:</span><span class="value green">€200</span></div></div>`;
         } else {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€${field.cost}</span></div></div>`;
         }
@@ -2131,7 +2089,7 @@ function hideCellInfo() {
 }
 
 // ============================================
-// 🆕 PREKYBOS MINI KORTELĖS
+// PREKYBOS MINI KORTELĖS
 // ============================================
 
 function renderMiniCardForTrade(field, options = {}) {
@@ -2175,7 +2133,6 @@ function renderMiniCardForTrade(field, options = {}) {
     `;
 }
 
-// 🆕 Prekybos mini kortelių tooltip'ai
 function initTradeMiniCardTooltips() {
     document.querySelectorAll('.trade-mini-cards .mini-card').forEach(card => {
         card.addEventListener('mouseenter', (e) => {
@@ -2239,9 +2196,6 @@ function showMiniCardTooltip(fieldId, cardElement) {
     }
     
     if (field.type === 'property' && field.color) {
-        const houses = owner && owner.houses && owner.houses[fieldId] ? owner.houses[fieldId] : 0;
-        
-        // 🆕 NAUJA FORMULĖ
         const baseRent = Math.round(field.cost * 0.10);
         const fullGroupRent = Math.round(field.cost * 0.20);
         const rent1 = Math.round(field.cost * 1.00);
@@ -2259,19 +2213,6 @@ function showMiniCardTooltip(fieldId, cardElement) {
         html += `<div class="info-row"><span class="label">Su 4 namais:</span><span class="value">€${rent4}</span></div>`;
         html += `<div class="info-row"><span class="label">🏨 Viešbutis:</span><span class="value">€${rentHotel}</span></div>`;
         html += `</div>`;
-        
-        if (owner) {
-            html += `<div class="info-section">`;
-            html += `<div class="info-section-title">🏠 DABARTINIS</div>`;
-            if (houses >= 5) {
-                html += `<div class="info-row"><span class="label">Statusas:</span><span class="value">🏨 VIEŽBUTIS</span></div>`;
-            } else if (houses > 0) {
-                html += `<div class="info-row"><span class="label">Namai:</span><span class="value">${houses} 🏠</span></div>`;
-            } else {
-                html += `<div class="info-row"><span class="label">Namai:</span><span class="value">0</span></div>`;
-            }
-            html += `</div>`;
-        }
     }
     
     if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
@@ -2353,13 +2294,10 @@ function createGame() {
     }
     playClickSound();
     
-    // 🆕 Išvalyti žurnalą naujam žaidimui
     clearJournal();
     
     const isPublicCheckbox = document.getElementById('createIsPublic');
     const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
-    
-
 
     socket.emit('createGame', {
         name: name,
@@ -2396,11 +2334,7 @@ function joinGame() {
     gameId = gid;
     playClickSound();
     
-    // 🆕 Išvalyti žurnalą naujam žaidimui
     clearJournal();
-    
-// 🆕 Rezervacija bus patvirtinta serverio pusėje
-    // (joinGame handler'is iškviečia confirmColorReservation)
     
     socket.emit('joinGame', { 
         gameId: gid, 
@@ -2414,10 +2348,8 @@ function enterGame() {
         goToGame();
     }
     
-    // 🆕 Užkrauti žurnalą iš localStorage
     loadJournalFromStorage();
 
-    // 🆕 Įkelti garsų režimą
     const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
     soundMode = savedSoundMode;
     
@@ -2434,7 +2366,6 @@ function enterGame() {
         }
     }
     
-    // 🆕 Inicializuoti statistiką KIEKVIENAM žaidėjui
     if (gameState && gameState.players && gameState.players.length > 0) {
         gameState.players.forEach(p => {
             if (!window.gameStats.players[p.id]) {
@@ -2448,7 +2379,6 @@ function enterGame() {
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
     
-    // 🆕 Garsumo slankikliai
     const savedMusicVolume = localStorage.getItem('bancrupt_musicVolume') || 15;
     const savedSfxVolume = localStorage.getItem('bancrupt_sfxVolume') || 50;
     
@@ -2465,7 +2395,6 @@ function enterGame() {
     changeMusicVolume(savedMusicVolume);
     changeSfxVolume(savedSfxVolume);
     
-    // 🆕 Fono muzika
     const savedMusic = localStorage.getItem('bancrupt_music');
     const musicBtn = document.getElementById('musicBtn');
     
@@ -2475,7 +2404,6 @@ function enterGame() {
             musicBtn.innerHTML = '🎵 Muzika: 🔴 IŠJ.';
         }
     } else {
-        // 🆕 Paleisti po pirmo vartotojo veiksmo (autoplay blokavimas)
         const startMusicOnFirstInteraction = () => {
             startBackgroundMusic();
             if (musicBtn) {
@@ -2518,10 +2446,6 @@ function enterGame() {
     
     setTimeout(initInfoResizeObserver, 1000);
 }
-
-// ============================================
-// PASITRAUKIMAS
-// ============================================
 
 function leaveGame() {
     if (!isConnected || !socket || !socket.connected) {
@@ -2689,8 +2613,6 @@ function showBuyChoice(data) {
     playNotificationSound();
 }
 
-
-
 function hideBuyChoice() {
     const choice = document.getElementById('buyChoice');
     choice.style.display = 'none';
@@ -2708,8 +2630,6 @@ function cancelBuy() {
     playClickSound();
     hideBuyChoice();
 }
-
-
 
 // ============================================
 // ŽAIDIMO VALDYMAS
@@ -2831,7 +2751,6 @@ function updateSellableProperties() {
     const player = gameState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    // 🆕 Rikiuoti nuo pigiausios iki brangiausios
     const properties = [...(player.properties || [])].sort((a, b) => {
         const fieldA = gameState.board.find(f => f.id === a);
         const fieldB = gameState.board.find(f => f.id === b);
@@ -2907,7 +2826,6 @@ function updateAuctionableProperties() {
     const player = gameState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    // 🆕 Rikiuoti nuo pigiausios iki brangiausios
     const properties = [...(player.properties || [])].sort((a, b) => {
         const fieldA = gameState.board.find(f => f.id === a);
         const fieldB = gameState.board.find(f => f.id === b);
@@ -3026,7 +2944,6 @@ function updateOfferFields() {
     const player = gameState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    // 🆕 Rikiuoti nuo pigiausios iki brangiausios
     const properties = [...(player.properties || [])].sort((a, b) => {
         const fieldA = gameState.board.find(f => f.id === a);
         const fieldB = gameState.board.find(f => f.id === b);
@@ -3116,7 +3033,6 @@ function updateRequestFields() {
         return;
     }
     
-    // 🆕 Rikiuoti nuo pigiausios iki brangiausios
     const properties = [...(target.properties || [])].sort((a, b) => {
         const fieldA = gameState.board.find(f => f.id === a);
         const fieldB = gameState.board.find(f => f.id === b);
@@ -3223,19 +3139,16 @@ function confirmProposeTrade() {
 function showTradeOffer(data) {
     document.getElementById('offerFromPlayer').textContent = data.fromPlayer || 'Nežinomas';
     
-    // 🆕 Generuoti mini korteles SIŪLOMOMS kortelėms
     const offerContainer = document.getElementById('offerFieldsContainer');
     if (offerContainer) {
         offerContainer.innerHTML = generateTradeMiniCards(data.offerFieldIds || []);
     }
     
-    // 🆕 Generuoti mini korteles PRAŠOMOMS kortelėms
     const requestContainer = document.getElementById('requestFieldsContainer');
     if (requestContainer) {
         requestContainer.innerHTML = generateTradeMiniCards(data.requestFieldIds || []);
     }
     
-    // 🆕 Pinigų rodymas
     const offerMoneyEl = document.getElementById('offerMoneyDisplay');
     if (offerMoneyEl) {
         if (data.offerMoney > 0) {
@@ -3259,7 +3172,6 @@ function showTradeOffer(data) {
     playNotificationSound();
 }
 
-// 🆕 Pagalbinė funkcija – generuoja mini korteles prekybai
 function generateTradeMiniCards(fieldIds) {
     if (!fieldIds || fieldIds.length === 0) {
         return '<div style="font-size:11px; color:#6c757d; text-align:center; padding:4px;">Tik pinigai</div>';
@@ -3329,6 +3241,9 @@ function counterTradeOffer() {
     playClickSound();
 }
 
+// ============================================
+// GRIAUTI NAMUS
+// ============================================
 let demolishableProperties = [];
 
 function openDemolish() {
@@ -3362,7 +3277,6 @@ function updateDemolishList(properties) {
         return;
     }
     
-    // 🆕 Rikiuoti nuo pigiausio iki brangiausio
     const sorted = [...properties].sort((a, b) => {
         return (a.cost || 0) - (b.cost || 0);
     });
@@ -3402,6 +3316,10 @@ function confirmDemolish(fieldId) {
     closeDemolish();
     playClickSound();
 }
+
+// ============================================
+// STATYBA
+// ============================================
 
 function buildHouse() {
     if (!isMyTurn) {
@@ -3560,44 +3478,41 @@ function updateUI(state) {
     
     document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left && !p.kicked).length}/${state.maxPlayers}`;
     
-    // 🆕 Rasti dabartinį žaidėją pagal playerId
     const currentPlayer = state.players.find(p => p.id === state.currentTurn);
     document.getElementById('turnDisplay').textContent = `🎯 Eina: ${currentPlayer ? currentPlayer.name : '---'}`;
 
-    // 🆕 Atnaujinti turnIndicator (5 langelyje)
-const turnIndicatorName = document.getElementById('turnIndicatorName');
-const turnIndicatorNext = document.getElementById('turnIndicatorNext');
-const indicator = document.getElementById('turnIndicator');
+    const turnIndicatorName = document.getElementById('turnIndicatorName');
+    const turnIndicatorNext = document.getElementById('turnIndicatorNext');
+    const indicator = document.getElementById('turnIndicator');
 
-if (currentPlayer) {
-    if (turnIndicatorName) {
-        turnIndicatorName.textContent = currentPlayer.name;
-        turnIndicatorName.style.color = currentPlayer.color || '#1a6b3c';
-    }
-    
-    if (indicator && currentPlayer.color) {
-        indicator.style.borderColor = currentPlayer.color;
-        indicator.style.background = currentPlayer.color + '20';
-    }
-    
-    // Rasti kitą žaidėją
-    const activePlayers = state.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
-    const currentIndex = activePlayers.findIndex(p => p.id === currentPlayer.id);
-    
-    let nextPlayer = null;
-    if (activePlayers.length > 1) {
-        nextPlayer = activePlayers[(currentIndex + 1) % activePlayers.length];
-    }
-    
-    if (turnIndicatorNext) {
-        if (nextPlayer && nextPlayer.id !== currentPlayer.id) {
-            turnIndicatorNext.textContent = nextPlayer.name;
-            turnIndicatorNext.style.color = nextPlayer.color || '#3d2b1f';
-        } else {
-            turnIndicatorNext.textContent = '---';
+    if (currentPlayer) {
+        if (turnIndicatorName) {
+            turnIndicatorName.textContent = currentPlayer.name;
+            turnIndicatorName.style.color = currentPlayer.color || '#1a6b3c';
+        }
+        
+        if (indicator && currentPlayer.color) {
+            indicator.style.borderColor = currentPlayer.color;
+            indicator.style.background = currentPlayer.color + '20';
+        }
+        
+        const activePlayers = state.players.filter(p => p.isActive && !p.bankrupt && !p.left && !p.kicked);
+        const currentIndex = activePlayers.findIndex(p => p.id === currentPlayer.id);
+        
+        let nextPlayer = null;
+        if (activePlayers.length > 1) {
+            nextPlayer = activePlayers[(currentIndex + 1) % activePlayers.length];
+        }
+        
+        if (turnIndicatorNext) {
+            if (nextPlayer && nextPlayer.id !== currentPlayer.id) {
+                turnIndicatorNext.textContent = nextPlayer.name;
+                turnIndicatorNext.style.color = nextPlayer.color || '#3d2b1f';
+            } else {
+                turnIndicatorNext.textContent = '---';
+            }
         }
     }
-}
     
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft && gameId) gameIdLeft.textContent = gameId;
@@ -3636,34 +3551,32 @@ if (currentPlayer) {
             cardsWithPrice.sort((a, b) => a.field.cost - b.field.cost);
             
             cardsWithPrice.forEach(({ fieldId, field, houses }) => {
-    let houseIcon = '';
-    if (houses >= 5) houseIcon = '🏨';
-    else if (houses > 0) {
-        for (let i = 0; i < houses; i++) houseIcon += '🏠';
-    }
-    
-    // 🆕 Jei service1/2/3 – rodom ikoną viršuje, ne spalvą
-    const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
-    const color = field.color || '#c9a84c';
-    
-    const tooltip = `${field.name} (#${fieldId}) • €${field.cost}`;
-    
-    // 🆕 Viršutinė dalis – arba spalva (property), arba ikona (service)
-    const topBar = isService 
-        ? `<div class="mini-card-color mini-card-icon" style="background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;">${field.icon || '⚙️'}</div>`
-        : `<div class="mini-card-color" style="background:${color};"></div>`;
-    
-    miniCardsHtml += `
-        <div class="mini-card" title="${tooltip}" data-field-id="${fieldId}">
-            ${topBar}
-            <div class="mini-card-body">
-                <div class="mini-card-name">${field.name}</div>
-                <div class="mini-card-info">€${field.cost} • #${fieldId}</div>
-                ${houseIcon ? `<div class="mini-card-houses">${houseIcon}</div>` : ''}
-            </div>
-        </div>
-    `;
-});
+                let houseIcon = '';
+                if (houses >= 5) houseIcon = '🏨';
+                else if (houses > 0) {
+                    for (let i = 0; i < houses; i++) houseIcon += '🏠';
+                }
+                
+                const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+                const color = field.color || '#c9a84c';
+                
+                const tooltip = `${field.name} (#${fieldId}) • €${field.cost}`;
+                
+                const topBar = isService 
+                    ? `<div class="mini-card-color mini-card-icon" style="background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;">${field.icon || '⚙️'}</div>`
+                    : `<div class="mini-card-color" style="background:${color};"></div>`;
+                
+                miniCardsHtml += `
+                    <div class="mini-card" title="${tooltip}" data-field-id="${fieldId}">
+                        ${topBar}
+                        <div class="mini-card-body">
+                            <div class="mini-card-name">${field.name}</div>
+                            <div class="mini-card-info">€${field.cost} • #${fieldId}</div>
+                            ${houseIcon ? `<div class="mini-card-houses">${houseIcon}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
             
             miniCardsHtml += '</div>';
         } else {
@@ -3690,25 +3603,23 @@ if (currentPlayer) {
             ${me.isDebtor ? '<div style="color:#dc3545; font-size:14px; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
         `;
 
-// 🆕 Atskiras mini kortelių konteineris (NE #myInfo viduje)
-const center1 = document.getElementById('center-1');
-let miniCardsContainer = center1.querySelector('.mini-cards-container');
+        const center1 = document.getElementById('center-1');
+        let miniCardsContainer = center1.querySelector('.mini-cards-container');
 
-if (!miniCardsContainer) {
-    miniCardsContainer = document.createElement('div');
-    miniCardsContainer.className = 'mini-cards-container';
-    center1.appendChild(miniCardsContainer);
-}
+        if (!miniCardsContainer) {
+            miniCardsContainer = document.createElement('div');
+            miniCardsContainer.className = 'mini-cards-container';
+            center1.appendChild(miniCardsContainer);
+        }
 
-// 🆕 Pridėti "TURIMOS KORTELĖS" antraštę + korteles
-if (me.properties.length > 0) {
-    miniCardsContainer.innerHTML = `
-        <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px; width:100%;">📋 TURIMOS KORTELĖS</div>
-        ${miniCardsHtml}
-    `;
-} else {
-    miniCardsContainer.innerHTML = `<div style="font-size:9px; color:#6c757d; margin-top:4px; text-align:center; width:100%;">Neturi kortelių</div>`;
-}
+        if (me.properties.length > 0) {
+            miniCardsContainer.innerHTML = `
+                <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px; width:100%;">📋 TURIMOS KORTELĖS</div>
+                ${miniCardsHtml}
+            `;
+        } else {
+            miniCardsContainer.innerHTML = `<div style="font-size:9px; color:#6c757d; margin-top:4px; text-align:center; width:100%;">Neturi kortelių</div>`;
+        }
         
         if (oldMoney !== newMoney) {
             setTimeout(() => {
@@ -3724,12 +3635,10 @@ if (me.properties.length > 0) {
         const isKicked = p.kicked === true;
         const isDebtor = p.isDebtor === true;
         
-        // 🆕 Nerodyti left žaidėjų
         if (isLeft) {
             return '';
         }
         
-        // 🆕 Nerodyti kicked žaidėjų (išskyrus save)
         if (isKicked && p.id !== playerId) {
             return '';
         }
@@ -3737,7 +3646,7 @@ if (me.properties.length > 0) {
         return `
             <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isKicked ? 'left' : ''}">
                 <span class="dot" style="background:${p.color}"></span>
-                <span class="pname">${p.name} ${p.id === playerId ? '👤' : ''}</span>
+                <span class="pname">${p.isBot ? '🤖 ' : ''}${p.name} ${p.id === playerId ? '👤' : ''}</span>
                 <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
                 ${pHouses > 0 ? `🏠${pHouses}` : ''}
                 ${p.inJail ? '⛓️' : ''}
@@ -3976,21 +3885,19 @@ function updateBoard(state) {
         else if (field.type === 'parking') cell.classList.add('parking', 'corner');
         else if (field.type === 'go-to-jail') cell.classList.add('go-to-jail', 'corner');
         if (field.type === 'property') cell.classList.add('property');
-else if (field.type === 'service1') cell.classList.add('service1');
-else if (field.type === 'service2') cell.classList.add('service2');
-else if (field.type === 'service3') cell.classList.add('service3');
+        else if (field.type === 'service1') cell.classList.add('service1');
+        else if (field.type === 'service2') cell.classList.add('service2');
+        else if (field.type === 'service3') cell.classList.add('service3');
         
         if (field.id !== 0 && field.id !== 16 && field.id !== 26 && field.id !== 42) {
             cell.classList.add('edge');
         }
         
-        // GRUPAVIMAS
         if (field.color && field.type === 'property') {
             cell.setAttribute('data-group', field.color);
             cell.style.setProperty('--group-color', field.color);
             
             if (owner) {
-                // 🆕 Nustatyti savininko spalvą
                 cell.style.setProperty('--owner-color', owner.color || '#ffd700');
                 
                 const group = COLOR_GROUPS[field.color] || [];
@@ -4023,10 +3930,13 @@ function addChatMessage(data) {
     
     const container = document.getElementById('chatMessages');
     if (container) {
+        const isBot = data.isBot === true;
+        const botIcon = isBot ? '🤖 ' : '';
+        
         container.innerHTML += `
-            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:2px; ${isBot ? 'background:rgba(111,66,193,0.1); padding:2px 4px; border-radius:4px;' : ''}">
                 <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${data.color}; border:1px solid rgba(0,0,0,0.2); flex-shrink:0;"></span>
-                <b>${data.player}:</b> 
+                <b>${botIcon}${data.player}:</b> 
                 <span>${data.message}</span>
                 <span style="font-size:7px; color:rgba(61,43,31,0.4); margin-left:auto;">${time}</span>
             </div>
@@ -4036,10 +3946,13 @@ function addChatMessage(data) {
     
     const waitingContainer = document.getElementById('waitingChatMessages');
     if (waitingContainer) {
+        const isBot = data.isBot === true;
+        const botIcon = isBot ? '🤖 ' : '';
+        
         waitingContainer.innerHTML += `
-            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:4px; ${isBot ? 'background:rgba(111,66,193,0.1); padding:2px 4px; border-radius:4px;' : ''}">
                 <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${data.color}; border:1px solid rgba(0,0,0,0.2); flex-shrink:0;"></span>
-                <b>${data.player}:</b> 
+                <b>${botIcon}${data.player}:</b> 
                 <span>${data.message}</span>
                 <span style="font-size:9px; color:rgba(61,43,31,0.4); margin-left:auto;">${time}</span>
             </div>
@@ -4068,7 +3981,6 @@ function addJournal(msg) {
     container.appendChild(item);
     container.scrollTop = container.scrollHeight;
     
-    // 🆕 Išsaugoti į localStorage (neribotas istorijos)
     try {
         const history = JSON.parse(localStorage.getItem('bancrupt_journal') || '[]');
         history.push({ num: journalCount, text: msg, time: time });
@@ -4077,15 +3989,12 @@ function addJournal(msg) {
         console.warn('⚠️ Nepavyko išsaugoti žurnalo:', e);
     }
     
-    // 🆕 Išvalyti senus iš DOM (kad nepersistengtų), bet localStorage turi viską
     while (container.children.length > 500) {
         container.removeChild(container.firstChild);
     }
 }
 
-// 🆕 Užkrauti žurnalą iš localStorage
 function loadJournalFromStorage() {
-    // 🆕 Visada pradėti nuo 0
     journalCount = 0;
     
     try {
@@ -4095,7 +4004,6 @@ function loadJournalFromStorage() {
         
         container.innerHTML = '';
         
-        // 🆕 Jei istorija tuščia - nieko nedarom
         if (history.length === 0) {
             console.log('📜 Žurnalas tuščias');
             return;
@@ -4121,7 +4029,6 @@ function loadJournalFromStorage() {
     }
 }
 
-// 🆕 Išvalyti žurnalą (naujam žaidimui)
 function clearJournal() {
     try {
         localStorage.removeItem('bancrupt_journal');
@@ -4168,13 +4075,11 @@ function showCellAction(message, type = 'info') {
     
     if (!header || !body) return;
     
-    // 🆕 SUSTABDYTI seną timeout'ą IR PASLĖPTI seną pranešimą
     if (cellActionTimeout) {
         clearTimeout(cellActionTimeout);
         cellActionTimeout = null;
     }
     
-    // 🆕 PASLĖPTI seną pranešimą (kad naujas išstumtų)
     box.style.display = 'none';
     box.classList.remove('show');
     
@@ -4206,14 +4111,12 @@ function showCellAction(message, type = 'info') {
     
     body.innerHTML = `<p>${message}</p>`;
     
-    // 🆕 BLOKUOTI "Mesti" mygtuką, kol rodomas pranešimas
     const rollBtn = document.getElementById('rollBtn');
     if (rollBtn) {
         rollBtn.disabled = true;
         rollBtn.dataset.blockedByAction = 'true';
     }
     
-    // 🆕 Rodyti naują pranešimą (kartu su animacija)
     requestAnimationFrame(() => {
         box.style.display = 'flex';
         box.classList.add('show');
@@ -4223,7 +4126,6 @@ function showCellAction(message, type = 'info') {
         box.style.animation = 'choiceFadeIn 0.25s ease';
     });
     
-    // 🆕 3 sekundžių timeout'as
     cellActionTimeout = setTimeout(() => {
         hideCellAction();
         cellActionTimeout = null;
@@ -4236,13 +4138,11 @@ function hideCellAction() {
     box.style.display = 'none';
     box.classList.remove('show');
     
-    // 🆕 Išvalyti timeout'ą
     if (cellActionTimeout) {
         clearTimeout(cellActionTimeout);
         cellActionTimeout = null;
     }
     
-    // 🆕 ATBLOKUOTI "Mesti" mygtuką
     const rollBtn = document.getElementById('rollBtn');
     if (rollBtn && rollBtn.dataset.blockedByAction === 'true') {
         delete rollBtn.dataset.blockedByAction;
@@ -4281,7 +4181,6 @@ function loadTheme() {
     }
 }
 
-// 🆕 Tema bus įjungta po DOM užkrovimo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', loadTheme);
 } else {
@@ -4327,13 +4226,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateRequestFields();
         });
     }
-
-    
-    
     
     renderColorPicker('createColorPicker', null, null, selectCreateColor);
    
-
     availableJoinColors = [...PLAYER_COLORS];
     renderColorPicker('joinColorPicker', availableJoinColors, null, selectJoinColor);
     
@@ -4412,7 +4307,6 @@ function fixCornerClasses() {
 
 fixCornerClasses();
 
-// 🆕 Vienkartinis paleidimas – be observer'ių ir setInterval
 function fixPropertyClasses() {
     const buyableIds = [11, 24, 32, 48];
     
@@ -4568,11 +4462,7 @@ function highlightCell(cellId, color = 'yellow', duration = 1500) {
 }
 
 // ============================================
-// KORTELĖS
-// ============================================
-
-// ============================================
-// 🆕 BUY CARD (5 langelyje)
+// BUY CARD (5 langelyje)
 // ============================================
 let buyCardTimeout = null;
 
@@ -4580,10 +4470,8 @@ function showBuyCard(field, player, type) {
     const card = document.getElementById('buyCard');
     if (!card || !field || !player) return;
     
-    // Išimti visas klases
     card.classList.remove('pending', 'success', 'cancel');
     
-    // Nustatyti spalvą
     const header = document.getElementById('buyCardHeader');
     
     if (type === 'pending') {
@@ -4597,7 +4485,6 @@ function showBuyCard(field, player, type) {
         header.textContent = '❌ ATSISAKYTA';
     }
     
-    // Spalva arba ikona
     const colorEl = document.getElementById('buyCardColor');
     const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
 
@@ -4614,13 +4501,9 @@ function showBuyCard(field, player, type) {
         colorEl.style.display = 'block';
     }
     
-    // Pavadinimas
     document.getElementById('buyCardName').textContent = `${field.icon || ''} ${field.name}`;
-    
-    // Kaina
     document.getElementById('buyCardPrice').textContent = `€${field.cost}`;
     
-    // Info (nuoma)
     let infoHtml = '';
     if (field.type === 'property') {
         const baseRent = Math.floor(field.cost * 0.1);
@@ -4630,7 +4513,6 @@ function showBuyCard(field, player, type) {
     }
     document.getElementById('buyCardInfo').textContent = infoHtml;
     
-    // Žaidėjas
     const playerEl = document.getElementById('buyCardPlayer');
     if (type === 'pending') {
         playerEl.textContent = `${player.name} gali pirkti`;
@@ -4643,10 +4525,8 @@ function showBuyCard(field, player, type) {
         playerEl.style.color = '#dc3545';
     }
     
-    // Rodyti
     card.style.display = 'flex';
     
-    // Paslėpti po 3s (arba 30s, jei pending)
     if (buyCardTimeout) clearTimeout(buyCardTimeout);
     const duration = type === 'pending' ? 30000 : 3000;
     buyCardTimeout = setTimeout(() => {
@@ -4870,7 +4750,8 @@ function updateLeadersDisplay() {
                 bankrupt: p.bankrupt,
                 left: p.left,
                 kicked: p.kicked,
-                isActive: p.isActive
+                isActive: p.isActive,
+                isBot: p.isBot
             };
         });
     
@@ -4921,7 +4802,7 @@ function updateLeadersDisplay() {
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
                     <span style="font-size:24px; min-width:30px; text-align:center;">${medal}</span>
                     <span style="width:16px; height:16px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
-                    <span style="color:#fff; font-weight:700; font-size:15px; flex:1;">${p.name}</span>
+                    <span style="color:#fff; font-weight:700; font-size:15px; flex:1;">${p.isBot ? '🤖 ' : ''}${p.name}</span>
                     ${status}
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-size:12px; color:#d4b896;">
@@ -4943,7 +4824,9 @@ function autoUpdateLeaders() {
     }
 }
 
-// 🆕 Fono muzika
+// ============================================
+// FONO MUZIKA
+// ============================================
 let backgroundMusicStarted = false;
 
 function startBackgroundMusic() {
@@ -4988,3 +4871,8 @@ function toggleBackgroundMusic() {
     
     playClickSound();
 }
+
+// ============================================
+// PABAIGA
+// ============================================
+console.log('✅ script.js užkrautas pilnai!');

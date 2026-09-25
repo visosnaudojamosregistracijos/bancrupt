@@ -45,7 +45,7 @@ const io = socketIo(server, {
 const games = new Map();
 
 // ============================================
-// GAUTI KLIENTO IP (per proxy)
+// GAUTI KLIENTO IP
 // ============================================
 function getClientIp(socket) {
     const forwarded = socket.handshake.headers['x-forwarded-for'];
@@ -228,6 +228,57 @@ function startBotLoop(gameId) {
             
             if (result && result.message) {
                 io.to(gameId).emit('message', result.message);
+            }
+            
+            // 🆕 Boto chat po ėjimo
+            if (result && result.action) {
+                let chatEvent = null;
+                
+                if (result.action === 'bought') chatEvent = 'buy';
+                else if (result.action === 'built') chatEvent = 'build';
+                else if (result.action === 'paid_jail') chatEvent = 'jail';
+                else if (result.action === 'bankrupt') chatEvent = 'bankrupt';
+                
+                if (chatEvent) {
+                    const chatMsg = currentGame.sendBotChat(currentBot.id, chatEvent);
+                    if (chatMsg) {
+                        io.to(gameId).emit('chatMessage', chatMsg);
+                    }
+                }
+            }
+            
+            // 🆕 Boto prekybos siūlymas (10%)
+            if (Math.random() < 0.1) {
+                const proposeResult = await currentGame.processBotProposeTrade(currentBot.id);
+                if (proposeResult && proposeResult.result && proposeResult.result.success) {
+                    io.to(gameId).emit('tradeProposed', proposeResult.result);
+                    
+                    const chatMsg = currentGame.sendBotChat(currentBot.id, 'trade_offer');
+                    if (chatMsg) {
+                        io.to(gameId).emit('chatMessage', chatMsg);
+                    }
+                }
+            }
+            
+            // 🆕 Boto vote-kick balsas
+            if (currentGame.activeVoteKick) {
+                const voteResult = await currentGame.processBotVoteKick(currentBot.id);
+                if (voteResult && voteResult.result) {
+                    if (voteResult.result.finished) {
+                        io.to(gameId).emit('gameState', currentGame.getGameState());
+                    } else {
+                        const vkState = voteResult.result.voteKick;
+                        if (vkState) {
+                            io.to(gameId).emit('voteKickUpdate', {
+                                votes: vkState.votes,
+                                requiredVotes: vkState.requiredVotes,
+                                timeLeft: vkState.timeLeft,
+                                targetName: vkState.targetName,
+                                targetId: vkState.targetId
+                            });
+                        }
+                    }
+                }
             }
             
         } catch (error) {
@@ -734,6 +785,16 @@ io.on('connection', (socket) => {
             io.to(socket.gameId).emit('gameState', game.getGameState());
             io.to(socket.gameId).emit('message', `🔨 ${game.players.find(p => p.id === socket.playerId).name} paskelbė aukcioną!`);
         }
+        
+        // 🆕 Informuoti botus apie aukcioną
+        const bots = game.getBots();
+        bots.forEach(bot => {
+            if (bot.id !== socket.playerId) {
+                setTimeout(() => {
+                    io.to(socket.gameId).emit('botBidAuction', { botId: bot.id, auctionId: result.auctionId });
+                }, 2000 + Math.random() * 3000);
+            }
+        });
     });
 
     socket.on('bidAuction', ({ auctionId, bidAmount }) => {
@@ -756,6 +817,27 @@ io.on('connection', (socket) => {
 
         io.to(socket.gameId).emit('auctionUpdated', result);
         io.to(socket.gameId).emit('gameState', game.getGameState());
+        
+        // 🆕 Boto chat
+        const bidChatMsg = game.sendBotChat(socket.playerId, 'auction_bid');
+        if (bidChatMsg) {
+            io.to(socket.gameId).emit('chatMessage', bidChatMsg);
+        }
+    });
+
+    // ============================================
+    // 🤖 BOTŲ BID AUKCIONE
+    // ============================================
+    socket.on('botBidAuction', async ({ botId, auctionId }) => {
+        if (!socket.gameId) return;
+        
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        
+        const bot = game.getPlayerById(botId);
+        if (!bot || !bot.isBot) return;
+        
+        await game.tradingLogic.botBidAuction(botId, auctionId);
     });
 
     socket.on('endAuction', ({ auctionId }) => {
@@ -779,7 +861,6 @@ io.on('connection', (socket) => {
         io.to(socket.gameId).emit('message', `🔨 Aukcionas baigėsi! ${result.winnerName || 'Niekas nelaimėjo'}`);
     });
 
-    // 🆕 TIK VIENAS proposeTrade blokas (su boto apdorojimu)
     socket.on('proposeTrade', (data) => {
         const { targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney } = data;
         
@@ -803,7 +884,6 @@ io.on('connection', (socket) => {
         io.to(socket.gameId).emit('tradeProposed', result);
         io.to(socket.gameId).emit('gameState', game.getGameState());
         
-        // 🆕 Jei gavėjas yra botas – automatiškai apdoroti
         const target = game.getPlayerById(targetPlayerId);
         if (target && target.isBot === true) {
             console.log(`🤖 ${target.name} yra botas – apdorojamas prekybos pasiūlymas`);
@@ -818,11 +898,98 @@ io.on('connection', (socket) => {
                         
                         const action = botResult.accept ? 'priėmė' : 'atmetė';
                         io.to(socket.gameId).emit('message', `🤖 ${botResult.botName} ${action} prekybą`);
+                        
+                        const chatEvent = botResult.accept ? 'trade_accept' : 'trade_reject';
+                        const chatMsg = game.sendBotChat(targetPlayerId, chatEvent);
+                        if (chatMsg) {
+                            io.to(socket.gameId).emit('chatMessage', chatMsg);
+                        }
                     }
                 } catch (err) {
                     console.error('🤖 Boto prekybos klaida:', err);
                 }
             }, 1500);
+        }
+    });
+
+    // ============================================
+    // 🤖 BOTŲ PREKYBOS SIŪLYMAS
+    // ============================================
+    socket.on('botProposeTrade', async ({ botId }) => {
+        if (!socket.gameId) return;
+        
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        
+        const bot = game.getPlayerById(botId);
+        if (!bot || !bot.isBot) return;
+        
+        if (game.tradingLogic.trades.size > 0) return;
+        
+        const result = await game.processBotProposeTrade(botId);
+        
+        if (result && result.result && result.result.success) {
+            io.to(socket.gameId).emit('tradeProposed', result.result);
+            io.to(socket.gameId).emit('gameState', game.getGameState());
+            
+            const chatMsg = game.sendBotChat(botId, 'trade_offer');
+            if (chatMsg) {
+                io.to(socket.gameId).emit('chatMessage', chatMsg);
+            }
+        }
+    });
+
+    // ============================================
+    // 🤖 BOTŲ VOTE-KICK BALSAS
+    // ============================================
+    socket.on('botVoteKick', async ({ botId }) => {
+        if (!socket.gameId) return;
+        
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        
+        const bot = game.getPlayerById(botId);
+        if (!bot || !bot.isBot) return;
+        
+        if (!game.activeVoteKick) return;
+        
+        const result = await game.processBotVoteKick(botId);
+        
+        if (result && result.result) {
+            if (result.result.finished) {
+                io.to(socket.gameId).emit('gameState', game.getGameState());
+            } else {
+                const vkState = result.result.voteKick;
+                if (vkState) {
+                    io.to(socket.gameId).emit('voteKickUpdate', {
+                        votes: vkState.votes,
+                        requiredVotes: vkState.requiredVotes,
+                        timeLeft: vkState.timeLeft,
+                        targetName: vkState.targetName,
+                        targetId: vkState.targetId
+                    });
+                }
+                io.to(socket.gameId).emit('gameState', game.getGameState());
+            }
+        }
+    });
+
+    // ============================================
+    // 🤖 BOTŲ CHAT
+    // ============================================
+    socket.on('botChat', ({ botId, event, data }) => {
+        if (!socket.gameId) return;
+        
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        
+        const bot = game.getPlayerById(botId);
+        if (!bot || !bot.isBot) return;
+        
+        const chatMsg = game.sendBotChat(botId, event, data);
+        
+        if (chatMsg) {
+            io.to(socket.gameId).emit('chatMessage', chatMsg);
         }
     });
 
@@ -973,6 +1140,16 @@ io.on('connection', (socket) => {
         });
 
         io.to(socket.gameId).emit('gameState', game.getGameState());
+        
+        // 🆕 Informuoti botus apie balsavimą
+        const bots = game.getBots();
+        bots.forEach(bot => {
+            if (bot.id !== socket.playerId && bot.id !== targetId) {
+                setTimeout(() => {
+                    io.to(socket.gameId).emit('botVoteKick', { botId: bot.id });
+                }, 2000 + Math.random() * 3000);
+            }
+        });
     });
 
     socket.on('voteKick', ({ vote }) => {
@@ -1111,6 +1288,17 @@ io.on('connection', (socket) => {
         
         if (game.isPublic) {
             broadcastPublicGames();
+        }
+        
+        // 🆕 Boto chat start
+        const firstBot = game.getBots()[0];
+        if (firstBot) {
+            setTimeout(() => {
+                const chatMsg = game.sendBotChat(firstBot.id, 'start');
+                if (chatMsg) {
+                    io.to(socket.gameId).emit('chatMessage', chatMsg);
+                }
+            }, 5000);
         }
         
         startBotLoop(socket.gameId);
@@ -1404,6 +1592,9 @@ io.on('connection', (socket) => {
     });
 });
 
+// ============================================
+// SERVERIO PALEIDIMAS
+// ============================================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`🚀 Bancrupt serveris veikia http://localhost:${PORT}`);
@@ -1417,4 +1608,5 @@ server.listen(PORT, () => {
     console.log(`📊 Viso stalų: max ${LIMITS.MAX_TOTAL_GAMES}`);
     console.log(`👥 Žaidėjų: max ${LIMITS.MAX_PLAYERS_TOTAL}`);
     console.log(`🔗 URL kodas palaikomas`);
+    console.log(`🤖 Botai aktyvuoti`);
 });

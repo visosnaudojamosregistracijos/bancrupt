@@ -437,6 +437,235 @@ class Game {
         };
     }
 
+    // ============================================
+    // 🆕 BOTŲ PREKYBOS SIŪLYMAS
+    // ============================================
+
+    botShouldProposeTrade(bot) {
+        if (!bot || !bot.isBot) return null;
+
+        if (bot.properties.length < 2) return null;
+
+        const colorCounts = {};
+        bot.properties.forEach(fieldId => {
+            const field = this.board.find(f => f.id === fieldId);
+            if (field && field.color && field.type === 'property') {
+                if (!colorCounts[field.color]) colorCounts[field.color] = [];
+                colorCounts[field.color].push(fieldId);
+            }
+        });
+
+        let targetColor = null;
+        let targetOwned = [];
+        for (const [color, ids] of Object.entries(colorCounts)) {
+            if (ids.length >= 2) {
+                const group = C.COLOR_GROUPS[color] || [];
+                if (ids.length < group.length) {
+                    targetColor = color;
+                    targetOwned = ids;
+                    break;
+                }
+            }
+        }
+
+        if (!targetColor) return null;
+
+        const group = C.COLOR_GROUPS[targetColor] || [];
+        const missing = group.filter(id => !bot.properties.includes(id));
+
+        if (missing.length === 0) return null;
+
+        const targetFieldId = missing[0];
+        const targetField = this.board.find(f => f.id === targetFieldId);
+        if (!targetField) return null;
+
+        const targetPlayer = this.players.find(p =>
+            p.id !== bot.id &&
+            p.properties.includes(targetFieldId) &&
+            !p.bankrupt && !p.left && !p.kicked
+        );
+
+        if (!targetPlayer) return null;
+
+        const offerable = bot.properties
+            .filter(id => !targetOwned.includes(id))
+            .filter(id => !bot.houses[id] || bot.houses[id] === 0)
+            .map(id => this.board.find(f => f.id === id))
+            .filter(f => f);
+
+        if (offerable.length === 0) return null;
+
+        const offerField = offerable.sort((a, b) => a.cost - b.cost)[0];
+
+        const valueDiff = targetField.cost - offerField.cost;
+        let offerMoney = 0;
+
+        if (valueDiff > 0) {
+            offerMoney = Math.min(valueDiff + 20, Math.floor(bot.money * 0.3));
+        }
+
+        if (bot.money < offerMoney) return null;
+
+        return {
+            targetPlayerId: targetPlayer.id,
+            offerFieldIds: [offerField.id],
+            requestFieldIds: [targetFieldId],
+            offerMoney: offerMoney,
+            requestMoney: 0
+        };
+    }
+
+    async processBotProposeTrade(botId) {
+        const bot = this.getPlayerById(botId);
+        if (!bot || !bot.isBot) return null;
+
+        const proposal = this.botShouldProposeTrade(bot);
+        if (!proposal) return null;
+
+        await this.botSleep(2000 + Math.random() * 3000);
+
+        console.log(`🤖 ${bot.name}: siūlo prekybą`);
+
+        const result = this.tradingLogic.proposeTrade(
+            botId,
+            proposal.targetPlayerId,
+            proposal.offerFieldIds,
+            proposal.requestFieldIds,
+            proposal.offerMoney,
+            proposal.requestMoney
+        );
+
+        if (result.error) {
+            console.log(`🤖 ${bot.name}: prekybos klaida:`, result.error);
+            return null;
+        }
+
+        return {
+            botId: botId,
+            botName: bot.name,
+            result: result
+        };
+    }
+
+    botShouldAcceptBotTrade(botId, trade) {
+        const bot = this.getPlayerById(botId);
+        if (!bot || !bot.isBot) return false;
+        return this.botShouldAcceptTrade(botId, trade);
+    }
+
+    // ============================================
+    // 🆕 BOTŲ VOTE-KICK
+    // ============================================
+
+    botShouldVoteKick(botId, voteKick) {
+        const bot = this.getPlayerById(botId);
+        if (!bot || !bot.isBot) return null;
+
+        if (voteKick.targetId === botId) return null;
+
+        if (voteKick.votes[botId] !== undefined) return null;
+
+        const target = this.getPlayerById(voteKick.targetId);
+        if (!target) return null;
+
+        const targetWealth = target.money + target.properties.reduce((sum, id) => {
+            const field = this.board.find(f => f.id === id);
+            return sum + (field ? field.cost : 0);
+        }, 0);
+
+        const targetHouses = target.houses ? Object.values(target.houses).reduce((a, b) => a + b, 0) : 0;
+
+        const isThreat = targetWealth > bot.money * 1.5 || targetHouses >= 5;
+
+        if (isThreat) {
+            return true;
+        }
+
+        return false;
+    }
+
+    async processBotVoteKick(botId) {
+        const bot = this.getPlayerById(botId);
+        if (!bot || !bot.isBot) return null;
+
+        if (!this.activeVoteKick) return null;
+
+        await this.botSleep(1500 + Math.random() * 3000);
+
+        const vote = this.botShouldVoteKick(botId, this.activeVoteKick);
+        if (vote === null) return null;
+
+        console.log(`🤖 ${bot.name}: balsuoja ${vote ? 'UŽ' : 'PRIEŠ'}`);
+
+        const result = this.voteKick(botId, vote);
+
+        return {
+            botId: botId,
+            botName: bot.name,
+            vote: vote,
+            result: result
+        };
+    }
+
+    // ============================================
+    // 🆕 BOTŲ CHAT
+    // ============================================
+
+    getBotChatMessage(bot, event, data = {}) {
+        const messages = {
+            start: ['🎮 Na, pradėkim!', '🎲 Sėkmės visiems!', '💰 Laikas uždirbti!'],
+            buy: ['💰 Gerai, perku!', '🏠 Šitas man tiks!', '💸 Nusipirkau!'],
+            rent_pay: ['😤 Brangu...', '💸 Nuoma skaudi...', '😅 Reikėjo neiti ten...'],
+            rent_get: ['💰 Ačiū už nuomą!', '🤑 Puiku!', '💸 Pinigai į kišenę!'],
+            build: ['🏗️ Stato namą!', '🏠 Auga mano miestas!', '🏨 Viežbutis čia tiks!'],
+            jail: ['⛓️ O ne, kalėjimas...', '😤 Vėl čia...', '🚔 Sėdžiu...'],
+            bankrupt: ['💀 Viso gero...', '😭 Bankrotas...', '🏳️ Pasiduodu...'],
+            trade_offer: ['📩 Siūlau prekybą!', '🤝 Norit mainais?', '💱 Pasiūlymas!'],
+            trade_accept: ['✅ Sutariam!', '🤝 Puiku!', '👍 Priimu!'],
+            trade_reject: ['❌ Ne, ačiū.', '🚫 Netinka.', '😕 Nepriimu.'],
+            auction_start: ['🔨 Aukcionas!', '💰 Parduodu!', '🔨 Kas daugiau?'],
+            auction_bid: ['💰 Siūlau!', '💸 Man!', '🔨 Pridedu!'],
+            auction_win: ['🏆 Laimėjau!', '🎉 Mano!', '💰 Pagaliau!'],
+            auction_lose: ['😤 Pralaimėjau...', '😕 Per brangu...', '💸 Kitą kartą...']
+        };
+
+        const eventMessages = messages[event];
+        if (!eventMessages) return null;
+
+        const msg = eventMessages[Math.floor(Math.random() * eventMessages.length)];
+
+        return msg.replace(/{(\w+)}/g, (match, key) => data[key] || match);
+    }
+
+    botShouldChat(bot, event) {
+        if (!bot || !bot.isBot) return false;
+        return Math.random() < 0.3;
+    }
+
+    sendBotChat(botId, event, data = {}) {
+        const bot = this.getPlayerById(botId);
+        if (!bot || !bot.isBot) return null;
+
+        if (!this.botShouldChat(bot, event)) return null;
+
+        const message = this.getBotChatMessage(bot, event, data);
+        if (!message) return null;
+
+        console.log(`💬 ${bot.name}: ${message}`);
+
+        return {
+            player: bot.name,
+            color: bot.color,
+            message: message,
+            timestamp: new Date().toISOString(),
+            isBot: true
+        };
+    }
+
+    // ============================================
+    // BOTŲ ĖJIMAS
+    // ============================================
+
     async botTurn(botId, emitFunction) {
         const bot = this.getPlayerById(botId);
 
@@ -823,7 +1052,7 @@ class Game {
         };
     }
 
-    // ============================================
+     // ============================================
     // VIEŠI STALAI
     // ============================================
 
@@ -1718,6 +1947,16 @@ class Game {
 
         this.addMessage(`🗳️ ${initiator.name} pradėjo balsavimą dėl ${target.name} pašalinimo!`);
 
+        // 🆕 Informuoti botus apie balsavimą
+        const bots = this.getBots();
+        bots.forEach(bot => {
+            if (bot.id !== initiatorId && bot.id !== targetId) {
+                setTimeout(() => {
+                    this.processBotVoteKick(bot.id);
+                }, 2000 + Math.random() * 3000);
+            }
+        });
+
         return {
             success: true,
             voteKick: this.getVoteKickState()
@@ -1906,7 +2145,7 @@ class Game {
     }
 
     // ============================================
-    // KITI METODAI (perduodami kitiems moduliams)
+    // KITI METODAI
     // ============================================
 
     sellToBank(playerId, fieldIds) {
