@@ -512,6 +512,16 @@ class TradingLogic {
         
         this.game.addMessage(`📩 ${player.name} pasiūlė ${target.name}: ${offerNames}${offerMoneyMsg} ⇄ ${requestNames}${requestMoneyMsg}`);
 
+        // 🆕 Jei gavėjas yra botas – automatiškai atsakyti (PRIEŠ return!)
+        if (target.isBot === true) {
+            console.log(`🤖 ${target.name} yra botas – apdorojamas prekybos pasiūlymas`);
+            
+            // 🆕 Paleisti asinchroninį apdorojimą (neblokuoja)
+            setTimeout(() => {
+                this.game.processBotTradeResponse(targetPlayerId, tradeId);
+            }, 100);
+        }
+
         return {
             success: true,
             tradeId: tradeId,

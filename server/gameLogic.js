@@ -334,31 +334,135 @@ botHandleDebt(bot) {
 }
 
 // 🆕 Boto sprendimas – ką daryti jo ėjimo metu?
-botDecideAction(bot) {
-    if (!bot || !bot.isActive || bot.bankrupt) return { action: 'none' };
+// 🆕 Boto sprendimas – ar priimti prekybos pasiūlymą?
+botShouldAcceptTrade(botId, trade) {
+    const bot = this.getPlayerById(botId);
+    if (!bot || !bot.isBot) return false;
     
-    // 1. Ar skolingas?
-    if (bot.money < 0) {
-        return this.botHandleDebt(bot);
+    // 🆕 1. Apskaičiuoti, ką botas gauna
+    let botGets = 0;
+    let botGives = 0;
+    
+    // Ką botas gauna (offer – siūloma botui)
+    if (trade.offerFieldIds && trade.offerFieldIds.length > 0) {
+        trade.offerFieldIds.forEach(fieldId => {
+            const field = this.board.find(f => f.id === fieldId);
+            if (field) botGets += field.cost;
+        });
+    }
+    botGets += trade.offerMoney || 0;
+    
+    // Ką botas atiduoda (request – prašoma iš boto)
+    if (trade.requestFieldIds && trade.requestFieldIds.length > 0) {
+        trade.requestFieldIds.forEach(fieldId => {
+            const field = this.board.find(f => f.id === fieldId);
+            if (field) botGives += field.cost;
+        });
+    }
+    botGives += trade.requestMoney || 0;
+    
+    console.log(`🤖 ${bot.name}: prekybos analizė:`);
+    console.log(`   Gauna: €${botGets}`);
+    console.log(`   Atiduoda: €${botGives}`);
+    console.log(`   Skirtumas: €${botGets - botGives}`);
+    
+    // 🆕 2. Jei botas gauna daugiau nei atiduoda – verta
+    const profit = botGets - botGives;
+    const profitRatio = botGives > 0 ? profit / botGives : 1;
+    
+    // 🆕 3. Ar tai grupės kortelės?
+    let getsGroupBonus = false;
+    let givesGroupPenalty = false;
+    
+    // Ar botas gauna kortelę, kuri jam padėtų surinkti grupę?
+    if (trade.offerFieldIds && trade.offerFieldIds.length > 0) {
+        trade.offerFieldIds.forEach(fieldId => {
+            const field = this.board.find(f => f.id === fieldId);
+            if (!field || !field.color) return;
+            
+            const group = C.COLOR_GROUPS[field.color] || [];
+            const ownedInGroup = bot.properties.filter(id => group.includes(id)).length;
+            
+            // Jei botas turi 1+ tos pačios spalvos – verta
+            if (ownedInGroup >= 1) {
+                getsGroupBonus = true;
+            }
+        });
     }
     
-    // 2. Ar kalėjime?
-    if (bot.inJail) {
-        if (bot.money >= C.JAIL_FINE * 2) {
-            return { action: 'pay_jail' };
-        }
+    // Ar botas atiduoda kortelę, kuri jam svarbi?
+    if (trade.requestFieldIds && trade.requestFieldIds.length > 0) {
+        trade.requestFieldIds.forEach(fieldId => {
+            const field = this.board.find(f => f.id === fieldId);
+            if (!field || !field.color) return;
+            
+            const group = C.COLOR_GROUPS[field.color] || [];
+            const ownedInGroup = bot.properties.filter(id => group.includes(id)).length;
+            
+            // Jei botas turi visą grupę – NEDUODA
+            if (ownedInGroup >= group.length) {
+                givesGroupPenalty = true;
+            }
+        });
     }
     
-    // 3. Ar gali statyti?
-    const field = this.board[bot.position];
-    if (field && field.type === 'property' && field.color) {
-        if (this.botShouldBuildHouse(bot, field.id)) {
-            return { action: 'build', fieldId: field.id };
-        }
+    // 🆕 4. SPRENDIMAS
+    
+    // ❌ Jei botas atiduoda visą grupę – NIEKADA
+    if (givesGroupPenalty) {
+        console.log(`🤖 ${bot.name}: NEPRIIMA – atiduoda pilną grupę`);
+        return false;
     }
     
-    // 4. Nieko
-    return { action: 'none' };
+    // ✅ Jei botas gauna grupės kortelę ir profit > 0 – PRIIMA
+    if (getsGroupBonus && profit >= 0) {
+        console.log(`🤖 ${bot.name}: PRIIMA – gauna grupės kortelę`);
+        return true;
+    }
+    
+    // ✅ Jei profit > 20% – PRIIMA
+    if (profitRatio > 0.2) {
+        console.log(`🤖 ${bot.name}: PRIIMA – pelnas ${(profitRatio * 100).toFixed(0)}%`);
+        return true;
+    }
+    
+    // ✅ Jei profit > 0 ir botas turi daug pinigų (>€1500) – PRIIMA
+    if (profit > 0 && bot.money > 1500) {
+        console.log(`🤖 ${bot.name}: PRIIMA – turi daug pinigų`);
+        return true;
+    }
+    
+    // ❌ Kitu atveju – ATMETA
+    console.log(`🤖 ${bot.name}: ATMETA – nepakankamas pelnas`);
+    return false;
+}
+
+// 🆕 Automatinis boto atsakymas į prekybą
+async processBotTradeResponse(botId, tradeId) {
+    const bot = this.getPlayerById(botId);
+    if (!bot || !bot.isBot) return;
+    
+    const trade = this.trades.get(tradeId);
+    if (!trade) return;
+    
+    // 🆕 Palaukti 1-2 sek. (kad atrodytų natūraliai)
+    await this.botSleep(1500);
+    
+    // 🆕 Nuspręsti
+    const accept = this.botShouldAcceptTrade(botId, trade);
+    
+    // 🆕 Atsakyti
+    const result = this.respondToTrade(tradeId, botId, accept);
+    
+    console.log(`🤖 ${bot.name} ${accept ? 'PRIIMA' : 'ATMETA'} prekybą:`, result);
+    
+    return {
+        botId: botId,
+        botName: bot.name,
+        tradeId: tradeId,
+        accept: accept,
+        result: result
+    };
 }
 
 // 🆕 Boto ėjimas – pagrindinė funkcija

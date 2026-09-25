@@ -829,6 +829,53 @@ io.on('connection', (socket) => {
         io.to(socket.gameId).emit('gameState', game.getGameState());
     });
 
+    socket.on('proposeTrade', (data) => {
+    const { targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney } = data;
+    
+    if (!socket.gameId || socket.playerId === undefined) {
+        socket.emit('error', 'Neprisijungei prie žaidimo!');
+        return;
+    }
+    
+    const game = games.get(socket.gameId);
+    if (!game) {
+        socket.emit('error', 'Žaidimas nerastas!');
+        return;
+    }
+
+    const result = game.proposeTrade(socket.playerId, targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney);
+    if (result.error) {
+        socket.emit('error', result.error);
+        return;
+    }
+
+    io.to(socket.gameId).emit('tradeProposed', result);
+    io.to(socket.gameId).emit('gameState', game.getGameState());
+    
+    // 🆕 Jei gavėjas yra botas – automatiškai apdoroti
+    const target = game.getPlayerById(targetPlayerId);
+    if (target && target.isBot === true) {
+        console.log(`🤖 ${target.name} yra botas – apdorojamas prekybos pasiūlymas`);
+        
+        // 🆕 Paleisti boto atsakymą po 1.5 sek.
+        setTimeout(async () => {
+            try {
+                const botResult = await game.processBotTradeResponse(targetPlayerId, result.tradeId);
+                
+                if (botResult) {
+                    io.to(socket.gameId).emit('tradeResponded', botResult.result);
+                    io.to(socket.gameId).emit('gameState', game.getGameState());
+                    
+                    const action = botResult.accept ? 'priėmė' : 'atmetė';
+                    io.to(socket.gameId).emit('message', `🤖 ${botResult.botName} ${action} prekybą`);
+                }
+            } catch (err) {
+                console.error('🤖 Boto prekybos klaida:', err);
+            }
+        }, 1500);
+    }
+});
+
     socket.on('respondToTrade', ({ tradeId, accept }) => {
         if (!socket.gameId || socket.playerId === undefined) {
             socket.emit('error', 'Neprisijungei prie žaidimo!');
@@ -850,6 +897,30 @@ io.on('connection', (socket) => {
         io.to(socket.gameId).emit('tradeResponded', result);
         io.to(socket.gameId).emit('gameState', game.getGameState());
     });
+
+    // ============================================
+// 🤖 BOTO ATSAKYMAS Į PREKYBĄ
+// ============================================
+socket.on('botTradeResponse', ({ tradeId, botId, accept }) => {
+    if (!socket.gameId) return;
+    
+    const game = games.get(socket.gameId);
+    if (!game) return;
+    
+    const result = game.respondToTrade(tradeId, botId, accept);
+    
+    if (result.error) {
+        console.error(`🤖 Boto atsakymo klaida:`, result.error);
+        return;
+    }
+    
+    io.to(socket.gameId).emit('tradeResponded', result);
+    io.to(socket.gameId).emit('gameState', game.getGameState());
+    
+    const bot = game.getPlayerById(botId);
+    const action = accept ? 'priėmė' : 'atmetė';
+    io.to(socket.gameId).emit('message', `🤖 ${bot ? bot.name : 'Botas'} ${action} prekybą`);
+});
 
     socket.on('counterTrade', ({ tradeId, newOfferField, newRequestField, newOfferMoney, newRequestMoney }) => {
         if (!socket.gameId || socket.playerId === undefined) {
