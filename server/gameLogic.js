@@ -1780,36 +1780,46 @@ class Game {
     }
 
     bankruptPlayer(playerId) {
-        const player = this.getPlayerById(playerId);
-        if (!player || player.bankrupt) return { error: 'Žaidėjas jau bankrutavęs' };
+    const player = this.getPlayerById(playerId);
+    if (!player || player.bankrupt) return { error: 'Žaidėjas jau bankrutavęs' };
 
-        player.bankrupt = true;
-        player.isActive = false;
-        player.isDebtor = false;
+    player.bankrupt = true;
+    player.isActive = false;
+    player.isDebtor = false;
 
-        player.properties = [];
-        player.houses = {};
-        player.money = 0;
+    player.properties = [];
+    player.houses = {};
+    player.money = 0;
 
-        this.addMessage(`💀 ${player.name} BANKROTAS! Kortelės grąžintos bankui.`);
+    this.addMessage(`💀 ${player.name} BANKROTAS! Kortelės grąžintos bankui.`);
 
-        if (this.activeVoteKick) {
-            this.cancelVoteKick('Žaidėjas bankrutavo');
-        }
+    if (this.activeVoteKick) {
+        this.cancelVoteKick('Žaidėjas bankrutavo');
+    }
 
-        const activePlayers = this.getActivePlayers();
-        if (activePlayers.length <= 1) {
-            this.endGame();
-        }
-
-        this.endTurn();
-
+    const activePlayers = this.getActivePlayers();
+    
+    // 🆕 Jei liko 1 aktyvus – baigti žaidimą
+    if (activePlayers.length <= 1) {
+        this.endGame();
         return {
             success: true,
             playerName: player.name,
-            activePlayers: activePlayers.length
+            activePlayers: activePlayers.length,
+            gameEnded: true
         };
     }
+
+    // 🆕 Tik tada pereiti prie kito
+    this.endTurn();
+
+    return {
+        success: true,
+        playerName: player.name,
+        activePlayers: activePlayers.length,
+        gameEnded: false
+    };
+}
 
     leaveGame(playerId) {
         const player = this.getPlayerById(playerId);
