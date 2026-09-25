@@ -1749,6 +1749,19 @@ function toggleSoundPanel() {
     playClickSound();
 }
 
+// 🆕 Muzikos panelės atidarymas
+function toggleMusicPanel() {
+    const panel = document.getElementById('musicPanel');
+    if (!panel) return;
+    
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+    playClickSound();
+}
+
 // 🆕 Garsų režimo perjungimas
 function toggleSoundMode() {
     const btn = document.getElementById('soundModeBtn');
@@ -4824,6 +4837,7 @@ function stopBackgroundMusic() {
 
 function toggleBackgroundMusic() {
     const btn = document.getElementById('musicBtn');
+    const toggleBtn = document.getElementById('musicToggleBtn');
     
     if (backgroundMusicStarted) {
         stopBackgroundMusic();
@@ -4831,12 +4845,18 @@ function toggleBackgroundMusic() {
             btn.innerHTML = '🎵 Muzika: 🔴 IŠJ.';
             btn.classList.remove('active');
         }
+        if (toggleBtn) {
+            toggleBtn.textContent = '🔊 Įjungti muziką';
+        }
         localStorage.setItem('bancrupt_music', 'false');
     } else {
         startBackgroundMusic();
         if (btn) {
             btn.innerHTML = '🎵 Muzika: 🟢 ĮJ.';
             btn.classList.add('active');
+        }
+        if (toggleBtn) {
+            toggleBtn.textContent = '🔇 Išjungti muziką';
         }
         localStorage.setItem('bancrupt_music', 'true');
     }

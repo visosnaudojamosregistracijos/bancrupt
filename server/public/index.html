@@ -128,50 +128,52 @@
 
             <div id="gameBody">
                 <aside id="leftPanel">
-    <div id="gameIdBox">
-        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
-    </div>
+                    <div id="gameIdBox">
+                        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
+                    </div>
 
-    <!-- 🎵 Muzika su slider'iu -->
-    <div style="position:relative; width:100%;">
-        <button onclick="toggleMusicPanel()" id="musicBtn" class="left-btn" style="background: linear-gradient(145deg, #9b59b6, #8e44ad); color: #fff; border-color: #bb8fce; width:100%;">
-            🎵 Muzika: 🟢
-        </button>
-        
-        <div id="musicPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8); box-sizing:border-box;">
-            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                <span style="font-size:11px; color:#ffd700;">🎵 Garsumas</span>
-                <span id="musicVolumeValue" style="font-size:10px; font-weight:700; color:#ffd700; margin-left:auto;">15</span>
-            </div>
-            <input type="range" id="musicVolumeSlider" min="0" max="100" value="15" 
-                   oninput="changeMusicVolume(this.value)" 
-                   style="width:100%; cursor:pointer; box-sizing:border-box;">
-        </div>
-    </div>
+                    <!-- 🎵 Muzika su slider'iu -->
+                    <div style="position:relative; width:100%;">
+                        <button onclick="toggleMusicPanel()" id="musicBtn" class="left-btn" style="background: linear-gradient(145deg, #9b59b6, #8e44ad); color: #fff; border-color: #bb8fce; width:100%;">
+                            🎵 Muzika: 🟢
+                        </button>
+                        
+                        <div id="musicPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8); box-sizing:border-box;">
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                                <span style="font-size:11px; color:#ffd700;">🎵 Garsumas</span>
+                                <span id="musicVolumeValue" style="font-size:10px; font-weight:700; color:#ffd700; margin-left:auto;">15</span>
+                            </div>
+                            <input type="range" id="musicVolumeSlider" min="0" max="100" value="15" 
+                                   oninput="changeMusicVolume(this.value)" 
+                                   style="width:100%; cursor:pointer; box-sizing:border-box;">
+                            
+                            <button onclick="toggleBackgroundMusic()" id="musicToggleBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700; margin-top:6px;">🔇 Išjungti muziką</button>
+                        </div>
+                    </div>
 
-    <!-- 🆕 Garsų režimas -->
-    <button onclick="toggleSoundMode()" id="soundModeBtn" class="left-btn" style="background: linear-gradient(145deg, #17a2b8, #138496); color: #fff; border-color: #4dd0e1;">
-        🎧 Garsai: Tik mano
-    </button>
+                    <!-- 🆕 Garsų režimas -->
+                    <button onclick="toggleSoundMode()" id="soundModeBtn" class="left-btn" style="background: linear-gradient(145deg, #17a2b8, #138496); color: #fff; border-color: #4dd0e1;">
+                        🎧 Garsai: Tik mano
+                    </button>
 
-    <!-- 🔊 Efektai su slider'iu -->
-    <div style="position:relative; width:100%;">
-        <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
-            🔊 Garsas
-        </button>
-        
-        <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8); box-sizing:border-box;">
-            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                <span style="font-size:11px; color:#ffd700;">🔊 Efektai</span>
-                <span id="sfxVolumeValue" style="font-size:10px; font-weight:700; color:#ffd700; margin-left:auto;">50</span>
-            </div>
-            <input type="range" id="sfxVolumeSlider" min="0" max="100" value="50" 
-                   oninput="changeSfxVolume(this.value)" 
-                   style="width:100%; cursor:pointer; box-sizing:border-box;">
-            
-            <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700; margin-top:4px;">🔇 Išjungti garsą</button>
-        </div>
-    </div>
+                    <!-- 🔊 Efektai su slider'iu -->
+                    <div style="position:relative; width:100%;">
+                        <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
+                            🔊 Garsas
+                        </button>
+                        
+                        <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8); box-sizing:border-box;">
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                                <span style="font-size:11px; color:#ffd700;">🔊 Efektai</span>
+                                <span id="sfxVolumeValue" style="font-size:10px; font-weight:700; color:#ffd700; margin-left:auto;">50</span>
+                            </div>
+                            <input type="range" id="sfxVolumeSlider" min="0" max="100" value="50" 
+                                   oninput="changeSfxVolume(this.value)" 
+                                   style="width:100%; cursor:pointer; box-sizing:border-box;">
+                            
+                            <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700; margin-top:6px;">🔇 Išjungti garsą</button>
+                        </div>
+                    </div>
 
                     <button onclick="toggleTheme()" id="themeBtn" class="left-btn" style="background: linear-gradient(145deg, #34495e, #2c3e50); color: #fff; border-color: #5d6d7e;">
                         🌙 Tamsus
