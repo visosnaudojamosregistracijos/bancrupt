@@ -458,6 +458,11 @@ body {
 .btn-primary {
     background: linear-gradient(145deg, #ffd700, #f0c000);
     color: #1a3b1a;
+    box-sizing: border-box;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .btn-primary:hover {
@@ -467,6 +472,11 @@ body {
 
 .btn-secondary {
     background: linear-gradient(145deg, #6c757d, #495057);
+    box-sizing: border-box;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .btn-secondary:hover {
@@ -567,6 +577,7 @@ body {
     font-size: 12px;
     flex-shrink: 0;
     align-items: center;
+    box-sizing: border-box;
 }
 
 /* ---------- KAIRĖ PANELĖ ---------- */
@@ -595,6 +606,9 @@ body {
     font-size: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     height: 99%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 #gameIdBox {
@@ -725,6 +739,7 @@ body {
     height: 99%;
     width: auto;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 #board.adaptive {
@@ -742,6 +757,7 @@ body {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y pinch-zoom;
+    box-sizing: border-box;
 }
 
 #board.fixed .board-row {
@@ -894,12 +910,16 @@ body {
     padding: 0 2px;
     color: #000000;
     font-weight: 700;
+    z-index: 2;
+    position: relative;
 }
 
 .cell .cell-cost {
     font-size: 10px;
     color: #000000;
     font-weight: 700;
+    z-index: 2;
+    position: relative;
 }
 
 /* ---------- VIDURIO LANGELIAI ---------- */
@@ -1048,6 +1068,8 @@ body {
     position: relative;
     perspective: 1000px;
     transform-style: preserve-3d;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .dice:hover {
@@ -1063,6 +1085,7 @@ body {
     width: clamp(36px, 4vw, 60px);
     height: clamp(36px, 4vw, 60px);
     padding: 3px;
+    box-sizing: border-box;
 }
 
 .dice-dot {
@@ -1073,6 +1096,7 @@ body {
     opacity: 0;
     transition: opacity 0.15s ease;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    box-sizing: border-box;
 }
 
 .dice-dot.visible {
@@ -1158,18 +1182,46 @@ body {
 
 .btn-dice {
     background: linear-gradient(145deg, #28a745, #1e7e34);
+    color: #fff;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: clamp(9px, 0.7vw, 13px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 .btn-dice:hover:not(:disabled) {
     transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+.btn-dice:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .btn-trade {
     background: linear-gradient(145deg, #ffd700, #f0c000);
     color: #3d2b1f;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: clamp(9px, 0.7vw, 13px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 .btn-trade:hover:not(:disabled) {
     transform: scale(1.05);
     box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+.btn-trade:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* ---------- ACTION ROW ---------- */
@@ -2314,7 +2366,7 @@ body {
 
 @media (max-width: 480px) {
     :root { 
-        --board-min-width: 900px;
+        --board-min-width: 700px;
     }
     
     #board {
@@ -2631,6 +2683,34 @@ body {
 #muteBtn:hover {
     background: #ffd700;
     color: #0d1f0d;
+}
+
+/* 🆕 PREKYBOS MYGTUKAI – vienoda išvaizda */
+.btn-trade-option {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: clamp(12px, 0.9vw, 16px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 4px 0;
+}
+
+.btn-trade-option:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-trade-option:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 /* ---------- INFO MYGTUKAS ---------- */
@@ -3338,9 +3418,6 @@ body {
     }
 }
 
-.cell.property:not([data-group]) {
-    border-width: 2px;
-}
 
 /* ============================================
    💸 SKRENDANTYS PINIGAI
@@ -3393,9 +3470,15 @@ button,
 .left-btn,
 .control-buttons button,
 .choice-btn,
-.action-row button {
+.action-row button,
+.btn-trade-option,
+.btn-bankrupt,
+.btn-jail,
+.btn-build,
+.btn-demolish {
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .landing-btn {
