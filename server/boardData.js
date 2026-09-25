@@ -17,7 +17,7 @@ const boardData = [
     { id: 8, name: 'ORO UOSTAS', type: 'service2', color: null, cost: 200, icon: '✈️' },
     { id: 9, name: 'Ramygala', type: 'property', color: '#4a90d9', cost: 120, icon: '' },
     { id: 10, name: 'Utena', type: 'property', color: '#2ecc71', cost: 140, icon: '' },
-    { id: 11, name: 'Cirkas', type: 'service3', color: null, cost: 100, icon: '🎪' },
+    { id: 11, name: 'SPA', type: 'service3', color: null, cost: 100, icon: '🛀' },
     { id: 12, name: 'Anykščiai', type: 'property', color: '#2ecc71', cost: 160, icon: '' },
     { id: 13, name: 'LIGONINĖ', type: 'special', color: null, cost: 100, icon: '🏥' },
     { id: 14, name: 'ŠIUKŠLĖS', type: 'service1', color: null, cost: 150, icon: '🗑️' },
@@ -34,7 +34,7 @@ const boardData = [
     { id: 21, name: 'LATRŲ BARAS', type: 'tax', color: '#dc3545', cost: 0, icon: '🍺' },
     { id: 22, name: 'Marijampolė', type: 'property', color: '#e74c3c', cost: 240, icon: '' },
     { id: 23, name: 'Vilkaviškis', type: 'property', color: '#e74c3c', cost: 250, icon: '' },
-    { id: 24, name: 'Veterinorius', type: 'service3', color: null, cost: 100, icon: '🐕' },
+    { id: 24, name: 'Baseinas', type: 'service3', color: null, cost: 100, icon: '🏊' },
     { id: 25, name: 'Kalvarija', type: 'property', color: '#e74c3c', cost: 260, icon: '' },
     
     // KAMPAS 3: PARKINGAS
@@ -66,7 +66,7 @@ const boardData = [
     { id: 45, name: 'Garliava', type: 'property', color: '#1a237e', cost: 400, icon: '' },
     { id: 46, name: 'AUTOBUSŲ STOTIS', type: 'service2', color: null, cost: 200, icon: '🚌' },
     { id: 47, name: 'Raudondvaris', type: 'property', color: '#1a237e', cost: 410, icon: '' },
-    { id: 48, name: 'Akropolis', type: 'service3', color: null, cost: 100, icon: '🛒' },
+    { id: 48, name: 'Paplūdimys', type: 'service3', color: null, cost: 100, icon: '🏖️' },
     { id: 49, name: 'Trakai', type: 'property', color: '#bdc3c7', cost: 430, icon: '' },
     { id: 50, name: 'TAVO GIMTADIENIS', type: 'special', color: '#dc3545', cost: 0, icon: '🎂' },
     { id: 51, name: 'Vilnius', type: 'property', color: '#bdc3c7', cost: 450, icon: '' },
