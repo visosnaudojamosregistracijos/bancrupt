@@ -3908,3 +3908,26 @@ body.dark-mode #cellInfoPanel {
 .center-row {
     overflow: visible;
 }
+
+/* ============================================
+   🆕 PREKYBOS MINI KORTELĖS (gavėjo lange)
+   ============================================ */
+
+.trade-mini-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    min-height: 50px;
+    padding: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 6px;
+}
+
+.trade-mini-cards > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    width: 100%;
+}

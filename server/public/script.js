@@ -3161,15 +3161,80 @@ function confirmProposeTrade() {
 }
 
 function showTradeOffer(data) {
-    document.getElementById('offerFromPlayer').textContent = data.fromPlayer;
-    document.getElementById('offerField').textContent = data.offerField || 'Pinigai';
-    document.getElementById('offerMoney').textContent = data.offerMoney || 0;
-    document.getElementById('requestField').textContent = data.requestField || 'Pinigai';
-    document.getElementById('requestMoney').textContent = data.requestMoney || 0;
+    document.getElementById('offerFromPlayer').textContent = data.fromPlayer || 'Nežinomas';
+    
+    // 🆕 Generuoti mini korteles SIŪLOMOMS kortelėms
+    const offerContainer = document.getElementById('offerFieldsContainer');
+    if (offerContainer) {
+        offerContainer.innerHTML = generateTradeMiniCards(data.offerFieldIds || []);
+    }
+    
+    // 🆕 Generuoti mini korteles PRAŠOMOMS kortelėms
+    const requestContainer = document.getElementById('requestFieldsContainer');
+    if (requestContainer) {
+        requestContainer.innerHTML = generateTradeMiniCards(data.requestFieldIds || []);
+    }
+    
+    // 🆕 Pinigų rodymas
+    const offerMoneyEl = document.getElementById('offerMoneyDisplay');
+    if (offerMoneyEl) {
+        if (data.offerMoney > 0) {
+            offerMoneyEl.textContent = `💰 + €${data.offerMoney}`;
+        } else {
+            offerMoneyEl.textContent = '';
+        }
+    }
+    
+    const requestMoneyEl = document.getElementById('requestMoneyDisplay');
+    if (requestMoneyEl) {
+        if (data.requestMoney > 0) {
+            requestMoneyEl.textContent = `💰 + €${data.requestMoney}`;
+        } else {
+            requestMoneyEl.textContent = '';
+        }
+    }
     
     currentTradeId = data.tradeId;
     document.getElementById('tradeOfferModal').style.display = 'flex';
     playNotificationSound();
+}
+
+// 🆕 Pagalbinė funkcija – generuoja mini korteles prekybai
+function generateTradeMiniCards(fieldIds) {
+    if (!fieldIds || fieldIds.length === 0) {
+        return '<div style="font-size:11px; color:#6c757d; text-align:center; padding:4px;">Tik pinigai</div>';
+    }
+    
+    if (!gameState || !gameState.board) {
+        return '<div style="font-size:11px; color:#6c757d;">Nėra duomenų</div>';
+    }
+    
+    let html = '<div style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center;">';
+    
+    fieldIds.forEach(fieldId => {
+        const field = gameState.board.find(f => f.id === fieldId);
+        if (!field) return;
+        
+        const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
+        const color = isService ? '#f0e8d8' : (field.color || '#c9a84c');
+        
+        const topBar = isService 
+            ? `<div style="background:#f0e8d8; display:flex; align-items:center; justify-content:center; height:20px; font-size:14px; border-bottom:1px solid rgba(61,43,31,0.2);">${field.icon || '⚙️'}</div>`
+            : `<div style="background:${color}; height:20px; border-bottom:1px solid #3d2b1f;"></div>`;
+        
+        html += `
+            <div style="background:#f5f0e8; border:2px solid #3d2b1f; border-radius:4px; overflow:hidden; width:60px; flex-shrink:0; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+                ${topBar}
+                <div style="padding:3px 2px; text-align:center;">
+                    <div style="font-size:8px; font-weight:700; color:#3d2b1f; line-height:1.1; word-wrap:break-word;">${field.name}</div>
+                    <div style="font-size:7px; color:#6c757d; margin-top:2px;">€${field.cost}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
 }
 
 function closeTradeOffer() {

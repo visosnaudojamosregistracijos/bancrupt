@@ -677,32 +677,41 @@
 
     <!-- PASIŪLYMO GAVIMO MODALAS -->
     <div id="tradeOfferModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9997; justify-content:center; align-items:center;">
-        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; text-align:center; border:3px solid #17a2b8; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-            <h2 style="color:#17a2b8; margin-bottom:15px;">📩 GAUTAS PASIŪLYMAS</h2>
-            <div id="tradeOfferContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
-                <p><strong>Siūlo:</strong> <span id="offerFromPlayer"></span></p>
-                <p><strong>Siūlo kortelę:</strong> <span id="offerField"></span></p>
-                <p><strong>Prideda pinigų:</strong> €<span id="offerMoney"></span></p>
-                <hr style="border:1px solid #c9a84c;">
-                <p><strong>Prašo kortelės:</strong> <span id="requestField"></span></p>
-                <p><strong>Prašo pinigų:</strong> €<span id="requestMoney"></span></p>
+    <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:550px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #17a2b8; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+        <h2 style="color:#17a2b8; margin-bottom:15px;">📩 GAUTAS PASIŪLYMAS</h2>
+        <div style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
+            <p style="margin-bottom:10px;"><strong>Siūlo:</strong> <span id="offerFromPlayer" style="color:#1a6b3c; font-weight:700;"></span></p>
+            
+            <div style="background:rgba(255,255,255,0.4); border-radius:8px; padding:8px; margin-bottom:10px;">
+                <div style="font-weight:700; color:#28a745; margin-bottom:6px;">📤 SIŪLO:</div>
+                <div id="offerFieldsContainer" class="trade-mini-cards"></div>
+                <div id="offerMoneyDisplay" style="font-size:13px; color:#28a745; font-weight:700; margin-top:6px;"></div>
             </div>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button onclick="acceptTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
-                    ✅ PRIIMTI
-                </button>
-                <button onclick="rejectTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
-                    ❌ ATMESTI
-                </button>
-                <button onclick="counterTradeOffer()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
-                    🔄 KOREGUOTI
-                </button>
+            
+            <hr style="border:1px solid #c9a84c; margin:10px 0;">
+            
+            <div style="background:rgba(255,255,255,0.4); border-radius:8px; padding:8px;">
+                <div style="font-weight:700; color:#dc3545; margin-bottom:6px;">📥 PRAŠO:</div>
+                <div id="requestFieldsContainer" class="trade-mini-cards"></div>
+                <div id="requestMoneyDisplay" style="font-size:13px; color:#dc3545; font-weight:700; margin-top:6px;"></div>
             </div>
-            <button onclick="closeTradeOffer()" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
-                🔙 Uždaryti
+        </div>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button onclick="acceptTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                ✅ PRIIMTI
+            </button>
+            <button onclick="rejectTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+                ❌ ATMESTI
+            </button>
+            <button onclick="counterTradeOffer()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
+                🔄 KOREGUOTI
             </button>
         </div>
+        <button onclick="closeTradeOffer()" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+            🔙 Uždaryti
+        </button>
     </div>
+</div>
 
     <!-- AUKCIONO MODALAS -->
     <div id="auctionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9996; justify-content:center; align-items:center;">
