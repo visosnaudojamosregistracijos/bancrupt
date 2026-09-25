@@ -1484,8 +1484,20 @@ body {
     align-items: center;
     background: rgba(0, 0, 0, 0.4);
     border-radius: 8px;
-    z-index: 10;
+    z-index: 100;
     animation: choiceFadeIn 0.25s ease;
+    pointer-events: all;  /* 🆕 Neleisti praleisti paspaudimų */
+}
+
+/* 🆕 Neleisti uždaryti paspaudus išorę */
+#buyChoice.show {
+    display: flex;
+    pointer-events: all;
+}
+
+/* 🆕 Neleisti ESC uždaryti */
+#buyChoice.show * {
+    pointer-events: all;
 }
 
 #buyChoice.show {

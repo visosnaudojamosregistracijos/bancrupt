@@ -2614,6 +2614,12 @@ function showBuyChoice(data) {
 }
 
 function hideBuyChoice() {
+    // 🆕 NELEISTI uždaryti, jei server'yje waitingForBuy
+    if (gameState && gameState.waitingForBuy) {
+        console.log('⚠️ Negalima uždaryti pirkimo – laukiama sprendimo!');
+        return;
+    }
+    
     const choice = document.getElementById('buyChoice');
     choice.style.display = 'none';
     choice.classList.remove('show');
@@ -3806,6 +3812,26 @@ function updateUI(state) {
     autoUpdateLeaders();
     
     setTimeout(initMiniCardTooltips, 100);
+    
+    // 🆕 Jei laukiama pirkimo – atidaryti modalą iš naujo
+    if (state.waitingForBuy) {
+        const me = state.players.find(p => p.id === playerId);
+        if (me && state.currentTurn === playerId) {
+            const field = state.board[me.position];
+            if (field && field.cost > 0) {
+                const buyChoice = document.getElementById('buyChoice');
+                if (buyChoice && buyChoice.style.display !== 'flex') {
+                    console.log('🆕 updateUI: atidarome buyChoice (waitingForBuy)');
+                    showBuyChoice({
+                        fieldId: field.id,
+                        fieldName: field.name,
+                        fieldCost: field.cost,
+                        playerId: me.id
+                    });
+                }
+            }
+        }
+    }
 }
 
 // ============================================
@@ -4876,3 +4902,21 @@ function toggleBackgroundMusic() {
 // PABAIGA
 // ============================================
 console.log('✅ script.js užkrautas pilnai!');
+
+// ============================================
+// 🆕 APSAUGA NUO PIRKIMO UŽDARYMO
+// ============================================
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        // 🆕 Neleisti uždaryti pirkimo su ESC
+        if (gameState && gameState.waitingForBuy) {
+            console.log('⚠️ Negalima uždaryti pirkimo su ESC!');
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }
+}, true);
+
+console.log('✅ Pirkimo apsauga aktyvuota!');
