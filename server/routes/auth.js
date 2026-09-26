@@ -80,7 +80,7 @@ router.post('/login', async (req, res) => {
 // GET /api/auth/me
 // Gauti savo profilį (pagal tokeną)
 // ============================================
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -88,14 +88,14 @@ router.get('/me', (req, res) => {
         }
 
         const token = authHeader.substring(7); // Nuimti "Bearer "
-        const user = authLogic.getUserFromToken(token);
+        const user = await authLogic.getUserFromToken(token);
 
         if (!user) {
             return res.status(401).json({ error: 'Neteisingas arba pasibaigęs tokenas' });
         }
 
         // Pridėti statistiką
-        const stats = db.getUserStats(user.userId);
+        const stats = await db.getUserStats(user.userId);
 
         res.json({
             success: true,
@@ -126,19 +126,19 @@ router.get('/me', (req, res) => {
 // GET /api/auth/stats/:userId
 // Gauti kito žaidėjo statistiką
 // ============================================
-router.get('/stats/:userId', (req, res) => {
+router.get('/stats/:userId', async (req, res) => {
     try {
         const userId = parseInt(req.params.userId);
         if (isNaN(userId)) {
             return res.status(400).json({ error: 'Neteisingas userId' });
         }
 
-        const user = db.findUserById(userId);
+        const user = await db.findUserById(userId);
         if (!user) {
             return res.status(404).json({ error: 'Vartotojas nerastas' });
         }
 
-        const stats = db.getUserStats(userId);
+        const stats = await db.getUserStats(userId);
 
         res.json({
             success: true,

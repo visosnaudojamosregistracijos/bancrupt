@@ -71,13 +71,13 @@ async function register(username, email, password) {
     }
 
     // Patikrinti ar vardas užimtas
-    const existingUsername = db.findUserByUsername(username);
+    const existingUsername = await db.findUserByUsername(username);
     if (existingUsername) {
         return { error: 'Toks vardas jau užimtas' };
     }
 
     // Patikrinti ar el. paštas užimtas
-    const existingEmail = db.findUserByEmail(email);
+    const existingEmail = await db.findUserByEmail(email);
     if (existingEmail) {
         return { error: 'Toks el. paštas jau registruotas' };
     }
@@ -87,7 +87,7 @@ async function register(username, email, password) {
 
     // Sukurti vartotoją
     try {
-        const userId = db.createUser(username, email, passwordHash);
+        const userId = await db.createUser(username, email, passwordHash);
         const token = generateToken(userId);
 
         console.log(`✅ Naujas vartotojas: ${username} (ID: ${userId})`);
@@ -115,7 +115,7 @@ async function login(username, password) {
     }
 
     // Rasti vartotoją
-    const user = db.findUserByUsername(username);
+    const user = await db.findUserByUsername(username);
     if (!user) {
         return { error: 'Neteisingas vardas arba slaptažodis' };
     }
@@ -127,7 +127,7 @@ async function login(username, password) {
     }
 
     // Atnaujinti paskutinį prisijungimą
-    db.updateLastLogin(user.id);
+    await db.updateLastLogin(user.id);
 
     // Sukurti tokeną
     const token = generateToken(user.id);
@@ -146,11 +146,11 @@ async function login(username, password) {
 // ============================================
 // GAUTI VARTOTOJĄ PAGAL TOKENĄ
 // ============================================
-function getUserFromToken(token) {
+async function getUserFromToken(token) {
     const decoded = verifyToken(token);
     if (!decoded) return null;
 
-    const user = db.findUserById(decoded.userId);
+    const user = await db.findUserById(decoded.userId);
     if (!user) return null;
 
     return {
