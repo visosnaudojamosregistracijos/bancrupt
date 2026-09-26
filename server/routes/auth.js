@@ -176,6 +176,27 @@ router.get('/stats/:userId', async (req, res) => {
 });
 
 // ============================================
+// 🆕 GET /api/auth/leaders
+// Gauti Top 10 žaidėjų
+// ============================================
+router.get('/leaders', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const leaders = await db.getTopPlayers(limit);
+
+        res.json({
+            success: true,
+            leaders: leaders,
+            count: leaders.length
+        });
+
+    } catch (err) {
+        console.error('❌ /leaders klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
+// ============================================
 // SLAPTAŽODŽIO ATSTATYMAS
 // ============================================
 

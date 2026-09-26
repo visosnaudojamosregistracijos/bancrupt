@@ -123,6 +123,24 @@ const dbHelpers = {
         return result.rows[0] || null;
     },
 
+    // 🆕 Lyderių lentelė
+    async getTopPlayers(limit = 10) {
+        const result = await pool.query(`
+            SELECT 
+                u.id, 
+                u.username, 
+                s.games_played, 
+                s.games_won, 
+                s.properties_bought, 
+                s.houses_built
+            FROM users u
+            JOIN stats s ON u.id = s.user_id
+            ORDER BY s.games_won DESC, s.games_played DESC, s.properties_bought DESC
+            LIMIT $1
+        `, [limit]);
+        return result.rows;
+    },
+
     async updateStats(userId, updates) {
         const fields = Object.keys(updates);
         const values = Object.values(updates);
