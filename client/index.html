@@ -305,12 +305,80 @@
             <p class="landing-subtitle">💰 Stalo žaidimas internetu</p>
             
             <div class="landing-buttons">
-                <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
-                    📖 Taisyklės
-                </button>
-                <button class="landing-btn landing-btn-primary" onclick="goToMenu()">
-                    🎮 Eiti prie žaidimo
-                </button>
+    <button class="landing-btn landing-btn-primary" onclick="goToRegister()">
+        📝 Registruotis
+    </button>
+    <button class="landing-btn landing-btn-secondary" onclick="goToLogin()">
+        🔑 Prisijungti
+    </button>
+    <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
+        📖 Taisyklės
+    </button>
+    <button class="landing-btn landing-btn-secondary" onclick="goToMenu()" style="background:linear-gradient(145deg, #6c757d, #495057);">
+        🎮 Žaisti kaip svečias
+    </button>
+</div>
+        </div>
+    </div>
+
+<!-- ============================================ -->
+    <!-- PUSLAPIS 1A: REGISTRACIJA -->
+    <!-- ============================================ -->
+    <div id="page-register" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>📝 REGISTRACIJA</h1>
+                <p class="subtitle">Sukurk paskyrą ir išsaugok savo statistiką</p>
+                
+                <div class="lobby-form">
+                    <input type="text" id="registerUsername" placeholder="Vardas (3-20 simbolių)" maxlength="20" autocomplete="username">
+                    <input type="email" id="registerEmail" placeholder="El. paštas" autocomplete="email">
+                    <input type="password" id="registerPassword" placeholder="Slaptažodis (bent 6 simboliai)" autocomplete="new-password">
+                    <input type="password" id="registerPasswordConfirm" placeholder="Pakartok slaptažodį" autocomplete="new-password">
+                    
+                    <div id="registerError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                    
+                    <button onclick="submitRegister()" class="btn btn-primary" id="registerBtn">
+                        ✅ Registruotis
+                    </button>
+                    
+                    <div style="margin-top:15px; text-align:center; color:#d4b896; font-size:14px;">
+                        Jau turi paskyrą? 
+                        <a href="#" onclick="goToLogin(); return false;" style="color:#ffd700; font-weight:700; text-decoration:underline;">Prisijunk</a>
+                    </div>
+                    
+                    <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PUSLAPIS 1B: PRISIJUNGIMAS -->
+    <!-- ============================================ -->
+    <div id="page-login" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>🔑 PRISIJUNGIMAS</h1>
+                <p class="subtitle">Sveikas sugrįžęs!</p>
+                
+                <div class="lobby-form">
+                    <input type="text" id="loginUsername" placeholder="Vardas" maxlength="20" autocomplete="username">
+                    <input type="password" id="loginPassword" placeholder="Slaptažodis" autocomplete="current-password">
+                    
+                    <div id="loginError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                    
+                    <button onclick="submitLogin()" class="btn btn-primary" id="loginBtn">
+                        ✅ Prisijungti
+                    </button>
+                    
+                    <div style="margin-top:15px; text-align:center; color:#d4b896; font-size:14px;">
+                        Neturi paskyros? 
+                        <a href="#" onclick="goToRegister(); return false;" style="color:#ffd700; font-weight:700; text-decoration:underline;">Registruokis</a>
+                    </div>
+                    
+                    <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
+                </div>
             </div>
         </div>
     </div>
@@ -895,6 +963,213 @@
             showPage('page-game');
             console.log('📍 Game puslapis');
         }
+
+        // ============================================
+// REGISTRACIJA IR PRISIJUNGIMAS
+// ============================================
+
+let currentUser = null; // Prisijungęs vartotojas
+
+function goToRegister() {
+    showPage('page-register');
+    console.log('📍 Registracijos puslapis');
+    
+    // Išvalyti klaidas
+    document.getElementById('registerError').textContent = '';
+}
+
+function goToLogin() {
+    showPage('page-login');
+    console.log('📍 Prisijungimo puslapis');
+    
+    // Išvalyti klaidas
+    document.getElementById('loginError').textContent = '';
+}
+
+async function submitRegister() {
+    const username = document.getElementById('registerUsername').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+    const errorEl = document.getElementById('registerError');
+    const btn = document.getElementById('registerBtn');
+    
+    errorEl.textContent = '';
+    
+    // Validacija
+    if (!username || !email || !password || !passwordConfirm) {
+        errorEl.textContent = '❌ Užpildyk visus laukus';
+        return;
+    }
+    
+    if (password !== passwordConfirm) {
+        errorEl.textContent = '❌ Slaptažodžiai nesutampa';
+        return;
+    }
+    
+    if (password.length < 6) {
+        errorEl.textContent = '❌ Slaptažodis turi būti bent 6 simbolių';
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ Registruojama...';
+    
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            errorEl.textContent = '❌ ' + data.error;
+            btn.disabled = false;
+            btn.textContent = '✅ Registruotis';
+            return;
+        }
+        
+        // Sėkmė!
+        localStorage.setItem('bancrupt_token', data.token);
+        localStorage.setItem('bancrupt_user', JSON.stringify({
+            userId: data.userId,
+            username: data.username,
+            email: data.email
+        }));
+        
+        currentUser = data;
+        
+        // Pranešimas
+        alert(`✅ Sveikas, ${data.username}!\n\nTavo paskyra sukurta. Dabar gali žaisti ir rinkti statistiką.`);
+        
+        // Eiti į menu
+        goToMenu();
+        
+    } catch (err) {
+        console.error('❌ Registracijos klaida:', err);
+        errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+        btn.disabled = false;
+        btn.textContent = '✅ Registruotis';
+    }
+}
+
+async function submitLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+    
+    errorEl.textContent = '';
+    
+    if (!username || !password) {
+        errorEl.textContent = '❌ Įvesk vardą ir slaptažodį';
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ Jungiamasi...';
+    
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            errorEl.textContent = '❌ ' + data.error;
+            btn.disabled = false;
+            btn.textContent = '✅ Prisijungti';
+            return;
+        }
+        
+        // Sėkmė!
+        localStorage.setItem('bancrupt_token', data.token);
+        localStorage.setItem('bancrupt_user', JSON.stringify({
+            userId: data.userId,
+            username: data.username,
+            email: data.email
+        }));
+        
+        currentUser = data;
+        
+        alert(`✅ Sveikas sugrįžęs, ${data.username}!`);
+        
+        goToMenu();
+        
+    } catch (err) {
+        console.error('❌ Prisijungimo klaida:', err);
+        errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+        btn.disabled = false;
+        btn.textContent = '✅ Prisijungti';
+    }
+}
+
+// ============================================
+// AUTO-LOGIN (jei turi tokeną)
+// ============================================
+
+async function checkAutoLogin() {
+    const token = localStorage.getItem('bancrupt_token');
+    if (!token) return;
+    
+    try {
+        const response = await fetch('/api/auth/me', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!response.ok) {
+            // Tokenas nebegalioja
+            localStorage.removeItem('bancrupt_token');
+            localStorage.removeItem('bancrupt_user');
+            return;
+        }
+        
+        const data = await response.json();
+        currentUser = data.user;
+        console.log('✅ Automatinis prisijungimas:', data.user.username);
+        
+    } catch (err) {
+        console.warn('⚠️ Auto-login nepavyko:', err);
+    }
+}
+
+// Paleisti auto-login puslapiui įsikėlus
+document.addEventListener('DOMContentLoaded', () => {
+    checkAutoLogin();
+});
+
+// ============================================
+// ENTER KLAVIŠO PALAIKYMAS FORMOSE
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Registracijos forma
+    const registerInputs = ['registerUsername', 'registerEmail', 'registerPassword', 'registerPasswordConfirm'];
+    registerInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitRegister();
+            });
+        }
+    });
+    
+    // Prisijungimo forma
+    const loginInputs = ['loginUsername', 'loginPassword'];
+    loginInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitLogin();
+            });
+        }
+    });
+});
         
         // ============================================
         // TAISYKLIŲ MODALAS

@@ -13,24 +13,119 @@
     <div id="page-landing" class="page active">
         <div class="landing-container">
             <h1>🏦 BANCRUPT</h1>
-            <p class="landing-subtitle">💰 Stalo žaidimas internetu</p>
             
-            <div class="landing-buttons">
-                <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
-                    📖 Taisyklės
-                </button>
-                <button class="landing-btn landing-btn-primary" onclick="goToMenu()">
-                    🎮 Eiti prie žaidimo
-                </button>
+            <!-- Svečio režimas (kai neprisijungęs) -->
+            <div id="landingGuest">
+                <p class="landing-subtitle">💰 Stalo žaidimas internetu</p>
+                
+                <div class="landing-buttons">
+                    <button class="landing-btn landing-btn-primary" onclick="goToRegister()">
+                        📝 Registruotis
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="goToLogin()">
+                        🔑 Prisijungti
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
+                        📖 Taisyklės
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="goToMenu()" style="background:linear-gradient(145deg, #6c757d, #495057);">
+                        🎮 Žaisti kaip svečias
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Prisijungusio režimas -->
+            <div id="landingUser" style="display:none;">
+                <p class="landing-subtitle" style="font-size:1.4em; color:#ffd700;">
+                    👤 Sveikas, <strong id="landingUsername">---</strong>!
+                </p>
+                
+                <div class="landing-buttons">
+                    <button class="landing-btn landing-btn-primary" onclick="goToMenu()">
+                        🎮 Žaisti
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="openStatsModal()">
+                        📊 Mano statistika
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
+                        📖 Taisyklės
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="logout()" style="background:linear-gradient(145deg, #dc3545, #a71d2a);">
+                        🚪 Atsijungti
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- PUSLAPIS 2: MENU -->
-    <div id="page-menu" class="page">
+    <!-- PUSLAPIS 1A: REGISTRACIJA -->
+    <div id="page-register" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>📝 REGISTRACIJA</h1>
+                <p class="subtitle">Sukurk paskyrą ir išsaugok savo statistiką</p>
+                
+                <div class="lobby-form">
+                    <input type="text" id="registerUsername" placeholder="Vardas (3-20 simbolių)" maxlength="20" autocomplete="username">
+                    <input type="email" id="registerEmail" placeholder="El. paštas" autocomplete="email">
+                    <input type="password" id="registerPassword" placeholder="Slaptažodis (bent 6 simboliai)" autocomplete="new-password">
+                    <input type="password" id="registerPasswordConfirm" placeholder="Pakartok slaptažodį" autocomplete="new-password">
+                    
+                    <div id="registerError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                    
+                    <button onclick="submitRegister()" class="btn btn-primary" id="registerBtn">
+                        ✅ Registruotis
+                    </button>
+                    
+                    <div style="margin-top:15px; text-align:center; color:#d4b896; font-size:14px;">
+                        Jau turi paskyrą? 
+                        <a href="#" onclick="goToLogin(); return false;" style="color:#ffd700; font-weight:700; text-decoration:underline;">Prisijunk</a>
+                    </div>
+                    
+                    <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PUSLAPIS 1B: PRISIJUNGIMAS -->
+    <div id="page-login" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>🔑 PRISIJUNGIMAS</h1>
+                <p class="subtitle">Sveikas sugrįžęs!</p>
+                
+                <div class="lobby-form">
+                    <input type="text" id="loginUsername" placeholder="Vardas" maxlength="20" autocomplete="username">
+                    <input type="password" id="loginPassword" placeholder="Slaptažodis" autocomplete="current-password">
+                    
+                    <div id="loginError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                    
+                    <button onclick="submitLogin()" class="btn btn-primary" id="loginBtn">
+                        ✅ Prisijungti
+                    </button>
+                    
+                    <div style="margin-top:15px; text-align:center; color:#d4b896; font-size:14px;">
+                        Neturi paskyros? 
+                        <a href="#" onclick="goToRegister(); return false;" style="color:#ffd700; font-weight:700; text-decoration:underline;">Registruokis</a>
+                    </div>
+                    
+                    <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <div id="page-menu" class="page">
         <div class="menu-container">
             <h1>🎮 ŽAIDIMAS</h1>
             <p>Pasirink veiksmą</p>
+
+            <div id="menuUserInfo" style="display:none; padding:10px; background:rgba(0,0,0,0.2); border-radius:10px; margin-bottom:15px;">
+                <div style="color:#d4b896; font-size:12px; margin-bottom:4px;">Prisijungęs kaip:</div>
+                <div style="color:#ffd700; font-size:18px; font-weight:700;" id="menuUsername">---</div>
+                <div style="color:#28a745; font-size:11px; margin-top:4px;">🔒 Vardas užrakintas</div>
+            </div>
             
             <div class="menu-buttons">
                 <button class="menu-btn" onclick="menuCreate()">
@@ -132,7 +227,6 @@
                         📋 ID:<br><span id="gameIdDisplayLeft">---</span>
                     </div>
 
-                    <!-- 🎵 Muzika su slider'iu -->
                     <div style="position:relative; width:100%;">
                         <button onclick="toggleMusicPanel()" id="musicBtn" class="left-btn" style="background: linear-gradient(145deg, #9b59b6, #8e44ad); color: #fff; border-color: #bb8fce; width:100%;">
                             🎵 Muzika: 🟢
@@ -151,7 +245,6 @@
                         </div>
                     </div>
 
-                    <!-- 🔊 Garsai -->
                     <div style="position:relative; width:100%;">
                         <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
                             🔊 Garsai
@@ -212,7 +305,6 @@
                 </aside>
 
                 <div id="board">
-                    <!-- VIRŠUS -->
                     <div class="board-row row-top">
                         <div id="cell-0" class="cell corner start" data-id="0">
                             🏁<br>START
@@ -237,7 +329,6 @@
                         </div>
                     </div>
 
-                    <!-- VIDURYS -->
                     <div class="board-row row-middle">
                         <div class="row-middle-left">
                             <div id="cell-51" class="cell edge property" data-id="51">51</div>
@@ -392,7 +483,6 @@
                         </div>
                     </div>
 
-                    <!-- APAČIA -->
                     <div class="board-row row-bottom">
                         <div id="cell-42" class="cell corner go-to-jail" data-id="42">
                             🚨<br>KELIAUK
@@ -718,7 +808,6 @@
             <div id="auctionContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
                 <p style="margin:5px 0;"><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
                 
-                <!-- 🆕 MINI KORTELĖ -->
                 <div style="margin:10px 0; display:flex; justify-content:center;">
                     <div id="auctionMiniCardContainer" style="display:flex; justify-content:center;"></div>
                 </div>
@@ -792,13 +881,14 @@
     <div id="statsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99997; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
         <div style="background:linear-gradient(145deg, #1a6b3c, #0f4a2a); border-radius:20px; padding:30px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             <h2 style="color:#ffd700; text-align:center; font-size:1.8em; margin-bottom:20px; border-bottom:2px solid #c9a84c; padding-bottom:10px;">
-                📊 STATISTIKA
+                📊 MANO STATISTIKA
             </h2>
             
             <div id="statsContent">
+                <div style="text-align:center; padding:20px; color:#d4b896;">Kraunama...</div>
             </div>
             
-            <button onclick="closeStats()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+            <button onclick="closeStatsModal()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
                 ❌ Uždaryti
             </button>
         </div>
@@ -888,7 +978,324 @@
             showPage('page-game');
             console.log('📍 Game puslapis');
         }
-        
+
+        // ============================================
+        // REGISTRACIJA IR PRISIJUNGIMAS
+        // ============================================
+
+        let currentUser = null;
+
+        function goToRegister() {
+            showPage('page-register');
+            console.log('📍 Registracijos puslapis');
+            document.getElementById('registerError').textContent = '';
+        }
+
+        function goToLogin() {
+            showPage('page-login');
+            console.log('📍 Prisijungimo puslapis');
+            document.getElementById('loginError').textContent = '';
+        }
+
+        async function submitRegister() {
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+            const errorEl = document.getElementById('registerError');
+            const btn = document.getElementById('registerBtn');
+            
+            errorEl.textContent = '';
+            
+            if (!username || !email || !password || !passwordConfirm) {
+                errorEl.textContent = '❌ Užpildyk visus laukus';
+                return;
+            }
+            
+            if (password !== passwordConfirm) {
+                errorEl.textContent = '❌ Slaptažodžiai nesutampa';
+                return;
+            }
+            
+            if (password.length < 6) {
+                errorEl.textContent = '❌ Slaptažodis turi būti bent 6 simbolių';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Registruojama...';
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    errorEl.textContent = '❌ ' + data.error;
+                    btn.disabled = false;
+                    btn.textContent = '✅ Registruotis';
+                    return;
+                }
+                
+                localStorage.setItem('bancrupt_token', data.token);
+                localStorage.setItem('bancrupt_user', JSON.stringify({
+                    userId: data.userId,
+                    username: data.username,
+                    email: data.email
+                }));
+                
+                currentUser = data;
+                updateLandingUI();
+                
+                alert(`✅ Sveikas, ${data.username}!\n\nTavo paskyra sukurta. Dabar gali žaisti ir rinkti statistiką.`);
+                goToMenu();
+                
+            } catch (err) {
+                console.error('❌ Registracijos klaida:', err);
+                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                btn.disabled = false;
+                btn.textContent = '✅ Registruotis';
+            }
+        }
+
+        async function submitLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+            const btn = document.getElementById('loginBtn');
+            
+            errorEl.textContent = '';
+            
+            if (!username || !password) {
+                errorEl.textContent = '❌ Įvesk vardą ir slaptažodį';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Jungiamasi...';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    errorEl.textContent = '❌ ' + data.error;
+                    btn.disabled = false;
+                    btn.textContent = '✅ Prisijungti';
+                    return;
+                }
+                
+                localStorage.setItem('bancrupt_token', data.token);
+                localStorage.setItem('bancrupt_user', JSON.stringify({
+                    userId: data.userId,
+                    username: data.username,
+                    email: data.email
+                }));
+                
+                currentUser = data;
+                updateLandingUI();
+                
+                alert(`✅ Sveikas sugrįžęs, ${data.username}!`);
+                goToMenu();
+                
+            } catch (err) {
+                console.error('❌ Prisijungimo klaida:', err);
+                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                btn.disabled = false;
+                btn.textContent = '✅ Prisijungti';
+            }
+        }
+
+        async function checkAutoLogin() {
+            const token = localStorage.getItem('bancrupt_token');
+            if (!token) {
+                updateLandingUI();
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (!response.ok) {
+                    localStorage.removeItem('bancrupt_token');
+                    localStorage.removeItem('bancrupt_user');
+                    updateLandingUI();
+                    return;
+                }
+                
+                const data = await response.json();
+                currentUser = data.user;
+                console.log('✅ Automatinis prisijungimas:', data.user.username);
+                updateLandingUI();
+                
+            } catch (err) {
+                console.warn('⚠️ Auto-login nepavyko:', err);
+                updateLandingUI();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLandingUI();
+            checkAutoLogin();
+            
+            ['registerUsername', 'registerEmail', 'registerPassword', 'registerPasswordConfirm'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitRegister(); });
+            });
+            
+            ['loginUsername', 'loginPassword'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitLogin(); });
+            });
+        });
+
+        // ============================================
+        // LANDING UI ATNAUJINIMAS
+        // ============================================
+
+        function updateLandingUI() {
+            const landingGuest = document.getElementById('landingGuest');
+            const landingUser = document.getElementById('landingUser');
+            const landingUsername = document.getElementById('landingUsername');
+            const menuUserInfo = document.getElementById('menuUserInfo');
+            const menuUsername = document.getElementById('menuUsername');
+            
+            const token = localStorage.getItem('bancrupt_token');
+            const userStr = localStorage.getItem('bancrupt_user');
+            
+            if (token && userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    
+                    if (landingGuest) landingGuest.style.display = 'none';
+                    if (landingUser) landingUser.style.display = 'block';
+                    if (landingUsername) landingUsername.textContent = user.username;
+                    
+                    if (menuUserInfo) menuUserInfo.style.display = 'block';
+                    if (menuUsername) menuUsername.textContent = user.username;
+                    
+                } catch (e) {
+                    console.warn('⚠️ Nepavyko perskaityti user:', e);
+                }
+            } else {
+                if (landingGuest) landingGuest.style.display = 'block';
+                if (landingUser) landingUser.style.display = 'none';
+                if (menuUserInfo) menuUserInfo.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // ATSIJUNGIMAS
+        // ============================================
+
+        function logout() {
+            if (!confirm('🚪 Ar tikrai nori atsijungti?')) return;
+            
+            localStorage.removeItem('bancrupt_token');
+            localStorage.removeItem('bancrupt_user');
+            currentUser = null;
+            
+            updateLandingUI();
+            goToLanding();
+            
+            alert('👋 Sėkmingai atsijungei!');
+        }
+
+        // ============================================
+        // STATISTIKOS MODALAS
+        // ============================================
+
+        async function openStatsModal() {
+            const modal = document.getElementById('statsModal');
+            const content = document.getElementById('statsContent');
+            
+            if (!modal || !content) return;
+            
+            modal.style.display = 'flex';
+            content.innerHTML = '<div style="text-align:center; padding:20px; color:#d4b896;">Kraunama...</div>';
+            
+            try {
+                const token = localStorage.getItem('bancrupt_token');
+                if (!token) {
+                    content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Nesi prisijungęs</div>';
+                    return;
+                }
+                
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (!response.ok) {
+                    content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Nepavyko užkrauti statistikos</div>';
+                    return;
+                }
+                
+                const data = await response.json();
+                const stats = data.stats || {};
+                
+                content.innerHTML = `
+                    <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span style="color:#d4b896;">👤 Vardas:</span>
+                            <strong style="color:#ffd700;">${data.user.username}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span style="color:#d4b896;">📧 El. paštas:</span>
+                            <strong style="color:#fff; font-size:13px;">${data.user.email}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#d4b896;">📅 Prisijungė:</span>
+                            <strong style="color:#fff; font-size:12px;">${new Date(data.user.createdAt).toLocaleDateString('lt-LT')}</strong>
+                        </div>
+                    </div>
+                    
+                    <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px;">
+                        <div style="color:#ffd700; font-weight:700; margin-bottom:10px;">🎮 ŽAIDIMO STATISTIKA</div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#d4b896;">🎮 Sužaista:</span>
+                            <strong style="color:#fff;">${stats.games_played || 0}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#d4b896;">🏆 Laimėta:</span>
+                            <strong style="color:#28a745;">${stats.games_won || 0}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#d4b896;">🏠 Namai pastatyti:</span>
+                            <strong style="color:#fff;">${stats.houses_built || 0}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#d4b896;">💰 Objektai pirkti:</span>
+                            <strong style="color:#fff;">${stats.properties_bought || 0}</strong>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (err) {
+                console.error('❌ Stats klaida:', err);
+                content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Serverio klaida</div>';
+            }
+        }
+
+        function closeStatsModal() {
+            const modal = document.getElementById('statsModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // ============================================
+        // TAISYKLIŲ MODALAS
+        // ============================================
+
         function openRulesModal() {
             document.getElementById('rulesModal').classList.add('active');
         }
@@ -924,14 +1331,60 @@
             }
         });
         
-        function menuCreate() {
+       function menuCreate() {
             console.log('🆕 Kurti žaidimą');
             showPage('page-create');
+            
+            // Auto-užpildyti vardą, jei prisijungęs
+            const userStr = localStorage.getItem('bancrupt_user');
+            const nameInput = document.getElementById('createPlayerName');
+            if (userStr && nameInput) {
+                try {
+                    const user = JSON.parse(userStr);
+                    nameInput.value = user.username;
+                    nameInput.disabled = true;
+                    nameInput.style.opacity = '0.7';
+                    nameInput.style.cursor = 'not-allowed';
+                    nameInput.title = '🔒 Prisijungęs kaip ' + user.username;
+                } catch (e) {
+                    console.warn('⚠️ Nepavyko perskaityti user:', e);
+                }
+            } else if (nameInput) {
+                // Svečias – leisti keisti
+                nameInput.disabled = false;
+                nameInput.style.opacity = '1';
+                nameInput.style.cursor = 'text';
+                nameInput.value = '';
+                nameInput.title = '';
+            }
         }
         
         function menuJoin() {
             console.log('🔗 Prisijungti');
             showPage('page-join');
+            
+            // Auto-užpildyti vardą, jei prisijungęs
+            const userStr = localStorage.getItem('bancrupt_user');
+            const nameInput = document.getElementById('joinPlayerName');
+            if (userStr && nameInput) {
+                try {
+                    const user = JSON.parse(userStr);
+                    nameInput.value = user.username;
+                    nameInput.disabled = true;
+                    nameInput.style.opacity = '0.7';
+                    nameInput.style.cursor = 'not-allowed';
+                    nameInput.title = '🔒 Prisijungęs kaip ' + user.username;
+                } catch (e) {
+                    console.warn('⚠️ Nepavyko perskaityti user:', e);
+                }
+            } else if (nameInput) {
+                // Svečias – leisti keisti
+                nameInput.disabled = false;
+                nameInput.style.opacity = '1';
+                nameInput.style.cursor = 'text';
+                nameInput.value = '';
+                nameInput.title = '';
+            }
         }
         
         function menuPublic() {

@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const os = require('os');
 const Game = require('./gameLogic');
+require('./db');
 
 // ============================================
 // LIMITAI
@@ -28,8 +29,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, 'public')));
+// 🆕 API ROUTES
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
 
+console.log('🔍 API ROUTES UŽREGISTRUOTI');
+console.log('🔍 authRoutes tipas:', typeof authRoutes);
+console.log('🔍 authRoutes stack:', authRoutes.stack ? authRoutes.stack.length : 'nėra');
+
+app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
