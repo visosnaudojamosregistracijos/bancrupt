@@ -13,3 +13,7 @@ node_modules/
 # Environment
 .env
 .DS_Store
+
+# Backup failai
+*.backup
+*.backup2
