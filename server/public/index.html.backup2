@@ -71,28 +71,6 @@
                     <input type="password" id="registerPassword" placeholder="Slaptažodis (bent 6 simboliai)" autocomplete="new-password">
                     <input type="password" id="registerPasswordConfirm" placeholder="Pakartok slaptažodį" autocomplete="new-password">
                     
-                    <div style="margin-top:15px; padding:12px; background:rgba(255,215,0,0.1); border:2px solid #ffd700; border-radius:10px;">
-                        <div style="color:#ffd700; font-size:13px; font-weight:700; margin-bottom:8px;">
-                            🔒 Saugumo klausimas (slaptažodžio atstatymui)
-                        </div>
-                        
-                        <select id="registerSecurityQuestion" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; background:#0d1f0d; color:#fff; font-size:14px; outline:none; margin-bottom:8px;">
-                            <option value="" style="background:#0d1f0d; color:#fff;">-- Pasirink klausimą --</option>
-                            <option value="Koks tavo augintinio vardas?">Koks tavo augintinio vardas?</option>
-                            <option value="Kokiame mieste gimei?">Kokiame mieste gimei?</option>
-                            <option value="Koks tavo mėgstamiausias filmas?">Koks tavo mėgstamiausias filmas?</option>
-                            <option value="Koks tavo mokyklos pavadinimas?">Koks tavo mokyklos pavadinimas?</option>
-                            <option value="Koks tavo mėgstamiausias maistas?">Koks tavo mėgstamiausias maistas?</option>
-                            <option value="Koks tavo automobilio modelis?">Koks tavo automobilio modelis?</option>
-                            <option value="Kokia tavo motinos mergautinė pavardė?">Kokia tavo motinos mergautinė pavardė?</option>
-                            <option value="Koks tavo mėgstamiausias muzikos atlikėjas?">Koks tavo mėgstamiausias muzikos atlikėjas?</option>
-                            <option value="Koks tavo svajonių atostogų tikslas?">Koks tavo svajonių atostogų tikslas?</option>
-                            <option value="Koks tavo mėgstamiausias sportas?">Koks tavo mėgstamiausias sportas?</option>
-                        </select>
-                        
-                        <input type="text" id="registerSecurityAnswer" placeholder="Atsakymas (pvz., Rexas)" maxlength="100" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; background:#0d1f0d; color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
-                    </div>
-                    
                     <div id="registerError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
                     
                     <button onclick="submitRegister()" class="btn btn-primary" id="registerBtn">
@@ -131,10 +109,6 @@
                         Neturi paskyros? 
                         <a href="#" onclick="goToRegister(); return false;" style="color:#ffd700; font-weight:700; text-decoration:underline;">Registruokis</a>
                     </div>
-
-                    <div style="margin-top:10px; text-align:center;">
-                        <a href="#" onclick="goToForgotPassword(); return false;" style="color:#ffd700; font-weight:700; font-size:14px; text-decoration:underline;">🔑 Pamiršau slaptažodį</a>
-                    </div>
                     
                     <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
                 </div>
@@ -142,80 +116,7 @@
         </div>
     </div>
 
-<!-- PUSLAPIS 1C: PAMIRŠAU SLAPTAŽODĮ -->
-    <div id="page-forgot-password" class="page" style="display:none;">
-        <div style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
-            <div class="lobby-container">
-                <h1>🔑 PAMIRŠAU SLAPTAŽODĮ</h1>
-                <p class="subtitle">Atstatyk slaptažodį per 3 žingsnius</p>
-                
-                <!-- 1 ETAPAS: Vardas + El. paštas -->
-                <div id="forgotStep1">
-                    <div class="lobby-form">
-                        <p style="color:#d4b896; font-size:13px; text-align:center; margin-bottom:10px;">
-                            <strong>1 žingsnis iš 3:</strong> Patvirtink savo tapatybę
-                        </p>
-                        
-                        <input type="text" id="forgotUsername" placeholder="Vardas" maxlength="20">
-                        <input type="email" id="forgotEmail" placeholder="El. paštas">
-                        
-                        <div id="forgotError1" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
-                        
-                        <button onclick="submitForgotStep1()" class="btn btn-primary" id="forgotBtn1">
-                            ➡️ Toliau
-                        </button>
-                        
-                        <button onclick="goToLogin()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
-                    </div>
-                </div>
-                
-                <!-- 2 ETAPAS: Atsakymas į klausimą -->
-                <div id="forgotStep2" style="display:none;">
-                    <div class="lobby-form">
-                        <p style="color:#d4b896; font-size:13px; text-align:center; margin-bottom:10px;">
-                            <strong>2 žingsnis iš 3:</strong> Atsakyk į saugumo klausimą
-                        </p>
-                        
-                        <div style="padding:12px; background:rgba(255,215,0,0.1); border:2px solid #ffd700; border-radius:10px; margin-bottom:10px;">
-                            <div style="color:#ffd700; font-size:13px; font-weight:700; margin-bottom:4px;">🔒 Tavo klausimas:</div>
-                            <div id="forgotQuestionText" style="color:#fff; font-size:14px; font-weight:600;"></div>
-                        </div>
-                        
-                        <input type="text" id="forgotAnswer" placeholder="Atsakymas" maxlength="100">
-                        
-                        <div id="forgotError2" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
-                        
-                        <button onclick="submitForgotStep2()" class="btn btn-primary" id="forgotBtn2">
-                            ➡️ Toliau
-                        </button>
-                        
-                        <button onclick="forgotBackToStep1()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
-                    </div>
-                </div>
-                
-                <!-- 3 ETAPAS: Naujas slaptažodis -->
-                <div id="forgotStep3" style="display:none;">
-                    <div class="lobby-form">
-                        <p style="color:#d4b896; font-size:13px; text-align:center; margin-bottom:10px;">
-                            <strong>3 žingsnis iš 3:</strong> Įvesk naują slaptažodį
-                        </p>
-                        
-                        <input type="password" id="forgotNewPassword" placeholder="Naujas slaptažodis (bent 6 simboliai)" autocomplete="new-password">
-                        <input type="password" id="forgotNewPasswordConfirm" placeholder="Pakartok naują slaptažodį" autocomplete="new-password">
-                        
-                        <div id="forgotError3" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
-                        
-                        <button onclick="submitForgotStep3()" class="btn btn-primary" id="forgotBtn3">
-                            ✅ Pakeisti slaptažodį
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PUSLAPIS 2: MENU -->
-    <div id="page-menu" class="page">
+     <div id="page-menu" class="page">
         <div class="menu-container">
             <h1>🎮 ŽAIDIMAS</h1>
             <p>Pasirink veiksmą</p>
@@ -1096,295 +997,40 @@
             document.getElementById('loginError').textContent = '';
         }
 
-        // ============================================
-        // SLAPTAŽODŽIO ATSTATYMAS
-        // ============================================
-
-        let forgotPasswordData = {
-            username: '',
-            email: '',
-            question: ''
-        };
-
-        function goToForgotPassword() {
-            showPage('page-forgot-password');
-            console.log('📍 Pamiršau slaptažodį puslapis');
-            
-            // Reset į 1 etapą
-            forgotBackToStep1();
-            
-            // Išvalyti laukus
-            const usernameEl = document.getElementById('forgotUsername');
-            const emailEl = document.getElementById('forgotEmail');
-            const answerEl = document.getElementById('forgotAnswer');
-            const passEl = document.getElementById('forgotNewPassword');
-            const passConfirmEl = document.getElementById('forgotNewPasswordConfirm');
-            
-            if (usernameEl) usernameEl.value = '';
-            if (emailEl) emailEl.value = '';
-            if (answerEl) answerEl.value = '';
-            if (passEl) passEl.value = '';
-            if (passConfirmEl) passConfirmEl.value = '';
-            
-            const err1 = document.getElementById('forgotError1');
-            const err2 = document.getElementById('forgotError2');
-            const err3 = document.getElementById('forgotError3');
-            
-            if (err1) err1.textContent = '';
-            if (err2) err2.textContent = '';
-            if (err3) err3.textContent = '';
-        }
-
-        async function submitForgotStep1() {
-            const username = document.getElementById('forgotUsername').value.trim();
-            const email = document.getElementById('forgotEmail').value.trim();
-            const errorEl = document.getElementById('forgotError1');
-            const btn = document.getElementById('forgotBtn1');
+        async function submitRegister() {
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+            const errorEl = document.getElementById('registerError');
+            const btn = document.getElementById('registerBtn');
             
             errorEl.textContent = '';
             
-            if (!username || !email) {
-                errorEl.textContent = '❌ Įvesk vardą ir el. paštą';
+            if (!username || !email || !password || !passwordConfirm) {
+                errorEl.textContent = '❌ Užpildyk visus laukus';
                 return;
             }
             
-            btn.disabled = true;
-            btn.textContent = '⏳ Tikrinama...';
-            
-            try {
-                const response = await fetch('/api/auth/forgot-password/verify-user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    errorEl.textContent = '❌ ' + data.error;
-                    btn.disabled = false;
-                    btn.textContent = '➡️ Toliau';
-                    return;
-                }
-                
-                // Išsaugom duomenis
-                forgotPasswordData.username = data.username;
-                forgotPasswordData.email = email;
-                forgotPasswordData.question = data.question;
-                
-                // Rodyti 2 etapą
-                document.getElementById('forgotStep1').style.display = 'none';
-                document.getElementById('forgotStep2').style.display = 'block';
-                document.getElementById('forgotQuestionText').textContent = data.question;
-                
-                btn.disabled = false;
-                btn.textContent = '➡️ Toliau';
-                
-                console.log('✅ 1 etapas baigtas. Klausimas:', data.question);
-                
-            } catch (err) {
-                console.error('❌ Klaida:', err);
-                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
-                btn.disabled = false;
-                btn.textContent = '➡️ Toliau';
-            }
-        }
-
-        async function submitForgotStep2() {
-            const answer = document.getElementById('forgotAnswer').value.trim();
-            const errorEl = document.getElementById('forgotError2');
-            const btn = document.getElementById('forgotBtn2');
-            
-            errorEl.textContent = '';
-            
-            if (!answer) {
-                errorEl.textContent = '❌ Įvesk atsakymą';
-                return;
-            }
-            
-            btn.disabled = true;
-            btn.textContent = '⏳ Tikrinama...';
-            
-            try {
-                const response = await fetch('/api/auth/forgot-password/verify-answer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: forgotPasswordData.username,
-                        email: forgotPasswordData.email,
-                        answer: answer
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    errorEl.textContent = '❌ ' + data.error;
-                    btn.disabled = false;
-                    btn.textContent = '➡️ Toliau';
-                    return;
-                }
-                
-                // Išsaugom atsakymą
-                forgotPasswordData.answer = answer;
-                
-                // Rodyti 3 etapą
-                document.getElementById('forgotStep2').style.display = 'none';
-                document.getElementById('forgotStep3').style.display = 'block';
-                
-                btn.disabled = false;
-                btn.textContent = '➡️ Toliau';
-                
-                console.log('✅ 2 etapas baigtas');
-                
-            } catch (err) {
-                console.error('❌ Klaida:', err);
-                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
-                btn.disabled = false;
-                btn.textContent = '➡️ Toliau';
-            }
-        }
-
-        async function submitForgotStep3() {
-            const newPassword = document.getElementById('forgotNewPassword').value;
-            const newPasswordConfirm = document.getElementById('forgotNewPasswordConfirm').value;
-            const errorEl = document.getElementById('forgotError3');
-            const btn = document.getElementById('forgotBtn3');
-            
-            errorEl.textContent = '';
-            
-            if (!newPassword || !newPasswordConfirm) {
-                errorEl.textContent = '❌ Įvesk naują slaptažodį';
-                return;
-            }
-            
-            if (newPassword !== newPasswordConfirm) {
+            if (password !== passwordConfirm) {
                 errorEl.textContent = '❌ Slaptažodžiai nesutampa';
                 return;
             }
             
-            if (newPassword.length < 6) {
+            if (password.length < 6) {
                 errorEl.textContent = '❌ Slaptažodis turi būti bent 6 simbolių';
                 return;
             }
             
             btn.disabled = true;
-            btn.textContent = '⏳ Keičiama...';
+            btn.textContent = '⏳ Registruojama...';
             
             try {
-                const response = await fetch('/api/auth/forgot-password/reset', {
+                const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: forgotPasswordData.username,
-                        email: forgotPasswordData.email,
-                        answer: forgotPasswordData.answer,
-                        newPassword: newPassword
-                    })
+                    body: JSON.stringify({ username, email, password })
                 });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    errorEl.textContent = '❌ ' + data.error;
-                    btn.disabled = false;
-                    btn.textContent = '✅ Pakeisti slaptažodį';
-                    return;
-                }
-                
-                // Sėkmė!
-                alert(`✅ Slaptažodis pakeistas!\n\nDabar gali prisijungti su nauju slaptažodžiu.`);
-                
-                // Grįžti į prisijungimą
-                goToLogin();
-                
-                // Užpildyti vartotojo vardą
-                const loginUsername = document.getElementById('loginUsername');
-                if (loginUsername) loginUsername.value = forgotPasswordData.username;
-                
-                btn.disabled = false;
-                btn.textContent = '✅ Pakeisti slaptažodį';
-                
-                console.log('✅ Slaptažodis pakeistas');
-                
-            } catch (err) {
-                console.error('❌ Klaida:', err);
-                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
-                btn.disabled = false;
-                btn.textContent = '✅ Pakeisti slaptažodį';
-            }
-        }
-
-        function forgotBackToStep1() {
-            const step1 = document.getElementById('forgotStep1');
-            const step2 = document.getElementById('forgotStep2');
-            const step3 = document.getElementById('forgotStep3');
-            
-            if (step1) step1.style.display = 'block';
-            if (step2) step2.style.display = 'none';
-            if (step3) step3.style.display = 'none';
-            
-            const answerEl = document.getElementById('forgotAnswer');
-            if (answerEl) answerEl.value = '';
-            
-            const err2 = document.getElementById('forgotError2');
-            const err3 = document.getElementById('forgotError3');
-            if (err2) err2.textContent = '';
-            if (err3) err3.textContent = '';
-        }
-
-        async function submitRegister() {
-    const username = document.getElementById('registerUsername').value.trim();
-    const email = document.getElementById('registerEmail').value.trim();
-    const password = document.getElementById('registerPassword').value;
-    const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-    const securityQuestion = document.getElementById('registerSecurityQuestion').value;
-    const securityAnswer = document.getElementById('registerSecurityAnswer').value.trim();
-    const errorEl = document.getElementById('registerError');
-    const btn = document.getElementById('registerBtn');
-    
-    errorEl.textContent = '';
-    
-    if (!username || !email || !password || !passwordConfirm) {
-        errorEl.textContent = '❌ Užpildyk visus laukus';
-        return;
-    }
-    
-    if (password !== passwordConfirm) {
-        errorEl.textContent = '❌ Slaptažodžiai nesutampa';
-        return;
-    }
-    
-    if (password.length < 6) {
-        errorEl.textContent = '❌ Slaptažodis turi būti bent 6 simbolių';
-        return;
-    }
-    
-    if (!securityQuestion) {
-        errorEl.textContent = '❌ Pasirink saugumo klausimą';
-        return;
-    }
-    
-    if (!securityAnswer || securityAnswer.length < 2) {
-        errorEl.textContent = '❌ Įvesk atsakymą į saugumo klausimą';
-        return;
-    }
-    
-    btn.disabled = true;
-    btn.textContent = '⏳ Registruojama...';
-    
-    try {
-        const response = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                username, 
-                email, 
-                password,
-                securityQuestion,
-                securityAnswer
-            })
-        });
                 
                 const data = await response.json();
                 

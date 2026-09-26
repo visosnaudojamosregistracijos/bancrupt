@@ -4065,3 +4065,14 @@ body.dark-mode #cellInfoPanel {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+#registerSecurityQuestion option {
+    background: #0d1f0d;
+    color: #fff;
+}
+
+#registerSecurityQuestion,
+#registerSecurityAnswer {
+    background: #0d1f0d !important;
+    color: #fff !important;
+}
