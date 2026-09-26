@@ -3,6 +3,7 @@
 // ============================================
 
 const C = require('./gameConstants');
+const db = require('./db');
 
 // ============================================
 // NAMŲ IR VIEZBUČIŲ STATYMO LOGIKA
@@ -184,6 +185,14 @@ class BuildingLogic {
             player.houses[fieldId] = 5;
             const message = `🏨 ${player.name} pastatė VIEZBUTĮ ant ${field.name} už €${cost}! 🎉`;
             this.game.addMessage(message);
+
+            // 🆕 ĮRAŠYTI STATISTIKĄ
+            if (player.userId && !player.isBot) {
+                db.updateStats(player.userId, { houses_built: 1 }).catch(err => {
+                    console.error('❌ houses_built klaida:', err);
+                });
+            }
+
             this.game.turnHistory.push({
                 player: player.name,
                 action: 'build_hotel',
@@ -217,6 +226,14 @@ class BuildingLogic {
             const houseCount = player.houses[fieldId];
             const message = `🏠 ${player.name} pastatė namą ant ${field.name} (dabar ${houseCount} namai) už €${cost}!`;
             this.game.addMessage(message);
+
+            // 🆕 ĮRAŠYTI STATISTIKĄ
+            if (player.userId && !player.isBot) {
+                db.updateStats(player.userId, { houses_built: 1 }).catch(err => {
+                    console.error('❌ houses_built klaida:', err);
+                });
+            }
+
             this.game.turnHistory.push({
                 player: player.name,
                 action: 'build_house',

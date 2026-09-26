@@ -327,6 +327,7 @@ io.on('connection', (socket) => {
         const playerName = data.name || data;
         const playerColor = data.color || null;
         const isPublic = data.isPublic === true;
+        const userId = data.userId || null;
         
         if (!playerName || playerName.trim() === '') {
             socket.emit('error', 'Įvesk vardą!');
@@ -357,7 +358,7 @@ io.on('connection', (socket) => {
             }
         });
         
-        const player = game.addPlayer(playerName.trim(), playerColor);
+        const player = game.addPlayer(playerName.trim(), playerColor, userId);
         
         if (player.error) {
             socket.emit('error', player.error);
@@ -391,8 +392,8 @@ io.on('connection', (socket) => {
     // ============================================
     // PRISIJUNGTI PRIE ŽAIDIMO
     // ============================================
-    socket.on('joinGame', ({ gameId, playerName, color }) => {
-        console.log('📥 Gauta joinGame užklausa:', { gameId, playerName, color });
+    socket.on('joinGame', ({ gameId, playerName, color, userId }) => {
+        console.log('📥 Gauta joinGame užklausa:', { gameId, playerName, color, userId });
         
         if (!gameId || !playerName) {
             socket.emit('error', 'Įvesk žaidimo ID ir vardą!');
@@ -410,7 +411,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const player = game.addPlayer(playerName.trim(), color);
+        const player = game.addPlayer(playerName.trim(), color, userId);
         if (player.error) {
             socket.emit('error', player.error);
             return;

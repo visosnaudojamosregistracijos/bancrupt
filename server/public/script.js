@@ -2298,11 +2298,24 @@ function createGame() {
     
     const isPublicCheckbox = document.getElementById('createIsPublic');
     const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
+    
+    // 🆕 Gauti userId iš localStorage
+    let userId = null;
+    const userStr = localStorage.getItem('bancrupt_user');
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            userId = user.userId;
+        } catch (e) {
+            console.warn('⚠️ Nepavyko perskaityti user:', e);
+        }
+    }
 
     socket.emit('createGame', {
         name: name,
         color: selectedCreateColor,
-        isPublic: isPublic
+        isPublic: isPublic,
+        userId: userId
     });
 }
 
@@ -2336,10 +2349,23 @@ function joinGame() {
     
     clearJournal();
     
+    // 🆕 Gauti userId iš localStorage
+    let userId = null;
+    const userStr = localStorage.getItem('bancrupt_user');
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            userId = user.userId;
+        } catch (e) {
+            console.warn('⚠️ Nepavyko perskaityti user:', e);
+        }
+    }
+    
     socket.emit('joinGame', { 
         gameId: gid, 
         playerName: name,
-        color: selectedJoinColor
+        color: selectedJoinColor,
+        userId: userId
     });
 }
 

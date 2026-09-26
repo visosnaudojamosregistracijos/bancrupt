@@ -4,6 +4,7 @@ const BuildingLogic = require('./buildingLogic');
 const TradingLogic = require('./tradingLogic');
 const DemolishLogic = require('./demolishLogic');
 const C = require('./gameConstants');
+const db = require('./db');
 
 class Game {
     constructor() {
@@ -58,7 +59,7 @@ class Game {
     // ŽAIDĖJŲ PRIDĖJIMAS
     // ============================================
 
-    addPlayer(name, color = null) {
+    addPlayer(name, color = null, userId = null) {
         if (this.players.length >= C.MAX_PLAYERS) {
             return { error: `Daugiausiai ${C.MAX_PLAYERS} žaidėjai` };
         }
@@ -121,7 +122,8 @@ class Game {
             token: Math.random().toString(36).substring(2) + Date.now().toString(36),
             joinedAt: Date.now(),
             isHost: this.players.length === 0,
-            isBot: false
+            isBot: false,
+            userId: userId
         };
         this.players.push(player);
 
@@ -1718,6 +1720,13 @@ class Game {
         player.properties.push(field.id);
         this.addMessage(`${player.name} nusipirko ${field.name} už €${field.cost}! 🏠`);
 
+        // 🆕 ĮRAŠYTI STATISTIKĄ
+        if (player.userId && !player.isBot) {
+            db.updateStats(player.userId, { properties_bought: 1 }).catch(err => {
+                console.error('❌ properties_bought klaida:', err);
+            });
+        }
+
         this.waitingForBuy = false;
         this.lastActivity = Date.now();
 
@@ -1792,6 +1801,13 @@ class Game {
     player.money = 0;
 
     this.addMessage(`💀 ${player.name} BANKROTAS! Kortelės grąžintos bankui.`);
+
+    // 🆕 ĮRAŠYTI STATISTIKĄ
+    if (player.userId && !player.isBot) {
+        db.updateStats(player.userId, { bankrupts: 1 }).catch(err => {
+            console.error('❌ bankrupts klaida:', err);
+        });
+    }
 
     if (this.activeVoteKick) {
         this.cancelVoteKick('Žaidėjas bankrutavo');
@@ -1938,33 +1954,52 @@ class Game {
         return { nextPlayer: this.currentTurn };
     }
 
-    endGame() {
-    this.gameStarted = false;
-    const activePlayers = this.getActivePlayers();
-    const winner = activePlayers[0];
-    
-    if (winner) {
-        this.addMessage(`🏆 ${winner.name} LAIMĖJO! 🎉`);
+    async endGame() {
+        this.gameStarted = false;
+        const activePlayers = this.getActivePlayers();
+        const winner = activePlayers[0];
         
-        // 🆕 Išsiųsti gameFinished eventą klientui
-        if (this.emitFunction) {
-            this.emitFunction('gameFinished', {
-                winner: winner.name,
-                winnerId: winner.id
-            });
+        if (winner) {
+            this.addMessage(`🏆 ${winner.name} LAIMĖJO! 🎉`);
+            
+            // 🆕 Išsiųsti gameFinished eventą klientui
+            if (this.emitFunction) {
+                this.emitFunction('gameFinished', {
+                    winner: winner.name,
+                    winnerId: winner.id
+                });
+            }
+        } else {
+            // 🆕 Jei nėra winner (visi bankrutavo)
+            this.addMessage(`🏁 Žaidimas baigtas – nėra laimėtojo`);
+            
+            if (this.emitFunction) {
+                this.emitFunction('gameFinished', {
+                    winner: 'Niekas',
+                    winnerId: null
+                });
+            }
         }
-    } else {
-        // 🆕 Jei nėra winner (visi bankrutavo)
-        this.addMessage(`🏁 Žaidimas baigtas – nėra laimėtojo`);
         
-        if (this.emitFunction) {
-            this.emitFunction('gameFinished', {
-                winner: 'Niekas',
-                winnerId: null
-            });
+        // 🆕 ĮRAŠYTI STATISTIKĄ Į DB
+        try {
+            for (const player of this.players) {
+                if (player.userId && !player.isBot) {
+                    // Visiems: games_played +1
+                    await db.updateStats(player.userId, { games_played: 1 });
+                    console.log(`📊 ${player.name}: games_played +1`);
+                }
+            }
+            
+            // Laimėtojui: games_won +1
+            if (winner && winner.userId && !winner.isBot) {
+                await db.updateStats(winner.userId, { games_won: 1 });
+                console.log(`📊 ${winner.name}: games_won +1`);
+            }
+        } catch (err) {
+            console.error('❌ Statistikos įrašymo klaida:', err);
         }
     }
-}
 
     addMessage(message) {
         this.lastMessage = message;
