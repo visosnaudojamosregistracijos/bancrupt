@@ -24,7 +24,7 @@ const boardData = [
     { id: 15, name: 'Zarasai', type: 'property', color: '#2ecc71', cost: 170, icon: '' },
         
     // KAMPAS 2: KALĖJIMAS
-    { id: 16, name: 'Kaleimas', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
+    { id: 16, name: 'Kaleimas kur sedi Romka', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
     
     // DEŠINĖ
     { id: 17, name: 'Mažeikiai', type: 'property', color: '#9b59b6', cost: 180, icon: '' },
