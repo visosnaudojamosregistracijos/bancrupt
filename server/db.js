@@ -32,17 +32,28 @@ pool.on('error', (err) => {
 // ============================================
 async function initDatabase() {
     try {
+        // Vartotojų lentelė
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(20) UNIQUE NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
+                security_question TEXT,
+                security_answer_hash TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP
             )
         `);
 
+        // 🆕 Pridėti stulpelius prie esamos lentelės
+        await pool.query(`
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS security_question TEXT,
+            ADD COLUMN IF NOT EXISTS security_answer_hash TEXT
+        `);
+
+        // Statistikos lentelė
         await pool.query(`
             CREATE TABLE IF NOT EXISTS stats (
                 user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -55,6 +66,7 @@ async function initDatabase() {
             )
         `);
 
+        // Indeksai
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
 
@@ -85,21 +97,25 @@ const dbHelpers = {
         return result.rows[0] || null;
     },
 
-    async createUser(username, email, passwordHash) {
-        const result = await pool.query(
-            'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id',
-            [username, email, passwordHash]
-        );
-        const userId = result.rows[0].id;
+    async createUser(username, email, passwordHash, securityQuestion, securityAnswerHash) {
+    const result = await pool.query(
+        'INSERT INTO users (username, email, password_hash, security_question, security_answer_hash) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [username, email, passwordHash, securityQuestion, securityAnswerHash]
+    );
+    const userId = result.rows[0].id;
 
-        await pool.query('INSERT INTO stats (user_id) VALUES ($1)', [userId]);
+    await pool.query('INSERT INTO stats (user_id) VALUES ($1)', [userId]);
 
-        return userId;
-    },
+    return userId;
+},
 
     async updateLastLogin(userId) {
         await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [userId]);
     },
+
+    async updatePassword(userId, newPasswordHash) {
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newPasswordHash, userId]);
+},
 
     // Statistika
     async getUserStats(userId) {

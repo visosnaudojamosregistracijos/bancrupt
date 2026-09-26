@@ -1,6 +1,6 @@
 // ============================================
 // server/routes/auth.js
-// Registracijos ir prisijungimo API
+// Registracijos, prisijungimo ir slaptažodžio atstatymo API
 // ============================================
 
 const express = require('express');
@@ -9,20 +9,37 @@ const authLogic = require('../authLogic');
 const db = require('../db');
 
 // ============================================
+// GET /api/auth/security-questions
+// Grąžinti saugumo klausimų sąrašą
+// ============================================
+router.get('/security-questions', (req, res) => {
+    res.json({
+        success: true,
+        questions: authLogic.SECURITY_QUESTIONS
+    });
+});
+
+// ============================================
 // POST /api/auth/register
 // Registracija
 // ============================================
 router.post('/register', async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, securityQuestion, securityAnswer } = req.body;
 
-        if (!username || !email || !password) {
+        if (!username || !email || !password || !securityQuestion || !securityAnswer) {
             return res.status(400).json({ 
-                error: 'Trūksta duomenų (username, email, password)' 
+                error: 'Trūksta duomenų (username, email, password, securityQuestion, securityAnswer)' 
             });
         }
 
-        const result = await authLogic.register(username, email, password);
+        const result = await authLogic.register(
+            username, 
+            email, 
+            password, 
+            securityQuestion, 
+            securityAnswer
+        );
 
         if (result.error) {
             return res.status(400).json({ error: result.error });
@@ -87,14 +104,13 @@ router.get('/me', async (req, res) => {
             return res.status(401).json({ error: 'Nėra tokeno' });
         }
 
-        const token = authHeader.substring(7); // Nuimti "Bearer "
+        const token = authHeader.substring(7);
         const user = await authLogic.getUserFromToken(token);
 
         if (!user) {
             return res.status(401).json({ error: 'Neteisingas arba pasibaigęs tokenas' });
         }
 
-        // Pridėti statistiką
         const stats = await db.getUserStats(user.userId);
 
         res.json({
@@ -155,6 +171,91 @@ router.get('/stats/:userId', async (req, res) => {
 
     } catch (err) {
         console.error('❌ /stats klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
+// ============================================
+// SLAPTAŽODŽIO ATSTATYMAS
+// ============================================
+
+// 1 ETAPAS: Patikrinti vardą + el. paštą, grąžinti klausimą
+router.post('/forgot-password/verify-user', async (req, res) => {
+    try {
+        const { username, email } = req.body;
+
+        if (!username || !email) {
+            return res.status(400).json({ error: 'Įvesk vardą ir el. paštą' });
+        }
+
+        const result = await authLogic.verifyUserAndGetQuestion(username, email);
+
+        if (result.error) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        res.json({
+            success: true,
+            username: result.username,
+            question: result.question
+        });
+
+    } catch (err) {
+        console.error('❌ /forgot-password/verify-user klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
+// 2 ETAPAS: Patikrinti atsakymą
+router.post('/forgot-password/verify-answer', async (req, res) => {
+    try {
+        const { username, email, answer } = req.body;
+
+        if (!username || !email || !answer) {
+            return res.status(400).json({ error: 'Trūksta duomenų' });
+        }
+
+        const result = await authLogic.verifySecurityAnswer(username, email, answer);
+
+        if (result.error) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        res.json({
+            success: true,
+            username: result.username,
+            message: 'Atsakymas teisingas. Galite pakeisti slaptažodį.'
+        });
+
+    } catch (err) {
+        console.error('❌ /forgot-password/verify-answer klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
+// 3 ETAPAS: Pakeisti slaptažodį
+router.post('/forgot-password/reset', async (req, res) => {
+    try {
+        const { username, email, answer, newPassword } = req.body;
+
+        if (!username || !email || !answer || !newPassword) {
+            return res.status(400).json({ error: 'Trūksta duomenų' });
+        }
+
+        const result = await authLogic.resetPassword(username, email, answer, newPassword);
+
+        if (result.error) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        res.json({
+            success: true,
+            username: result.username,
+            message: 'Slaptažodis sėkmingai pakeistas!'
+        });
+
+    } catch (err) {
+        console.error('❌ /forgot-password/reset klaida:', err);
         res.status(500).json({ error: 'Serverio klaida' });
     }
 });
