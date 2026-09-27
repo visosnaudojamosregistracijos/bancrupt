@@ -50,11 +50,6 @@
                     <button class="landing-btn landing-btn-secondary" onclick="openStatsModal()">
                         📊 Mano statistika
                     </button>
-
-<button class="landing-btn landing-btn-secondary" onclick="openHistoryModal()" style="background:linear-gradient(145deg, #17a2b8, #138496);">
-                        📜 Žaidimų istorija
-                    </button>
-
                     <button class="landing-btn landing-btn-secondary" onclick="openLeaders()" style="background:linear-gradient(145deg, #f39c12, #e67e22);">
                         🏆 Lyderiai
                     </button>
@@ -1015,6 +1010,23 @@
                 <div style="text-align:center; padding:20px; color:#d4b896;">Kraunama...</div>
             </div>
             
+            <!-- 🔑 SLAPTAŽODŽIO KEITIMAS -->
+            <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-top:15px; border:2px solid #17a2b8;">
+                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">🔑 SLAPTAŽODŽIO KEITIMAS</div>
+                
+                <input type="password" id="currentPassword" placeholder="Dabartinis slaptažodis" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #17a2b8; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+                
+                <input type="password" id="newPassword" placeholder="Naujas slaptažodis (bent 6 simboliai)" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #17a2b8; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+                
+                <input type="password" id="newPasswordConfirm" placeholder="Pakartok naują slaptažodį" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #17a2b8; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+                
+                <div id="changePasswordError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center; margin-bottom:8px;"></div>
+                
+                <button onclick="changePassword()" style="width:100%; padding:10px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
+                    🔑 Pakeisti slaptažodį
+                </button>
+            </div>
+            
             <button onclick="closeStatsModal()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
                 ❌ Uždaryti
             </button>
@@ -1048,23 +1060,6 @@
             </div>
             
             <button onclick="closeLeaders()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
-                ❌ Uždaryti
-            </button>
-        </div>
-    </div>
-
-    <!-- 📜 ŽAIDIMŲ ISTORIJOS MODALAS -->
-    <div id="historyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99995; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
-        <div style="background:linear-gradient(145deg, #1a6b3c, #0f4a2a); border-radius:20px; padding:30px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; border:3px solid #17a2b8; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-            <h2 style="color:#ffd700; text-align:center; font-size:1.8em; margin-bottom:20px; border-bottom:2px solid #17a2b8; padding-bottom:10px;">
-                📜 ŽAIDIMŲ ISTORIJA
-            </h2>
-            
-            <div id="historyContent">
-                <div style="text-align:center; padding:20px; color:#d4b896;">⏳ Kraunama...</div>
-            </div>
-            
-            <button onclick="closeHistoryModal()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
                 ❌ Uždaryti
             </button>
         </div>
@@ -1749,131 +1744,72 @@ function closeStatsModal() {
     if (modal) modal.style.display = 'none';
 }
 
-async function openHistoryModal() {
-    const modal = document.getElementById('historyModal');
-    const content = document.getElementById('historyContent');
+// ============================================
+// 🔑 SLAPTAŽODŽIO KEITIMAS
+// ============================================
+async function changePassword() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const newPasswordConfirm = document.getElementById('newPasswordConfirm').value;
+    const errorEl = document.getElementById('changePasswordError');
     
-    if (!modal || !content) return;
+    errorEl.textContent = '';
     
-    modal.style.display = 'flex';
-    content.innerHTML = '<div style="text-align:center; padding:20px; color:#d4b896;">⏳ Kraunama...</div>';
+    if (!currentPassword || !newPassword || !newPasswordConfirm) {
+        errorEl.textContent = '❌ Užpildyk visus laukus';
+        return;
+    }
+    
+    if (newPassword !== newPasswordConfirm) {
+        errorEl.textContent = '❌ Nauji slaptažodžiai nesutampa';
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        errorEl.textContent = '❌ Naujas slaptažodis turi būti bent 6 simbolių';
+        return;
+    }
+    
+    if (currentPassword === newPassword) {
+        errorEl.textContent = '❌ Naujas slaptažodis negali būti toks pat';
+        return;
+    }
     
     try {
         const token = localStorage.getItem('bancrupt_token');
         if (!token) {
-            content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Nesi prisijungęs</div>';
+            errorEl.textContent = '❌ Nesi prisijungęs';
             return;
         }
         
-        const response = await fetch('/api/auth/history?limit=10', {
-            headers: { 'Authorization': 'Bearer ' + token }
+        const response = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ currentPassword, newPassword })
         });
-        
-        if (!response.ok) {
-            content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Nepavyko užkrauti istorijos</div>';
-            return;
-        }
         
         const data = await response.json();
-        const history = data.history || [];
         
-        if (history.length === 0) {
-            content.innerHTML = `
-                <div style="text-align:center; padding:40px 20px;">
-                    <div style="font-size:60px; margin-bottom:15px;">📭</div>
-                    <div style="color:#d4b896; font-size:16px;">Dar nėra sužaistų žaidimų</div>
-                    <div style="color:#6c757d; font-size:13px; margin-top:8px;">Sužaisk žaidimą ir jis atsiras čia!</div>
-                </div>
-            `;
+        if (data.error) {
+            errorEl.textContent = '❌ ' + data.error;
             return;
         }
         
-        let html = '';
+        alert('✅ Slaptažodis sėkmingai pakeistas!');
         
-        history.forEach((game) => {
-            let resultIcon = '❓';
-            let resultText = 'Nežinoma';
-            let resultColor = '#6c757d';
-            let borderColor = '#6c757d';
-            
-            if (game.result === 'win') {
-                resultIcon = '🏆';
-                resultText = 'LAIMĖJIMAS';
-                resultColor = '#ffd700';
-                borderColor = '#ffd700';
-            } else if (game.result === 'bankrupt') {
-                resultIcon = '💀';
-                resultText = 'BANKROTAS';
-                resultColor = '#dc3545';
-                borderColor = '#dc3545';
-            } else if (game.result === 'left') {
-                resultIcon = '🏃';
-                resultText = 'PASITRAUKIAU';
-                resultColor = '#6c757d';
-                borderColor = '#6c757d';
-            } else if (game.result === 'kicked') {
-                resultIcon = '🚫';
-                resultText = 'PAŠALINTAS';
-                resultColor = '#dc3545';
-                borderColor = '#dc3545';
-            } else if (game.result === 'lose') {
-                resultIcon = '😔';
-                resultText = 'PRALAIMĖJIMAS';
-                resultColor = '#ff9800';
-                borderColor = '#ff9800';
-            }
-            
-            const date = new Date(game.created_at);
-            const dateStr = date.toLocaleDateString('lt-LT') + ' ' + date.toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
-            
-            const moneyColor = game.money >= 0 ? '#28a745' : '#dc3545';
-            const moneySign = game.money >= 0 ? '+' : '';
-            
-            html += `
-                <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:12px; border-left:4px solid ${borderColor};">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-size:28px;">${resultIcon}</span>
-                            <div>
-                                <div style="color:${resultColor}; font-weight:700; font-size:15px;">${resultText}</div>
-                                <div style="color:#d4b896; font-size:11px;">${dateStr}</div>
-                            </div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="color:#ffd700; font-weight:700; font-size:14px;">Stalas #${game.game_id || '?'}</div>
-                            <div style="color:#6c757d; font-size:11px;">👥 ${game.players_count} žaidėjai</div>
-                        </div>
-                    </div>
-                    
-                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding-top:8px; border-top:1px solid rgba(255,215,0,0.2);">
-                        <div style="text-align:center;">
-                            <div style="color:${moneyColor}; font-weight:700; font-size:14px;">${moneySign}€${game.money}</div>
-                            <div style="color:#6c757d; font-size:10px;">💰 Pinigai</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="color:#fff; font-weight:700; font-size:14px;">${game.houses_built || 0}</div>
-                            <div style="color:#6c757d; font-size:10px;">🏠 Namai</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="color:#fff; font-weight:700; font-size:14px;">${game.properties_bought || 0}</div>
-                            <div style="color:#6c757d; font-size:10px;">🏘️ Objektai</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        content.innerHTML = html;
+        // Išvalyti laukus
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('newPasswordConfirm').value = '';
+        errorEl.textContent = '';
         
     } catch (err) {
-        console.error('❌ History klaida:', err);
-        content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Serverio klaida</div>';
+        console.error('❌ Change password klaida:', err);
+        errorEl.textContent = '❌ Serverio klaida';
     }
-}
-
-function closeHistoryModal() {
-    const modal = document.getElementById('historyModal');
-    if (modal) modal.style.display = 'none';
 }
 
         // ============================================

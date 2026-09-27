@@ -287,6 +287,43 @@ async function resetPassword(username, email, answer, newPassword) {
 }
 
 // ============================================
+// 🆕 SLAPTAŽODŽIO KEITIMAS (prisijungus)
+// ============================================
+async function changePassword(userId, currentPassword, newPassword) {
+    if (!currentPassword || !newPassword) {
+        return { error: 'Įvesk dabartinį ir naują slaptažodį' };
+    }
+
+    if (!isValidPassword(newPassword)) {
+        return { error: 'Naujas slaptažodis turi būti bent 6 simbolių' };
+    }
+
+    if (currentPassword === newPassword) {
+        return { error: 'Naujas slaptažodis negali būti toks pat kaip dabartinis' };
+    }
+
+    const user = await db.findUserById(userId);
+    if (!user) {
+        return { error: 'Vartotojas nerastas' };
+    }
+
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!passwordMatch) {
+        return { error: 'Neteisingas dabartinis slaptažodis' };
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await db.updatePassword(userId, newPasswordHash);
+
+    console.log(`🔑 Slaptažodis pakeistas: ${user.username} (ID: ${userId})`);
+
+    return {
+        success: true,
+        username: user.username
+    };
+}
+
+// ============================================
 // EKSPORTAS
 // ============================================
 module.exports = {
@@ -297,6 +334,7 @@ module.exports = {
     verifyUserAndGetQuestion,
     verifySecurityAnswer,
     resetPassword,
+    changePassword,        // 🆕
     isValidUsername,
     isValidEmail,
     isValidPassword,

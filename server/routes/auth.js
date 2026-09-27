@@ -313,4 +313,45 @@ router.post('/forgot-password/reset', async (req, res) => {
     }
 });
 
+// ============================================
+// 🆕 POST /api/auth/change-password
+// Slaptažodžio keitimas (prisijungus)
+// ============================================
+router.post('/change-password', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Nėra tokeno' });
+        }
+
+        const token = authHeader.substring(7);
+        const user = await authLogic.getUserFromToken(token);
+        if (!user) {
+            return res.status(401).json({ error: 'Neteisingas arba pasibaigęs tokenas' });
+        }
+
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Įvesk dabartinį ir naują slaptažodį' });
+        }
+
+        const result = await authLogic.changePassword(user.userId, currentPassword, newPassword);
+
+        if (result.error) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        res.json({
+            success: true,
+            username: result.username,
+            message: 'Slaptažodis sėkmingai pakeistas!'
+        });
+
+    } catch (err) {
+        console.error('❌ /change-password klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
 module.exports = router;
