@@ -1,13 +1,16 @@
 // server/server.js
+require('dotenv').config();   // 🆕 Pirmiausia .env
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const helmet = require('helmet');   // 🆕
+const helmet = require('helmet');
 const path = require('path');
 const os = require('os');
 const Game = require('./gameLogic');
 const db = require('./db');
+const { RateLimiterMemory } = require('rate-limiter-flexible');   // 🆕
 
 // ============================================
 // 🆕 LEIDŽIAMI DOMENAI
@@ -53,6 +56,51 @@ app.use(cors({
 
 app.use(express.json());
 
+// ============================================
+// 🆕 HTTP RATE LIMITING
+// ============================================
+const httpRateLimiter = new RateLimiterMemory({
+    points: 100,        // 100 užklausų
+    duration: 60,       // per 60 sekundžių
+    blockDuration: 60   // blokuoti 60 sekundžių
+});
+
+const authRateLimiter = new RateLimiterMemory({
+    points: 10,         // 10 bandymų
+    duration: 60,       // per 60 sekundžių
+    blockDuration: 300  // blokuoti 5 minutes
+});
+
+function httpRateLimitMiddleware(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress;
+    
+    httpRateLimiter.consume(ip)
+        .then(() => next())
+        .catch(() => {
+            console.log(`⚠️ Rate limit viršytas (HTTP): ${ip}`);
+            res.status(429).json({ error: '⏳ Per daug užklausų. Palauk minutę.' });
+        });
+}
+
+function authRateLimitMiddleware(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress;
+    
+    authRateLimiter.consume(ip)
+        .then(() => next())
+        .catch(() => {
+            console.log(`⚠️ Rate limit viršytas (auth): ${ip}`);
+            res.status(429).json({ error: '⏳ Per daug bandymų. Palauk 5 minutes.' });
+        });
+}
+
+// Taikyti HTTP rate limiting visiems API
+app.use('/api', httpRateLimitMiddleware);
+
+// Griežtesnis rate limiting registracijai ir prisijungimui
+app.use('/api/auth/register', authRateLimitMiddleware);
+app.use('/api/auth/login', authRateLimitMiddleware);
+app.use('/api/auth/forgot-password', authRateLimitMiddleware);
+
 // 🆕 API ROUTES
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
@@ -84,6 +132,29 @@ const io = socketIo(server, {
         credentials: true
     }
 });
+
+// ============================================
+// 🆕 SOCKET.IO RATE LIMITING
+// ============================================
+const socketRateLimiter = new RateLimiterMemory({
+    points: 30,         // 30 event'ų
+    duration: 1,        // per 1 sekundę
+    blockDuration: 5    // blokuoti 5 sekundes
+});
+
+function checkSocketRateLimit(socket, eventName) {
+    const key = `${socket.clientIp || socket.handshake.address}:${eventName}`;
+    
+    return new Promise((resolve) => {
+        socketRateLimiter.consume(key)
+            .then(() => resolve(true))
+            .catch(() => {
+                console.log(`⚠️ Rate limit viršytas (Socket.IO): ${key}`);
+                socket.emit('error', '⏳ Per daug užklausų. Palauk kelias sekundes.');
+                resolve(false);
+            });
+    });
+}
 
 const games = new Map();
 
@@ -356,8 +427,10 @@ io.on('connection', (socket) => {
     // ============================================
     // SUKURTI ŽAIDIMĄ
     // ============================================
-    socket.on('createGame', (data) => {
-        console.log('📥 Gauta createGame užklausa:', data);
+    socket.on('createGame', async (data) => {
+    if (!await checkSocketRateLimit(socket, 'createGame')) return;
+    
+    console.log('📥 Gauta createGame užklausa:', data);
         
         const playerName = data.name || data;
         const playerColor = data.color || null;
@@ -535,10 +608,12 @@ io.on('connection', (socket) => {
         io.to(gameId.toUpperCase()).emit('message', `🔄 ${player.name} grįžo į žaidimą!`);
     });
 
-    // ============================================
+   // ============================================
     // KAULIUKŲ METIMAS
     // ============================================
-    socket.on('rollDice', () => {
+    socket.on('rollDice', async () => {
+        if (!await checkSocketRateLimit(socket, 'rollDice')) return;
+        
         try {
             if (!socket.gameId || socket.playerId === undefined) {
                 socket.emit('error', 'Neprisijungei prie žaidimo!');
@@ -550,7 +625,6 @@ io.on('connection', (socket) => {
                 socket.emit('error', 'Žaidimas nerastas!');
                 return;
             }
-
             const result = game.rollDice(socket.playerId, socket.id);
             if (result.error) {
                 socket.emit('error', result.error);
@@ -676,8 +750,10 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('chatMessage', (message) => {
-        if (!socket.gameId) return;
+    socket.on('chatMessage', async (message) => {
+    if (!await checkSocketRateLimit(socket, 'chatMessage')) return;
+    
+    if (!socket.gameId) return;
         
         const game = games.get(socket.gameId);
         if (!game) return;
@@ -1264,8 +1340,10 @@ io.on('connection', (socket) => {
     // ============================================
     // 🤖 PRIDĖTI BOTĄ
     // ============================================
-    socket.on('addBot', () => {
-        console.log('🤖 GAUTA addBot UŽKLAUSA:', { 
+    socket.on('addBot', async () => {
+    if (!await checkSocketRateLimit(socket, 'addBot')) return;
+    
+    console.log('🤖 GAUTA addBot UŽKLAUSA:', { 
             socketId: socket.id, 
             gameId: socket.gameId,
             playerId: socket.playerId
