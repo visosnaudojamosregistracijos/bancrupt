@@ -54,17 +54,24 @@ async function initDatabase() {
         `);
 
         // Statistikos lentelė
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS stats (
-                user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-                games_played INTEGER DEFAULT 0,
-                games_won INTEGER DEFAULT 0,
-                total_money_won INTEGER DEFAULT 0,
-                total_money_lost INTEGER DEFAULT 0,
-                houses_built INTEGER DEFAULT 0,
-                properties_bought INTEGER DEFAULT 0
-            )
-        `);
+await pool.query(`
+    CREATE TABLE IF NOT EXISTS stats (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        games_played INTEGER DEFAULT 0,
+        games_won INTEGER DEFAULT 0,
+        total_money_won INTEGER DEFAULT 0,
+        total_money_lost INTEGER DEFAULT 0,
+        houses_built INTEGER DEFAULT 0,
+        properties_bought INTEGER DEFAULT 0,
+        bankrupts INTEGER DEFAULT 0
+    )
+`);
+
+// 🆕 Pridėti stulpelį prie esamos lentelės (jei jos nėra)
+await pool.query(`
+    ALTER TABLE stats 
+    ADD COLUMN IF NOT EXISTS bankrupts INTEGER DEFAULT 0
+`);
 
         // Indeksai
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
