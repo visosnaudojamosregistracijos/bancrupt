@@ -1594,80 +1594,138 @@
         // ============================================
 
         async function openStatsModal() {
-            const modal = document.getElementById('statsModal');
-            const content = document.getElementById('statsContent');
+    const modal = document.getElementById('statsModal');
+    const content = document.getElementById('statsContent');
+    
+    if (!modal || !content) return;
+    
+    modal.style.display = 'flex';
+    content.innerHTML = '<div style="text-align:center; padding:20px; color:#d4b896;">⏳ Kraunama...</div>';
+    
+    try {
+        const token = localStorage.getItem('bancrupt_token');
+        if (!token) {
+            content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Nesi prisijungęs</div>';
+            return;
+        }
+        
+        const response = await fetch('/api/auth/me', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!response.ok) {
+            content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Nepavyko užkrauti statistikos</div>';
+            return;
+        }
+        
+        const data = await response.json();
+        const stats = data.stats || {};
+        
+        const gamesPlayed = stats.games_played || 0;
+        const gamesWon = stats.games_won || 0;
+        const winRate = gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0;
+        const bankrupts = stats.bankrupts || 0;
+        const moneyWon = stats.total_money_won || 0;
+        const moneyLost = stats.total_money_lost || 0;
+        const housesBuilt = stats.houses_built || 0;
+        const propertiesBought = stats.properties_bought || 0;
+        
+        // 🏆 Rango nustatymas
+        let rank = '🥉 Pradedantysis';
+        let rankColor = '#cd7f32';
+        if (winRate >= 70 && gamesPlayed >= 10) {
+            rank = '👑 Legenda';
+            rankColor = '#ffd700';
+        } else if (winRate >= 50 && gamesPlayed >= 5) {
+            rank = '🥇 Meistras';
+            rankColor = '#ffd700';
+        } else if (winRate >= 30 && gamesPlayed >= 3) {
+            rank = '🥈 Patyręs';
+            rankColor = '#c0c0c0';
+        }
+        
+        content.innerHTML = `
+            <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:15px; border:2px solid #c9a84c;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                    <div style="width:50px; height:50px; border-radius:50%; background:linear-gradient(145deg, #ffd700, #f0c000); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">👤</div>
+                    <div style="flex:1;">
+                        <div style="color:#ffd700; font-size:18px; font-weight:700;">${data.user.username}</div>
+                        <div style="color:${rankColor}; font-size:13px; font-weight:600;">${rank}</div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#d4b896; padding-top:8px; border-top:1px solid rgba(255,215,0,0.2);">
+                    <span>📧 ${data.user.email}</span>
+                    <span>📅 ${new Date(data.user.createdAt).toLocaleDateString('lt-LT')}</span>
+                </div>
+            </div>
             
-            if (!modal || !content) return;
-            
-            modal.style.display = 'flex';
-            content.innerHTML = '<div style="text-align:center; padding:20px; color:#d4b896;">Kraunama...</div>';
-            
-            try {
-                const token = localStorage.getItem('bancrupt_token');
-                if (!token) {
-                    content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Nesi prisijungęs</div>';
-                    return;
-                }
+            <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:15px;">
+                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">🎮 ŽAIDIMO STATISTIKA</div>
                 
-                const response = await fetch('/api/auth/me', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                
-                if (!response.ok) {
-                    content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Nepavyko užkrauti statistikos</div>';
-                    return;
-                }
-                
-                const data = await response.json();
-                const stats = data.stats || {};
-                
-                content.innerHTML = `
-                    <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:10px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                            <span style="color:#d4b896;">👤 Vardas:</span>
-                            <strong style="color:#ffd700;">${data.user.username}</strong>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                            <span style="color:#d4b896;">📧 El. paštas:</span>
-                            <strong style="color:#fff; font-size:13px;">${data.user.email}</strong>
-                        </div>
-                        <div style="display:flex; justify-content:space-between;">
-                            <span style="color:#d4b896;">📅 Prisijungė:</span>
-                            <strong style="color:#fff; font-size:12px;">${new Date(data.user.createdAt).toLocaleDateString('lt-LT')}</strong>
-                        </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:12px; text-align:center; border:1px solid rgba(255,255,255,0.1);">
+                        <div style="font-size:28px; font-weight:700; color:#fff;">${gamesPlayed}</div>
+                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">🎮 Sužaista</div>
                     </div>
                     
-                    <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px;">
-                        <div style="color:#ffd700; font-weight:700; margin-bottom:10px;">🎮 ŽAIDIMO STATISTIKA</div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="color:#d4b896;">🎮 Sužaista:</span>
-                            <strong style="color:#fff;">${stats.games_played || 0}</strong>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="color:#d4b896;">🏆 Laimėta:</span>
-                            <strong style="color:#28a745;">${stats.games_won || 0}</strong>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="color:#d4b896;">🏠 Namai pastatyti:</span>
-                            <strong style="color:#fff;">${stats.houses_built || 0}</strong>
-                        </div>
-                        <div style="display:flex; justify-content:space-between;">
-                            <span style="color:#d4b896;">💰 Objektai pirkti:</span>
-                            <strong style="color:#fff;">${stats.properties_bought || 0}</strong>
-                        </div>
+                    <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:12px; text-align:center; border:1px solid rgba(40,167,69,0.3);">
+                        <div style="font-size:28px; font-weight:700; color:#28a745;">${gamesWon}</div>
+                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">🏆 Laimėta</div>
                     </div>
-                `;
+                    
+                    <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:12px; text-align:center; border:1px solid rgba(255,215,0,0.3);">
+                        <div style="font-size:28px; font-weight:700; color:#ffd700;">${winRate}%</div>
+                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">📊 Laimėjimų %</div>
+                    </div>
+                    
+                    <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:12px; text-align:center; border:1px solid rgba(220,53,69,0.3);">
+                        <div style="font-size:28px; font-weight:700; color:#dc3545;">${bankrupts}</div>
+                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">💀 Bankrotai</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:15px;">
+                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">🏠 TURTAS</div>
                 
-            } catch (err) {
-                console.error('❌ Stats klaida:', err);
-                content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Serverio klaida</div>';
-            }
-        }
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; padding:6px 0;">
+                    <span style="color:#d4b896;">🏠 Namai pastatyti:</span>
+                    <strong style="color:#fff;">${housesBuilt}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:6px 0;">
+                    <span style="color:#d4b896;">💰 Objektai pirkti:</span>
+                    <strong style="color:#fff;">${propertiesBought}</strong>
+                </div>
+            </div>
+            
+            <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px;">
+                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">💵 PINIGŲ BALANSAS</div>
+                
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; padding:6px 0;">
+                    <span style="color:#d4b896;">💵 Laimėti pinigai:</span>
+                    <strong style="color:#28a745;">+€${moneyWon}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; padding:6px 0;">
+                    <span style="color:#d4b896;">💸 Prarasti pinigai:</span>
+                    <strong style="color:#dc3545;">-€${moneyLost}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-top:1px solid rgba(255,215,0,0.3); margin-top:4px;">
+                    <span style="color:#d4b896; font-weight:700;">📊 Balansas:</span>
+                    <strong style="color:${(moneyWon - moneyLost) >= 0 ? '#28a745' : '#dc3545'}; font-size:16px;">${(moneyWon - moneyLost) >= 0 ? '+' : ''}€${moneyWon - moneyLost}</strong>
+                </div>
+            </div>
+        `;
+        
+    } catch (err) {
+        console.error('❌ Stats klaida:', err);
+        content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Serverio klaida</div>';
+    }
+}
 
-        function closeStatsModal() {
-            const modal = document.getElementById('statsModal');
-            if (modal) modal.style.display = 'none';
-        }
+function closeStatsModal() {
+    const modal = document.getElementById('statsModal');
+    if (modal) modal.style.display = 'none';
+}
 
         // ============================================
         // TAISYKLIŲ MODALAS
