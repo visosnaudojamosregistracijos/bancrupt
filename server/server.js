@@ -3,10 +3,21 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');   // 🆕
 const path = require('path');
 const os = require('os');
 const Game = require('./gameLogic');
 const db = require('./db');
+
+// ============================================
+// 🆕 LEIDŽIAMI DOMENAI
+// ============================================
+const ALLOWED_ORIGINS = [
+    'https://bancrupt-production.up.railway.app',
+    'https://responsible-nourishment-production.up.railway.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+];
 
 // ============================================
 // LIMITAI
@@ -26,7 +37,19 @@ const LIMITS = {
 };
 
 const app = express();
-app.use(cors());
+
+// 🆕 Saugumo antraštės
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+}));
+
+// 🆕 CORS su leidžiamais domenais
+app.use(cors({
+    origin: ALLOWED_ORIGINS,
+    credentials: true
+}));
+
 app.use(express.json());
 
 // 🆕 API ROUTES
