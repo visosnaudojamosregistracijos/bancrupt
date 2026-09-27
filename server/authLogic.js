@@ -10,7 +10,14 @@ const db = require('./db');
 // ============================================
 // JWT KONFIGŪRACIJA
 // ============================================
-const JWT_SECRET = process.env.JWT_SECRET || 'bancrupt-slaptas-raktas-2026';
+// 🆕 Saugumo patikra – JWT_SECRET privalomas
+if (!process.env.JWT_SECRET) {
+    console.error('❌ JWT_SECRET nenustatytas! Sustabdomas serveris.');
+    console.error('💡 Railway → Variables → pridėk JWT_SECRET');
+    process.exit(1);
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d'; // Tokenas galioja 7 dienas
 
 // ============================================
