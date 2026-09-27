@@ -16,7 +16,8 @@ const ALLOWED_ORIGINS = [
     'https://bancrupt-production.up.railway.app',
     'https://responsible-nourishment-production.up.railway.app',
     'http://localhost:3000',
-    'http://127.0.0.1:3000'
+    'http://127.0.0.1:3000',
+    'http://localhost:3001'   // 🆕
 ];
 
 // ============================================

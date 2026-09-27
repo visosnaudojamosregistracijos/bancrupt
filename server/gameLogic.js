@@ -1408,6 +1408,40 @@ class Game {
             };
         }
 
+        // 🆕 Jei pateko į kalėjimą – praranda eilę, net jei dublis
+        if (result.action === 'go_to_jail' || player.inJail) {
+            this.consecutiveDoubles = 0;
+            this.doubleRoll = false;
+            this.isRolling = false;
+            
+            this.addMessage(`⛓️ ${player.name} pateko į kalėjimą – praranda eilę!`);
+            
+            this.turnHistory.push({
+                player: player.name,
+                dice: [dice1, dice2],
+                total,
+                field: currentField.name,
+                action: 'go_to_jail',
+                double: false,
+                timestamp: new Date().toISOString()
+            });
+            
+            this.endTurn();
+            
+            return {
+                dice: [dice1, dice2],
+                total,
+                player,
+                field: currentField,
+                result,
+                double: false,
+                oldPosition: oldPosition,
+                newPosition: newPosition,
+                inJail: true,
+                canBuy: false
+            };
+        }
+
         this.isRolling = false;
         this.endTurn();
         return {
