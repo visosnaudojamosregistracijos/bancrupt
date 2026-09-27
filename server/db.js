@@ -54,28 +54,44 @@ async function initDatabase() {
         `);
 
         // Statistikos lentelė
-await pool.query(`
-    CREATE TABLE IF NOT EXISTS stats (
-        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-        games_played INTEGER DEFAULT 0,
-        games_won INTEGER DEFAULT 0,
-        total_money_won INTEGER DEFAULT 0,
-        total_money_lost INTEGER DEFAULT 0,
-        houses_built INTEGER DEFAULT 0,
-        properties_bought INTEGER DEFAULT 0,
-        bankrupts INTEGER DEFAULT 0
-    )
-`);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS stats (
+                user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                games_played INTEGER DEFAULT 0,
+                games_won INTEGER DEFAULT 0,
+                total_money_won INTEGER DEFAULT 0,
+                total_money_lost INTEGER DEFAULT 0,
+                houses_built INTEGER DEFAULT 0,
+                properties_bought INTEGER DEFAULT 0,
+                bankrupts INTEGER DEFAULT 0
+            )
+        `);
 
-// 🆕 Pridėti stulpelį prie esamos lentelės (jei jos nėra)
-await pool.query(`
-    ALTER TABLE stats 
-    ADD COLUMN IF NOT EXISTS bankrupts INTEGER DEFAULT 0
-`);
+        // 🆕 Pridėti stulpelį prie esamos lentelės (jei jos nėra)
+        await pool.query(`
+            ALTER TABLE stats 
+            ADD COLUMN IF NOT EXISTS bankrupts INTEGER DEFAULT 0
+        `);
+
+        // 🆕 Žaidimų istorijos lentelė
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS game_history (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                game_id VARCHAR(20),
+                result VARCHAR(20) NOT NULL,
+                money INTEGER DEFAULT 0,
+                players_count INTEGER DEFAULT 0,
+                houses_built INTEGER DEFAULT 0,
+                properties_bought INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
 
         // Indeksai
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_game_history_user ON game_history(user_id, created_at DESC)`);
 
         console.log('💾 PostgreSQL duomenų bazė paruošta');
     } catch (err) {
@@ -105,24 +121,24 @@ const dbHelpers = {
     },
 
     async createUser(username, email, passwordHash, securityQuestion, securityAnswerHash) {
-    const result = await pool.query(
-        'INSERT INTO users (username, email, password_hash, security_question, security_answer_hash) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-        [username, email, passwordHash, securityQuestion, securityAnswerHash]
-    );
-    const userId = result.rows[0].id;
+        const result = await pool.query(
+            'INSERT INTO users (username, email, password_hash, security_question, security_answer_hash) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [username, email, passwordHash, securityQuestion, securityAnswerHash]
+        );
+        const userId = result.rows[0].id;
 
-    await pool.query('INSERT INTO stats (user_id) VALUES ($1)', [userId]);
+        await pool.query('INSERT INTO stats (user_id) VALUES ($1)', [userId]);
 
-    return userId;
-},
+        return userId;
+    },
 
     async updateLastLogin(userId) {
         await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [userId]);
     },
 
     async updatePassword(userId, newPasswordHash) {
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newPasswordHash, userId]);
-},
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newPasswordHash, userId]);
+    },
 
     // Statistika
     async getUserStats(userId) {
@@ -130,7 +146,7 @@ const dbHelpers = {
         return result.rows[0] || null;
     },
 
-    // 🆕 Lyderių lentelė
+    // Lyderių lentelė
     async getTopPlayers(limit = 10) {
         const result = await pool.query(`
             SELECT 
@@ -139,7 +155,8 @@ const dbHelpers = {
                 s.games_played, 
                 s.games_won, 
                 s.properties_bought, 
-                s.houses_built
+                s.houses_built,
+                COALESCE(s.bankrupts, 0) AS bankrupts
             FROM users u
             JOIN stats s ON u.id = s.user_id
             ORDER BY s.games_won DESC, s.games_played DESC, s.properties_bought DESC
@@ -160,6 +177,28 @@ const dbHelpers = {
             `UPDATE stats SET ${setClause} WHERE user_id = $${fields.length + 1}`,
             [...values, userId]
         );
+    },
+
+    // 🆕 Įrašyti žaidimo istoriją
+    async saveGameHistory(userId, gameId, result, money, playersCount, housesBuilt, propertiesBought) {
+        await pool.query(
+            `INSERT INTO game_history (user_id, game_id, result, money, players_count, houses_built, properties_bought) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [userId, gameId, result, money, playersCount, housesBuilt, propertiesBought]
+        );
+    },
+
+    // 🆕 Gauti paskutinius N žaidimų
+    async getGameHistory(userId, limit = 10) {
+        const result = await pool.query(
+            `SELECT id, game_id, result, money, players_count, houses_built, properties_bought, created_at 
+             FROM game_history 
+             WHERE user_id = $1 
+             ORDER BY created_at DESC 
+             LIMIT $2`,
+            [userId, limit]
+        );
+        return result.rows;
     }
 };
 

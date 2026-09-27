@@ -197,6 +197,38 @@ router.get('/leaders', async (req, res) => {
 });
 
 // ============================================
+// 🆕 GET /api/auth/history
+// Gauti savo žaidimų istoriją (paskutiniai 10)
+// ============================================
+router.get('/history', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Nėra tokeno' });
+        }
+
+        const token = authHeader.substring(7);
+        const user = await authLogic.getUserFromToken(token);
+        if (!user) {
+            return res.status(401).json({ error: 'Neteisingas tokenas' });
+        }
+
+        const limit = parseInt(req.query.limit) || 10;
+        const history = await db.getGameHistory(user.userId, limit);
+
+        res.json({
+            success: true,
+            history: history,
+            count: history.length
+        });
+
+    } catch (err) {
+        console.error('❌ /history klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
+// ============================================
 // SLAPTAŽODŽIO ATSTATYMAS
 // ============================================
 

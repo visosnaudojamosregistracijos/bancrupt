@@ -1809,6 +1809,20 @@ class Game {
         });
     }
 
+    // 🆕 Įrašyti bankrotą į istoriją
+    if (player.userId && !player.isBot) {
+        const housesBuilt = player.houses ? Object.values(player.houses).reduce((a, b) => a + b, 0) : 0;
+        db.saveGameHistory(
+            player.userId,
+            this.gameId || 'unknown',
+            'bankrupt',
+            0,
+            this.players.length,
+            housesBuilt,
+            0
+        ).catch(err => console.error('❌ history klaida:', err));
+    }
+
     if (this.activeVoteKick) {
         this.cancelVoteKick('Žaidėjas bankrutavo');
     }
@@ -1985,19 +1999,53 @@ class Game {
         try {
             for (const player of this.players) {
                 if (player.userId && !player.isBot) {
-                    // Visiems: games_played +1
                     await db.updateStats(player.userId, { games_played: 1 });
                     console.log(`📊 ${player.name}: games_played +1`);
                 }
             }
             
-            // Laimėtojui: games_won +1
             if (winner && winner.userId && !winner.isBot) {
                 await db.updateStats(winner.userId, { games_won: 1 });
                 console.log(`📊 ${winner.name}: games_won +1`);
             }
         } catch (err) {
             console.error('❌ Statistikos įrašymo klaida:', err);
+        }
+
+        // 🆕 Įrašyti žaidimo istoriją visiems žaidėjams
+        try {
+            for (const player of this.players) {
+                if (player.userId && !player.isBot) {
+                    let result;
+                    if (winner && player.id === winner.id) {
+                        result = 'win';
+                    } else if (player.bankrupt) {
+                        result = 'bankrupt';
+                    } else if (player.left) {
+                        result = 'left';
+                    } else if (player.kicked) {
+                        result = 'kicked';
+                    } else {
+                        result = 'lose';
+                    }
+                    
+                    const housesBuilt = player.houses ? Object.values(player.houses).reduce((a, b) => a + b, 0) : 0;
+                    const propertiesBought = player.properties ? player.properties.length : 0;
+                    
+                    await db.saveGameHistory(
+                        player.userId,
+                        this.gameId || 'unknown',
+                        result,
+                        player.money || 0,
+                        this.players.length,
+                        housesBuilt,
+                        propertiesBought
+                    );
+                    console.log(`📜 ${player.name}: istorija įrašyta (${result})`);
+                }
+            }
+        } catch (err) {
+            console.error('❌ Istorijos įrašymo klaida:', err);
         }
     }
 
