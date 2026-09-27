@@ -1,4 +1,19 @@
+# Duomenų bazė (lokali, ne commit'inti)
+server/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Node modules
 node_modules/
+
+# Logs
+*.log
+
+# Environment
 .env
 .DS_Store
-*.log
+
+# Backup failai
+*.backup
+*.backup2

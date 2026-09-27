@@ -13,15 +13,209 @@
     <div id="page-landing" class="page active">
         <div class="landing-container">
             <h1>🏦 BANCRUPT</h1>
-            <p class="landing-subtitle">💰 Stalo žaidimas internetu</p>
             
-            <div class="landing-buttons">
-                <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
-                    📖 Taisyklės
-                </button>
-                <button class="landing-btn landing-btn-primary" onclick="goToMenu()">
-                    🎮 Eiti prie žaidimo
-                </button>
+            <!-- Svečio režimas (kai neprisijungęs) -->
+            <div id="landingGuest">
+                <p class="landing-subtitle">💰 Stalo žaidimas internetu</p>
+                
+                <div class="landing-buttons">
+                    <button class="landing-btn landing-btn-primary" onclick="goToRegister()">
+                        📝 Registruotis
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="goToLogin()">
+                        🔑 Prisijungti
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="openLeaders()" style="background:linear-gradient(145deg, #f39c12, #e67e22);">
+                        🏆 Lyderiai
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
+                        📖 Taisyklės
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="goToMenu()" style="background:linear-gradient(145deg, #6c757d, #495057);">
+                        🎮 Žaisti kaip svečias
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Prisijungusio režimas -->
+             <div id="landingUser" style="display:none;">
+                <p class="landing-subtitle" style="font-size:1.4em; color:#ffd700;">
+                    👤 Sveikas, <strong id="landingUsername">---</strong>!
+                </p>
+                
+                <div class="landing-buttons">
+                    <button class="landing-btn landing-btn-primary" onclick="goToMenu()">
+                        🎮 Žaisti
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="openStatsModal()">
+                        📊 Mano statistika
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="openLeaders()" style="background:linear-gradient(145deg, #f39c12, #e67e22);">
+                        🏆 Lyderiai
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
+                        📖 Taisyklės
+                    </button>
+                    <button class="landing-btn landing-btn-secondary" onclick="logout()" style="background:linear-gradient(145deg, #dc3545, #a71d2a);">
+                        🚪 Atsijungti
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PUSLAPIS 1A: REGISTRACIJA -->
+    <div id="page-register" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>📝 REGISTRACIJA</h1>
+                <p class="subtitle">Sukurk paskyrą ir išsaugok savo statistiką</p>
+                
+                <div class="lobby-form">
+                    <input type="text" id="registerUsername" placeholder="Vardas (3-20 simbolių)" maxlength="20" autocomplete="username">
+                    <input type="email" id="registerEmail" placeholder="El. paštas" autocomplete="email">
+                    <input type="password" id="registerPassword" placeholder="Slaptažodis (bent 6 simboliai)" autocomplete="new-password">
+                    <input type="password" id="registerPasswordConfirm" placeholder="Pakartok slaptažodį" autocomplete="new-password">
+                    
+                    <div style="margin-top:15px; padding:12px; background:rgba(255,215,0,0.1); border:2px solid #ffd700; border-radius:10px;">
+                        <div style="color:#ffd700; font-size:13px; font-weight:700; margin-bottom:8px;">
+                            🔒 Saugumo klausimas (slaptažodžio atstatymui)
+                        </div>
+                        
+                        <select id="registerSecurityQuestion" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; background:#0d1f0d; color:#fff; font-size:14px; outline:none; margin-bottom:8px;">
+                            <option value="" style="background:#0d1f0d; color:#fff;">-- Pasirink klausimą --</option>
+                            <option value="Koks tavo augintinio vardas?">Koks tavo augintinio vardas?</option>
+                            <option value="Kokiame mieste gimei?">Kokiame mieste gimei?</option>
+                            <option value="Koks tavo mėgstamiausias filmas?">Koks tavo mėgstamiausias filmas?</option>
+                            <option value="Koks tavo mokyklos pavadinimas?">Koks tavo mokyklos pavadinimas?</option>
+                            <option value="Koks tavo mėgstamiausias maistas?">Koks tavo mėgstamiausias maistas?</option>
+                            <option value="Koks tavo automobilio modelis?">Koks tavo automobilio modelis?</option>
+                            <option value="Kokia tavo motinos mergautinė pavardė?">Kokia tavo motinos mergautinė pavardė?</option>
+                            <option value="Koks tavo mėgstamiausias muzikos atlikėjas?">Koks tavo mėgstamiausias muzikos atlikėjas?</option>
+                            <option value="Koks tavo svajonių atostogų tikslas?">Koks tavo svajonių atostogų tikslas?</option>
+                            <option value="Koks tavo mėgstamiausias sportas?">Koks tavo mėgstamiausias sportas?</option>
+                        </select>
+                        
+                        <input type="text" id="registerSecurityAnswer" placeholder="Atsakymas (pvz., Rexas)" maxlength="100" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; background:#0d1f0d; color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+                    </div>
+                    
+                    <div id="registerError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                    
+                    <button onclick="submitRegister()" class="btn btn-primary" id="registerBtn">
+                        ✅ Registruotis
+                    </button>
+                    
+                    <div style="margin-top:15px; text-align:center; color:#d4b896; font-size:14px;">
+                        Jau turi paskyrą? 
+                        <a href="#" onclick="goToLogin(); return false;" style="color:#ffd700; font-weight:700; text-decoration:underline;">Prisijunk</a>
+                    </div>
+                    
+                    <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PUSLAPIS 1B: PRISIJUNGIMAS -->
+    <div id="page-login" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>🔑 PRISIJUNGIMAS</h1>
+                <p class="subtitle">Sveikas sugrįžęs!</p>
+                
+                <div class="lobby-form">
+                    <input type="text" id="loginUsername" placeholder="Vardas" maxlength="20" autocomplete="username">
+                    <input type="password" id="loginPassword" placeholder="Slaptažodis" autocomplete="current-password">
+                    
+                    <div id="loginError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                    
+                    <button onclick="submitLogin()" class="btn btn-primary" id="loginBtn">
+                        ✅ Prisijungti
+                    </button>
+                    
+                    <div style="margin-top:15px; text-align:center; color:#d4b896; font-size:14px;">
+                        Neturi paskyros? 
+                        <a href="#" onclick="goToRegister(); return false;" style="color:#ffd700; font-weight:700; text-decoration:underline;">Registruokis</a>
+                    </div>
+
+                    <div style="margin-top:10px; text-align:center;">
+                        <a href="#" onclick="goToForgotPassword(); return false;" style="color:#ffd700; font-weight:700; font-size:14px; text-decoration:underline;">🔑 Pamiršau slaptažodį</a>
+                    </div>
+                    
+                    <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- PUSLAPIS 1C: PAMIRŠAU SLAPTAŽODĮ -->
+    <div id="page-forgot-password" class="page" style="display:none;">
+        <div style="width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div class="lobby-container">
+                <h1>🔑 PAMIRŠAU SLAPTAŽODĮ</h1>
+                <p class="subtitle">Atstatyk slaptažodį per 3 žingsnius</p>
+                
+                <!-- 1 ETAPAS: Vardas + El. paštas -->
+                <div id="forgotStep1">
+                    <div class="lobby-form">
+                        <p style="color:#d4b896; font-size:13px; text-align:center; margin-bottom:10px;">
+                            <strong>1 žingsnis iš 3:</strong> Patvirtink savo tapatybę
+                        </p>
+                        
+                        <input type="text" id="forgotUsername" placeholder="Vardas" maxlength="20">
+                        <input type="email" id="forgotEmail" placeholder="El. paštas">
+                        
+                        <div id="forgotError1" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                        
+                        <button onclick="submitForgotStep1()" class="btn btn-primary" id="forgotBtn1">
+                            ➡️ Toliau
+                        </button>
+                        
+                        <button onclick="goToLogin()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
+                    </div>
+                </div>
+                
+                <!-- 2 ETAPAS: Atsakymas į klausimą -->
+                <div id="forgotStep2" style="display:none;">
+                    <div class="lobby-form">
+                        <p style="color:#d4b896; font-size:13px; text-align:center; margin-bottom:10px;">
+                            <strong>2 žingsnis iš 3:</strong> Atsakyk į saugumo klausimą
+                        </p>
+                        
+                        <div style="padding:12px; background:rgba(255,215,0,0.1); border:2px solid #ffd700; border-radius:10px; margin-bottom:10px;">
+                            <div style="color:#ffd700; font-size:13px; font-weight:700; margin-bottom:4px;">🔒 Tavo klausimas:</div>
+                            <div id="forgotQuestionText" style="color:#fff; font-size:14px; font-weight:600;"></div>
+                        </div>
+                        
+                        <input type="text" id="forgotAnswer" placeholder="Atsakymas" maxlength="100">
+                        
+                        <div id="forgotError2" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                        
+                        <button onclick="submitForgotStep2()" class="btn btn-primary" id="forgotBtn2">
+                            ➡️ Toliau
+                        </button>
+                        
+                        <button onclick="forgotBackToStep1()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;">🔙 Atgal</button>
+                    </div>
+                </div>
+                
+                <!-- 3 ETAPAS: Naujas slaptažodis -->
+                <div id="forgotStep3" style="display:none;">
+                    <div class="lobby-form">
+                        <p style="color:#d4b896; font-size:13px; text-align:center; margin-bottom:10px;">
+                            <strong>3 žingsnis iš 3:</strong> Įvesk naują slaptažodį
+                        </p>
+                        
+                        <input type="password" id="forgotNewPassword" placeholder="Naujas slaptažodis (bent 6 simboliai)" autocomplete="new-password">
+                        <input type="password" id="forgotNewPasswordConfirm" placeholder="Pakartok naują slaptažodį" autocomplete="new-password">
+                        
+                        <div id="forgotError3" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
+                        
+                        <button onclick="submitForgotStep3()" class="btn btn-primary" id="forgotBtn3">
+                            ✅ Pakeisti slaptažodį
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -31,6 +225,12 @@
         <div class="menu-container">
             <h1>🎮 ŽAIDIMAS</h1>
             <p>Pasirink veiksmą</p>
+
+            <div id="menuUserInfo" style="display:none; padding:10px; background:rgba(0,0,0,0.2); border-radius:10px; margin-bottom:15px;">
+                <div style="color:#d4b896; font-size:12px; margin-bottom:4px;">Prisijungęs kaip:</div>
+                <div style="color:#ffd700; font-size:18px; font-weight:700;" id="menuUsername">---</div>
+                <div style="color:#28a745; font-size:11px; margin-top:4px;">🔒 Vardas užrakintas</div>
+            </div>
             
             <div class="menu-buttons">
                 <button class="menu-btn" onclick="menuCreate()">
@@ -132,7 +332,6 @@
                         📋 ID:<br><span id="gameIdDisplayLeft">---</span>
                     </div>
 
-                    <!-- 🎵 Muzika su slider'iu -->
                     <div style="position:relative; width:100%;">
                         <button onclick="toggleMusicPanel()" id="musicBtn" class="left-btn" style="background: linear-gradient(145deg, #9b59b6, #8e44ad); color: #fff; border-color: #bb8fce; width:100%;">
                             🎵 Muzika: 🟢
@@ -151,7 +350,6 @@
                         </div>
                     </div>
 
-                    <!-- 🔊 Garsai -->
                     <div style="position:relative; width:100%;">
                         <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;">
                             🔊 Garsai
@@ -212,7 +410,6 @@
                 </aside>
 
                 <div id="board">
-                    <!-- VIRŠUS -->
                     <div class="board-row row-top">
                         <div id="cell-0" class="cell corner start" data-id="0">
                             🏁<br>START
@@ -237,7 +434,6 @@
                         </div>
                     </div>
 
-                    <!-- VIDURYS -->
                     <div class="board-row row-middle">
                         <div class="row-middle-left">
                             <div id="cell-51" class="cell edge property" data-id="51">51</div>
@@ -392,7 +588,6 @@
                         </div>
                     </div>
 
-                    <!-- APAČIA -->
                     <div class="board-row row-bottom">
                         <div id="cell-42" class="cell corner go-to-jail" data-id="42">
                             🚨<br>KELIAUK
@@ -422,76 +617,93 @@
     </div>
 
     <!-- WAITING ROOM OVERLAY -->
-    <div id="waitingRoomOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(145deg, rgba(26,107,60,0.98), rgba(15,74,42,0.98)); z-index:9993; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
-        <div style="background:rgba(0,0,0,0.4); border:3px solid #c9a84c; border-radius:20px; padding:30px; max-width:600px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+<div id="waitingRoomOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(145deg, rgba(26,107,60,0.98), rgba(15,74,42,0.98)); z-index:9993; justify-content:center; align-items:flex-start; padding:20px; overflow-y:auto;">
+    <div style="background:rgba(0,0,0,0.4); border:3px solid #c9a84c; border-radius:20px; padding:30px; max-width:1000px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+        
+        <h2 style="color:#ffd700; text-align:center; font-size:2em; margin-bottom:5px;">🏦 BANCRUPT</h2>
+        <p style="color:#d4b896; text-align:center; margin-bottom:25px;">⏳ Laukiama žaidėjų...</p>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
             
-            <h2 style="color:#ffd700; text-align:center; font-size:2em; margin-bottom:5px;">🏦 BANCRUPT</h2>
-            <p style="color:#d4b896; text-align:center; margin-bottom:25px;">⏳ Laukiama žaidėjų...</p>
-            
-            <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:20px; border:2px solid #c9a84c;">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                    <span style="color:#d4b896; font-weight:600; font-size:13px;">📋 Stalo kodas:</span>
-                    <button onclick="copyGameCode()" style="padding:5px 12px; border:none; border-radius:6px; background:#ffd700; color:#1a3b1a; font-weight:700; cursor:pointer; font-size:11px;">📋 Kopijuoti</button>
+            <!-- KAIRĖ PUSĖ -->
+            <div>
+                <!-- Stalo kodas -->
+                <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:20px; border:2px solid #c9a84c;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                        <span style="color:#d4b896; font-weight:600; font-size:13px;">📋 Stalo kodas:</span>
+                        <button onclick="copyGameCode()" style="padding:5px 12px; border:none; border-radius:6px; background:#ffd700; color:#1a3b1a; font-weight:700; cursor:pointer; font-size:11px;">📋 Kopijuoti</button>
+                    </div>
+                    <div id="waitingGameCode" style="color:#fff; font-size:28px; font-weight:900; letter-spacing:6px; text-align:center; text-shadow:0 0 20px rgba(255,215,0,0.5);">------</div>
+                    
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:15px; margin-bottom:5px;">
+                        <span style="color:#d4b896; font-weight:600; font-size:13px;">🔗 Nuoroda:</span>
+                        <button onclick="copyGameLink()" style="padding:5px 12px; border:none; border-radius:6px; background:#17a2b8; color:#fff; font-weight:700; cursor:pointer; font-size:11px;">🔗 Kopijuoti</button>
+                    </div>
+                    <div id="waitingGameLink" style="color:#9bd9e8; font-size:11px; text-align:center; word-break:break-all;">---</div>
                 </div>
-                <div id="waitingGameCode" style="color:#fff; font-size:28px; font-weight:900; letter-spacing:6px; text-align:center; text-shadow:0 0 20px rgba(255,215,0,0.5);">------</div>
                 
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:15px; margin-bottom:5px;">
-                    <span style="color:#d4b896; font-weight:600; font-size:13px;">🔗 Nuoroda:</span>
-                    <button onclick="copyGameLink()" style="padding:5px 12px; border:none; border-radius:6px; background:#17a2b8; color:#fff; font-weight:700; cursor:pointer; font-size:11px;">🔗 Kopijuoti</button>
+                <!-- Žaidėjai -->
+                <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:15px; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="color:#ffd700; font-weight:700; font-size:15px;">👥 Žaidėjai</span>
+                        <span id="waitingPlayerCount" style="color:#d4b896; font-size:13px;">0/8</span>
+                    </div>
+                    <div id="waitingPlayersList" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; min-height:60px;">
+</div>
                 </div>
-                <div id="waitingGameLink" style="color:#9bd9e8; font-size:11px; text-align:center; word-break:break-all;">---</div>
-            </div>
-            
-            <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:15px; margin-bottom:20px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <span style="color:#ffd700; font-weight:700; font-size:15px;">👥 Žaidėjai</span>
-                    <span id="waitingPlayerCount" style="color:#d4b896; font-size:13px;">0/8</span>
-                </div>
-                <div id="waitingPlayersList" style="display:flex; flex-direction:column; gap:8px; min-height:60px;">
-                </div>
-            </div>
-            
-            <div id="waitingStatusText" style="text-align:center; color:#d4b896; font-size:14px; margin-bottom:20px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px;">
-                Laukiama žaidėjų...
-            </div>
-            
-            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-                <button id="readyBtn" onclick="toggleReady()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; transition:all 0.3s;">
-                    ✋ Aš pasiruošęs
-                </button>
                 
-                <button id="addBotBtn" onclick="addBot()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6f42c1, #5a32a3); color:#fff; transition:all 0.3s;">
-                    ➕ Pridėti botą
-                </button>
-                
-                <button id="startGameBtn" onclick="startGame()" style="display:none; padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
-                    🚀 Pradėti žaidimą
-                </button>
-                
-                <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;">
-                    <input type="checkbox" id="waitingIsPublic" onchange="togglePublic()" style="width:18px; height:18px; cursor:pointer;">
-                    <label for="waitingIsPublic" style="color:#d4b896; font-size:13px; font-weight:600; cursor:pointer;">
-                        🌐 Viešas stalas
-                    </label>
+                <!-- Statusas -->
+                <div id="waitingStatusText" style="text-align:center; color:#d4b896; font-size:14px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px;">
+                    Laukiama žaidėjų...
                 </div>
             </div>
+            <!-- UŽDARYTA KAIRĖ -->
             
-            <button onclick="leaveGameFromWaiting()" style="width:100%; padding:12px; margin-bottom:20px; border:2px solid #ff6b6b; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
-                🏃 Pasitraukti iš stalo
-            </button>
-            
-            <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:12px;">
-                <div style="color:#ffd700; font-weight:700; font-size:13px; margin-bottom:8px;">💬 Chat</div>
-                <div id="waitingChatMessages" style="height:100px; overflow-y:auto; font-size:12px; color:#d4b896; background:rgba(0,0,0,0.2); border-radius:8px; padding:8px; margin-bottom:8px;">
-                </div>
-                <div style="display:flex; gap:6px;">
-                    <input type="text" id="waitingChatInput" placeholder="Rašyk žinutę..." onkeypress="if(event.key==='Enter') sendWaitingChat()" style="flex:1; padding:8px; border:1px solid #c9a84c; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; font-size:13px; outline:none;">
-                    <button onclick="sendWaitingChat()" style="padding:8px 14px; background:#3d2b1f; color:#fff; border:none; border-radius:6px; cursor:pointer;">➤</button>
+            <!-- DEŠINĖ PUSĖ -->
+            <div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button id="readyBtn" onclick="toggleReady()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; transition:all 0.3s;">
+                        ✋ Aš pasiruošęs
+                    </button>
+                    
+                    <button id="addBotBtn" onclick="addBot()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6f42c1, #5a32a3); color:#fff; transition:all 0.3s;">
+                        ➕ Pridėti botą
+                    </button>
+                    
+                    <button id="startGameBtn" onclick="startGame()" style="display:none; padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
+                        🚀 Pradėti žaidimą
+                    </button>
+                    
+                    <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;">
+                        <input type="checkbox" id="waitingIsPublic" onchange="togglePublic()" style="width:18px; height:18px; cursor:pointer;">
+                        <label for="waitingIsPublic" style="color:#d4b896; font-size:13px; font-weight:600; cursor:pointer;">
+                            🌐 Viešas stalas
+                        </label>
+                    </div>
+                    
+                    <button onclick="leaveGameFromWaiting()" style="width:100%; padding:12px; margin-top:10px; border:2px solid #ff6b6b; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;">
+                        🏃 Pasitraukti iš stalo
+                    </button>
                 </div>
             </div>
+            <!-- UŽDARYTA DEŠINĖ -->
             
         </div>
+        <!-- UŽDARYTA GRID -->
+        
+        <!-- CHAT -->
+        <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:12px; margin-top:20px;">
+            <div style="color:#ffd700; font-weight:700; font-size:13px; margin-bottom:8px;">💬 Chat</div>
+            <div id="waitingChatMessages" style="height:100px; overflow-y:auto; font-size:12px; color:#d4b896; background:rgba(0,0,0,0.2); border-radius:8px; padding:8px; margin-bottom:8px;">
+            </div>
+            <div style="display:flex; gap:6px;">
+                <input type="text" id="waitingChatInput" placeholder="Rašyk žinutę..." onkeypress="if(event.key==='Enter') sendWaitingChat()" style="flex:1; padding:8px; border:1px solid #c9a84c; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; font-size:13px; outline:none;">
+                <button onclick="sendWaitingChat()" style="padding:8px 14px; background:#3d2b1f; color:#fff; border:none; border-radius:6px; cursor:pointer;">➤</button>
+            </div>
+        </div>
+        
     </div>
+</div>
 
     <!-- TAISYKLIŲ MODALAS -->
     <div id="rulesModal">
@@ -718,7 +930,6 @@
             <div id="auctionContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
                 <p style="margin:5px 0;"><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
                 
-                <!-- 🆕 MINI KORTELĖ -->
                 <div style="margin:10px 0; display:flex; justify-content:center;">
                     <div id="auctionMiniCardContainer" style="display:flex; justify-content:center;"></div>
                 </div>
@@ -792,13 +1003,14 @@
     <div id="statsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99997; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
         <div style="background:linear-gradient(145deg, #1a6b3c, #0f4a2a); border-radius:20px; padding:30px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             <h2 style="color:#ffd700; text-align:center; font-size:1.8em; margin-bottom:20px; border-bottom:2px solid #c9a84c; padding-bottom:10px;">
-                📊 STATISTIKA
+                📊 MANO STATISTIKA
             </h2>
             
             <div id="statsContent">
+                <div style="text-align:center; padding:20px; color:#d4b896;">Kraunama...</div>
             </div>
             
-            <button onclick="closeStats()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+            <button onclick="closeStatsModal()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
                 ❌ Uždaryti
             </button>
         </div>
@@ -888,7 +1100,579 @@
             showPage('page-game');
             console.log('📍 Game puslapis');
         }
-        
+
+        // ============================================
+        // REGISTRACIJA IR PRISIJUNGIMAS
+        // ============================================
+
+        let currentUser = null;
+
+        function goToRegister() {
+            showPage('page-register');
+            console.log('📍 Registracijos puslapis');
+            document.getElementById('registerError').textContent = '';
+        }
+
+        function goToLogin() {
+            showPage('page-login');
+            console.log('📍 Prisijungimo puslapis');
+            document.getElementById('loginError').textContent = '';
+        }
+
+        // ============================================
+        // SLAPTAŽODŽIO ATSTATYMAS
+        // ============================================
+
+        let forgotPasswordData = {
+            username: '',
+            email: '',
+            question: ''
+        };
+
+        function goToForgotPassword() {
+            showPage('page-forgot-password');
+            console.log('📍 Pamiršau slaptažodį puslapis');
+            
+            // Reset į 1 etapą
+            forgotBackToStep1();
+            
+            // Išvalyti laukus
+            const usernameEl = document.getElementById('forgotUsername');
+            const emailEl = document.getElementById('forgotEmail');
+            const answerEl = document.getElementById('forgotAnswer');
+            const passEl = document.getElementById('forgotNewPassword');
+            const passConfirmEl = document.getElementById('forgotNewPasswordConfirm');
+            
+            if (usernameEl) usernameEl.value = '';
+            if (emailEl) emailEl.value = '';
+            if (answerEl) answerEl.value = '';
+            if (passEl) passEl.value = '';
+            if (passConfirmEl) passConfirmEl.value = '';
+            
+            const err1 = document.getElementById('forgotError1');
+            const err2 = document.getElementById('forgotError2');
+            const err3 = document.getElementById('forgotError3');
+            
+            if (err1) err1.textContent = '';
+            if (err2) err2.textContent = '';
+            if (err3) err3.textContent = '';
+        }
+
+        async function submitForgotStep1() {
+            const username = document.getElementById('forgotUsername').value.trim();
+            const email = document.getElementById('forgotEmail').value.trim();
+            const errorEl = document.getElementById('forgotError1');
+            const btn = document.getElementById('forgotBtn1');
+            
+            errorEl.textContent = '';
+            
+            if (!username || !email) {
+                errorEl.textContent = '❌ Įvesk vardą ir el. paštą';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Tikrinama...';
+            
+            try {
+                const response = await fetch('/api/auth/forgot-password/verify-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    errorEl.textContent = '❌ ' + data.error;
+                    btn.disabled = false;
+                    btn.textContent = '➡️ Toliau';
+                    return;
+                }
+                
+                // Išsaugom duomenis
+                forgotPasswordData.username = data.username;
+                forgotPasswordData.email = email;
+                forgotPasswordData.question = data.question;
+                
+                // Rodyti 2 etapą
+                document.getElementById('forgotStep1').style.display = 'none';
+                document.getElementById('forgotStep2').style.display = 'block';
+                document.getElementById('forgotQuestionText').textContent = data.question;
+                
+                btn.disabled = false;
+                btn.textContent = '➡️ Toliau';
+                
+                console.log('✅ 1 etapas baigtas. Klausimas:', data.question);
+                
+            } catch (err) {
+                console.error('❌ Klaida:', err);
+                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                btn.disabled = false;
+                btn.textContent = '➡️ Toliau';
+            }
+        }
+
+        async function submitForgotStep2() {
+            const answer = document.getElementById('forgotAnswer').value.trim();
+            const errorEl = document.getElementById('forgotError2');
+            const btn = document.getElementById('forgotBtn2');
+            
+            errorEl.textContent = '';
+            
+            if (!answer) {
+                errorEl.textContent = '❌ Įvesk atsakymą';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Tikrinama...';
+            
+            try {
+                const response = await fetch('/api/auth/forgot-password/verify-answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: forgotPasswordData.username,
+                        email: forgotPasswordData.email,
+                        answer: answer
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    errorEl.textContent = '❌ ' + data.error;
+                    btn.disabled = false;
+                    btn.textContent = '➡️ Toliau';
+                    return;
+                }
+                
+                // Išsaugom atsakymą
+                forgotPasswordData.answer = answer;
+                
+                // Rodyti 3 etapą
+                document.getElementById('forgotStep2').style.display = 'none';
+                document.getElementById('forgotStep3').style.display = 'block';
+                
+                btn.disabled = false;
+                btn.textContent = '➡️ Toliau';
+                
+                console.log('✅ 2 etapas baigtas');
+                
+            } catch (err) {
+                console.error('❌ Klaida:', err);
+                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                btn.disabled = false;
+                btn.textContent = '➡️ Toliau';
+            }
+        }
+
+        async function submitForgotStep3() {
+            const newPassword = document.getElementById('forgotNewPassword').value;
+            const newPasswordConfirm = document.getElementById('forgotNewPasswordConfirm').value;
+            const errorEl = document.getElementById('forgotError3');
+            const btn = document.getElementById('forgotBtn3');
+            
+            errorEl.textContent = '';
+            
+            if (!newPassword || !newPasswordConfirm) {
+                errorEl.textContent = '❌ Įvesk naują slaptažodį';
+                return;
+            }
+            
+            if (newPassword !== newPasswordConfirm) {
+                errorEl.textContent = '❌ Slaptažodžiai nesutampa';
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                errorEl.textContent = '❌ Slaptažodis turi būti bent 6 simbolių';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Keičiama...';
+            
+            try {
+                const response = await fetch('/api/auth/forgot-password/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: forgotPasswordData.username,
+                        email: forgotPasswordData.email,
+                        answer: forgotPasswordData.answer,
+                        newPassword: newPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    errorEl.textContent = '❌ ' + data.error;
+                    btn.disabled = false;
+                    btn.textContent = '✅ Pakeisti slaptažodį';
+                    return;
+                }
+                
+                // Sėkmė!
+                alert(`✅ Slaptažodis pakeistas!\n\nDabar gali prisijungti su nauju slaptažodžiu.`);
+                
+                // Grįžti į prisijungimą
+                goToLogin();
+                
+                // Užpildyti vartotojo vardą
+                const loginUsername = document.getElementById('loginUsername');
+                if (loginUsername) loginUsername.value = forgotPasswordData.username;
+                
+                btn.disabled = false;
+                btn.textContent = '✅ Pakeisti slaptažodį';
+                
+                console.log('✅ Slaptažodis pakeistas');
+                
+            } catch (err) {
+                console.error('❌ Klaida:', err);
+                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                btn.disabled = false;
+                btn.textContent = '✅ Pakeisti slaptažodį';
+            }
+        }
+
+        function forgotBackToStep1() {
+            const step1 = document.getElementById('forgotStep1');
+            const step2 = document.getElementById('forgotStep2');
+            const step3 = document.getElementById('forgotStep3');
+            
+            if (step1) step1.style.display = 'block';
+            if (step2) step2.style.display = 'none';
+            if (step3) step3.style.display = 'none';
+            
+            const answerEl = document.getElementById('forgotAnswer');
+            if (answerEl) answerEl.value = '';
+            
+            const err2 = document.getElementById('forgotError2');
+            const err3 = document.getElementById('forgotError3');
+            if (err2) err2.textContent = '';
+            if (err3) err3.textContent = '';
+        }
+
+        async function submitRegister() {
+    const username = document.getElementById('registerUsername').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+    const securityQuestion = document.getElementById('registerSecurityQuestion').value;
+    const securityAnswer = document.getElementById('registerSecurityAnswer').value.trim();
+    const errorEl = document.getElementById('registerError');
+    const btn = document.getElementById('registerBtn');
+    
+    errorEl.textContent = '';
+    
+    if (!username || !email || !password || !passwordConfirm) {
+        errorEl.textContent = '❌ Užpildyk visus laukus';
+        return;
+    }
+    
+    if (password !== passwordConfirm) {
+        errorEl.textContent = '❌ Slaptažodžiai nesutampa';
+        return;
+    }
+    
+    if (password.length < 6) {
+        errorEl.textContent = '❌ Slaptažodis turi būti bent 6 simbolių';
+        return;
+    }
+    
+    if (!securityQuestion) {
+        errorEl.textContent = '❌ Pasirink saugumo klausimą';
+        return;
+    }
+    
+    if (!securityAnswer || securityAnswer.length < 2) {
+        errorEl.textContent = '❌ Įvesk atsakymą į saugumo klausimą';
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ Registruojama...';
+    
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                username, 
+                email, 
+                password,
+                securityQuestion,
+                securityAnswer
+            })
+        });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    errorEl.textContent = '❌ ' + data.error;
+                    btn.disabled = false;
+                    btn.textContent = '✅ Registruotis';
+                    return;
+                }
+                
+                localStorage.setItem('bancrupt_token', data.token);
+                localStorage.setItem('bancrupt_user', JSON.stringify({
+                    userId: data.userId,
+                    username: data.username,
+                    email: data.email
+                }));
+                
+                currentUser = data;
+                updateLandingUI();
+                
+                alert(`✅ Sveikas, ${data.username}!\n\nTavo paskyra sukurta. Dabar gali žaisti ir rinkti statistiką.`);
+                goToMenu();
+                
+            } catch (err) {
+                console.error('❌ Registracijos klaida:', err);
+                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                btn.disabled = false;
+                btn.textContent = '✅ Registruotis';
+            }
+        }
+
+        async function submitLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+            const btn = document.getElementById('loginBtn');
+            
+            errorEl.textContent = '';
+            
+            if (!username || !password) {
+                errorEl.textContent = '❌ Įvesk vardą ir slaptažodį';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Jungiamasi...';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    errorEl.textContent = '❌ ' + data.error;
+                    btn.disabled = false;
+                    btn.textContent = '✅ Prisijungti';
+                    return;
+                }
+                
+                localStorage.setItem('bancrupt_token', data.token);
+                localStorage.setItem('bancrupt_user', JSON.stringify({
+                    userId: data.userId,
+                    username: data.username,
+                    email: data.email
+                }));
+                
+                currentUser = data;
+                updateLandingUI();
+                
+                alert(`✅ Sveikas sugrįžęs, ${data.username}!`);
+                goToMenu();
+                
+            } catch (err) {
+                console.error('❌ Prisijungimo klaida:', err);
+                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                btn.disabled = false;
+                btn.textContent = '✅ Prisijungti';
+            }
+        }
+
+        async function checkAutoLogin() {
+            const token = localStorage.getItem('bancrupt_token');
+            if (!token) {
+                updateLandingUI();
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (!response.ok) {
+                    localStorage.removeItem('bancrupt_token');
+                    localStorage.removeItem('bancrupt_user');
+                    updateLandingUI();
+                    return;
+                }
+                
+                const data = await response.json();
+                currentUser = data.user;
+                console.log('✅ Automatinis prisijungimas:', data.user.username);
+                updateLandingUI();
+                
+            } catch (err) {
+                console.warn('⚠️ Auto-login nepavyko:', err);
+                updateLandingUI();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLandingUI();
+            checkAutoLogin();
+            
+            ['registerUsername', 'registerEmail', 'registerPassword', 'registerPasswordConfirm'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitRegister(); });
+            });
+            
+            ['loginUsername', 'loginPassword'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitLogin(); });
+            });
+        });
+
+        // ============================================
+        // LANDING UI ATNAUJINIMAS
+        // ============================================
+
+        function updateLandingUI() {
+            const landingGuest = document.getElementById('landingGuest');
+            const landingUser = document.getElementById('landingUser');
+            const landingUsername = document.getElementById('landingUsername');
+            const menuUserInfo = document.getElementById('menuUserInfo');
+            const menuUsername = document.getElementById('menuUsername');
+            
+            const token = localStorage.getItem('bancrupt_token');
+            const userStr = localStorage.getItem('bancrupt_user');
+            
+            if (token && userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    
+                    if (landingGuest) landingGuest.style.display = 'none';
+                    if (landingUser) landingUser.style.display = 'block';
+                    if (landingUsername) landingUsername.textContent = user.username;
+                    
+                    if (menuUserInfo) menuUserInfo.style.display = 'block';
+                    if (menuUsername) menuUsername.textContent = user.username;
+                    
+                } catch (e) {
+                    console.warn('⚠️ Nepavyko perskaityti user:', e);
+                }
+            } else {
+                if (landingGuest) landingGuest.style.display = 'block';
+                if (landingUser) landingUser.style.display = 'none';
+                if (menuUserInfo) menuUserInfo.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // ATSIJUNGIMAS
+        // ============================================
+
+        function logout() {
+            if (!confirm('🚪 Ar tikrai nori atsijungti?')) return;
+            
+            localStorage.removeItem('bancrupt_token');
+            localStorage.removeItem('bancrupt_user');
+            currentUser = null;
+            
+            updateLandingUI();
+            goToLanding();
+            
+            alert('👋 Sėkmingai atsijungei!');
+        }
+
+        // ============================================
+        // STATISTIKOS MODALAS
+        // ============================================
+
+        async function openStatsModal() {
+            const modal = document.getElementById('statsModal');
+            const content = document.getElementById('statsContent');
+            
+            if (!modal || !content) return;
+            
+            modal.style.display = 'flex';
+            content.innerHTML = '<div style="text-align:center; padding:20px; color:#d4b896;">Kraunama...</div>';
+            
+            try {
+                const token = localStorage.getItem('bancrupt_token');
+                if (!token) {
+                    content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Nesi prisijungęs</div>';
+                    return;
+                }
+                
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (!response.ok) {
+                    content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Nepavyko užkrauti statistikos</div>';
+                    return;
+                }
+                
+                const data = await response.json();
+                const stats = data.stats || {};
+                
+                content.innerHTML = `
+                    <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span style="color:#d4b896;">👤 Vardas:</span>
+                            <strong style="color:#ffd700;">${data.user.username}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span style="color:#d4b896;">📧 El. paštas:</span>
+                            <strong style="color:#fff; font-size:13px;">${data.user.email}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#d4b896;">📅 Prisijungė:</span>
+                            <strong style="color:#fff; font-size:12px;">${new Date(data.user.createdAt).toLocaleDateString('lt-LT')}</strong>
+                        </div>
+                    </div>
+                    
+                    <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px;">
+                        <div style="color:#ffd700; font-weight:700; margin-bottom:10px;">🎮 ŽAIDIMO STATISTIKA</div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#d4b896;">🎮 Sužaista:</span>
+                            <strong style="color:#fff;">${stats.games_played || 0}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#d4b896;">🏆 Laimėta:</span>
+                            <strong style="color:#28a745;">${stats.games_won || 0}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#d4b896;">🏠 Namai pastatyti:</span>
+                            <strong style="color:#fff;">${stats.houses_built || 0}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#d4b896;">💰 Objektai pirkti:</span>
+                            <strong style="color:#fff;">${stats.properties_bought || 0}</strong>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (err) {
+                console.error('❌ Stats klaida:', err);
+                content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Serverio klaida</div>';
+            }
+        }
+
+        function closeStatsModal() {
+            const modal = document.getElementById('statsModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // ============================================
+        // TAISYKLIŲ MODALAS
+        // ============================================
+
         function openRulesModal() {
             document.getElementById('rulesModal').classList.add('active');
         }
@@ -924,14 +1708,60 @@
             }
         });
         
-        function menuCreate() {
+       function menuCreate() {
             console.log('🆕 Kurti žaidimą');
             showPage('page-create');
+            
+            // Auto-užpildyti vardą, jei prisijungęs
+            const userStr = localStorage.getItem('bancrupt_user');
+            const nameInput = document.getElementById('createPlayerName');
+            if (userStr && nameInput) {
+                try {
+                    const user = JSON.parse(userStr);
+                    nameInput.value = user.username;
+                    nameInput.disabled = true;
+                    nameInput.style.opacity = '0.7';
+                    nameInput.style.cursor = 'not-allowed';
+                    nameInput.title = '🔒 Prisijungęs kaip ' + user.username;
+                } catch (e) {
+                    console.warn('⚠️ Nepavyko perskaityti user:', e);
+                }
+            } else if (nameInput) {
+                // Svečias – leisti keisti
+                nameInput.disabled = false;
+                nameInput.style.opacity = '1';
+                nameInput.style.cursor = 'text';
+                nameInput.value = '';
+                nameInput.title = '';
+            }
         }
         
         function menuJoin() {
             console.log('🔗 Prisijungti');
             showPage('page-join');
+            
+            // Auto-užpildyti vardą, jei prisijungęs
+            const userStr = localStorage.getItem('bancrupt_user');
+            const nameInput = document.getElementById('joinPlayerName');
+            if (userStr && nameInput) {
+                try {
+                    const user = JSON.parse(userStr);
+                    nameInput.value = user.username;
+                    nameInput.disabled = true;
+                    nameInput.style.opacity = '0.7';
+                    nameInput.style.cursor = 'not-allowed';
+                    nameInput.title = '🔒 Prisijungęs kaip ' + user.username;
+                } catch (e) {
+                    console.warn('⚠️ Nepavyko perskaityti user:', e);
+                }
+            } else if (nameInput) {
+                // Svečias – leisti keisti
+                nameInput.disabled = false;
+                nameInput.style.opacity = '1';
+                nameInput.style.cursor = 'text';
+                nameInput.value = '';
+                nameInput.title = '';
+            }
         }
         
         function menuPublic() {

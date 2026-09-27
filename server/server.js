@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const os = require('os');
 const Game = require('./gameLogic');
+const db = require('./db');
 
 // ============================================
 // LIMITAI
@@ -28,8 +29,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, 'public')));
+// 🆕 API ROUTES
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
 
+console.log('🔍 API ROUTES UŽREGISTRUOTI');
+console.log('🔍 authRoutes tipas:', typeof authRoutes);
+console.log('🔍 authRoutes stack:', authRoutes.stack ? authRoutes.stack.length : 'nėra');
+
+app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -319,6 +327,7 @@ io.on('connection', (socket) => {
         const playerName = data.name || data;
         const playerColor = data.color || null;
         const isPublic = data.isPublic === true;
+        const userId = data.userId || null;
         
         if (!playerName || playerName.trim() === '') {
             socket.emit('error', 'Įvesk vardą!');
@@ -331,8 +340,8 @@ io.on('connection', (socket) => {
             return;
         }
         
-        const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
-        console.log('🆕 Kuriamas žaidimas:', gameId, 'Viešas:', isPublic);
+        const gameId = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log('🆕 Kuriamas žaidimas:', gameId, 'Viešas:', isPublic);
         
         const game = new Game();
         game.setGameId(gameId);
@@ -349,7 +358,7 @@ io.on('connection', (socket) => {
             }
         });
         
-        const player = game.addPlayer(playerName.trim(), playerColor);
+        const player = game.addPlayer(playerName.trim(), playerColor, userId);
         
         if (player.error) {
             socket.emit('error', player.error);
@@ -383,15 +392,15 @@ io.on('connection', (socket) => {
     // ============================================
     // PRISIJUNGTI PRIE ŽAIDIMO
     // ============================================
-    socket.on('joinGame', ({ gameId, playerName, color }) => {
-        console.log('📥 Gauta joinGame užklausa:', { gameId, playerName, color });
+    socket.on('joinGame', ({ gameId, playerName, color, userId }) => {
+        console.log('📥 Gauta joinGame užklausa:', { gameId, playerName, color, userId });
         
         if (!gameId || !playerName) {
             socket.emit('error', 'Įvesk žaidimo ID ir vardą!');
             return;
         }
         
-        const game = games.get(gameId.toUpperCase());
+        const game = games.get(gameId);
         if (!game) {
             socket.emit('error', 'Žaidimas nerastas!');
             return;
@@ -402,7 +411,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const player = game.addPlayer(playerName.trim(), color);
+        const player = game.addPlayer(playerName.trim(), color, userId);
         if (player.error) {
             socket.emit('error', player.error);
             return;
@@ -1596,17 +1605,23 @@ io.on('connection', (socket) => {
 // SERVERIO PALEIDIMAS
 // ============================================
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`🚀 Bancrupt serveris veikia http://localhost:${PORT}`);
-    console.log(`📡 Laukiama prisijungimų...`);
-    console.log(`💀 Bankroto handleris aktyvuotas`);
-    console.log(`🗳️ Vote-kick sistema aktyvuota`);
-    console.log(`⏳ Waiting room aktyvus`);
-    console.log(`🎲 Shuffle aktyvus`);
-    console.log(`🌐 Vieši stalai: max ${LIMITS.MAX_PUBLIC_GAMES}`);
-    console.log(`🔒 Privatūs stalai: max ${LIMITS.MAX_PRIVATE_GAMES}`);
-    console.log(`📊 Viso stalų: max ${LIMITS.MAX_TOTAL_GAMES}`);
-    console.log(`👥 Žaidėjų: max ${LIMITS.MAX_PLAYERS_TOTAL}`);
-    console.log(`🔗 URL kodas palaikomas`);
-    console.log(`🤖 Botai aktyvuoti`);
+
+db.initDatabase().then(() => {
+    server.listen(PORT, () => {
+        console.log(`🚀 Bancrupt serveris veikia http://localhost:${PORT}`);
+        console.log(`📡 Laukiama prisijungimų...`);
+        console.log(`💀 Bankroto handleris aktyvuotas`);
+        console.log(`🗳️ Vote-kick sistema aktyvuota`);
+        console.log(`⏳ Waiting room aktyvus`);
+        console.log(`🎲 Shuffle aktyvus`);
+        console.log(`🌐 Vieši stalai: max ${LIMITS.MAX_PUBLIC_GAMES}`);
+        console.log(`🔒 Privatūs stalai: max ${LIMITS.MAX_PRIVATE_GAMES}`);
+        console.log(`📊 Viso stalų: max ${LIMITS.MAX_TOTAL_GAMES}`);
+        console.log(`👥 Žaidėjų: max ${LIMITS.MAX_PLAYERS_TOTAL}`);
+        console.log(`🔗 URL kodas palaikomas`);
+        console.log(`🤖 Botai aktyvuoti`);
+    });
+}).catch(err => {
+    console.error('❌ Nepavyko paleisti serverio:', err);
+    process.exit(1);
 });

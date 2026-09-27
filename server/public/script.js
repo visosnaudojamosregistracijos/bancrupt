@@ -2298,11 +2298,24 @@ function createGame() {
     
     const isPublicCheckbox = document.getElementById('createIsPublic');
     const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
+    
+    // 🆕 Gauti userId iš localStorage
+    let userId = null;
+    const userStr = localStorage.getItem('bancrupt_user');
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            userId = user.userId;
+        } catch (e) {
+            console.warn('⚠️ Nepavyko perskaityti user:', e);
+        }
+    }
 
     socket.emit('createGame', {
         name: name,
         color: selectedCreateColor,
-        isPublic: isPublic
+        isPublic: isPublic,
+        userId: userId
     });
 }
 
@@ -2336,10 +2349,23 @@ function joinGame() {
     
     clearJournal();
     
+    // 🆕 Gauti userId iš localStorage
+    let userId = null;
+    const userStr = localStorage.getItem('bancrupt_user');
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            userId = user.userId;
+        } catch (e) {
+            console.warn('⚠️ Nepavyko perskaityti user:', e);
+        }
+    }
+    
     socket.emit('joinGame', { 
         gameId: gid, 
         playerName: name,
-        color: selectedJoinColor
+        color: selectedJoinColor,
+        userId: userId
     });
 }
 
@@ -2615,26 +2641,43 @@ function showBuyChoice(data) {
 
 function hideBuyChoice() {
     // 🆕 NELEISTI uždaryti, jei server'yje waitingForBuy
-    if (gameState && gameState.waitingForBuy) {
+    // BET leisti, jei tai cancelBuy
+    if (gameState && gameState.waitingForBuy && !window.buyCancelled) {
         console.log('⚠️ Negalima uždaryti pirkimo – laukiama sprendimo!');
         return;
     }
     
     const choice = document.getElementById('buyChoice');
-    choice.style.display = 'none';
-    choice.classList.remove('show');
+    if (choice) {
+        choice.style.display = 'none';
+        choice.classList.remove('show');
+    }
 }
 
 function confirmBuy() {
+    // 🆕 Nustatyti vėliau, kad hideBuyChoice praleistų
+    window.buyCancelled = true;  // naudojam tą patį flag'ą
+    
     socket.emit('buyProperty');
     playClickSound();
     hideBuyChoice();
+    
+    setTimeout(() => {
+        window.buyCancelled = false;
+    }, 2000);
 }
 
 function cancelBuy() {
+    // 🆕 Nustatyti vėliau, kad hideBuyChoice praleistų
+    window.buyCancelled = true;
+    
     socket.emit('cancelBuy');
     playClickSound();
     hideBuyChoice();
+    
+    setTimeout(() => {
+        window.buyCancelled = false;
+    }, 2000);
 }
 
 // ============================================
@@ -3814,7 +3857,8 @@ function updateUI(state) {
     setTimeout(initMiniCardTooltips, 100);
     
     // 🆕 Jei laukiama pirkimo – atidaryti modalą iš naujo
-    if (state.waitingForBuy) {
+    // BET ne, jei ką tik atsisakėme
+    if (state.waitingForBuy && !window.buyCancelled) {
         const me = state.players.find(p => p.id === playerId);
         if (me && state.currentTurn === playerId) {
             const field = state.board[me.position];
@@ -4753,94 +4797,83 @@ function closeLeaders() {
     playClickSound();
 }
 
-function updateLeadersDisplay() {
+async function updateLeadersDisplay() {
     const content = document.getElementById('leadersContent');
     if (!content) return;
     
-    if (!gameState || !gameState.players) {
-        content.innerHTML = '<div style="color:#d4b896; text-align:center; padding:20px;">Nėra žaidėjų</div>';
-        return;
-    }
+    content.innerHTML = '<div style="color:#d4b896; text-align:center; padding:20px;">⏳ Kraunama...</div>';
     
-    const players = gameState.players
-        .filter(p => !p.kicked)
-        .map(p => {
-            const houses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
-            return {
-                id: p.id,
-                name: p.name,
-                color: p.color,
-                money: p.money,
-                properties: p.properties ? p.properties.length : 0,
-                houses: houses,
-                bankrupt: p.bankrupt,
-                left: p.left,
-                kicked: p.kicked,
-                isActive: p.isActive,
-                isBot: p.isBot
-            };
-        });
-    
-    players.sort((a, b) => {
-        if (a.bankrupt !== b.bankrupt) return a.bankrupt ? 1 : -1;
-        if (a.left !== b.left) return a.left ? 1 : -1;
-        return b.money - a.money;
-    });
-    
-    let html = '';
-    
-    html += `
-        <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px; text-align:center;">
-            <div style="color:#d4b896; font-size:13px; margin-bottom:4px;">👥 Žaidėjų skaičius</div>
-            <div style="color:#ffd700; font-size:20px; font-weight:700;">${players.length}/8</div>
-        </div>
-    `;
-    
-    players.forEach((p, index) => {
-        let medal = '';
-        let bgColor = 'rgba(255,255,255,0.1)';
-        let borderColor = p.color;
+    try {
+        const response = await fetch('/api/auth/leaders?limit=10');
         
-        if (index === 0 && !p.bankrupt && !p.left) {
-            medal = '🥇';
-            bgColor = 'rgba(255,215,0,0.15)';
-            borderColor = '#ffd700';
-        } else if (index === 1 && !p.bankrupt && !p.left) {
-            medal = '🥈';
-            bgColor = 'rgba(192,192,192,0.15)';
-            borderColor = '#c0c0c0';
-        } else if (index === 2 && !p.bankrupt && !p.left) {
-            medal = '🥉';
-            bgColor = 'rgba(205,127,50,0.15)';
-            borderColor = '#cd7f32';
-        } else {
-            medal = `#${index + 1}`;
+        if (!response.ok) {
+            content.innerHTML = '<div style="color:#dc3545; text-align:center; padding:20px;">❌ Nepavyko užkrauti lyderių</div>';
+            return;
         }
         
-        let status = '';
-        if (p.bankrupt) status = '<span style="color:#dc3545; font-size:11px;">💀 BANKROTAS</span>';
-        else if (p.left) status = '<span style="color:#6c757d; font-size:11px;">😭 PASITRAUKĖ</span>';
-        else if (p.kicked) status = '<span style="color:#dc3545; font-size:11px;">🚫 PAŠALINTAS</span>';
-        else if (!p.isActive) status = '<span style="color:#6c757d; font-size:11px;">⏸️ NEAKTYVUS</span>';
+        const data = await response.json();
+        const leaders = data.leaders || [];
+        
+        if (leaders.length === 0) {
+            content.innerHTML = '<div style="color:#d4b896; text-align:center; padding:20px;">📊 Dar nėra sužaistų žaidimų</div>';
+            return;
+        }
+        
+        let html = '';
         
         html += `
-            <div style="background:${bgColor}; border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid ${borderColor}; ${p.bankrupt || p.left ? 'opacity:0.6;' : ''}">
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                    <span style="font-size:24px; min-width:30px; text-align:center;">${medal}</span>
-                    <span style="width:16px; height:16px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
-                    <span style="color:#fff; font-weight:700; font-size:15px; flex:1;">${p.isBot ? '🤖 ' : ''}${p.name}</span>
-                    ${status}
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-size:12px; color:#d4b896;">
-                    <div>💰 <strong style="color:${p.money < 0 ? '#dc3545' : '#28a745'};">€${p.money}</strong></div>
-                    <div>🏠 <strong style="color:#fff;">${p.properties}</strong> objektai</div>
-                    <div>🏗️ <strong style="color:#fff;">${p.houses}</strong> namai</div>
-                </div>
+            <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px; text-align:center;">
+                <div style="color:#d4b896; font-size:13px; margin-bottom:4px;">🏆 Top ${leaders.length} žaidėjų</div>
             </div>
         `;
-    });
-    
-    content.innerHTML = html;
+        
+        leaders.forEach((p, index) => {
+            let medal = '';
+            let bgColor = 'rgba(255,255,255,0.1)';
+            let borderColor = '#ffd700';
+            
+            if (index === 0) {
+                medal = '🥇';
+                bgColor = 'rgba(255,215,0,0.15)';
+                borderColor = '#ffd700';
+            } else if (index === 1) {
+                medal = '🥈';
+                bgColor = 'rgba(192,192,192,0.15)';
+                borderColor = '#c0c0c0';
+            } else if (index === 2) {
+                medal = '🥉';
+                bgColor = 'rgba(205,127,50,0.15)';
+                borderColor = '#cd7f32';
+            } else {
+                medal = `#${index + 1}`;
+                borderColor = '#c9a84c';
+            }
+            
+            const winRate = p.games_played > 0 
+                ? Math.round((p.games_won / p.games_played) * 100) 
+                : 0;
+            
+            html += `
+                <div style="background:${bgColor}; border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid ${borderColor};">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                        <span style="font-size:24px; min-width:30px; text-align:center;">${medal}</span>
+                        <span style="color:#fff; font-weight:700; font-size:15px; flex:1;">${p.username}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-size:12px; color:#d4b896;">
+                        <div>🏆 <strong style="color:#ffd700;">${p.games_won}</strong></div>
+                        <div>🎮 <strong style="color:#fff;">${p.games_played}</strong></div>
+                        <div>📊 <strong style="color:#28a745;">${winRate}%</strong></div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        content.innerHTML = html;
+        
+    } catch (err) {
+        console.error('❌ Lyderių klaida:', err);
+        content.innerHTML = '<div style="color:#dc3545; text-align:center; padding:20px;">❌ Serverio klaida</div>';
+    }
 }
 
 function autoUpdateLeaders() {

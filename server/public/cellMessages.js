@@ -234,7 +234,7 @@ window.CELL_MESSAGES = {
     },
     // 🆕 11 CIRKAS – service3
     11: {
-        name: 'Cirkas',
+        name: 'SPA',
         type: 'service3',
         messages: {
             buyMine: '✅ Jūs nusipirkote CIRKĄ! 🎪',
@@ -472,7 +472,7 @@ window.CELL_MESSAGES = {
     },
     // 🆕 24 VETERINORIUS – service3
     24: {
-        name: 'Veterinorius',
+        name: 'Baseinas',
         type: 'service3',
         messages: {
             buyMine: '✅ Jūs nusipirkote VETERINORIŲ! 🐕',
@@ -932,7 +932,7 @@ window.CELL_MESSAGES = {
     },
     // 🆕 48 AKROPOLIS – service3
     48: {
-        name: 'Akropolis',
+        name: 'Paplūdimys',
         type: 'service3',
         messages: {
             buyMine: '✅ Jūs nusipirkote AKROPOLĮ! 🛒',

@@ -2151,12 +2151,14 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    display: flex;
-    gap: 3px;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    grid-template-rows: repeat(2, auto);
+    gap: 4px;
     z-index: 20;
     justify-content: center;
-    align-items: center;
-    padding: 0;
+    align-content: center;
+    padding: 2px;
     margin: 0;
     pointer-events: none;
 }
@@ -2187,35 +2189,7 @@ body {
     height: 38px;
 }
 
-.cell .players-on-cell:has(.player-dot:nth-child(3)) .player-dot {
-    width: 38px;
-    height: 38px;
-}
 
-.cell .players-on-cell:has(.player-dot:nth-child(4)) .player-dot {
-    width: 34px;
-    height: 34px;
-}
-
-.cell .players-on-cell:has(.player-dot:nth-child(5)) .player-dot {
-    width: 30px;
-    height: 30px;
-}
-
-.cell .players-on-cell:has(.player-dot:nth-child(6)) .player-dot {
-    width: 26px;
-    height: 26px;
-}
-
-.cell .players-on-cell:has(.player-dot:nth-child(7)) .player-dot {
-    width: 22px;
-    height: 22px;
-}
-
-.cell .players-on-cell:has(.player-dot:nth-child(8)) .player-dot {
-    width: 20px;
-    height: 20px;
-}
 
 /* ---------- BLINK ANIMACIJA ---------- */
 @keyframes blink {
@@ -3977,60 +3951,18 @@ body.dark-mode #cellInfoPanel {
     box-shadow: 0 4px 15px rgba(0,0,0,0.4);
 }
 
-#auctionMiniCardContainer .mini-card-color {
-    width: 100%;
-    height: 35px;
-    border-bottom: 3px solid #3d2b1f;
-    flex-shrink: 0;
+/* ============================================ */
+/* WAITING ROOM – TELEFONUI */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    #waitingRoomOverlay > div > div:nth-child(3) {
+        grid-template-columns: 1fr !important;
+    }
 }
 
-#auctionMiniCardContainer .mini-card-color.mini-card-icon {
-    background: linear-gradient(145deg, #f0e8d8, #e0d5c0);
-    border-bottom: 2px solid rgba(61,43,31,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-}
-
-#auctionMiniCardContainer .mini-card-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 6px 4px;
-    text-align: center;
-    background: #f5f0e8;
-    position: relative;
-}
-
-#auctionMiniCardContainer .mini-card-name {
-    font-size: 11px;
-    font-weight: 700;
-    color: #3d2b1f;
-    line-height: 1.2;
-    word-wrap: break-word;
-    overflow: hidden;
-}
-
-#auctionMiniCardContainer .mini-card-info {
-    font-size: 11px;
-    font-weight: 700;
-    color: #28a745;
-    margin-top: auto;
-    padding-top: 4px;
-    border-top: 1px solid rgba(61,43,31,0.2);
-    line-height: 1;
-}
-
-#auctionMiniCardContainer .mini-card-houses {
-    position: absolute;
-    bottom: 28px;
-    right: 4px;
-    font-size: 12px;
-    line-height: 1;
-    background: rgba(255,255,255,0.95);
-    border-radius: 3px;
-    padding: 1px 3px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+@media (max-width: 768px) {
+    #waitingPlayersList {
+        grid-template-columns: 1fr !important;
+    }
 }

@@ -24,7 +24,7 @@ const boardData = [
     { id: 15, name: 'Zarasai', type: 'property', color: '#2ecc71', cost: 170, icon: '' },
         
     // KAMPAS 2: KALĖJIMAS
-    { id: 16, name: 'Kaleimas kur sedi Romka', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
+    { id: 16, name: 'Kalėjimas', type: 'jail', color: '#6c757d', cost: 0, icon: '⛓️' },
     
     // DEŠINĖ
     { id: 17, name: 'Mažeikiai', type: 'property', color: '#9b59b6', cost: 180, icon: '' },
@@ -38,7 +38,7 @@ const boardData = [
     { id: 25, name: 'Kalvarija', type: 'property', color: '#e74c3c', cost: 260, icon: '' },
     
     // KAMPAS 3: PARKINGAS
-    { id: 26, name: 'ROMKOS PARKINGAS', type: 'parking', color: '#007bff', cost: 0, icon: '🅿️' },
+    { id: 26, name: 'PARKINGAS', type: 'parking', color: '#007bff', cost: 0, icon: '🅿️' },
     
     // APAČIA
     { id: 27, name: 'Alytus', type: 'property', color: '#8B6914', cost: 270, icon: '' },
