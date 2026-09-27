@@ -68,8 +68,19 @@ app.get('/', (req, res) => {
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: (origin, callback) => {
+            // Leisti užklausas be origin (pvz., server-to-server)
+            if (!origin) return callback(null, true);
+            
+            if (ALLOWED_ORIGINS.includes(origin)) {
+                callback(null, true);
+            } else {
+                console.log('❌ Blokuotas origin:', origin);
+                callback(new Error('CORS neleidžiamas'));
+            }
+        },
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
