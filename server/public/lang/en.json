@@ -107,6 +107,8 @@
     "game.buyBtn": "🏠 Buy",
     "game.cancelBtn": "❌ Cancel",
     "game.notification": "📢 NOTIFICATION",
+    "game.turnNow": "🎯 Now playing:",
+    "game.turnNext": "⏭️ Next:",
     
     "waiting.title": "⏳ Waiting for players...",
     "waiting.tableCode": "📋 Table code:",

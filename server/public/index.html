@@ -9,8 +9,8 @@
 </head>
 <body>
 
-    <!-- 🌐 KALBOS PASIRINKIMAS -->
-    <div id="langSwitcher" style="position: fixed; top: 10px; right: 10px; z-index: 10000; display: flex; gap: 5px;">
+    <!-- 🌐 KALBOS PASIRINKIMAS (landing/menu puslapiuose) -->
+    <div id="langSwitcher" style="position: fixed; top: 10px; right: 10px; z-index: 999999; display: flex; gap: 5px;">
         <button class="lang-btn" data-lang="lt" onclick="changeLanguage('lt')">🇱🇹 LT</button>
         <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')">🇬🇧 EN</button>
         <button class="lang-btn" data-lang="ru" onclick="changeLanguage('ru')">🇷🇺 RU</button>
@@ -340,6 +340,13 @@
                         📋 ID:<br><span id="gameIdDisplayLeft">---</span>
                     </div>
 
+                    <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange -->
+                    <div id="gameLangSwitcher" style="display: flex; gap: 3px; width: 100%; justify-content: center;">
+                        <button class="lang-btn" data-lang="lt" onclick="changeLanguage('lt')" style="flex:1; padding:5px 2px; font-size:10px;">🇱🇹</button>
+                        <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')" style="flex:1; padding:5px 2px; font-size:10px;">🇬🇧</button>
+                        <button class="lang-btn" data-lang="ru" onclick="changeLanguage('ru')" style="flex:1; padding:5px 2px; font-size:10px;">🇷🇺</button>
+                    </div>
+
                     <div style="position:relative; width:100%;">
                         <button onclick="toggleMusicPanel()" id="musicBtn" class="left-btn" style="background: linear-gradient(145deg, #9b59b6, #8e44ad); color: #fff; border-color: #bb8fce; width:100%;">
                             🎵 Muzika: 🟢
@@ -524,11 +531,11 @@
                                     
                                     <div id="turnIndicator" style="text-align: center; padding: 16px; background: rgba(255, 215, 0, 0.15); border-radius: 8px; border: 2px solid #ffd700; font-size: 24px; font-weight: 700; color: #3d2b1f; margin-bottom: 8px; transition: opacity 0.3s ease;">
                                         <div style="margin-bottom: 8px;">
-                                            🎯 Dabar eina:<br>
+                                            <span data-i18n="game.turnNow">🎯 Dabar eina:</span><br>
                                             <span id="turnIndicatorName" style="font-size: 28px; color: #1a6b3c;">---</span>
                                         </div>
                                         <div style="font-size: 22px; color: #6c757d; border-top: 1px dashed rgba(61,43,31,0.2); padding-top: 8px;">
-                                            ⏭️ Kitas:<br>
+                                            <span data-i18n="game.turnNext">⏭️ Kitas:</span><br>
                                             <span id="turnIndicatorNext" style="font-size: 24px; color: #3d2b1f;">---</span>
                                         </div>
                                     </div>
@@ -1088,6 +1095,19 @@
             const targetPage = document.getElementById(pageId);
             if (targetPage) {
                 targetPage.classList.add('active');
+                
+                // 🌐 Kalbos pasirinkimas: žaidimo lange – kairėje, kituose – viršuje
+                const topLangSwitcher = document.getElementById('langSwitcher');
+                const gameLangSwitcher = document.getElementById('gameLangSwitcher');
+                
+                if (pageId === 'page-game') {
+                    if (topLangSwitcher) topLangSwitcher.style.display = 'none';
+                    if (gameLangSwitcher) gameLangSwitcher.style.display = 'flex';
+                } else {
+                    if (topLangSwitcher) topLangSwitcher.style.display = 'flex';
+                    if (gameLangSwitcher) gameLangSwitcher.style.display = 'none';
+                }
+                
                 if (pageId === 'page-landing' || pageId === 'page-menu') {
                     targetPage.style.display = 'flex';
                     targetPage.style.flexDirection = 'column';

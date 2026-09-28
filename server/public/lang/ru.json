@@ -107,6 +107,8 @@
     "game.buyBtn": "🏠 Купить",
     "game.cancelBtn": "❌ Отмена",
     "game.notification": "📢 УВЕДОМЛЕНИЕ",
+    "game.turnNow": "🎯 Сейчас ходит:",
+    "game.turnNext": "⏭️ Следующий:",
     
     "waiting.title": "⏳ Ожидание игроков...",
     "waiting.tableCode": "📋 Код стола:",

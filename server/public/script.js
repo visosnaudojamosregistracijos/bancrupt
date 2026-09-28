@@ -2379,6 +2379,12 @@ function enterGame() {
         goToGame();
     }
     
+    // 🌐 Paslėpti viršutinį kalbos pasirinkimą žaidimo lange
+    const topLangSwitcher = document.getElementById('langSwitcher');
+    if (topLangSwitcher) {
+        topLangSwitcher.style.display = 'none';
+    }
+    
     loadJournalFromStorage();
 
     const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';

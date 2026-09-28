@@ -107,6 +107,8 @@
     "game.buyBtn": "🏠 Pirkti",
     "game.cancelBtn": "❌ Atsisakyti",
     "game.notification": "📢 PRANEŠIMAS",
+    "game.turnNow": "🎯 Dabar eina:",
+    "game.turnNext": "⏭️ Kitas:",
     
     "waiting.title": "⏳ Laukiama žaidėjų...",
     "waiting.tableCode": "📋 Stalo kodas:",
