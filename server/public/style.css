@@ -3966,3 +3966,28 @@ body.dark-mode #cellInfoPanel {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* ============================================ */
+/* 🌐 KALBOS PASIRINKIMAS */
+/* ============================================ */
+.lang-btn {
+    padding: 6px 10px;
+    border: 2px solid #ffd700;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.5);
+    color: #ffd700;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+}
+
+.lang-btn:hover {
+    background: rgba(255,215,0,0.2);
+    transform: scale(1.05);
+}
+
+.lang-btn.active {
+    background: #ffd700;
+    color: #1a3b1a;
+}

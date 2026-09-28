@@ -416,11 +416,42 @@ function stopBotLoop(gameId) {
 }
 
 // ============================================
+// 🆕 JWT SOCKET.IO AUTENTIFIKACIJA
+// ============================================
+const authLogic = require('./authLogic');
+
+io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    
+    // Svečias – leisti, bet be paskyros
+    if (!token) {
+        console.log('👤 Svečias prisijungė (be JWT)');
+        socket.userId = null;
+        socket.isGuest = true;
+        return next();
+    }
+    
+    // Tikrinti JWT
+    const decoded = authLogic.verifyToken(token);
+    if (!decoded) {
+        console.log('❌ Neteisingas JWT – atmetama');
+        return next(new Error('Neteisingas JWT'));
+    }
+    
+    socket.userId = decoded.userId;
+    socket.isGuest = false;
+    
+    console.log(`✅ Prisijungęs vartotojas: userId=${socket.userId}`);
+    next();
+});
+
+// ============================================
 // SOCKET.IO PRISIJUNGIMAS
 // ============================================
 io.on('connection', (socket) => {
     console.log('🎮 Naujas žaidėjas prisijungė:', socket.id);
     console.log('📊 Iš viso prisijungę:', io.engine.clientsCount);
+    console.log(`👤 Tipas: ${socket.isGuest ? 'Svečias' : 'Prisijungęs'} (userId: ${socket.userId})`);
     
     socket.clientIp = getClientIp(socket);
 
@@ -428,9 +459,9 @@ io.on('connection', (socket) => {
     // SUKURTI ŽAIDIMĄ
     // ============================================
     socket.on('createGame', async (data) => {
-    if (!await checkSocketRateLimit(socket, 'createGame')) return;
-    
-    console.log('📥 Gauta createGame užklausa:', data);
+        if (!await checkSocketRateLimit(socket, 'createGame')) return;
+
+        console.log('📥 Gauta createGame užklausa:', data);
         
         const playerName = data.name || data;
         const playerColor = data.color || null;

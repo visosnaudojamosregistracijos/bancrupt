@@ -70,12 +70,17 @@ function initSocket() {
     
     console.log('🌐 Serverio URL:', SERVER_URL);
     
-    socket = io(SERVER_URL, {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000
-    });
+    const token = localStorage.getItem('bancrupt_token');
+
+socket = io(SERVER_URL, {
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    auth: {
+        token: token    // 🆕 Siunčiam JWT
+    }
+});
     
     socket.on('connect', () => {
         console.log('✅ Prisijungta prie serverio');
@@ -110,9 +115,9 @@ function initSocket() {
     });
 
     socket.on('error', (msg) => {
-        console.log('❌ Klaida:', msg);
+        console.log('Klaida:', msg);
         playErrorSound();
-        alert('❌ ' + msg);
+        alert(msg);
     });
 
     socket.on('gameCreated', (data) => {
@@ -4953,3 +4958,4 @@ document.addEventListener('keydown', (e) => {
 }, true);
 
 console.log('✅ Pirkimo apsauga aktyvuota!');
+
