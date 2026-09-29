@@ -314,10 +314,16 @@ function startBotLoop(gameId) {
         }
         
         if (currentGame.botTurnInProgress) {
-            return;
-        }
-        
-        currentGame.botTurnInProgress = true;
+    return;
+}
+
+// 🆕 Jei kažkas dar meta kauliukus – palaukti
+if (currentGame.isRolling) {
+    console.log(`⏳ Botų ciklas: laukiama, kol baigsis metimas`);
+    return;
+}
+
+currentGame.botTurnInProgress = true;
         
         try {
             console.log(`🤖 Botas ${currentBot.name} pradeda...`);
@@ -1695,6 +1701,14 @@ io.on('connection', (socket) => {
         
         io.to(gameIdCopy).emit('gameState', game.getGameState());
         io.to(gameIdCopy).emit('waitingRoomUpdate', game.getWaitingRoomState());
+        
+        // 🆕 IŠVALYTI socketId iš VISŲ žaidėjo stalų
+        for (const [id, g] of games) {
+            const p = g.players.find(pl => pl.socketId === socket.id);
+            if (p) {
+                p.socketId = null;
+            }
+        }
         
         socket.leave(gameIdCopy);
         socket.gameId = null;

@@ -237,16 +237,16 @@ window.CELL_MESSAGES = {
         name: 'SPA',
         type: 'service3',
         messages: {
-            buyMine: '✅ Jūs nusipirkote CIRKĄ! 🎪',
-            buyOthers: '✅ {player} nusipirko CIRKĄ! 🎪',
+            buyMine: '✅ Jūs nusipirkote SPA saloną! 🛀',
+            buyOthers: '✅ {player} nusipirko SPA saloną! 🛀',
             
-            visitMine: '🎪 Atvykai į CIRKĄ – tai tavo nuosavybė.',
-            visitOthers: '🎪 {player} atvyko į CIRKĄ – savo nuosavybę.',
-            visitObserver: '🎪 {player} atvyko į CIRKĄ – savo nuosavybę.',
+            visitMine: '🛀 Atvykai į SPA – tai tavo nuosavybė.',
+            visitOthers: '🛀 {player} atvyko į SPA – savo nuosavybę.',
+            visitObserver: '🛀 {player} atvyko į SPA – savo nuosavybę.',
             
-            rentOwner: '🎪 {player} atvyko į CIRKĄ ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
-            rentPayer: '🎪 Tu atvykai į CIRKĄ ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
-            rentObserver: '🎪 {player} atvyko į CIRKĄ ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
+            rentOwner: '🛀 {player} atvyko į SPA saloną ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
+            rentPayer: '🛀 Tu atvykai į SPA saloną ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
+            rentObserver: '🛀 {player} atvyko į SPA saloną ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
         }
     },
     12: {
@@ -475,16 +475,16 @@ window.CELL_MESSAGES = {
         name: 'Baseinas',
         type: 'service3',
         messages: {
-            buyMine: '✅ Jūs nusipirkote VETERINORIŲ! 🐕',
-            buyOthers: '✅ {player} nusipirko VETERINORIŲ! 🐕',
+            buyMine: '✅ Jūs nusipirkote BASEINĄ! 🏊',
+            buyOthers: '✅ {player} nusipirko BASEINĄ! 🏊',
             
-            visitMine: '🐕 Atvykai pas VETERINORIŲ – tai tavo nuosavybė.',
-            visitOthers: '🐕 {player} atvyko pas VETERINORIŲ – savo nuosavybę.',
-            visitObserver: '🐕 {player} atvyko pas VETERINORIŲ – savo nuosavybę.',
+            visitMine: '🏊 Atvykai į baseiną – tai tavo nuosavybė.',
+            visitOthers: '🏊 {player} atvyko į baseiną – savo nuosavybę.',
+            visitObserver: '🏊 {player} atvyko į baseiną – savo nuosavybę.',
             
-            rentOwner: '🐕 {player} atvyko pas VETERINORIŲ ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
-            rentPayer: '🐕 Tu atvykai pas VETERINORIŲ ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
-            rentObserver: '🐕 {player} atvyko pas VETERINORIŲ ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
+            rentOwner: '🏊 {player} atvyko į baseiną ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
+            rentPayer: '🏊 Tu atvykai į baseiną ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
+            rentObserver: '🏊 {player} atvyko į baseiną ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
         }
     },
     25: {
@@ -935,16 +935,16 @@ window.CELL_MESSAGES = {
         name: 'Paplūdimys',
         type: 'service3',
         messages: {
-            buyMine: '✅ Jūs nusipirkote AKROPOLĮ! 🛒',
-            buyOthers: '✅ {player} nusipirko AKROPOLĮ! 🛒',
+            buyMine: '✅ Jūs nusipirkote paplūdimio dalį! 🏖️',
+            buyOthers: '✅ {player} nusipirko paplūdimio dalį! 🏖️',
             
-            visitMine: '🛒 Atvykai į AKROPOLĮ – tai tavo nuosavybė.',
-            visitOthers: '🛒 {player} atvyko į AKROPOLĮ – savo nuosavybę.',
-            visitObserver: '🛒 {player} atvyko į AKROPOLĮ – savo nuosavybę.',
+            visitMine: '🏖️ Atvykai į paplūdimį – tai tavo nuosavybė.',
+            visitOthers: '🏖️ {player} atvyko į paplūdimį – savo nuosavybę.',
+            visitObserver: '🏖️ {player} atvyko į paplūdimį – savo nuosavybę.',
             
-            rentOwner: '🛒 {player} atvyko į AKROPOLĮ ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
-            rentPayer: '🛒 Tu atvykai į AKROPOLĮ ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
-            rentObserver: '🛒 {player} atvyko į AKROPOLĮ ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
+            rentOwner: '🏖️ {player} atvyko į palūdimį ir sumokėjo tau €{rent} ({count} objekt{countSuffix} grupėje).',
+            rentPayer: '🏖️ Tu atvykai į paplūdimį ir sumokėjai {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).',
+            rentObserver: '🏖️ {player} atvyko į paplūdimį ir sumokėjo {owner} €{rent} ({owner} turi {count} objekt{countSuffix} grupėje).'
         }
     },
     49: {

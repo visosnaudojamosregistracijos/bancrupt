@@ -103,28 +103,29 @@ class Game {
         }
 
         const player = {
-            id: this.players.length,
-            name: name,
-            position: 0,
-            money: C.START_MONEY,
-            color: finalColor,
-            properties: [],
-            houses: {},
-            inJail: false,
-            jailTurns: 0,
-            isActive: true,
-            bankrupt: false,
-            left: false,
-            kicked: false,
-            isDebtor: false,
-            ready: false,
-            socketId: null,
-            token: Math.random().toString(36).substring(2) + Date.now().toString(36),
-            joinedAt: Date.now(),
-            isHost: this.players.length === 0,
-            isBot: false,
-            userId: userId
-        };
+    id: this.players.length,
+    name: name,
+    position: 0,
+    money: C.START_MONEY,
+    color: finalColor,
+    properties: [],
+    houses: {},
+    inJail: false,
+    jailTurns: 0,
+    consecutiveDoubles: 0,   // 🆕 PRIDĖTA
+    isActive: true,
+    bankrupt: false,
+    left: false,
+    kicked: false,
+    isDebtor: false,
+    ready: false,
+    socketId: null,
+    token: Math.random().toString(36).substring(2) + Date.now().toString(36),
+    joinedAt: Date.now(),
+    isHost: this.players.length === 0,
+    isBot: false,
+    userId: userId
+};
         this.players.push(player);
 
         this.lastActivity = Date.now();
@@ -174,6 +175,7 @@ class Game {
             houses: {},
             inJail: false,
             jailTurns: 0,
+            consecutiveDoubles: 0,   // 🆕 PRIDĖTA
             isActive: true,
             bankrupt: false,
             left: false,
@@ -788,6 +790,16 @@ class Game {
             return { error: rollResult.error };
         }
 
+        // 🆕 Jei rollDice jau perdavė eilę kitam žaidėjui – nutraukti
+        if (this.currentTurn !== botId) {
+            console.log(`🤖 ${bot.name}: ėjimas baigtas (eilė perduota)`);
+            return {
+                action: 'ended',
+                rollResult,
+                message: `${bot.name} baigė ėjimą`
+            };
+        }
+
         if (this.waitingForBuy) {
             await this.botSleep(1500);
 
@@ -1193,13 +1205,13 @@ class Game {
         }
 
         if (this.doubleRoll) {
-            this.consecutiveDoubles++;
-        } else {
-            this.consecutiveDoubles = 0;
-        }
+    player.consecutiveDoubles++;   // 🆕 player, ne this
+} else {
+    player.consecutiveDoubles = 0;   // 🆕 player, ne this
+}
 
-        if (this.consecutiveDoubles >= 3) {
-            this.consecutiveDoubles = 0;
+if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
+    player.consecutiveDoubles = 0;   // 🆕 player, ne this
             player.position = 16;
             player.inJail = true;
             this.isRolling = false;

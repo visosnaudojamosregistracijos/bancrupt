@@ -14,6 +14,9 @@ class AudioManager {
     loadSounds() {
         const soundFiles = {
             'background': 'sounds/background.mp3',
+            'spa': 'sounds/spa.mp3',
+'baseinas': 'sounds/baseinas.mp3',
+'papludimys': 'sounds/papludimys.mp3',
             'air-port': 'sounds/air-port.mp3',
             'air-in': 'sounds/air-in.mp3',
             'hospital': 'sounds/hospital.mp3',
@@ -42,6 +45,7 @@ class AudioManager {
             'jail': 'sounds/jail.mp3',
             'move': 'sounds/move.mp3',
             'pay': 'sounds/pay.mp3',
+            'pay1': 'sounds/pay1.mp3',
             'roll': 'sounds/roll.mp3',
             'trade': 'sounds/trade.mp3',
             'win': 'sounds/win.mp3',
@@ -55,6 +59,7 @@ class AudioManager {
             'celebrate': 'sounds/celebrate.mp3',
     'your-turn': 'sounds/your-turn.mp3',      // 🆕
     'game-start': 'sounds/game-start.mp3'
+    
         };
 
         for (const [name, path] of Object.entries(soundFiles)) {

@@ -16,6 +16,7 @@ let isMuted = false;
 let lastVolume = 50;
 let infoMode = false;
 let lastHoveredField = null;
+let isAnimating = false;
 let soundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
 
 let voteKickTimerInterval = null;
@@ -131,7 +132,7 @@ socket = io(SERVER_URL, {
         
         document.getElementById('gameIdDisplay').textContent = '📋 ID: ' + gameId;
         showLobbyMessage(`✅ Žaidimas sukurtas! ID: ${gameId}`, '#28a745');
-        playStartSound();
+        // playStartSound();    // ← IŠJUNGTA
         enterGame();
     });
 
@@ -342,8 +343,10 @@ socket = io(SERVER_URL, {
         }
         
         if (data.oldPosition !== undefined && data.newPosition !== undefined) {
-            await animateMovement(data.player.id, data.oldPosition, data.newPosition);
-        }
+        isAnimating = true;   // 🆕 PRADEDAM animaciją
+        await animateMovement(data.player.id, data.oldPosition, data.newPosition);
+        isAnimating = false;   // 🆕 BAIGĖM animaciją
+    }
         
         window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
         
@@ -375,6 +378,9 @@ socket = io(SERVER_URL, {
             else if (data.field.id === 13) playSoundForPlayer('hospital', fpId);
             else if (data.field.id === 21) playSoundForPlayer('latras', fpId, true);
             else if (data.field.id === 32) playSoundForPlayer('pirtis', fpId);
+            else if (data.field.id === 11) playSoundForPlayer('spa', fpId);
+            else if (data.field.id === 24) playSoundForPlayer('baseinas', fpId);
+            else if (data.field.id === 48) playSoundForPlayer('papludimys', fpId);
             else if (data.field.id === 50) playSoundForPlayer('birthday', fpId, true);
             else if (data.field.id === 42) playSoundForPlayer('jail_in', fpId, true);
             else if (data.field.id === 16) playSoundForPlayer('jail', fpId);
@@ -457,9 +463,11 @@ socket = io(SERVER_URL, {
         updateUI(gameState);
     });
 
-    socket.on('message', (msg) => {
-        console.log('📢 Pranešimas:', msg);
-        
+   socket.on('message', (msg) => {
+    console.log('📢 Pranešimas:', msg);
+    
+    // 🆕 Funkcija, kuri apdoroja pranešimą
+    const processMsg = () => {
         if (msg.includes('gali nusipirkti') && msg.includes('už €')) {
             return;
         }
@@ -502,7 +510,7 @@ socket = io(SERVER_URL, {
                                msg.includes('AUTOBUSŲ STOTIS');
             
             if (!isService1 && !isOroUostas && !isService2) {
-                playSoundForPlayer('pay', null);
+                playSoundForPlayer('pay1', null);
             }
             showPopupMessage(msg, 'rent');
         }
@@ -547,40 +555,24 @@ socket = io(SERVER_URL, {
         }
         
         addJournal(msg);
-    });
-
-    socket.on('chatMessage', (data) => {
-        console.log('💬 Žinutė:', data);
-        playNotificationSound();
-        addChatMessage(data);
-    });
-
-    socket.on('showBuy', (data) => {
-        console.log('🏠 Galima pirkti:', data);
-        if (data.playerId === playerId) {
-            showBuyChoice(data);
-        }
-    });
-
-    socket.on('buyPending', (data) => {
-        console.log('⏳ Laukiama sprendimo:', data);
-        
-        if (data.playerId !== playerId) {
-            const msg = `⏳ ${data.playerName} gali pirkti ${data.fieldName} už €${data.fieldCost}... Laukiama sprendimo`;
-            addJournal(msg);
-            
-            const field = gameState.board.find(f => f.id === data.fieldId);
-            const player = gameState.players.find(p => p.id === data.playerId);
-            if (field && player) {
-                showBuyCard(field, player, 'pending');
+    };
+    
+    // 🆕 Jei animacija vyksta – laukiam, kol baigsis
+    if (isAnimating) {
+        const waitForAnim = setInterval(() => {
+            if (!isAnimating) {
+                clearInterval(waitForAnim);
+                processMsg();
             }
-        }
-    });
-
+        }, 100);
+    } else {
+        processMsg();
+    }
+});
     socket.on('buyConfirmed', (data) => {
         console.log('✅ Pirkimas patvirtintas:', data);
         playSoundForPlayer('buy', data.playerId);
-        playSoundForPlayer('cash', data.playerId);
+        playSoundForPlayer('nope', data.playerId);
 
         if (data.playerId !== undefined) {
             incrementBought(data.playerId);
