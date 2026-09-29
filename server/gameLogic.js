@@ -1205,13 +1205,13 @@ class Game {
         }
 
         if (this.doubleRoll) {
-    player.consecutiveDoubles++;   // 🆕 player, ne this
-} else {
-    player.consecutiveDoubles = 0;   // 🆕 player, ne this
-}
+            player.consecutiveDoubles++;
+        } else {
+            player.consecutiveDoubles = 0;
+        }
 
-if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
-    player.consecutiveDoubles = 0;   // 🆕 player, ne this
+        if (player.consecutiveDoubles >= 3) {
+            player.consecutiveDoubles = 0;
             player.position = 16;
             player.inJail = true;
             this.isRolling = false;
@@ -1248,75 +1248,20 @@ if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
 
         player.position = newPosition;
         const currentField = this.board[newPosition];
-        const result = this.handleField(player, currentField);
 
-        if (result.action === 'can_buy') {
-            this.waitingForBuy = true;
-            this.isRolling = false;
-
-            if (this.emitFunction) {
-                this.emitFunction('showBuy', {
-                    fieldId: currentField.id,
-                    playerId: player.id,
-                    fieldName: currentField.name,
-                    fieldCost: currentField.cost
-                });
-
-                this.emitFunction('buyPending', {
-                    playerId: player.id,
-                    playerName: player.name,
-                    fieldName: currentField.name,
-                    fieldCost: currentField.cost
-                });
-            }
-
-            this.startBuyTimeout(playerId);
-
-            return {
-                dice: [dice1, dice2],
-                total,
-                player,
-                field: currentField,
-                result,
-                double: this.doubleRoll,
-                oldPosition: oldPosition,
-                newPosition: newPosition,
-                canBuy: true,
-                message: `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`
-            };
-        }
-
-        this.turnHistory.push({
-            player: player.name,
-            dice: [dice1, dice2],
-            total,
-            field: currentField.name,
-            action: result.action || 'Atsistojo',
-            double: this.doubleRoll,
-            timestamp: new Date().toISOString()
-        });
-
+        // 🆕 IŠIMTA handleField - bus iškviesta processField
         this.isRolling = false;
-
-        if (this.doubleRoll && result.action !== 'can_buy') {
-            this.addMessage(`🎲 ${player.name} išmetė dublį! Meta dar kartą.`);
-        }
-
-        if (!this.doubleRoll) {
-            this.endTurn();
-        }
 
         return {
             dice: [dice1, dice2],
             total,
             player,
             field: currentField,
-            result,
             double: this.doubleRoll,
             oldPosition: oldPosition,
             newPosition: newPosition,
             inJail: player.inJail,
-            canBuy: false
+            needsProcessField: true   // 🆕 Signalas server'iui, kad reikia apdoroti lauką
         };
     }
 
@@ -1328,9 +1273,9 @@ if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
             player.inJail = false;
             player.jailTurns = 0;
             this.addMessage(`${player.name} išėjo iš kalėjimo! 🎉`);
+            this.isRolling = false;
             return this.continueAfterJail(player, dice1, dice2);
         } else if (player.jailTurns >= 3) {
-            // 🆕 Patikrinti, ar turi €50
             if (player.money < C.JAIL_FINE) {
                 console.log(`💀 ${player.name}: neturi €${C.JAIL_FINE} – BANKROTAS!`);
                 this.addMessage(`💀 ${player.name} neturi €${C.JAIL_FINE} – bankrotuoja!`);
@@ -1349,6 +1294,7 @@ if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
             if (player.money < 0) {
                 this.checkDebtor(player.id);
             }
+            this.isRolling = false;
             return this.continueAfterJail(player, dice1, dice2);
         } else {
             this.addMessage(`${player.name} kalėjime. Bandymas ${player.jailTurns}/3`);
@@ -1358,7 +1304,7 @@ if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
                 dice: [dice1, dice2],
                 total: dice1 + dice2,
                 player,
-                field: null,
+                field: this.board[player.position],   // 🆕
                 inJail: true,
                 double: false,
                 jailAttempt: player.jailTurns,
@@ -1382,11 +1328,40 @@ if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
 
         player.position = newPosition;
         const currentField = this.board[newPosition];
+
+        // 🆕 IŠIMTA handleField - bus iškviesta processField
+        this.isRolling = false;
+
+        return {
+            dice: [dice1, dice2],
+            total,
+            player,
+            field: currentField,
+            double: false,
+            oldPosition: oldPosition,
+            newPosition: newPosition,
+            inJail: player.inJail,
+            needsProcessField: true   // 🆕
+        };
+    }
+
+    processField(playerId) {
+        const player = this.getPlayerById(playerId);
+        if (!player) {
+            return { error: 'Žaidėjas nerastas' };
+        }
+
+        const currentField = this.board[player.position];
+        if (!currentField) {
+            return { error: 'Laukas nerastas' };
+        }
+
+        // 🆕 Apdorojam lauką
         const result = this.handleField(player, currentField);
 
+        // 🆕 Jei can_buy
         if (result.action === 'can_buy') {
             this.waitingForBuy = true;
-            this.isRolling = false;
 
             if (this.emitFunction) {
                 this.emitFunction('showBuy', {
@@ -1404,68 +1379,84 @@ if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
                 });
             }
 
-            this.startBuyTimeout(player.id);
+            this.startBuyTimeout(playerId);
 
             return {
-                dice: [dice1, dice2],
-                total,
-                player,
+                success: true,
+                playerId: playerId,
+                playerName: player.name,
                 field: currentField,
-                result,
-                double: false,
-                oldPosition: oldPosition,
-                newPosition: newPosition,
+                result: result,
                 canBuy: true,
                 message: `🏠 ${player.name} gali nusipirkti ${currentField.name} už €${currentField.cost}`
             };
         }
 
-        // 🆕 Jei pateko į kalėjimą – praranda eilę, net jei dublis
+        // 🆕 Jei pateko į kalėjimą (go-to-jail arba Chance)
         if (result.action === 'go_to_jail' || player.inJail) {
-            this.consecutiveDoubles = 0;
+            player.consecutiveDoubles = 0;
             this.doubleRoll = false;
-            this.isRolling = false;
-            
+
             this.addMessage(`⛓️ ${player.name} pateko į kalėjimą – praranda eilę!`);
-            
+
             this.turnHistory.push({
                 player: player.name,
-                dice: [dice1, dice2],
-                total,
                 field: currentField.name,
                 action: 'go_to_jail',
-                double: false,
                 timestamp: new Date().toISOString()
             });
-            
+
+            // 🆕 Jei dublis, bet pateko į kalėjimą → praranda eilę
             this.endTurn();
-            
+
             return {
-                dice: [dice1, dice2],
-                total,
-                player,
+                success: true,
+                playerId: playerId,
+                playerName: player.name,
                 field: currentField,
-                result,
-                double: false,
-                oldPosition: oldPosition,
-                newPosition: newPosition,
+                result: result,
                 inJail: true,
-                canBuy: false
+                canBuy: false,
+                message: `⛓️ ${player.name} pateko į kalėjimą`
             };
         }
 
-        this.isRolling = false;
+        // 🆕 Įrašom į istoriją
+        this.turnHistory.push({
+            player: player.name,
+            field: currentField.name,
+            action: result.action || 'Atsistojo',
+            double: this.doubleRoll,
+            timestamp: new Date().toISOString()
+        });
+
+        // 🆕 Jei dublis – tas pats žaidėjas meta dar kartą
+        if (this.doubleRoll) {
+            this.addMessage(`🎲 ${player.name} išmetė dublį! Meta dar kartą.`);
+            
+            return {
+                success: true,
+                playerId: playerId,
+                playerName: player.name,
+                field: currentField,
+                result: result,
+                double: true,
+                canBuy: false,
+                message: `🎲 Dublis! ${player.name} meta dar kartą`
+            };
+        }
+
+        // 🆕 Jei ne dublis – pereina prie kito žaidėjo
         this.endTurn();
+
         return {
-            dice: [dice1, dice2],
-            total,
-            player,
+            success: true,
+            playerId: playerId,
+            playerName: player.name,
             field: currentField,
-            result,
+            result: result,
             double: false,
-            oldPosition: oldPosition,
-            newPosition: newPosition,
-            inJail: false
+            canBuy: false
         };
     }
 
@@ -1589,9 +1580,9 @@ if (player.consecutiveDoubles >= 3) {   // 🆕 player, ne this
 
             case 'tax': {
                 if (field.id === 5) {
-                    player.money -= 200;
+                    player.money -= 100;
                     result.action = 'pay_tax';
-                    result.message = `${player.name} sumokėjo €200 VMI mokesčių! 💰`;
+                    result.message = `${player.name} sumokėjo €100 VMI mokesčių! 💰`;
                     this.addMessage(result.message);
                 } else if (field.id === 21) {
                     player.money -= 10;

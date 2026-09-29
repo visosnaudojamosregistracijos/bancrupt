@@ -343,12 +343,21 @@ socket = io(SERVER_URL, {
         }
         
         if (data.oldPosition !== undefined && data.newPosition !== undefined) {
-        isAnimating = true;   // 🆕 PRADEDAM animaciją
-        await animateMovement(data.player.id, data.oldPosition, data.newPosition);
-        isAnimating = false;   // 🆕 BAIGĖM animaciją
-    }
+            isAnimating = true;   // 🆕 PRADEDAM animaciją
+            await animateMovement(data.player.id, data.oldPosition, data.newPosition);
+            isAnimating = false;   // 🆕 BAIGĖM animaciją
+        }
         
         window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
+
+
+        
+        // 🆕 Siunčiam movementFinished TIK jei AŠ mečiau kauliukus
+if (data.needsProcessField && data.player.id === playerId) {
+    console.log('✅ Animacija baigta, siunčiam movementFinished');
+    socket.emit('movementFinished');
+    return;
+}
         
         const isMe = data.player.id === playerId;
 
@@ -638,6 +647,58 @@ socket = io(SERVER_URL, {
         if (data.playerId === playerId) {
             document.getElementById('bankruptMessage').style.display = 'flex';
         }
+        updateUI(gameState);
+    });
+
+    // 🆕 SERVERIS APDOROJO LAUKĄ – rodom garsus, pranešimus, kortelę
+    socket.on('fieldResult', (data) => {
+    console.log('🎯 fieldResult:', data);
+    console.log('🎯 data.result:', data.result);
+    console.log('🎯 data.result.result:', data.result?.result);
+    console.log('🎯 data.result.result?.rent:', data.result?.result?.rent);
+    
+    if (!data || !data.field) return;
+    
+    const fieldId = data.field.id;
+    const result = data.result || {};
+        
+        // 🆕 Garsai pagal lauką
+        if (fieldId === 2) playSoundForPlayer('dujos', data.playerId);
+        else if (fieldId === 14) playSoundForPlayer('siuksles', data.playerId);
+        else if (fieldId === 28) playSoundForPlayer('elektra', data.playerId);
+        else if (fieldId === 44) playSoundForPlayer('vanduo', data.playerId);
+        else if (fieldId === 8) playSoundForPlayer('air-port', data.playerId);
+        else if (fieldId === 19) playSoundForPlayer('train', data.playerId);
+        else if (fieldId === 37) playSoundForPlayer('port', data.playerId);
+        else if (fieldId === 46) playSoundForPlayer('bus', data.playerId);
+        else if (fieldId === 13) playSoundForPlayer('hospital', data.playerId);
+        else if (fieldId === 21) playSoundForPlayer('latras', data.playerId, true);
+        else if (fieldId === 32) playSoundForPlayer('pirtis', data.playerId);
+        else if (fieldId === 11) playSoundForPlayer('spa', data.playerId);
+        else if (fieldId === 24) playSoundForPlayer('baseinas', data.playerId);
+        else if (fieldId === 48) playSoundForPlayer('papludimys', data.playerId);
+        else if (fieldId === 50) playSoundForPlayer('birthday', data.playerId, true);
+        else if (fieldId === 42) playSoundForPlayer('jail_in', data.playerId, true);
+        else if (fieldId === 16) playSoundForPlayer('jail', data.playerId);
+        
+        // 🆕 Nuomos mokėjimo garsas
+        if (result.action === 'pay_rent') {
+            playSoundForPlayer('pay1', null);
+        }
+        
+        // 🆕 Pranešimas
+        if (result.message) {
+            addJournal(result.message);
+            
+            let actionType = 'info';
+            if (result.action === 'pay_rent') actionType = 'rent';
+            else if (result.action === 'pay_tax' || result.action === 'latras' || result.action === 'pirtis') actionType = 'tax';
+            else if (result.action === 'chance' || result.action === 'special' || result.action === 'birthday') actionType = 'chance';
+            else if (result.action === 'can_buy') actionType = 'visit';
+            
+            showCellAction(result.message, actionType);
+        }
+        
         updateUI(gameState);
     });
 
@@ -3941,14 +4002,14 @@ function updateBoard(state) {
         }
         
         if (playersHere.length > 0) {
-            html += `<div class="players-on-cell">`;
-            playersHere.forEach(p => {
-                const isAnimating = window.animatingPlayers && window.animatingPlayers.includes(p.id);
-                const displayStyle = isAnimating ? 'display:none;' : '';
-                html += `<span class="player-dot" style="background:${p.color};${displayStyle}" data-player-id="${p.id}"></span>`;
-            });
-            html += `</div>`;
-        }
+    html += `<div class="players-on-cell" data-count="${playersHere.length}">`;
+    playersHere.forEach(p => {
+        const isAnimating = window.animatingPlayers && window.animatingPlayers.includes(p.id);
+        const displayStyle = isAnimating ? 'display:none;' : '';
+        html += `<span class="player-dot" style="background:${p.color};${displayStyle}" data-player-id="${p.id}"></span>`;
+    });
+    html += `</div>`;
+}
         
         cell.innerHTML = html;
         

@@ -1,5 +1,5 @@
 /* ============================================
-   BANCRUPT - PAGRINDINIS STILIUS
+   BANCRUPT - PAGRINDINIS STILIUS (IŠVALYTAS)
    ============================================ */
 
 :root {
@@ -800,10 +800,6 @@ body {
     background: linear-gradient(145deg, #e8d5b5, #d4b896);
     border: 2px solid #c9a84c;
     border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     font-size: 9px;
     color: #3d2b1f;
     text-align: center;
@@ -898,10 +894,15 @@ body {
     line-height: 1;
 }
 
+/* ---------- LANGELIO PAVADINIMAS IR KAINA (ABSOLIUTŪS – NESTUMDO) ---------- */
 .cell .cell-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -75%);
     font-size: 11px;
     line-height: 1.2;
-    max-width: 100%;
+    max-width: 90%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: normal;
@@ -910,16 +911,30 @@ body {
     padding: 0 2px;
     color: #000000;
     font-weight: 700;
-    z-index: 2;
-    position: relative;
+    z-index: 3;
+    pointer-events: none;
 }
 
 .cell .cell-cost {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 30%);
     font-size: 10px;
     color: #000000;
     font-weight: 700;
-    z-index: 2;
-    position: relative;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.cell.corner .cell-name {
+    transform: translate(-50%, -85%);
+    font-size: 13px;
+}
+
+.cell.corner .cell-cost {
+    transform: translate(-50%, 50%);
+    font-size: 12px;
 }
 
 /* ---------- VIDURIO LANGELIAI ---------- */
@@ -1104,39 +1119,17 @@ body {
 }
 
 @keyframes diceRollEnhanced {
-    0% {
-        transform: rotate(0deg) scale(1);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-    }
-    20% {
-        transform: rotate(72deg) scale(1.15);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-    }
-    40% {
-        transform: rotate(144deg) scale(0.9);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-    }
-    60% {
-        transform: rotate(216deg) scale(1.2);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-    }
-    80% {
-        transform: rotate(288deg) scale(0.95);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    }
-    100% {
-        transform: rotate(360deg) scale(1);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-    }
+    0% { transform: rotate(0deg) scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
+    20% { transform: rotate(72deg) scale(1.15); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+    40% { transform: rotate(144deg) scale(0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
+    60% { transform: rotate(216deg) scale(1.2); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+    80% { transform: rotate(288deg) scale(0.95); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+    100% { transform: rotate(360deg) scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
 }
 
 @keyframes diceGlow {
-    0%, 100% {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 5px rgba(255,215,0,0.3);
-    }
-    50% {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 25px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4);
-    }
+    0%, 100% { box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 5px rgba(255,215,0,0.3); }
+    50% { box-shadow: 0 4px 15px rgba(0,0,0,0.25), 0 0 25px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4); }
 }
 
 .dice.rolling {
@@ -1251,7 +1244,6 @@ body {
     white-space: nowrap;
 }
 
-/* 🆕 VISI ACTION MYGTUKAI – vienoda išvaizda */
 .btn-bankrupt,
 .btn-jail,
 .btn-build {
@@ -1283,7 +1275,6 @@ body {
     cursor: not-allowed;
 }
 
-/* 🆕 Griauti mygtukas – tokia pati išvaizda kaip bankrotas */
 .btn-demolish {
     background: linear-gradient(145deg, #dc3545, #a71d2a);
     color: #fff;
@@ -1486,22 +1477,16 @@ body {
     border-radius: 8px;
     z-index: 100;
     animation: choiceFadeIn 0.25s ease;
-    pointer-events: all;  /* 🆕 Neleisti praleisti paspaudimų */
+    pointer-events: all;
 }
 
-/* 🆕 Neleisti uždaryti paspaudus išorę */
 #buyChoice.show {
     display: flex;
     pointer-events: all;
 }
 
-/* 🆕 Neleisti ESC uždaryti */
 #buyChoice.show * {
     pointer-events: all;
-}
-
-#buyChoice.show {
-    display: flex;
 }
 
 @keyframes choiceFadeIn {
@@ -1662,8 +1647,6 @@ body {
 }
 
 /* ---------- SPALVOTOS JUOSTELĖS ---------- */
-
-/* SERVICE grupės – BE spalvotos juostelės */
 .cell.service1::before,
 .cell.service2::before,
 .cell.service3::before {
@@ -1739,7 +1722,6 @@ body {
     z-index: 5;
 }
 
-/* ---------- KAMPŲ NUMERIŲ POZICIJOS ---------- */
 .cell.corner .cell-number {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.4);
@@ -1765,7 +1747,7 @@ body {
     left: 6px;
 }
 
-/* ---------- SAVININKŲ RUTULIUKŲ IŠVAZDA ---------- */
+/* ---------- SAVININKŲ RUTULIUKAI ---------- */
 .cell .cell-owner {
     position: absolute;
     width: 14px;
@@ -1908,7 +1890,7 @@ body {
 }
 
 /* ============================================
-   🆕 PREKYBOS MINI KORTELĖS
+   PREKYBOS MINI KORTELĖS
    ============================================ */
 
 .trade-mini-cards {
@@ -2144,28 +2126,31 @@ body {
     line-height: 1.2;
 }
 
-/* ---------- ŽAIDĖJŲ IKONĖLĖS ---------- */
+/* ============================================
+   ŽAIDĖJŲ IKONĖLĖS – VIENA TAISYKLĖ (ABSOLIUTI)
+   ============================================ */
 .cell .players-on-cell {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: grid;
-    grid-template-columns: repeat(4, auto);
-    grid-template-rows: repeat(2, auto);
-    gap: 4px;
-    z-index: 20;
-    justify-content: center;
-    align-content: center;
-    padding: 2px;
-    margin: 0;
-    pointer-events: none;
+    position: absolute !important;
+    top: 2px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
+    z-index: 20 !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    padding: 2px !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+    overflow: visible !important;
+    max-height: 50% !important;
 }
 
 .cell .players-on-cell .player-dot {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: 3px solid rgba(255,255,255,0.95);
     display: flex;
@@ -2189,7 +2174,61 @@ body {
     height: 38px;
 }
 
+/* Mažinimas pagal žaidėjų skaičių */
+.cell .players-on-cell[data-count="1"] .player-dot {
+    width: 40px;
+    height: 40px;
+}
 
+.cell .players-on-cell[data-count="2"] .player-dot {
+    width: 36px;
+    height: 36px;
+    border-width: 2px;
+}
+
+.cell .players-on-cell[data-count="3"] .player-dot {
+    width: 28px;
+    height: 28px;
+    border-width: 2px;
+}
+
+.cell .players-on-cell[data-count="4"] .player-dot,
+.cell .players-on-cell[data-count="5"] .player-dot,
+.cell .players-on-cell[data-count="6"] .player-dot,
+.cell .players-on-cell[data-count="7"] .player-dot,
+.cell .players-on-cell[data-count="8"] .player-dot {
+    width: 22px;
+    height: 22px;
+    border-width: 2px;
+}
+
+/* Kampų mažinimas */
+.cell.corner .players-on-cell[data-count="1"] .player-dot {
+    width: 38px;
+    height: 38px;
+}
+
+.cell.corner .players-on-cell[data-count="2"] .player-dot {
+    width: 30px;
+    height: 30px;
+    border-width: 2px;
+}
+
+.cell.corner .players-on-cell[data-count="3"] .player-dot {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+}
+
+.cell.corner .players-on-cell[data-count="4"] .player-dot,
+.cell.corner .players-on-cell[data-count="5"] .player-dot,
+.cell.corner .players-on-cell[data-count="6"] .player-dot,
+.cell.corner .players-on-cell[data-count="7"] .player-dot,
+.cell.corner .players-on-cell[data-count="8"] .player-dot {
+    width: 18px;
+    height: 18px;
+    border-width: 1.5px;
+}
 
 /* ---------- BLINK ANIMACIJA ---------- */
 @keyframes blink {
@@ -2197,7 +2236,1114 @@ body {
     51%, 100% { opacity: 0.3; }
 }
 
-/* ---------- RESPONSIVE ---------- */
+/* ---------- FONO IKONA (EMOJI) ---------- */
+.cell-bg-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8em;
+    opacity: 0.8;
+    z-index: 0;
+    pointer-events: none;
+    line-height: 1;
+    user-select: none;
+}
+
+.row-middle-left .cell-bg-icon,
+.row-middle-right .cell-bg-icon {
+    font-size: 5em;
+}
+
+.cell.corner .cell-bg-icon {
+    font-size: 8em;
+    opacity: 0.8;
+}
+
+.cell-top-bar {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+    pointer-events: none;
+    flex-direction: row;
+}
+
+.row-top .cell-top-bar {
+    top: 2px;
+    left: 2px;
+}
+
+.row-bottom .cell-top-bar {
+    bottom: 4px;
+    left: 6px;
+}
+
+.row-middle-right .cell-top-bar {
+    bottom: 4px;
+    right: 6px;
+}
+
+.row-middle-left .cell-top-bar {
+    top: 4px;
+    left: 6px;
+}
+
+/* ---------- GARSO SLIDER ---------- */
+#volumeSlider,
+#musicVolumeSlider,
+#sfxVolumeSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: linear-gradient(to right, #dc3545, #ffc107, #28a745);
+    border-radius: 3px;
+    outline: none;
+}
+
+#volumeSlider::-webkit-slider-thumb,
+#musicVolumeSlider::-webkit-slider-thumb,
+#sfxVolumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #ffd700;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #0d1f0d;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+#volumeSlider::-moz-range-thumb,
+#musicVolumeSlider::-moz-range-thumb,
+#sfxVolumeSlider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #ffd700;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #0d1f0d;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+#soundPanel {
+    animation: soundPanelFadeIn 0.2s ease;
+}
+
+@keyframes soundPanelFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#muteBtn:hover {
+    background: #ffd700;
+    color: #0d1f0d;
+}
+
+/* ---------- PREKYBOS MYGTUKAI ---------- */
+.btn-trade-option {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: clamp(12px, 0.9vw, 16px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 4px 0;
+}
+
+.btn-trade-option:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-trade-option:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* ---------- INFO MYGTUKAS ---------- */
+.info-btn {
+    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    color: #fff;
+    border-color: #ff6b6b;
+    transition: all 0.3s;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-btn.active {
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    border-color: #4ade80;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+}
+
+.info-btn:hover {
+    transform: scale(1.03);
+}
+
+/* ---------- INFO PANELĖ ---------- */
+#cellInfoPanel {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    border: 1px solid rgba(61, 43, 31, 0.1);
+    margin-top: 3px;
+    min-height: 30px;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-size: var(--info-font-size, 11px);
+    color: #3d2b1f;
+    line-height: 1.25;
+    flex-shrink: 0;
+}
+
+#cellInfoPanel.show {
+    display: flex;
+}
+
+#cellInfoPanel::-webkit-scrollbar {
+    width: 4px;
+}
+
+#cellInfoPanel::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 2px;
+}
+
+#cellInfoPanel::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+}
+
+.info-header {
+    font-weight: 700;
+    font-size: var(--info-header-size, 14px);
+    color: #1a6b3c;
+    border-bottom: 2px solid #c9a84c;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 1px 0;
+    font-size: var(--info-font-size, 11px);
+}
+
+.info-row .label {
+    color: #6c757d;
+    font-weight: 600;
+    font-size: var(--info-font-size, 11px);
+}
+
+.info-row .value {
+    color: #3d2b1f;
+    font-weight: 700;
+    font-size: var(--info-font-size, 11px);
+}
+
+.info-row .value.green {
+    color: #28a745;
+}
+
+.info-row .value.red {
+    color: #dc3545;
+}
+
+.info-section {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dashed rgba(61, 43, 31, 0.2);
+}
+
+.info-section-title {
+    font-weight: 700;
+    font-size: var(--info-section-size, 12px);
+    color: #1a6b3c;
+    margin-bottom: 2px;
+}
+
+.info-placeholder {
+    text-align: center;
+    color: #6c757d;
+    font-size: 11px;
+    padding: 8px;
+    font-style: italic;
+}
+
+/* ---------- BALSAVIMO MYGTUKAS ---------- */
+.vote-kick-btn {
+    background: linear-gradient(145deg, #6f42c1, #5a32a3);
+    color: #fff;
+    border-color: #8b5cf6;
+    font-size: clamp(9px, 0.7vw, 11px);
+    padding: 8px 6px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vote-kick-btn:hover {
+    background: linear-gradient(145deg, #8b5cf6, #6f42c1);
+    color: #fff;
+}
+
+/* ---------- BALSAVIMO MODALAS ---------- */
+.vote-kick-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    margin: 4px 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 8px;
+    border: 2px solid #c9a84c;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vote-kick-card:hover {
+    background: rgba(255,255,255,0.5);
+    transform: scale(1.02);
+    border-color: #dc3545;
+}
+
+.vote-kick-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.vote-kick-card .card-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.vote-kick-card .card-name {
+    font-weight: 600;
+    font-size: 14px;
+    flex: 1;
+    margin-left: 8px;
+    color: #3d2b1f;
+}
+
+.vote-kick-card .card-votes {
+    font-size: 13px;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+.vote-kick-status {
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #3d2b1f;
+    text-align: center;
+    border: 1px solid #c9a84c;
+}
+
+.vote-kick-timer {
+    font-size: 18px;
+    font-weight: 700;
+    color: #dc3545;
+    margin: 5px 0;
+}
+
+/* ============================================ */
+/* WAITING ROOM OVERLAY */
+/* ============================================ */
+#waitingRoomOverlay {
+    animation: waitingFadeIn 0.3s ease;
+}
+
+@keyframes waitingFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#waitingPlayersList::-webkit-scrollbar,
+#waitingChatMessages::-webkit-scrollbar {
+    width: 4px;
+}
+
+#waitingPlayersList::-webkit-scrollbar-thumb,
+#waitingChatMessages::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 2px;
+}
+
+#waitingPlayersList::-webkit-scrollbar-track,
+#waitingChatMessages::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+}
+
+#readyBtn:disabled,
+#startGameBtn:disabled {
+    cursor: not-allowed;
+}
+
+#waitingIsPublic {
+    accent-color: #ffd700;
+}
+
+#createIsPublic {
+    accent-color: #ffd700;
+}
+
+/* ---------- INFO TOOLTIP ---------- */
+#cellInfoTooltip {
+    position: fixed;
+    display: none;
+    background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
+    border: 2px solid #c9a84c;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 11px;
+    color: #3d2b1f;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    z-index: 10000;
+    min-width: 180px;
+    max-width: 280px;
+    pointer-events: none;
+    animation: tooltipFadeIn 0.15s ease;
+}
+
+@keyframes tooltipFadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+#cellInfoTooltip .info-header {
+    font-weight: 700;
+    font-size: 12px;
+    color: #1a6b3c;
+    border-bottom: 1px solid #c9a84c;
+    padding-bottom: 3px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+#cellInfoTooltip .info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 1px 0;
+    font-size: 10px;
+}
+
+#cellInfoTooltip .info-row .label {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+#cellInfoTooltip .info-row .value {
+    color: #3d2b1f;
+    font-weight: 700;
+}
+
+#cellInfoTooltip .info-row .value.green {
+    color: #28a745;
+}
+
+#cellInfoTooltip .info-row .value.red {
+    color: #dc3545;
+}
+
+#cellInfoTooltip .info-section {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dashed rgba(61, 43, 31, 0.2);
+}
+
+#cellInfoTooltip .info-section-title {
+    font-weight: 700;
+    font-size: 10px;
+    color: #1a6b3c;
+    margin-bottom: 3px;
+}
+
+/* ---------- ŽAIDĖJO JUDĖJIMO ANIMACIJA ---------- */
+.player-dot.jumping {
+    transform: scale(1.4);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    z-index: 101;
+}
+
+/* ---------- LANGELIO PRANEŠIMŲ BLOKAS ---------- */
+#cellActionInfo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    z-index: 8;
+    animation: choiceFadeIn 0.25s ease;
+}
+
+#cellActionInfo.show {
+    display: flex;
+}
+
+.cell-action-box {
+    background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
+    border-radius: 10px;
+    padding: 12px 14px 14px;
+    width: 90%;
+    max-width: 250px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    border: 2px solid #c9a84c;
+}
+
+.cell-action-header {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a6b3c;
+    border-bottom: 2px solid #c9a84c;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+}
+
+.cell-action-body {
+    text-align: center;
+    font-size: 12px;
+    color: #3d2b1f;
+    line-height: 1.4;
+}
+
+.cell-action-body p {
+    margin: 4px 0;
+}
+
+/* ============================================
+   EMODŽIŲ ANIMACIJOS
+   ============================================ */
+
+@keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.15); }
+}
+
+@keyframes spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes wave {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-8px); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-12px); }
+}
+
+@keyframes glow {
+    0%, 100% { 
+        filter: drop-shadow(0 0 5px gold); 
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% { 
+        filter: drop-shadow(0 0 15px gold); 
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+.cell[data-id="0"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
+.cell[data-id="2"] .cell-bg-icon { animation: glow 1.5s ease-in-out infinite; }
+.cell[data-id="4"] .cell-bg-icon { animation: pulse 1.8s ease-in-out infinite; }
+.cell[data-id="5"] .cell-bg-icon { animation: blink 1.2s ease-in-out infinite; }
+.cell[data-id="8"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="11"] .cell-bg-icon { animation: bounce 1.5s ease-in-out infinite; }
+.cell[data-id="13"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
+.cell[data-id="14"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="16"] .cell-bg-icon { animation: blink 1.5s ease-in-out infinite; }
+.cell[data-id="19"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="21"] .cell-bg-icon { animation: bounce 1.8s ease-in-out infinite; }
+.cell[data-id="24"] .cell-bg-icon { animation: spin 8s linear infinite; }
+.cell[data-id="26"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="28"] .cell-bg-icon { animation: blink 1s ease-in-out infinite; }
+.cell[data-id="32"] .cell-bg-icon { animation: pulse 2.5s ease-in-out infinite; }
+.cell[data-id="37"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="42"] .cell-bg-icon { animation: blink 0.8s ease-in-out infinite; }
+.cell[data-id="44"] .cell-bg-icon { animation: wave 2.5s ease-in-out infinite; }
+.cell[data-id="46"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
+.cell[data-id="48"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
+.cell[data-id="50"] .cell-bg-icon { animation: bounce 1.5s ease-in-out infinite; }
+
+/* ============================================
+   LAIMĖJIMO EKRANAS SU KONFETI
+   ============================================ */
+
+@keyframes winnerBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.1); }
+}
+
+@keyframes winnerGlow {
+    0%, 100% { 
+        text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 20px rgba(0,0,0,0.9);
+        transform: scale(1);
+    }
+    50% { 
+        text-shadow: 0 0 60px rgba(255,215,0,1), 0 0 80px rgba(255,215,0,0.6), 0 4px 20px rgba(0,0,0,0.9);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.confetti-piece {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    top: -20px;
+    z-index: 99998;
+    animation: confettiFall linear forwards;
+    pointer-events: none;
+}
+
+.confetti-piece.rect {
+    width: 8px;
+    height: 16px;
+    border-radius: 2px;
+}
+
+.confetti-piece.circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.confetti-piece.triangle {
+    width: 0;
+    height: 0;
+    background: transparent;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 12px solid;
+}
+
+#winnerModal.active {
+    display: flex;
+}
+
+/* ============================================
+   NAMŲ STATYMO ANIMACIJA
+   ============================================ */
+
+@keyframes houseGrow {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    50% { transform: scale(1.3) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes houseBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+@keyframes hotelGrow {
+    0% { transform: scale(0) rotate(180deg); opacity: 0; }
+    50% { transform: scale(1.5) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1.1) rotate(0deg); opacity: 1; }
+}
+
+.cell-houses span.new-house {
+    animation: houseGrow 0.6s ease-out;
+    display: inline-block;
+}
+
+.cell-houses span.new-hotel {
+    animation: hotelGrow 0.8s ease-out;
+    display: inline-block;
+}
+
+.cell-houses span.house-bounce {
+    animation: houseBounce 0.4s ease-out;
+    display: inline-block;
+}
+
+/* ============================================
+   SKLYPO HIGHLIGHT
+   ============================================ */
+
+.cell.highlight-yellow {
+    background: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5);
+    transform: scale(1.08);
+    z-index: 100;
+    transition: all 0.12s ease;
+    animation: highlightPulse 0.6s ease-in-out infinite alternate;
+}
+
+.cell.highlight-green {
+    background: rgba(40, 167, 69, 0.5);
+    box-shadow: 0 0 30px rgba(40, 167, 69, 0.9), inset 0 0 20px rgba(40, 167, 69, 0.5);
+    transform: scale(1.1);
+    z-index: 100;
+    transition: all 0.15s ease;
+    animation: highlightGreenPulse 0.5s ease-in-out infinite alternate;
+}
+
+.cell.highlight-red {
+    background: rgba(220, 53, 69, 0.5);
+    box-shadow: 0 0 30px rgba(220, 53, 69, 0.9), inset 0 0 20px rgba(220, 53, 69, 0.5);
+    transform: scale(1.08);
+    z-index: 100;
+    transition: all 0.12s ease;
+    animation: highlightRedBlink 0.4s ease-in-out infinite;
+}
+
+@keyframes highlightPulse {
+    0% { 
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5);
+        transform: scale(1.05);
+    }
+    100% { 
+        box-shadow: 0 0 40px rgba(255, 215, 0, 1), inset 0 0 25px rgba(255, 215, 0, 0.7);
+        transform: scale(1.1);
+    }
+}
+
+@keyframes highlightGreenPulse {
+    0% { 
+        box-shadow: 0 0 30px rgba(40, 167, 69, 0.9), inset 0 0 20px rgba(40, 167, 69, 0.5);
+        transform: scale(1.08);
+    }
+    100% { 
+        box-shadow: 0 0 50px rgba(40, 167, 69, 1), inset 0 0 30px rgba(40, 167, 69, 0.7);
+        transform: scale(1.15);
+    }
+}
+
+@keyframes highlightRedBlink {
+    0%, 100% { 
+        opacity: 1;
+        box-shadow: 0 0 30px rgba(220, 53, 69, 0.9), inset 0 0 20px rgba(220, 53, 69, 0.5);
+    }
+    50% { 
+        opacity: 0.7;
+        box-shadow: 0 0 50px rgba(220, 53, 69, 1), inset 0 0 30px rgba(220, 53, 69, 0.7);
+    }
+}
+
+/* ============================================
+   SKLYPŲ GRUPAVIMAS
+   ============================================ */
+
+.cell.property[data-group] {
+    border-width: 3px;
+    position: relative;
+}
+
+.cell.property.full-group {
+    border-color: var(--owner-color, #ffd700);
+    box-shadow: 
+        0 0 15px var(--owner-color, #ffd700), 
+        inset 0 0 10px var(--owner-color, #ffd700);
+    animation: fullGroupPulse 2s ease-in-out infinite;
+}
+
+.cell.property.full-group::after {
+    background: var(--owner-color, #ffd700);
+    height: 5px;
+    box-shadow: 0 0 10px var(--owner-color, #ffd700);
+}
+
+@keyframes fullGroupPulse {
+    0%, 100% { 
+        box-shadow: 
+            0 0 15px var(--owner-color, #ffd700), 
+            inset 0 0 10px var(--owner-color, #ffd700);
+    }
+    50% { 
+        box-shadow: 
+            0 0 25px var(--owner-color, #ffd700), 
+            inset 0 0 15px var(--owner-color, #ffd700);
+    }
+}
+
+/* ============================================
+   SKRENDANTYS PINIGAI
+   ============================================ */
+
+@keyframes flyMoney {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--fly-x, 0px), var(--fly-y, -200px)) scale(0.3);
+        opacity: 0;
+    }
+}
+
+.flying-money {
+    position: fixed;
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.9), 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 99999;
+    pointer-events: none;
+    animation: flyMoney 1.2s ease-out forwards;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flying-money.negative {
+    color: #dc3545;
+    text-shadow: 0 0 10px rgba(220, 53, 69, 0.9), 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.flying-money.positive {
+    color: #28a745;
+    text-shadow: 0 0 10px rgba(40, 167, 69, 0.9), 0 2px 5px rgba(0,0,0,0.5);
+}
+
+/* ============================================
+   MYGTUKŲ HOVER EFEKTAI
+   ============================================ */
+
+button,
+.btn,
+.menu-btn,
+.landing-btn,
+.header-btn,
+.left-btn,
+.control-buttons button,
+.choice-btn,
+.action-row button,
+.btn-trade-option,
+.btn-bankrupt,
+.btn-jail,
+.btn-build,
+.btn-demolish {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+button:active:not(:disabled),
+.btn:active,
+.menu-btn:active,
+.landing-btn:active,
+.header-btn:active,
+.left-btn:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s;
+}
+
+button:disabled,
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* ============================================
+   TAMSAUS REŽIMO SPALVOS
+   ============================================ */
+
+body.dark-mode {
+    background: #0a0a0a;
+}
+
+body.dark-mode .cell {
+    background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+body.dark-mode .cell .cell-name,
+body.dark-mode .cell .cell-cost,
+body.dark-mode .cell .cell-number {
+    color: #e0e0e0;
+}
+
+body.dark-mode .center-cell {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.dark-mode .center-cell h4 {
+    color: #e0e0e0;
+    border-bottom-color: rgba(224, 224, 224, 0.2);
+}
+
+body.dark-mode #chatMessages,
+body.dark-mode #journal,
+body.dark-mode #notifications,
+body.dark-mode #playersList {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
+}
+
+body.dark-mode .journal-item {
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .notification-item {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+}
+
+body.dark-mode .player-item {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
+}
+
+body.dark-mode #myInfo {
+    color: #e0e0e0;
+}
+
+body.dark-mode #myInfo .player-money {
+    color: #fff;
+}
+
+body.dark-mode #myInfo .player-name {
+    color: #e0e0e0;
+}
+
+body.dark-mode #cellInfoPanel {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
+}
+
+/* ============================================
+   BUY CARD (5 langelyje)
+   ============================================ */
+
+#buyCard.pending #buyCardBox {
+    border-color: #ffc107;
+    box-shadow: 0 8px 30px rgba(255, 193, 7, 0.5);
+}
+
+#buyCard.pending #buyCardHeader {
+    color: #e0a800;
+    border-bottom-color: #ffc107;
+}
+
+#buyCard.success #buyCardBox {
+    border-color: #28a745;
+    box-shadow: 0 8px 30px rgba(40, 167, 69, 0.5);
+}
+
+#buyCard.success #buyCardHeader {
+    color: #28a745;
+    border-bottom-color: #28a745;
+}
+
+#buyCard.cancel #buyCardBox {
+    border-color: #dc3545;
+    box-shadow: 0 8px 30px rgba(220, 53, 69, 0.5);
+}
+
+#buyCard.cancel #buyCardHeader {
+    color: #dc3545;
+    border-bottom-color: #dc3545;
+}
+
+/* ============================================
+   MINI KORTELIŲ HOVER FIX
+   ============================================ */
+
+#center-1 {
+    overflow: hidden;
+    position: relative;
+    z-index: 100;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#center-1 .center-cell {
+    overflow: hidden;
+}
+
+#center-1 .mini-cards-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    flex: 1 1 45%;
+    min-height: 0;
+}
+
+#center-1 #myInfo {
+    overflow: hidden;
+}
+
+.row-middle-center,
+.center-row {
+    overflow: visible;
+}
+
+/* ============================================
+   AUKCIONO MINI KORTELĖ
+   ============================================ */
+
+#auctionMiniCardContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    min-height: 100px;
+}
+
+#auctionMiniCardContainer .mini-card {
+    width: 80px;
+    height: 120px;
+    min-width: 80px;
+    max-width: 80px;
+    min-height: 120px;
+    max-height: 120px;
+    flex: 0 0 auto;
+    background: #f5f0e8;
+    border: 3px solid #3d2b1f;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+/* ============================================ */
+/* WAITING ROOM – TELEFONUI */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    #waitingRoomOverlay > div > div:nth-child(3) {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #waitingPlayersList {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ============================================ */
+/* KALBOS PASIRINKIMAS */
+/* ============================================ */
+.lang-btn {
+    padding: 6px 10px;
+    border: 2px solid #ffd700;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.5);
+    color: #ffd700;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+}
+
+.lang-btn:hover {
+    background: rgba(255,215,0,0.2);
+    transform: scale(1.05);
+}
+
+.lang-btn.active {
+    background: #ffd700;
+    color: #1a3b1a;
+}
+
+#langSwitcher {
+    position: fixed !important;
+    top: 10px !important;
+    right: 10px !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    gap: 5px !important;
+    pointer-events: auto !important;
+}
+
+#langSwitcher .lang-btn {
+    padding: 6px 10px;
+    border: 2px solid #ffd700;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.8);
+    color: #ffd700;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+    z-index: 999999;
+}
+
+#langSwitcher .lang-btn:hover {
+    background: rgba(255,215,0,0.3);
+    transform: scale(1.05);
+}
+
+#langSwitcher .lang-btn.active {
+    background: #ffd700;
+    color: #1a3b1a;
+    box-shadow: 0 0 15px rgba(255,215,0,0.8);
+}
+
+body:has(#page-game.active) #langSwitcher {
+    display: none !important;
+}
+
+#gameLangSwitcher {
+    display: none;
+}
+
+body:has(#page-game.active) #gameLangSwitcher {
+    display: flex !important;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 @media (max-width: 1200px) {
     #board.fixed {
         width: 100%;
@@ -2537,7 +3683,7 @@ body {
         height: 13px;
         border-width: 1.5px;
     }
-    .cell.corner .players-on-cell .player-dot {
+    .cell.corner .players-on-cell .player-dot {  
         width: 11px;
         height: 11px;
     }
@@ -2761,1282 +3907,4 @@ body {
     .rules-content h2 {
         font-size: 1.4em;
     }
-}
-
-/* ---------- GARSO SLIDER ---------- */
-#volumeSlider,
-#musicVolumeSlider,
-#sfxVolumeSlider {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 6px;
-    background: linear-gradient(to right, #dc3545, #ffc107, #28a745);
-    border-radius: 3px;
-    outline: none;
-}
-
-#volumeSlider::-webkit-slider-thumb,
-#musicVolumeSlider::-webkit-slider-thumb,
-#sfxVolumeSlider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    background: #ffd700;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #0d1f0d;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-
-#volumeSlider::-moz-range-thumb,
-#musicVolumeSlider::-moz-range-thumb,
-#sfxVolumeSlider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    background: #ffd700;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #0d1f0d;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-
-#soundPanel {
-    animation: soundPanelFadeIn 0.2s ease;
-}
-
-@keyframes soundPanelFadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-#muteBtn:hover {
-    background: #ffd700;
-    color: #0d1f0d;
-}
-
-/* 🆕 PREKYBOS MYGTUKAI – vienoda išvaizda */
-.btn-trade-option {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    font-size: clamp(12px, 0.9vw, 16px);
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-sizing: border-box;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin: 4px 0;
-}
-
-.btn-trade-option:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.btn-trade-option:hover:not(:disabled) {
-    transform: scale(1.02);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-
-/* ---------- INFO MYGTUKAS ---------- */
-.info-btn {
-    background: linear-gradient(145deg, #dc3545, #a71d2a);
-    color: #fff;
-    border-color: #ff6b6b;
-    transition: all 0.3s;
-    box-sizing: border-box;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.info-btn.active {
-    background: linear-gradient(145deg, #28a745, #1e7e34);
-    border-color: #4ade80;
-    box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
-}
-
-.info-btn:hover {
-    transform: scale(1.03);
-}
-
-/* ---------- INFO PANELĖ ---------- */
-#cellInfoPanel {
-    display: none;
-    flex-direction: column;
-    gap: 2px;
-    padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    border: 1px solid rgba(61, 43, 31, 0.1);
-    margin-top: 3px;
-    min-height: 30px;
-    max-height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    font-size: var(--info-font-size, 11px);
-    color: #3d2b1f;
-    line-height: 1.25;
-    flex-shrink: 0;
-}
-
-#cellInfoPanel.show {
-    display: flex;
-}
-
-#cellInfoPanel::-webkit-scrollbar {
-    width: 4px;
-}
-
-#cellInfoPanel::-webkit-scrollbar-thumb {
-    background: #c9a84c;
-    border-radius: 2px;
-}
-
-#cellInfoPanel::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1);
-    border-radius: 2px;
-}
-
-.info-header {
-    font-weight: 700;
-    font-size: var(--info-header-size, 14px);
-    color: #1a6b3c;
-    border-bottom: 2px solid #c9a84c;
-    padding-bottom: 3px;
-    margin-bottom: 3px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-    padding: 1px 0;
-    font-size: var(--info-font-size, 11px);
-}
-
-.info-row .label {
-    color: #6c757d;
-    font-weight: 600;
-    font-size: var(--info-font-size, 11px);
-}
-
-.info-row .value {
-    color: #3d2b1f;
-    font-weight: 700;
-    font-size: var(--info-font-size, 11px);
-}
-
-.info-row .value.green {
-    color: #28a745;
-}
-
-.info-row .value.red {
-    color: #dc3545;
-}
-
-.info-section {
-    margin-top: 4px;
-    padding-top: 4px;
-    border-top: 1px dashed rgba(61, 43, 31, 0.2);
-}
-
-.info-section-title {
-    font-weight: 700;
-    font-size: var(--info-section-size, 12px);
-    color: #1a6b3c;
-    margin-bottom: 2px;
-}
-
-.info-placeholder {
-    text-align: center;
-    color: #6c757d;
-    font-size: 11px;
-    padding: 8px;
-    font-style: italic;
-}
-
-/* ---------- BALSAVIMO MYGTUKAS ---------- */
-.vote-kick-btn {
-    background: linear-gradient(145deg, #6f42c1, #5a32a3);
-    color: #fff;
-    border-color: #8b5cf6;
-    font-size: clamp(9px, 0.7vw, 11px);
-    padding: 8px 6px;
-    box-sizing: border-box;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.vote-kick-btn:hover {
-    background: linear-gradient(145deg, #8b5cf6, #6f42c1);
-    color: #fff;
-}
-
-/* ---------- BALSAVIMO MODALAS ---------- */
-.vote-kick-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    margin: 4px 0;
-    background: rgba(255,255,255,0.3);
-    border-radius: 8px;
-    border: 2px solid #c9a84c;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.vote-kick-card:hover {
-    background: rgba(255,255,255,0.5);
-    transform: scale(1.02);
-    border-color: #dc3545;
-}
-
-.vote-kick-card.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-.vote-kick-card .card-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    flex-shrink: 0;
-}
-
-.vote-kick-card .card-name {
-    font-weight: 600;
-    font-size: 14px;
-    flex: 1;
-    margin-left: 8px;
-    color: #3d2b1f;
-}
-
-.vote-kick-card .card-votes {
-    font-size: 13px;
-    font-weight: 700;
-    color: #dc3545;
-}
-
-.vote-kick-status {
-    margin: 10px 0;
-    padding: 10px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 8px;
-    font-size: 13px;
-    color: #3d2b1f;
-    text-align: center;
-    border: 1px solid #c9a84c;
-}
-
-.vote-kick-timer {
-    font-size: 18px;
-    font-weight: 700;
-    color: #dc3545;
-    margin: 5px 0;
-}
-
-/* ---------- FONO IKONA ---------- */
-.cell-bg-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 8em;
-    opacity: 0.8;
-    z-index: 0;
-    pointer-events: none;
-    line-height: 1;
-    user-select: none;
-}
-
-.cell .cell-icon,
-.cell .cell-name,
-.cell .cell-cost,
-.cell .cell-houses,
-.cell .players-on-cell {
-    position: relative;
-    z-index: 1;
-}
-
-.cell .cell-owner {
-    position: relative;
-    z-index: 5;
-}
-
-.row-middle-left .cell-bg-icon,
-.row-middle-right .cell-bg-icon {
-    font-size: 5em;
-}
-
-.cell.corner .cell-bg-icon {
-    font-size: 8em;
-    opacity: 0.8;
-}
-
-.cell-top-bar {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    z-index: 5;
-    pointer-events: none;
-    flex-direction: row;
-}
-
-.row-top .cell-top-bar {
-    top: 2px;
-    left: 2px;
-}
-
-.row-bottom .cell-top-bar {
-    bottom: 4px;
-    left: 6px;
-}
-
-.row-middle-right .cell-top-bar {
-    bottom: 4px;
-    right: 6px;
-}
-
-.row-middle-left .cell-top-bar {
-    top: 4px;
-    left: 6px;
-}
-
-/* ============================================ */
-/* WAITING ROOM OVERLAY */
-/* ============================================ */
-#waitingRoomOverlay {
-    animation: waitingFadeIn 0.3s ease;
-}
-
-@keyframes waitingFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-#waitingPlayersList::-webkit-scrollbar,
-#waitingChatMessages::-webkit-scrollbar {
-    width: 4px;
-}
-
-#waitingPlayersList::-webkit-scrollbar-thumb,
-#waitingChatMessages::-webkit-scrollbar-thumb {
-    background: #c9a84c;
-    border-radius: 2px;
-}
-
-#waitingPlayersList::-webkit-scrollbar-track,
-#waitingChatMessages::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1);
-    border-radius: 2px;
-}
-
-#readyBtn:disabled,
-#startGameBtn:disabled {
-    cursor: not-allowed;
-}
-
-#waitingIsPublic {
-    accent-color: #ffd700;
-}
-
-#createIsPublic {
-    accent-color: #ffd700;
-}
-
-/* ---------- INFO TOOLTIP ---------- */
-#cellInfoTooltip {
-    position: fixed;
-    display: none;
-    background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
-    border: 2px solid #c9a84c;
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 11px;
-    color: #3d2b1f;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-    z-index: 10000;
-    min-width: 180px;
-    max-width: 280px;
-    pointer-events: none;
-    animation: tooltipFadeIn 0.15s ease;
-}
-
-@keyframes tooltipFadeIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-#cellInfoTooltip .info-header {
-    font-weight: 700;
-    font-size: 12px;
-    color: #1a6b3c;
-    border-bottom: 1px solid #c9a84c;
-    padding-bottom: 3px;
-    margin-bottom: 5px;
-    text-align: center;
-}
-
-#cellInfoTooltip .info-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-    padding: 1px 0;
-    font-size: 10px;
-}
-
-#cellInfoTooltip .info-row .label {
-    color: #6c757d;
-    font-weight: 600;
-}
-
-#cellInfoTooltip .info-row .value {
-    color: #3d2b1f;
-    font-weight: 700;
-}
-
-#cellInfoTooltip .info-row .value.green {
-    color: #28a745;
-}
-
-#cellInfoTooltip .info-row .value.red {
-    color: #dc3545;
-}
-
-#cellInfoTooltip .info-section {
-    margin-top: 4px;
-    padding-top: 4px;
-    border-top: 1px dashed rgba(61, 43, 31, 0.2);
-}
-
-#cellInfoTooltip .info-section-title {
-    font-weight: 700;
-    font-size: 10px;
-    color: #1a6b3c;
-    margin-bottom: 3px;
-}
-
-/* ---------- ŽAIDĖJO JUDĖJIMO ANIMACIJA ---------- */
-.player-dot.jumping {
-    transform: scale(1.4);
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-    z-index: 101;
-}
-
-/* ---------- LANGELIO PRANEŠIMŲ BLOKAS ---------- */
-#cellActionInfo {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 8px;
-    z-index: 8;
-    animation: choiceFadeIn 0.25s ease;
-}
-
-#cellActionInfo.show {
-    display: flex;
-}
-
-.cell-action-box {
-    background: linear-gradient(145deg, #f5f0e8, #e8d5b5);
-    border-radius: 10px;
-    padding: 12px 14px 14px;
-    width: 90%;
-    max-width: 250px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    border: 2px solid #c9a84c;
-}
-
-.cell-action-header {
-    text-align: center;
-    font-size: 13px;
-    font-weight: 700;
-    color: #1a6b3c;
-    border-bottom: 2px solid #c9a84c;
-    padding-bottom: 5px;
-    margin-bottom: 8px;
-}
-
-.cell-action-body {
-    text-align: center;
-    font-size: 12px;
-    color: #3d2b1f;
-    line-height: 1.4;
-}
-
-.cell-action-body p {
-    margin: 4px 0;
-}
-
-/* ============================================
-   🎨 EMODŽIŲ ANIMACIJOS
-   ============================================ */
-
-@keyframes pulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.15); }
-}
-
-@keyframes spin {
-    from { transform: translate(-50%, -50%) rotate(0deg); }
-    to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-@keyframes wave {
-    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-    50% { transform: translate(-50%, -50%) translateY(-8px); }
-}
-
-@keyframes bounce {
-    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-    50% { transform: translate(-50%, -50%) translateY(-12px); }
-}
-
-@keyframes glow {
-    0%, 100% { 
-        filter: drop-shadow(0 0 5px gold); 
-        transform: translate(-50%, -50%) scale(1);
-    }
-    50% { 
-        filter: drop-shadow(0 0 15px gold); 
-        transform: translate(-50%, -50%) scale(1.1);
-    }
-}
-
-.cell[data-id="0"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
-.cell[data-id="2"] .cell-bg-icon { animation: glow 1.5s ease-in-out infinite; }
-.cell[data-id="4"] .cell-bg-icon { animation: pulse 1.8s ease-in-out infinite; }
-.cell[data-id="5"] .cell-bg-icon { animation: blink 1.2s ease-in-out infinite; }
-.cell[data-id="8"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
-.cell[data-id="11"] .cell-bg-icon { animation: bounce 1.5s ease-in-out infinite; }
-.cell[data-id="13"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
-.cell[data-id="14"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
-.cell[data-id="16"] .cell-bg-icon { animation: blink 1.5s ease-in-out infinite; }
-.cell[data-id="19"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
-.cell[data-id="21"] .cell-bg-icon { animation: bounce 1.8s ease-in-out infinite; }
-.cell[data-id="24"] .cell-bg-icon { animation: spin 8s linear infinite; }
-.cell[data-id="26"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
-.cell[data-id="28"] .cell-bg-icon { animation: blink 1s ease-in-out infinite; }
-.cell[data-id="32"] .cell-bg-icon { animation: pulse 2.5s ease-in-out infinite; }
-.cell[data-id="37"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
-.cell[data-id="42"] .cell-bg-icon { animation: blink 0.8s ease-in-out infinite; }
-.cell[data-id="44"] .cell-bg-icon { animation: wave 2.5s ease-in-out infinite; }
-.cell[data-id="46"] .cell-bg-icon { animation: wave 3s ease-in-out infinite; }
-.cell[data-id="48"] .cell-bg-icon { animation: pulse 2s ease-in-out infinite; }
-.cell[data-id="50"] .cell-bg-icon { animation: bounce 1.5s ease-in-out infinite; }
-
-/* ============================================
-   🏆 LAIMĖJIMO EKRANAS SU KONFETI
-   ============================================ */
-
-@keyframes winnerBounce {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-20px) scale(1.1); }
-}
-
-@keyframes winnerGlow {
-    0%, 100% { 
-        text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 20px rgba(0,0,0,0.9);
-        transform: scale(1);
-    }
-    50% { 
-        text-shadow: 0 0 60px rgba(255,215,0,1), 0 0 80px rgba(255,215,0,0.6), 0 4px 20px rgba(0,0,0,0.9);
-        transform: scale(1.05);
-    }
-}
-
-@keyframes confettiFall {
-    0% {
-        transform: translateY(-100vh) rotate(0deg);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(100vh) rotate(720deg);
-        opacity: 0;
-    }
-}
-
-.confetti-piece {
-    position: fixed;
-    width: 12px;
-    height: 12px;
-    top: -20px;
-    z-index: 99998;
-    animation: confettiFall linear forwards;
-    pointer-events: none;
-}
-
-.confetti-piece.rect {
-    width: 8px;
-    height: 16px;
-    border-radius: 2px;
-}
-
-.confetti-piece.circle {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.confetti-piece.triangle {
-    width: 0;
-    height: 0;
-    background: transparent;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-bottom: 12px solid;
-}
-
-#winnerModal.active {
-    display: flex;
-}
-
-/* ============================================
-   🏠 NAMŲ STATYMO ANIMACIJA
-   ============================================ */
-
-@keyframes houseGrow {
-    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-    50% { transform: scale(1.3) rotate(0deg); opacity: 1; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-
-@keyframes houseBounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-}
-
-@keyframes hotelGrow {
-    0% { transform: scale(0) rotate(180deg); opacity: 0; }
-    50% { transform: scale(1.5) rotate(0deg); opacity: 1; }
-    100% { transform: scale(1.1) rotate(0deg); opacity: 1; }
-}
-
-.cell-houses span.new-house {
-    animation: houseGrow 0.6s ease-out;
-    display: inline-block;
-}
-
-.cell-houses span.new-hotel {
-    animation: hotelGrow 0.8s ease-out;
-    display: inline-block;
-}
-
-.cell-houses span.house-bounce {
-    animation: houseBounce 0.4s ease-out;
-    display: inline-block;
-}
-
-/* ============================================
-   🎨 SKLYPO HIGHLIGHT
-   ============================================ */
-
-.cell.highlight-yellow {
-    background: rgba(255, 215, 0, 0.5);
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5);
-    transform: scale(1.08);
-    z-index: 100;
-    transition: all 0.12s ease;
-    animation: highlightPulse 0.6s ease-in-out infinite alternate;
-}
-
-.cell.highlight-green {
-    background: rgba(40, 167, 69, 0.5);
-    box-shadow: 0 0 30px rgba(40, 167, 69, 0.9), inset 0 0 20px rgba(40, 167, 69, 0.5);
-    transform: scale(1.1);
-    z-index: 100;
-    transition: all 0.15s ease;
-    animation: highlightGreenPulse 0.5s ease-in-out infinite alternate;
-}
-
-.cell.highlight-red {
-    background: rgba(220, 53, 69, 0.5);
-    box-shadow: 0 0 30px rgba(220, 53, 69, 0.9), inset 0 0 20px rgba(220, 53, 69, 0.5);
-    transform: scale(1.08);
-    z-index: 100;
-    transition: all 0.12s ease;
-    animation: highlightRedBlink 0.4s ease-in-out infinite;
-}
-
-@keyframes highlightPulse {
-    0% { 
-        box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.5);
-        transform: scale(1.05);
-    }
-    100% { 
-        box-shadow: 0 0 40px rgba(255, 215, 0, 1), inset 0 0 25px rgba(255, 215, 0, 0.7);
-        transform: scale(1.1);
-    }
-}
-
-@keyframes highlightGreenPulse {
-    0% { 
-        box-shadow: 0 0 30px rgba(40, 167, 69, 0.9), inset 0 0 20px rgba(40, 167, 69, 0.5);
-        transform: scale(1.08);
-    }
-    100% { 
-        box-shadow: 0 0 50px rgba(40, 167, 69, 1), inset 0 0 30px rgba(40, 167, 69, 0.7);
-        transform: scale(1.15);
-    }
-}
-
-@keyframes highlightRedBlink {
-    0%, 100% { 
-        opacity: 1;
-        box-shadow: 0 0 30px rgba(220, 53, 69, 0.9), inset 0 0 20px rgba(220, 53, 69, 0.5);
-    }
-    50% { 
-        opacity: 0.7;
-        box-shadow: 0 0 50px rgba(220, 53, 69, 1), inset 0 0 30px rgba(220, 53, 69, 0.7);
-    }
-}
-
-/* ============================================
-   🎨 SKLYPŲ GRUPAVIMAS
-   ============================================ */
-
-.cell.property[data-group] {
-    border-width: 3px;
-    position: relative;
-}
-
-/* Pilnos grupės – ŽAIDĖJO spalvos rėmelis */
-.cell.property.full-group {
-    border-color: var(--owner-color, #ffd700);
-    box-shadow: 
-        0 0 15px var(--owner-color, #ffd700), 
-        inset 0 0 10px var(--owner-color, #ffd700);
-    animation: fullGroupPulse 2s ease-in-out infinite;
-}
-
-/* Žaidėjo spalvos juostelė pilnai grupei */
-.cell.property.full-group::after {
-    background: var(--owner-color, #ffd700);
-    height: 5px;
-    box-shadow: 0 0 10px var(--owner-color, #ffd700);
-}
-
-@keyframes fullGroupPulse {
-    0%, 100% { 
-        box-shadow: 
-            0 0 15px var(--owner-color, #ffd700), 
-            inset 0 0 10px var(--owner-color, #ffd700);
-    }
-    50% { 
-        box-shadow: 
-            0 0 25px var(--owner-color, #ffd700), 
-            inset 0 0 15px var(--owner-color, #ffd700);
-    }
-}
-
-
-/* ============================================
-   💸 SKRENDANTYS PINIGAI
-   ============================================ */
-
-@keyframes flyMoney {
-    0% {
-        transform: translate(0, 0) scale(1);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(var(--fly-x, 0px), var(--fly-y, -200px)) scale(0.3);
-        opacity: 0;
-    }
-}
-
-.flying-money {
-    position: fixed;
-    font-size: 36px;
-    font-weight: 700;
-    color: #ffd700;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.9), 0 2px 5px rgba(0,0,0,0.5);
-    z-index: 99999;
-    pointer-events: none;
-    animation: flyMoney 1.2s ease-out forwards;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.flying-money.negative {
-    color: #dc3545;
-    text-shadow: 0 0 10px rgba(220, 53, 69, 0.9), 0 2px 5px rgba(0,0,0,0.5);
-}
-
-.flying-money.positive {
-    color: #28a745;
-    text-shadow: 0 0 10px rgba(40, 167, 69, 0.9), 0 2px 5px rgba(0,0,0,0.5);
-}
-
-/* ============================================
-   🖱️ MYGTUKŲ HOVER EFEKTAI
-   ============================================ */
-
-button,
-.btn,
-.menu-btn,
-.landing-btn,
-.header-btn,
-.left-btn,
-.control-buttons button,
-.choice-btn,
-.action-row button,
-.btn-trade-option,
-.btn-bankrupt,
-.btn-jail,
-.btn-build,
-.btn-demolish {
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    cursor: pointer;
-    box-sizing: border-box;
-}
-
-.landing-btn {
-    position: relative;
-    overflow: hidden;
-}
-
-.landing-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.landing-btn:hover::before {
-    width: 300px;
-    height: 300px;
-}
-
-.landing-btn:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.landing-btn-primary:hover {
-    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
-}
-
-.landing-btn-secondary:hover {
-    box-shadow: 0 10px 30px rgba(23, 162, 184, 0.5);
-}
-
-.menu-btn {
-    position: relative;
-    overflow: hidden;
-}
-
-.menu-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 215, 0, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.menu-btn:hover::before {
-    width: 300px;
-    height: 300px;
-}
-
-.menu-btn:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
-    border-color: #ffd700;
-}
-
-.header-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
-}
-
-.left-btn:hover {
-    transform: translateY(-2px) scale(1.03);
-    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
-}
-
-.leave-btn:hover {
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
-}
-
-.control-buttons button:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.08);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-.btn-dice:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
-}
-
-.btn-trade:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
-}
-
-.action-row button:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.05);
-}
-
-.btn-bankrupt:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
-}
-
-.btn-demolish:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
-}
-
-.choice-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-.choice-buy:hover {
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
-}
-
-.choice-cancel:hover {
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
-}
-
-.btn:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.btn-primary:hover {
-    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
-}
-
-.btn-secondary:hover {
-    box-shadow: 0 10px 30px rgba(108, 117, 125, 0.5);
-}
-
-button:active:not(:disabled),
-.btn:active,
-.menu-btn:active,
-.landing-btn:active,
-.header-btn:active,
-.left-btn:active {
-    transform: translateY(0) scale(0.98);
-    transition: all 0.1s;
-}
-
-button:disabled,
-.btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-}
-
-/* ============================================
-   🌙 TAMSAUS REŽIMO SPALVOS
-   ============================================ */
-
-body.dark-mode {
-    background: #0a0a0a;
-}
-
-body.dark-mode .cell {
-    background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
-    color: #e0e0e0;
-    border-color: #444;
-}
-
-body.dark-mode .cell .cell-name,
-body.dark-mode .cell .cell-cost,
-body.dark-mode .cell .cell-number {
-    color: #e0e0e0;
-}
-
-body.dark-mode .center-cell {
-    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-    border-color: #444;
-    color: #e0e0e0;
-}
-
-body.dark-mode .center-cell h4 {
-    color: #e0e0e0;
-    border-bottom-color: rgba(224, 224, 224, 0.2);
-}
-
-body.dark-mode #chatMessages,
-body.dark-mode #journal,
-body.dark-mode #notifications,
-body.dark-mode #playersList {
-    background: rgba(255, 255, 255, 0.05);
-    color: #e0e0e0;
-}
-
-body.dark-mode .journal-item {
-    color: #e0e0e0;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-body.dark-mode .notification-item {
-    background: rgba(255, 255, 255, 0.1);
-    color: #e0e0e0;
-}
-
-body.dark-mode .player-item {
-    background: rgba(255, 255, 255, 0.05);
-    color: #e0e0e0;
-}
-
-body.dark-mode #myInfo {
-    color: #e0e0e0;
-}
-
-body.dark-mode #myInfo .player-money {
-    color: #fff;
-}
-
-body.dark-mode #myInfo .player-name {
-    color: #e0e0e0;
-}
-
-body.dark-mode #cellInfoPanel {
-    background: rgba(255, 255, 255, 0.05);
-    color: #e0e0e0;
-}
-
-/* ============================================
-   🆕 BUY CARD (5 langelyje)
-   ============================================ */
-
-#buyCard.pending #buyCardBox {
-    border-color: #ffc107;
-    box-shadow: 0 8px 30px rgba(255, 193, 7, 0.5);
-}
-
-#buyCard.pending #buyCardHeader {
-    color: #e0a800;
-    border-bottom-color: #ffc107;
-}
-
-#buyCard.success #buyCardBox {
-    border-color: #28a745;
-    box-shadow: 0 8px 30px rgba(40, 167, 69, 0.5);
-}
-
-#buyCard.success #buyCardHeader {
-    color: #28a745;
-    border-bottom-color: #28a745;
-}
-
-#buyCard.cancel #buyCardBox {
-    border-color: #dc3545;
-    box-shadow: 0 8px 30px rgba(220, 53, 69, 0.5);
-}
-
-#buyCard.cancel #buyCardHeader {
-    color: #dc3545;
-    border-bottom-color: #dc3545;
-}
-
-/* ============================================
-   🆕 MINI KORTELIŲ HOVER FIX
-   ============================================ */
-
-#center-1 {
-    overflow: hidden;
-    position: relative;
-    z-index: 100;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-#center-1 .center-cell {
-    overflow: hidden;
-}
-
-#center-1 .mini-cards-container {
-    overflow-y: auto;
-    overflow-x: hidden;
-    box-sizing: border-box;
-    flex: 1 1 45%;
-    min-height: 0;
-}
-
-#center-1 #myInfo {
-    overflow: hidden;
-}
-
-.row-middle-center,
-.center-row {
-    overflow: visible;
-}
-
-/* ============================================
-   🆕 PREKYBOS MINI KORTELĖS (gavėjo lange)
-   ============================================ */
-
-.trade-mini-cards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
-    min-height: 50px;
-    padding: 4px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 6px;
-}
-
-.trade-mini-cards > div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
-    width: 100%;
-}
-
-/* ============================================
-   🆕 AUKCIONO MINI KORTELĖ
-   ============================================ */
-
-#auctionMiniCardContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 8px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 8px;
-    min-height: 100px;
-}
-
-#auctionMiniCardContainer .mini-card {
-    width: 80px;
-    height: 120px;
-    min-width: 80px;
-    max-width: 80px;
-    min-height: 120px;
-    max-height: 120px;
-    flex: 0 0 auto;
-    background: #f5f0e8;
-    border: 3px solid #3d2b1f;
-    border-radius: 6px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-}
-
-/* ============================================ */
-/* WAITING ROOM – TELEFONUI */
-/* ============================================ */
-
-@media (max-width: 768px) {
-    #waitingRoomOverlay > div > div:nth-child(3) {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-@media (max-width: 768px) {
-    #waitingPlayersList {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-/* ============================================ */
-/* 🌐 KALBOS PASIRINKIMAS */
-/* ============================================ */
-.lang-btn {
-    padding: 6px 10px;
-    border: 2px solid #ffd700;
-    border-radius: 6px;
-    background: rgba(0,0,0,0.5);
-    color: #ffd700;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 12px;
-}
-
-.lang-btn:hover {
-    background: rgba(255,215,0,0.2);
-    transform: scale(1.05);
-}
-
-.lang-btn.active {
-    background: #ffd700;
-    color: #1a3b1a;
-}
-
-/* 🌐 Kalbos mygtukai – matomi visada */
-#langSwitcher {
-    position: fixed !important;
-    top: 10px !important;
-    right: 10px !important;
-    z-index: 999999 !important;
-    display: flex !important;
-    gap: 5px !important;
-    pointer-events: auto !important;
-}
-
-#langSwitcher .lang-btn {
-    padding: 6px 10px;
-    border: 2px solid #ffd700;
-    border-radius: 6px;
-    background: rgba(0,0,0,0.8);
-    color: #ffd700;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 12px;
-    z-index: 999999;
-}
-
-#langSwitcher .lang-btn:hover {
-    background: rgba(255,215,0,0.3);
-    transform: scale(1.05);
-}
-
-#langSwitcher .lang-btn.active {
-    background: #ffd700;
-    color: #1a3b1a;
-    box-shadow: 0 0 15px rgba(255,215,0,0.8);
-}
-
-/* 🌐 Paslėpti viršutinį kalbos pasirinkimą, kai aktyvus page-game */
-body:has(#page-game.active) #langSwitcher {
-    display: none !important;
-}
-
-/* 🌐 Rodyti kalbos pasirinkimą žaidimo lange tik kai page-game aktyvus */
-#gameLangSwitcher {
-    display: none;
-}
-
-body:has(#page-game.active) #gameLangSwitcher {
-    display: flex !important;
 }
