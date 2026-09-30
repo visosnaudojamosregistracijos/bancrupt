@@ -288,6 +288,18 @@ function broadcastPublicGames() {
     io.to('lobby').emit('publicGamesList', publicGames);
 }
 
+function stopBotLoop(gameId) {
+    const game = games.get(gameId);
+    if (!game) return;
+    
+    if (game.botLoopInterval) {
+        clearInterval(game.botLoopInterval);
+        game.botLoopInterval = null;
+        console.log(`🤖 Botų ciklas sustabdytas žaidimui: ${gameId}`);
+    }
+}
+
+
 // ============================================
 // 🤖 BOTŲ CIKLAS
 // ============================================
