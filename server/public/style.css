@@ -2271,6 +2271,20 @@ body {
     max-width: 50% !important;
 }
 
+/* 🆕 Kairė – sumažintos figūrėlės */
+.row-middle-left .cell .players-on-cell .player-dot {
+    width: 22px !important;
+    height: 22px !important;
+    border-width: 2px !important;
+}
+
+/* 🆕 Dešinė – sumažintos figūrėlės */
+.row-middle-right .cell .players-on-cell .player-dot {
+    width: 22px !important;
+    height: 22px !important;
+    border-width: 2px !important;
+}
+
 /* Dešinė pusė – figūrėlės dešinėje */
 .row-middle-right .cell .players-on-cell {
     top: 0 !important;
