@@ -20,7 +20,12 @@ const ALLOWED_ORIGINS = [
     'https://responsible-nourishment-production.up.railway.app',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://localhost:3001'   // 🆕
+    'http://localhost:3001',
+    'http://185.34.52.222:3000',
+    'http://bankrotuoju.lt',
+    'http://www.bankrotuoju.lt',
+    'https://bankrotuoju.lt',
+    'https://www.bankrotuoju.lt'
 ];
 
 // ============================================
