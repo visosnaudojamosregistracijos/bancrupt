@@ -529,7 +529,7 @@ io.on('connection', (socket) => {
     
     socket.clientIp = getClientIp(socket);
 
-    // ============================================
+     // ============================================
     // SUKURTI ŽAIDIMĄ
     // ============================================
     socket.on('createGame', async (data) => {
@@ -554,7 +554,7 @@ io.on('connection', (socket) => {
         }
         
         const gameId = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('🆕 Kuriamas žaidimas:', gameId, 'Viešas:', isPublic);
+        console.log('🆕 Kuriamas žaidimas:', gameId, 'Viešas:', isPublic);
         
         const game = new Game();
         game.setGameId(gameId);
@@ -571,7 +571,22 @@ io.on('connection', (socket) => {
             }
         });
         
-        const player = game.addPlayer(playerName.trim(), playerColor, userId);
+        // 🆕 NUSKAITYTI EMOJI IŠ DB
+        let emoji = null;
+        if (userId) {
+            try {
+                const userResult = await db.pool.query('SELECT emoji FROM users WHERE id = $1', [userId]);
+                if (userResult.rows.length > 0) {
+                    emoji = userResult.rows[0].emoji;
+                    console.log('🎨 Gautas emoji iš DB:', emoji);
+                }
+            } catch (err) {
+                console.error('❌ Nepavyko nuskaityti emoji:', err);
+            }
+        }
+        
+        // 🆕 Perduodame emoji į addPlayer (4 parametras)
+        const player = game.addPlayer(playerName.trim(), playerColor, userId, emoji);
         
         if (player.error) {
             socket.emit('error', player.error);
@@ -605,7 +620,7 @@ io.on('connection', (socket) => {
     // ============================================
     // PRISIJUNGTI PRIE ŽAIDIMO
     // ============================================
-    socket.on('joinGame', ({ gameId, playerName, color, userId }) => {
+    socket.on('joinGame', async ({ gameId, playerName, color, userId }) => {
         console.log('📥 Gauta joinGame užklausa:', { gameId, playerName, color, userId });
         
         if (!gameId || !playerName) {
@@ -624,7 +639,22 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const player = game.addPlayer(playerName.trim(), color, userId);
+        // 🆕 NUSKAITYTI EMOJI IŠ DB
+        let emoji = null;
+        if (userId) {
+            try {
+                const userResult = await db.pool.query('SELECT emoji FROM users WHERE id = $1', [userId]);
+                if (userResult.rows.length > 0) {
+                    emoji = userResult.rows[0].emoji;
+                    console.log('🎨 Gautas emoji iš DB (joinGame):', emoji);
+                }
+            } catch (err) {
+                console.error('❌ Nepavyko nuskaityti emoji (joinGame):', err);
+            }
+        }
+
+        // 🆕 Perduodame emoji į addPlayer (4 parametras)
+        const player = game.addPlayer(playerName.trim(), color, userId, emoji);
         if (player.error) {
             socket.emit('error', player.error);
             return;

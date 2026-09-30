@@ -3742,69 +3742,72 @@ function updateUI(state) {
     }
     
     const playersList = document.getElementById('playersList');
-    playersList.innerHTML = state.players.map(p => {
-        const pHouses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
-        const isLeft = p.left === true;
-        const isKicked = p.kicked === true;
-        const isDebtor = p.isDebtor === true;
-        
-        if (isLeft) {
-            return '';
-        }
-        
-        if (isKicked && p.id !== playerId) {
-            return '';
-        }
-        
-        return `
-            <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isKicked ? 'left' : ''}">
-                <span class="dot" style="background:${p.color}"></span>
-                <span class="pname">${p.isBot ? '🤖 ' : ''}${p.name} ${p.id === playerId ? '👤' : ''}</span>
-                <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
-                ${pHouses > 0 ? `🏠${pHouses}` : ''}
-                ${p.inJail ? '⛓️' : ''}
-                ${p.bankrupt ? '💀' : ''}
-                ${isKicked ? '🚫' : ''}
-                ${isDebtor && !p.bankrupt ? '⚠️' : ''}
-                ${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}
-            </div>
-        `;
-    }).filter(html => html !== '').join('');
+playersList.innerHTML = state.players.map(p => {
+    const pHouses = p.houses ? Object.values(p.houses).reduce((a, b) => a + b, 0) : 0;
+    const isLeft = p.left === true;
+    const isKicked = p.kicked === true;
+    const isDebtor = p.isDebtor === true;
     
-    const isBankrupt = myPlayer && myPlayer.bankrupt;
-    const isLeft = myPlayer && myPlayer.left;
-    const isKicked = myPlayer && myPlayer.kicked;
-    const isDebtor = myPlayer && myPlayer.isDebtor;
-    isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left && !myPlayer.kicked;
-    
-    const rollBtn = document.getElementById('rollBtn');
-    if (rollBtn) {
-        const blockedByAction = rollBtn.dataset.blockedByAction === 'true';
-        
-        if (blockedByAction) {
-            rollBtn.disabled = true;
-        } else {
-            rollBtn.disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
-        }
+    if (isLeft) {
+        return '';
     }
     
-    const tradeBtn = document.getElementById('tradeBtn');
-    if (tradeBtn) {
-        tradeBtn.disabled = isBankrupt || isLeft || isKicked;
+    if (isKicked && p.id !== playerId) {
+        return '';
     }
     
-    document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || isKicked || !myPlayer || !myPlayer.isActive;
+    const playerEmoji = p.emoji || '';
+    return `
+        <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isKicked ? 'left' : ''}">
+            <span class="dot" style="background:${p.color}; position:relative; display:inline-flex; align-items:center; justify-content:center;">
+                ${playerEmoji ? `<span class="player-emoji-list">${playerEmoji}</span>` : ''}
+            </span>
+            <span class="pname">${p.isBot ? '🤖 ' : ''}${p.name} ${p.id === playerId ? '👤' : ''}</span>
+            <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
+            ${pHouses > 0 ? `🏠${pHouses}` : ''}
+            ${p.inJail ? '⛓️' : ''}
+            ${p.bankrupt ? '💀' : ''}
+            ${isKicked ? '🚫' : ''}
+            ${isDebtor && !p.bankrupt ? '⚠️' : ''}
+            ${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}
+        </div>
+    `;
+}).filter(html => html !== '').join('');
 
-    const jailBtn = document.getElementById('jailBtn');
-    if (jailBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && !isKicked && !isDebtor && myPlayer && myPlayer.inJail) {
-            jailBtn.style.display = 'block';
-            jailBtn.disabled = false;
-        } else {
-            jailBtn.style.display = 'none';
-            jailBtn.disabled = true;
-        }
+const isBankrupt = myPlayer && myPlayer.bankrupt;
+const isLeft = myPlayer && myPlayer.left;
+const isKicked = myPlayer && myPlayer.kicked;
+const isDebtor = myPlayer && myPlayer.isDebtor;
+isMyTurn = state.currentTurn === playerId && myPlayer && myPlayer.isActive && !myPlayer.bankrupt && !myPlayer.left && !myPlayer.kicked;
+
+const rollBtn = document.getElementById('rollBtn');
+if (rollBtn) {
+    const blockedByAction = rollBtn.dataset.blockedByAction === 'true';
+    
+    if (blockedByAction) {
+        rollBtn.disabled = true;
+    } else {
+        rollBtn.disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
     }
+}
+
+const tradeBtn = document.getElementById('tradeBtn');
+if (tradeBtn) {
+    tradeBtn.disabled = isBankrupt || isLeft || isKicked;
+}
+
+document.getElementById('bankruptBtn').disabled = isBankrupt || isLeft || isKicked || !myPlayer || !myPlayer.isActive;
+
+const jailBtn = document.getElementById('jailBtn');
+if (jailBtn) {
+    if (isMyTurn && !isBankrupt && !isLeft && !isKicked && !isDebtor && myPlayer && myPlayer.inJail) {
+        jailBtn.style.display = 'block';
+        jailBtn.disabled = false;
+    } else {
+        jailBtn.style.display = 'none';
+        jailBtn.disabled = true;
+    }
+}
 
     const demolishBtn = document.getElementById('demolishBtn');
     if (demolishBtn) {
@@ -4006,7 +4009,13 @@ function updateBoard(state) {
     playersHere.forEach(p => {
         const isAnimating = window.animatingPlayers && window.animatingPlayers.includes(p.id);
         const displayStyle = isAnimating ? 'display:none;' : '';
-        html += `<span class="player-dot" style="background:${p.color};${displayStyle}" data-player-id="${p.id}"></span>`;
+        const emoji = p.emoji || '';
+        const emojiClass = emoji ? 'dancing' : '';
+        html += `<span class="player-dot" style="background:${p.color};${displayStyle}" data-player-id="${p.id}">`;
+        if (emoji) {
+            html += `<span class="player-emoji ${emojiClass}">${emoji}</span>`;
+        }
+        html += `</span>`;
     });
     html += `</div>`;
 }

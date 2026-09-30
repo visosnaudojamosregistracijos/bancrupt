@@ -59,7 +59,7 @@ class Game {
     // ŽAIDĖJŲ PRIDĖJIMAS
     // ============================================
 
-    addPlayer(name, color = null, userId = null) {
+    addPlayer(name, color = null, userId = null, emoji = null) {
         if (this.players.length >= C.MAX_PLAYERS) {
             return { error: `Daugiausiai ${C.MAX_PLAYERS} žaidėjai` };
         }
@@ -103,29 +103,30 @@ class Game {
         }
 
         const player = {
-    id: this.players.length,
-    name: name,
-    position: 0,
-    money: C.START_MONEY,
-    color: finalColor,
-    properties: [],
-    houses: {},
-    inJail: false,
-    jailTurns: 0,
-    consecutiveDoubles: 0,   // 🆕 PRIDĖTA
-    isActive: true,
-    bankrupt: false,
-    left: false,
-    kicked: false,
-    isDebtor: false,
-    ready: false,
-    socketId: null,
-    token: Math.random().toString(36).substring(2) + Date.now().toString(36),
-    joinedAt: Date.now(),
-    isHost: this.players.length === 0,
-    isBot: false,
-    userId: userId
-};
+            id: this.players.length,
+            name: name,
+            position: 0,
+            money: C.START_MONEY,
+            color: finalColor,
+            emoji: emoji,                           // 🆕 EMOJI
+            properties: [],
+            houses: {},
+            inJail: false,
+            jailTurns: 0,
+            consecutiveDoubles: 0,
+            isActive: true,
+            bankrupt: false,
+            left: false,
+            kicked: false,
+            isDebtor: false,
+            ready: false,
+            socketId: null,
+            token: Math.random().toString(36).substring(2) + Date.now().toString(36),
+            joinedAt: Date.now(),
+            isHost: this.players.length === 0,
+            isBot: false,
+            userId: userId
+        };
         this.players.push(player);
 
         this.lastActivity = Date.now();

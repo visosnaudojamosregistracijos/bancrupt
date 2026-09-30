@@ -2233,6 +2233,79 @@ body {
 
 
 /* ============================================ */
+/* 🆕 ŠOKANTIS EMOJI */
+/* ============================================ */
+
+.player-emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 300%;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.player-emoji.dancing {
+    display: inline-block;
+    animation: dance 1s ease-in-out infinite;
+}
+
+/* 🆕 Emoji player sąraše (mažas rutuliukas) */
+.player-item .dot .player-emoji-list {
+    font-size: 10px;
+    line-height: 1;
+    display: inline-block;
+    animation: dance 1s ease-in-out infinite;
+    pointer-events: none;
+}
+
+
+
+
+
+
+@keyframes dance {
+    0%, 100% { 
+        transform: rotate(-15deg) scale(1); 
+    }
+    25% { 
+        transform: rotate(15deg) scale(1.1); 
+    }
+    50% { 
+        transform: rotate(-15deg) scale(1); 
+    }
+    75% { 
+        transform: rotate(15deg) scale(1.1); 
+    }
+}
+
+.player-emoji.spinning {
+    display: inline-block;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.player-emoji.bouncing {
+    display: inline-block;
+    animation: bounceEmoji 0.8s ease-in-out infinite;
+}
+
+@keyframes bounceEmoji {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-30%); }
+}
+
+
+
+
+/* ============================================ */
 /* 🆕 FIGŪRĖLĖS PAGAL LENTOS PUSĘ */
 /* ============================================ */
 
