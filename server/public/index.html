@@ -336,10 +336,15 @@
             </div>
 
             <div id="gameBody">
-                <aside id="leftPanel">
-                    <div id="gameIdBox">
-                        📋 ID:<br><span id="gameIdDisplayLeft">---</span>
-                    </div>
+            <!-- 🆕 Kairės panelės toggle mygtukas -->
+            <button id="leftPanelToggle" onclick="toggleLeftPanel()" title="Slėpti/Parodyti panelę">
+                ◀
+            </button>
+            
+            <aside id="leftPanel">
+                <div id="gameIdBox">
+                    📋 ID:<br><span id="gameIdDisplayLeft">---</span>
+                </div>
 
                     <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange -->
                     <div id="gameLangSwitcher" style="display: flex; gap: 3px; width: 100%; justify-content: center;">

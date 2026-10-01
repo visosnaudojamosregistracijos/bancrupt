@@ -2861,6 +2861,64 @@ function enterGame() {
     setTimeout(initInfoResizeObserver, 1000);
 }
 
+
+// ============================================
+// 🆕 KAIRĖS PANELĖS PASLĖPIMAS / PARODYMAS
+// ============================================
+function toggleLeftPanel() {
+    const panel = document.getElementById('leftPanel');
+    const btn = document.getElementById('leftPanelToggle');
+    
+    if (!panel || !btn) return;
+    
+    const isHidden = panel.classList.toggle('hidden');
+    
+    if (isHidden) {
+        // Paslėpti
+        btn.innerHTML = '▶';
+        btn.title = 'Parodyti panelę';
+        localStorage.setItem('bancrupt_leftPanelHidden', 'true');
+        console.log('📋 Kairė panelė paslėpta');
+    } else {
+        // Parodyti
+        btn.innerHTML = '◀';
+        btn.title = 'Slėpti panelę';
+        localStorage.setItem('bancrupt_leftPanelHidden', 'false');
+        console.log('📋 Kairė panelė parodyta');
+    }
+    
+    if (typeof playClickSound === 'function') {
+        playClickSound();
+    }
+}
+
+// 🆕 Įkelti būseną paleidus
+function loadLeftPanelState() {
+    const panel = document.getElementById('leftPanel');
+    const btn = document.getElementById('leftPanelToggle');
+    
+    if (!panel || !btn) return;
+    
+    const isHidden = localStorage.getItem('bancrupt_leftPanelHidden') === 'true';
+    
+    if (isHidden) {
+        panel.classList.add('hidden');
+        btn.innerHTML = '▶';
+        btn.title = 'Parodyti panelę';
+    } else {
+        panel.classList.remove('hidden');
+        btn.innerHTML = '◀';
+        btn.title = 'Slėpti panelę';
+    }
+}
+
+// 🆕 Paleisti įkėlus
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(loadLeftPanelState, 500);
+});
+
+
+
 function leaveGame() {
     if (!isConnected || !socket || !socket.connected) {
         alert('❌ Nėra ryšio su serveriu!');
