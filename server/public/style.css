@@ -854,7 +854,10 @@ body {
 }
 
 .cell.start {
-    background: linear-gradient(145deg, #28a745, #1e7e34);
+    background: linear-gradient(145deg, 
+        var(--group-color, #28a745), 
+        var(--group-color2, #1e7e34)
+    );
     color: #fff;
 }
 .cell.start .cell-name,
@@ -863,7 +866,10 @@ body {
 }
 
 .cell.jail {
-    background: linear-gradient(145deg, #6c757d, #495057);
+    background: linear-gradient(145deg, 
+        var(--group-color, #6c757d), 
+        var(--group-color2, #495057)
+    );
     color: #fff;
 }
 .cell.jail .cell-name,
@@ -872,7 +878,10 @@ body {
 }
 
 .cell.parking {
-    background: linear-gradient(145deg, #007bff, #0056b3);
+    background: linear-gradient(145deg, 
+        var(--group-color, #007bff), 
+        var(--group-color2, #0056b3)
+    );
     color: #fff;
 }
 .cell.parking .cell-name,
@@ -881,7 +890,10 @@ body {
 }
 
 .cell.go-to-jail {
-    background: linear-gradient(145deg, #dc3545, #a71d2a);
+    background: linear-gradient(145deg, 
+        var(--group-color, #dc3545), 
+        var(--group-color2, #a71d2a)
+    );
     color: #fff;
 }
 .cell.go-to-jail .cell-name,
@@ -994,8 +1006,8 @@ body {
 }
 
 .center-cell {
-    background: linear-gradient(145deg, #d4b896, #c4a886);
-    border: 2px solid #b8966a;
+    background: var(--center-bg, linear-gradient(145deg, #d4b896, #c4a886));
+    border: 2px solid var(--center-border, #b8966a);
     border-radius: 8px;
     padding: 6px 8px;
     flex: 1 1 0;
@@ -1005,11 +1017,21 @@ body {
     overflow: hidden;
     position: relative;
     min-width: 0;
+    color: var(--center-font-color, #3d2b1f);
+    font-size: clamp(
+        var(--center-font-size-min, 10px),
+        var(--center-font-size, 13px),
+        var(--center-font-size-max, 18px)
+    );
 }
 
 .center-cell h4 {
-    font-size: 10px;
-    color: #3d2b1f;
+    font-size: clamp(
+        var(--center-title-size-min, 8px),
+        var(--center-title-size, 10px),
+        var(--center-title-size-max, 16px)
+    );
+    color: var(--center-title-color, #3d2b1f);
     text-align: center;
     border-bottom: 1px solid rgba(61,43,31,0.2);
     padding-bottom: 3px;
@@ -1019,8 +1041,8 @@ body {
 
 /* ---------- 1 LANGELIS - AŠ ---------- */
 #myInfo {
-    font-size: clamp(9px, 0.6vw, 13px);
-    color: #3d2b1f;
+    font-size: var(--myinfo-text-size, clamp(9px, 0.6vw, 13px));
+    color: var(--myinfo-text-color, #3d2b1f);
     flex: 0 0 55%;
     display: flex;
     flex-direction: column;
@@ -1033,14 +1055,19 @@ body {
 }
 
 #myInfo .player-money {
-    font-size: clamp(20px, 1.5vw, 34px);
+    font-size: var(--myinfo-money-size, clamp(20px, 1.5vw, 34px));
     font-weight: 700;
-    color: #000000;
+    color: var(--myinfo-money-color, #000000);
+}
+
+#myInfo .player-money.negative {
+    color: #dc3545;
 }
 
 #myInfo .player-name {
-    font-size: clamp(12px, 0.9vw, 18px);
+    font-size: var(--myinfo-name-size, clamp(12px, 0.9vw, 18px));
     font-weight: 600;
+    color: var(--myinfo-name-color, #3d2b1f);
 }
 
 #myInfo .player-color {
@@ -2476,6 +2503,82 @@ body {
 
 #soundPanel {
     animation: soundPanelFadeIn 0.2s ease;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 320px !important;
+    max-width: 90vw !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    z-index: 99999 !important;
+}
+
+#soundPanel::-webkit-scrollbar {
+    width: 4px;
+}
+
+#soundPanel::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 2px;
+}
+
+#soundPanel::-webkit-scrollbar-thumb {
+    background: #ffd700;
+    border-radius: 2px;
+}
+
+#soundLevelsList::-webkit-scrollbar {
+    width: 4px;
+}
+
+#soundLevelsList::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 2px;
+}
+
+#soundLevelsList::-webkit-scrollbar-thumb {
+    background: #ffd700;
+    border-radius: 2px;
+}
+
+/* Garso panelės radio buttons */
+#soundPanel input[type="radio"] {
+    accent-color: #ffd700;
+    width: 14px;
+    height: 14px;
+}
+
+/* Garso panelės slider'iai */
+#soundPanel input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 5px;
+    background: linear-gradient(to right, #dc3545, #ffc107, #28a745);
+    border-radius: 3px;
+    outline: none;
+}
+
+#soundPanel input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #ffd700;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #0d1f0d;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+#soundPanel input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: #ffd700;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #0d1f0d;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
 @keyframes soundPanelFadeIn {
@@ -3250,13 +3353,13 @@ body.dark-mode .cell .cell-number {
 }
 
 body.dark-mode .center-cell {
-    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-    border-color: #444;
-    color: #e0e0e0;
+    background: var(--center-bg, linear-gradient(145deg, #2a2a2a, #1a1a1a));
+    border-color: var(--center-border, #444);
+    color: var(--center-font-color, #e0e0e0);
 }
 
 body.dark-mode .center-cell h4 {
-    color: #e0e0e0;
+    color: var(--center-title-color, #e0e0e0);
     border-bottom-color: rgba(224, 224, 224, 0.2);
 }
 
@@ -3655,7 +3758,11 @@ body:has(#page-game.active) #gameLangSwitcher {
         min-width: 0;
     }
     .center-cell h4 {
-        font-size: 8px;
+        font-size: clamp(
+            var(--center-title-size-min, 6px),
+            var(--center-title-size, 8px),
+            var(--center-title-size-max, 12px)
+        );
         padding-bottom: 2px;
         margin-bottom: 2px;
     }
@@ -3693,18 +3800,18 @@ body:has(#page-game.active) #gameLangSwitcher {
         font-size: 9px;
         padding: 4px 3px;
     }
-    #myInfo .player-money {
-        font-size: 24px;
+     #myInfo .player-money {
+        font-size: var(--myinfo-money-size, 24px);
     }
     #myInfo .player-name {
-        font-size: 11px;
+        font-size: var(--myinfo-name-size, 11px);
     }
     #myInfo .player-color {
         width: 18px;
         height: 18px;
     }
     #myInfo {
-        font-size: 9px;
+        font-size: var(--myinfo-text-size, 9px);
         gap: 1px;
     }
     #playersList {
@@ -3857,7 +3964,11 @@ body:has(#page-game.active) #gameLangSwitcher {
         border-width: 1px;
     }
     .center-cell h4 {
-        font-size: 6px;
+        font-size: clamp(
+            var(--center-title-size-min, 5px),
+            var(--center-title-size, 6px),
+            var(--center-title-size-max, 10px)
+        );
         padding-bottom: 1px;
         margin-bottom: 1px;
     }
@@ -3896,10 +4007,10 @@ body:has(#page-game.active) #gameLangSwitcher {
         padding: 3px 2px;
     }
     #myInfo .player-money {
-        font-size: 11px;
+        font-size: var(--myinfo-money-size, 11px);
     }
     #myInfo .player-name {
-        font-size: 9px;
+        font-size: var(--myinfo-name-size, 9px);
     }
     #myInfo .player-color {
         width: 14px;
@@ -3907,7 +4018,7 @@ body:has(#page-game.active) #gameLangSwitcher {
         border-width: 1.5px;
     }
     #myInfo {
-        font-size: 7px;
+        font-size: var(--myinfo-text-size, 7px);
         gap: 0px;
     }
     #playersList {

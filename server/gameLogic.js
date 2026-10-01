@@ -6,10 +6,53 @@ const DemolishLogic = require('./demolishLogic');
 const C = require('./gameConstants');
 const db = require('./db');
 
+// ============================================
+// 🆕 GLOBALUS BOARD CACHE (boardData + DB override)
+// ============================================
+let globalBoardCache = null;
+
+async function loadBoardCache() {
+    try {
+        const overrides = await db.getBoardCells();
+        const overrideMap = new Map();
+        overrides.forEach(o => overrideMap.set(o.cell_index, o));
+
+        globalBoardCache = boardData.map(cell => {
+    const ov = overrideMap.get(cell.id);
+    if (!ov) return { ...cell };
+    return {
+        ...cell,
+        name: ov.name ?? cell.name,
+        type: ov.type ?? cell.type,
+        color: ov.color ?? cell.color,
+        color2: ov.color2 ?? null,
+        cost: ov.cost ?? cell.cost,
+        icon: ov.icon ?? cell.icon,
+        music: ov.music ?? null,
+        font_size: ov.font_size ?? 14,
+        font_color: ov.font_color ?? null,
+        description: ov.description ?? null,
+        custom_data: ov.custom_data ?? null
+    };
+});
+
+        console.log(`🎨 Board cache įkeltas (${overrides.length} override)`);
+        return globalBoardCache;
+    } catch (err) {
+        console.error('❌ Board cache klaida:', err);
+        globalBoardCache = boardData.map(c => ({ ...c }));
+        return globalBoardCache;
+    }
+}
+
+function getBoardCache() {
+    return globalBoardCache || boardData;
+}
+
 class Game {
     constructor() {
         this.players = [];
-        this.board = boardData;
+        this.board = getBoardCache();   // ← PAKEISTA (buvo boardData)
         this.currentTurn = 0;
         this.gameStarted = false;
         this.turnHistory = [];
@@ -125,7 +168,8 @@ class Game {
             joinedAt: Date.now(),
             isHost: this.players.length === 0,
             isBot: false,
-            userId: userId
+            userId: userId,
+            pendingPurchase: null   // 🆕 ← PRIDĖKITE ŠITĄ
         };
         this.players.push(player);
 
@@ -1180,6 +1224,63 @@ class Game {
         if (!player || !player.isActive || player.bankrupt || player.left || player.kicked) {
             return { error: 'Žaidėjas neaktyvus' };
         }
+        
+        // 🆕 PATIKRINTI PENDING PURCHASE   ← NAUJA!
+        if (player.pendingPurchase) {
+            const pending = player.pendingPurchase;
+            const field = this.board[pending.fieldId];
+            const owner = this.players.find(p => p.properties.includes(pending.fieldId) && !p.bankrupt && !p.left && !p.kicked);
+            
+            console.log(`🔍 pendingPurchase patikra: ${player.name}`);
+            console.log(`  - field: ${field?.name}`);
+            console.log(`  - player.position: ${player.position}`);
+            console.log(`  - pending.fieldId: ${pending.fieldId}`);
+            console.log(`  - owner: ${owner?.name || 'nėra'}`);
+            console.log(`  - player.money: €${player.money}`);
+            console.log(`  - pending.fieldCost: €${pending.fieldCost}`);
+            
+            // Ar vis dar stovi ant to paties sklypo?
+            if (player.position !== pending.fieldId) {
+                console.log(`  ❌ Ne, jau ne ant to sklypo`);
+                player.pendingPurchase = null;
+            }
+            // Ar sklypas vis dar laisvas?
+            else if (owner) {
+                console.log(`  ❌ Ne, jau nusipirktas`);
+                player.pendingPurchase = null;
+            }
+            // Ar turi pakankamai pinigų?
+            else if (player.money >= pending.fieldCost) {
+                console.log(`  ✅ TAIP! Galima pasiūlyti pirkti`);
+                
+                this.waitingForBuy = true;
+                
+                if (this.emitFunction) {
+                    this.emitFunction('pendingPurchase', {
+                        playerId: player.id,
+                        playerName: player.name,
+                        fieldId: field.id,
+                        fieldName: field.name,
+                        fieldCost: field.cost
+                    });
+                }
+                
+                this.startBuyTimeout(playerId);
+                
+                return {
+                    action: 'pending_purchase',
+                    player: player,
+                    field: field,
+                    message: `💰 ${player.name} gali nusipirkti ${field.name} už €${field.cost}!`
+                };
+            }
+            // Neturi pakankamai pinigų
+            else {
+                console.log(`  ❌ Ne, vis dar trūksta pinigų`);
+                // Palikti pendingPurchase – gal kitą kartą turės
+            }
+        }
+        
         if (player.isDebtor) {
             return { error: '⚠️ Tu skolingas! Parduok turtą, kad išsigelbėtum!' };
         }
@@ -1520,6 +1621,15 @@ class Game {
                         result.field = field;
                         result.message = `${player.name} neturi pakankamai pinigų ${field.name} pirkti`;
                         this.addMessage(result.message);
+                        
+                        // 🆕 IŠSAUGOTI PENDING PURCHASE   ← NAUJA!
+                        player.pendingPurchase = {
+                            fieldId: field.id,
+                            fieldName: field.name,
+                            fieldCost: field.cost
+                        };
+                        
+                        console.log(`📝 ${player.name}: pendingPurchase išsaugotas (${field.name} €${field.cost})`);
                     }
                 }
                 break;
@@ -1725,106 +1835,150 @@ class Game {
     }
 
     buyProperty(playerId) {
-        this.clearBuyTimeout();
+    this.clearBuyTimeout();
 
-        if (!this.waitingForBuy) {
-            return { error: 'Čia negalima pirkti' };
-        }
-
-        const player = this.getPlayerById(playerId);
-        if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
-
-        const field = this.board[player.position];
-        if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2' && field.type !== 'service3') {
-            this.waitingForBuy = false;
-            return { error: 'Čia negalima pirkti' };
-        }
-
-        if (player.properties.includes(field.id)) {
-            this.waitingForBuy = false;
-            return { error: 'Jau turi šį objektą' };
-        }
-
-        if (this.players.find(p => p.properties.includes(field.id) && p.id !== player.id && !p.kicked)) {
-            this.waitingForBuy = false;
-            return { error: 'Šis objektas jau priklauso kitam žaidėjui' };
-        }
-
-        if (player.money < field.cost) {
-            return { error: 'Nepakanka pinigų' };
-        }
-
-        player.money -= field.cost;
-        player.properties.push(field.id);
-        this.addMessage(`${player.name} nusipirko ${field.name} už €${field.cost}! 🏠`);
-
-        // 🆕 ĮRAŠYTI STATISTIKĄ
-        if (player.userId && !player.isBot) {
-            db.updateStats(player.userId, { properties_bought: 1 }).catch(err => {
-                console.error('❌ properties_bought klaida:', err);
-            });
-        }
-
-        this.waitingForBuy = false;
-        this.lastActivity = Date.now();
-
-        if (this.emitFunction) {
-            this.emitFunction('buyConfirmed', {
-                playerId: player.id,
-                playerName: player.name,
-                fieldName: field.name
-            });
-        }
-
-        if (this.doubleRoll) {
-            this.addMessage(`🎲 ${player.name} išmetė dublį! Gali mesti dar kartą.`);
-            return { success: true, message: `${field.name} nupirktas! Gali mesti dar kartą (dublis)!`, double: true };
-        }
-
-        this.endTurn();
-        return { success: true, message: `${field.name} nupirktas!`, double: false };
+    if (!this.waitingForBuy) {
+        return { error: 'Čia negalima pirkti' };
     }
 
-    cancelBuy(playerId, isTimeout = false) {
-        this.clearBuyTimeout();
+    const player = this.getPlayerById(playerId);
+    if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
 
-        if (!this.waitingForBuy) {
-            return { error: 'Nėra ką pirkti' };
-        }
-
-        const player = this.getPlayerById(playerId);
-        if (!player) return { error: 'Žaidėjas nerastas' };
-
-        const field = this.board[player.position];
+    const field = this.board[player.position];
+    if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2' && field.type !== 'service3') {
         this.waitingForBuy = false;
-        this.addMessage(`${player.name} atsisakė pirkti ${field.name}`);
+        return { error: 'Čia negalima pirkti' };
+    }
 
-        this.lastActivity = Date.now();
+    if (player.properties.includes(field.id)) {
+        this.waitingForBuy = false;
+        return { error: 'Jau turi šį objektą' };
+    }
 
-        if (this.emitFunction) {
-            this.emitFunction('buyCancelled', {
-                playerId: player.id,
-                playerName: player.name,
-                fieldName: field.name
-            });
-        }
+    if (this.players.find(p => p.properties.includes(field.id) && p.id !== player.id && !p.kicked)) {
+        this.waitingForBuy = false;
+        return { error: 'Šis objektas jau priklauso kitam žaidėjui' };
+    }
 
-        if (this.doubleRoll && !isTimeout) {
-            return {
-                success: true,
-                message: 'Atsisakyta pirkti. Gali mesti dar kartą (dublis)!',
-                double: true
-            };
-        }
+    if (player.money < field.cost) {
+        return { error: 'Nepakanka pinigų' };
+    }
 
-        this.endTurn();
-        return {
-            success: true,
-            message: isTimeout ? 'Laikas baigėsi - praleistas ėjimas' : 'Atsisakyta pirkti',
+    // 🆕 PATIKRINTI, AR TAI BUVO pendingPurchase   ← NAUJA!
+    const wasPendingPurchase = player.pendingPurchase !== null;
+
+    player.money -= field.cost;
+    player.properties.push(field.id);
+    
+    // 🆕 IŠVALYTI PENDING PURCHASE
+    player.pendingPurchase = null;
+    console.log(`✅ ${player.name}: pendingPurchase išvalytas (nupirko ${field.name})`);
+    
+    this.addMessage(`${player.name} nusipirko ${field.name} už €${field.cost}! 🏠`);
+
+    // 🆕 ĮRAŠYTI STATISTIKĄ
+    if (player.userId && !player.isBot) {
+        db.updateStats(player.userId, { properties_bought: 1 }).catch(err => {
+            console.error('❌ properties_bought klaida:', err);
+        });
+    }
+
+    this.waitingForBuy = false;
+    this.lastActivity = Date.now();
+
+    if (this.emitFunction) {
+        this.emitFunction('buyConfirmed', {
+            playerId: player.id,
+            playerName: player.name,
+            fieldName: field.name
+        });
+    }
+
+    // 🆕 JEI TAI BUVO pendingPurchase – LEISTI MESTI KAULIUKUS   ← NAUJA!
+    if (wasPendingPurchase) {
+        this.addMessage(`💰 ${player.name} nupirko ${field.name}! Dabar gali mesti kauliukus.`);
+        return { 
+            success: true, 
+            message: `${field.name} nupirktas! Dabar gali mesti kauliukus.`, 
             double: false,
-            timeout: isTimeout
+            pendingPurchase: true   // 🆕 Signalas server'iui
         };
     }
+
+    // Įprastas pirkimas po metimo
+    if (this.doubleRoll) {
+        this.addMessage(`🎲 ${player.name} išmetė dublį! Gali mesti dar kartą.`);
+        return { success: true, message: `${field.name} nupirktas! Gali mesti dar kartą (dublis)!`, double: true };
+    }
+
+    this.endTurn();
+    return { success: true, message: `${field.name} nupirktas!`, double: false };
+}
+
+    cancelBuy(playerId, isTimeout = false) {
+    this.clearBuyTimeout();
+
+    if (!this.waitingForBuy) {
+        return { error: 'Nėra ką pirkti' };
+    }
+
+    const player = this.getPlayerById(playerId);
+    if (!player) return { error: 'Žaidėjas nerastas' };
+
+    const field = this.board[player.position];
+    this.waitingForBuy = false;
+    
+    // 🆕 PATIKRINTI, AR TAI BUVO pendingPurchase   ← NAUJA!
+    const wasPendingPurchase = player.pendingPurchase !== null;
+    
+    // 🆕 IŠVALYTI PENDING PURCHASE
+    if (!isTimeout) {
+        player.pendingPurchase = null;
+        console.log(`❌ ${player.name}: pendingPurchase išvalytas (atsisakė)`);
+    } else {
+        console.log(`⏰ ${player.name}: pendingPurchase paliktas (timeout)`);
+    }
+    
+    this.addMessage(`${player.name} atsisakė pirkti ${field.name}`);
+
+    this.lastActivity = Date.now();
+
+    if (this.emitFunction) {
+        this.emitFunction('buyCancelled', {
+            playerId: player.id,
+            playerName: player.name,
+            fieldName: field.name
+        });
+    }
+
+    // 🆕 JEI TAI BUVO pendingPurchase – LEISTI MESTI KAULIUKUS   ← NAUJA!
+    if (wasPendingPurchase && !isTimeout) {
+        this.addMessage(`${player.name} atsisakė pirkti. Dabar gali mesti kauliukus.`);
+        return { 
+            success: true, 
+            message: 'Atsisakyta pirkti. Dabar gali mesti kauliukus.', 
+            double: false,
+            pendingPurchase: true   // 🆕 Signalas server'iui
+        };
+    }
+
+    // Įprastas atsisakymas po metimo
+    if (this.doubleRoll && !isTimeout) {
+        return {
+            success: true,
+            message: 'Atsisakyta pirkti. Gali mesti dar kartą (dublis)!',
+            double: true
+        };
+    }
+
+    this.endTurn();
+    return {
+        success: true,
+        message: isTimeout ? 'Laikas baigėsi - praleistas ėjimas' : 'Atsisakyta pirkti',
+        double: false,
+        timeout: isTimeout
+    };
+}
 
     bankruptPlayer(playerId) {
     const player = this.getPlayerById(playerId);
@@ -2451,3 +2605,5 @@ class Game {
 }
 
 module.exports = Game;
+module.exports.loadBoardCache = loadBoardCache;
+module.exports.getBoardCache = getBoardCache;

@@ -40,9 +40,9 @@ const SECURITY_QUESTIONS = [
 // PAGALBINĖS FUNKCIJOS
 // ============================================
 
-function generateToken(userId) {
+function generateToken(userId, isAdmin = false) {
     return jwt.sign(
-        { userId },
+        { userId, is_admin: isAdmin },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
     );
@@ -127,7 +127,7 @@ async function register(username, email, password, securityQuestion, securityAns
             securityQuestion,
             answerHash
         );
-        const token = generateToken(userId);
+        const token = generateToken(userId, false);   // ← PAKEISTA
 
         console.log(`✅ Naujas vartotojas: ${username} (ID: ${userId})`);
 
@@ -163,7 +163,7 @@ async function login(username, password) {
     }
 
     await db.updateLastLogin(user.id);
-    const token = generateToken(user.id);
+const token = generateToken(user.id, user.is_admin === true);
 
     console.log(`✅ Prisijungė: ${user.username} (ID: ${user.id})`);
 
@@ -190,6 +190,7 @@ async function getUserFromToken(token) {
         userId: user.id,
         username: user.username,
         email: user.email,
+        isAdmin: user.is_admin === true,      // ← NAUJA
         createdAt: user.created_at,
         lastLogin: user.last_login
     };

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin panelė — Bancrupt</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: #eee; margin: 0; }
+    h1 { color: #ffd700; margin-bottom: 20px; }
+    .topbar { 
+    display: flex; 
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px; 
+    margin-bottom: 20px; 
+}
+.back { 
+    color: #ffd700; 
+    text-decoration: none; 
+    padding: 8px 16px; 
+    border: 1px solid #ffd700; 
+    border-radius: 4px; 
+    display: inline-block;
+}
+.back:hover { background: #ffd700; color: #000; }
+
+.tabs { 
+    display: flex; 
+    flex-direction: column;
+    gap: 5px; 
+    margin-bottom: 20px; 
+    border-left: 3px solid #0f3460;
+    padding-left: 10px;
+}
+.tab { 
+    padding: 12px 20px; 
+    background: #16213e; 
+    color: #eee; 
+    border: 1px solid #0f3460; 
+    cursor: pointer; 
+    font-size: 16px; 
+    border-radius: 8px;
+    text-align: left;
+    width: 100%;
+    max-width: 300px;
+}
+.tab.active { background: #ffd700; color: #000; font-weight: bold; }
+.tab:hover { background: #1f2b4d; }
+.tab.active:hover { background: #ffd700; }
+
+    .tab-content { display: none; }
+    .tab-content.active { 
+        display: block; 
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .tab-content::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .tab-content::-webkit-scrollbar-track {
+        background: #0f3460;
+        border-radius: 4px;
+    }
+    
+    .tab-content::-webkit-scrollbar-thumb {
+        background: #ffd700;
+        border-radius: 4px;
+    }
+    
+    .tab-content::-webkit-scrollbar-thumb:hover {
+        background: #ffed4e;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #16213e; }
+    th, td { padding: 8px; border: 1px solid #444; text-align: left; font-size: 14px; }
+    th { background: #0f3460; color: #ffd700; }
+    tr:hover { background: #1f2b4d; }
+
+    input[type="text"], input[type="number"], select {
+        padding: 4px 6px; font-size: 14px; background: #0f3460; color: #fff;
+        border: 1px solid #444; border-radius: 4px; width: 100%;
+    }
+    input[type="color"] { padding: 0; border: 1px solid #444; height: 30px; width: 40px; cursor: pointer; }
+
+    button { padding: 5px 10px; background: #ffd700; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
+    button:hover { background: #ffed4e; }
+    button.danger { background: #dc3545; color: #fff; }
+    button.danger:hover { background: #e74c3c; }
+
+    .msg { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .ok { background: #1b5e20; }
+    .err { background: #b71c1c; }
+
+    .emoji-cell { font-size: 20px; text-align: center; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+    .badge-override { background: #ff9800; color: #000; }
+    .badge-default { background: #555; color: #fff; }
+
+    .board-cell-color { width: 30px; height: 30px; border-radius: 4px; border: 1px solid #666; display: inline-block; }
+
+    .filters { margin: 10px 0; display: flex; gap: 10px; flex-wrap: wrap; }
+    .filters input, .filters select { padding: 6px; max-width: 200px; }
+
+    /* ============================================ */
+    /* 🆕 BOARD TAB — SCROLL IR STICKY              */
+    /* ============================================ */
+    #tab-board {
+        max-height: calc(100vh - 220px);
+        overflow: auto;
+        position: relative;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 10px;
+        background: #0d1526;
+    }
+
+    #tab-board h2 {
+        position: sticky;
+        top: 0;
+        background: #0d1526;
+        z-index: 25;
+        margin: 0 0 10px 0;
+        padding: 5px 0;
+    }
+
+    #tab-board .filters {
+        position: sticky;
+        top: 40px;
+        background: #0d1526;
+        padding: 10px 0;
+        z-index: 20;
+        margin-top: 0;
+        border-bottom: 1px solid #333;
+    }
+
+    #tab-board thead th {
+        position: sticky;
+        top: 0;
+        background: #0f3460;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    #tab-board tbody tr td:first-child,
+    #tab-board thead th:first-child {
+        position: sticky;
+        left: 0;
+        background: #16213e;
+        z-index: 5;
+        box-shadow: 2px 0 4px rgba(0,0,0,0.5);
+        font-weight: bold;
+    }
+
+    #tab-board thead th:first-child {
+        z-index: 15;
+        background: #0f3460;
+    }
+
+    #tab-board::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+
+    #tab-board::-webkit-scrollbar-track {
+        background: #0f3460;
+        border-radius: 6px;
+    }
+
+    #tab-board::-webkit-scrollbar-thumb {
+        background: #ffd700;
+        border-radius: 6px;
+    }
+
+    #tab-board::-webkit-scrollbar-thumb:hover {
+        background: #ffed4e;
+    }
+</style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>🛠️ Admin panelė</h1>
+        <a href="/" class="back">← Grįžti į žaidimą</a>
+    </div>
+
+    <div id="msg"></div>
+
+    <div class="tabs">
+    <button class="tab active" onclick="switchTab('users')">👥 Vartotojai</button>
+    <button class="tab" onclick="switchTab('board')">🎲 Lenta</button>
+    <button class="tab" onclick="switchTab('center')">🏠 Vidurys</button>
+    <button class="tab" onclick="switchTab('sounds')">🎵 Garsai</button>
+    <button class="tab" onclick="switchTab('sound-files')">📁 Garso failai</button>   ← NAUJA!
+</div>
+
+     <!-- ==================== USERS TAB ==================== -->
+    <div id="tab-users" class="tab-content active">
+        <h2>👥 Vartotojų emoji</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Emoji</th>
+                    <th>Naujas emoji</th>
+                    <th>Veiksmas</th>
+                </tr>
+            </thead>
+            <tbody id="usersTable">
+                <tr><td colspan="5" style="text-align:center;">⏳ Kraunama...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ==================== BOARD TAB ==================== -->
+    <div id="tab-board" class="tab-content">
+        <h2>🎲 Lentos langeliai (52)</h2>
+
+        <div class="filters">
+            <input type="text" id="boardFilter" placeholder="🔍 Filtruoti pagal pavadinimą..." oninput="filterBoard()">
+            <select id="boardTypeFilter" onchange="filterBoard()">
+                <option value="">Visi tipai</option>
+                <option value="property">Property</option>
+                <option value="tax">Tax</option>
+                <option value="special">Special</option>
+                <option value="service1">Service1</option>
+                <option value="service2">Service2</option>
+                <option value="service3">Service3</option>
+                <option value="start">Start</option>
+                <option value="jail">Jail</option>
+                <option value="parking">Parking</option>
+                <option value="go-to-jail">Go to jail</option>
+            </select>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:50px;">Nr</th>
+                    <th style="width:60px;">Spalva</th>
+                    <th style="width:60px;">Spalva 2</th>
+                    <th>Pavadinimas</th>
+                    <th style="width:100px;">Tipas</th>
+                    <th style="width:80px;">Kaina</th>
+                    <th style="width:60px;">Emoji</th>
+                    <th style="width:120px;">Muzika</th>
+                    <th style="width:80px;">Šriftas</th>
+                    <th style="width:100px;">Veiksmas</th>
+                </tr>
+            </thead>
+            <tbody id="boardTable">
+                <tr><td colspan="10" style="text-align:center;">⏳ Kraunama...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+       <!-- ==================== CENTER TAB ==================== -->
+    <div id="tab-center" class="tab-content">
+        <h2>🏠 Vidurio langeliai (6)</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:40px;">Nr</th>
+                    <th style="width:60px;">Emoji</th>
+                    <th>Pavadinimas</th>
+                    <th style="width:70px;">Pavad. sp.</th>
+                    <th style="width:50px;">Pavad. dyd.</th>
+                    <th style="width:50px;">Pavad. min</th>
+                    <th style="width:50px;">Pavad. max</th>
+                    <th style="width:70px;">Fonas 1</th>
+                    <th style="width:70px;">Fonas 2</th>
+                    <th style="width:70px;">Border</th>
+                    <th style="width:70px;">Tekst. sp.</th>
+                    <th style="width:50px;">Tekst. dyd.</th>
+                    <th style="width:50px;">Tekst. min</th>
+                    <th style="width:50px;">Tekst. max</th>
+                    <th style="width:50px;">Vardo dyd.</th>
+                    <th style="width:50px;">Vardo sp.</th>
+                    <th style="width:50px;">Pinigų dyd.</th>
+                    <th style="width:50px;">Pinigų sp.</th>
+                    <th style="width:50px;">Teksto dyd.</th>
+                    <th style="width:50px;">Teksto sp.</th>
+                    <th style="width:90px;">Veiksmas</th>
+                </tr>
+            </thead>
+            <tbody id="centerTable">
+                <tr><td colspan="21" style="text-align:center;">⏳ Kraunama...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+     <!-- ==================== SOUNDS TAB ==================== -->
+    <div id="tab-sounds" class="tab-content">
+        <h2>🎵 Garso valdymas</h2>
+        
+        <div style="max-width: 600px; margin: 20px 0; max-height: calc(100vh - 200px); overflow-y: auto; padding-right: 10px;">
+            
+            <!-- Jungiklis: ar rodyti žaidėjams garso panelę -->
+            <div style="background: #16213e; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #0f3460;">
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 16px;">
+                    <input type="checkbox" id="soundPlayerControlEnabled" style="width: 20px; height: 20px; cursor: pointer; accent-color: #ffd700;">
+                    <strong style="color: #ffd700;">🎵 Garso valdymo panelė žaidėjams</strong>
+                </label>
+                <p style="color: #d4b896; font-size: 13px; margin-top: 10px; margin-left: 32px;">
+                    ✅ <strong>ĮJ.</strong> – žaidėjas gali koreguoti kiekvieną garsą atskirai<br>
+                    ❌ <strong>IŠJ.</strong> – žaidėjas mato tik paprastą valdymą (režimas + bendras garsumas)
+                </p>
+            </div>
+            
+            <!-- Numatytieji nustatymai -->
+            <div id="soundDefaultsSection" style="background: #16213e; padding: 20px; border-radius: 8px; border: 2px solid #0f3460;">
+                <h3 style="color: #ffd700; margin-top: 0; margin-bottom: 15px;">⚙️ Numatytieji nustatymai</h3>
+                
+                <!-- Režimas -->
+                <div style="margin-bottom: 15px;">
+                    <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                        🎧 Režimas:
+                    </label>
+                    <select id="soundDefaultMode" style="width: 100%; padding: 10px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 14px;">
+                        <option value="my">🎧 Tik mano</option>
+                        <option value="all">🔊 Visi garsai</option>
+                        <option value="off">🔇 Išjungti garsus</option>
+                    </select>
+                </div>
+                
+                <!-- Efektų garsumas -->
+                <div style="margin-bottom: 15px;">
+                    <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                        🔊 Efektų garsumas: <span id="soundSfxValue" style="color: #fff;">50</span>
+                    </label>
+                    <input type="range" id="soundDefaultSfxVolume" min="0" max="100" value="50" 
+                           oninput="document.getElementById('soundSfxValue').textContent = this.value"
+                           style="width: 100%;">
+                </div>
+                
+                <!-- Išsaugoti mygtukas -->
+                <button onclick="saveSoundSettings()" style="width: 100%; padding: 12px; background: #ffd700; color: #000; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer;">
+                    💾 Išsaugoti nustatymus
+                </button>
+            </div>
+            
+            <!-- Info -->
+            <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px solid #ffd700;">
+                <p style="color: #d4b896; font-size: 13px; margin: 0;">
+                    ℹ️ <strong>Pastaba:</strong> Garso nustatymai taikomi visiems žaidėjams. 
+                    Žaidėjai gali koreguoti tik tada, kai „Garso valdymo panelė" yra ĮJUNGTA.
+                </p>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- ==================== SOUND FILES TAB ==================== -->
+    <div id="tab-sound-files" class="tab-content">
+        <h2>📁 Garso failai</h2>
+        
+        <p style="color: #d4b896; font-size: 13px; margin-bottom: 15px;">
+            ℹ️ Čia galite priskirti skirtingus garso failus kiekvienai operacijai.<br>
+            Failai turi būti įkelti į <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px;">server/public/sounds/</code> katalogą.
+        </p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:200px;">Operacija</th>
+                    <th style="width:120px;">Garso ID</th>
+                    <th>Kelias</th>
+                    <th style="width:80px;">Klausytis</th>
+                    <th style="width:100px;">Veiksmas</th>
+                </tr>
+            </thead>
+            <tbody id="soundFilesTable">
+                <tr><td colspan="5" style="text-align:center;">⏳ Kraunama...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>BANCRUPT</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -366,32 +367,70 @@
                     </div>
 
                     <div style="position:relative; width:100%;">
-                        <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;" data-i18n="game.sounds">
-    🔊 Garsai
-</button>
-                        
-                        <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:100%; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:8px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8); box-sizing:border-box;">
-                            
-                            <div style="margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid rgba(255,215,0,0.2);">
-                                <div style="font-size:11px; color:#ffd700; margin-bottom:4px;" data-i18n="game.soundMode">🎧 Režimas</div>
-                                <button onclick="toggleSoundMode()" id="soundModeBtn" style="width:100%; padding:6px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background: linear-gradient(145deg, #17a2b8, #138496); color: #fff;" data-i18n="game.soundModeMy">
-    🎧 Tik mano
-</button>
-                            </div>
-                            
-                            <div style="margin-bottom:10px;">
-                                <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                                    <span style="font-size:11px; color:#ffd700;" data-i18n="game.sfxVolume">🔊 Efektai</span>
-                                    <span id="sfxVolumeValue" style="font-size:10px; font-weight:700; color:#ffd700; margin-left:auto;">50</span>
-                                </div>
-                                <input type="range" id="sfxVolumeSlider" min="0" max="100" value="50" 
-                                       oninput="changeSfxVolume(this.value)" 
-                                       style="width:100%; cursor:pointer; box-sizing:border-box;">
-                            </div>
-                            
-                            <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:5px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700;" data-i18n="game.soundOff">🔇 Išjungti garsą</button>
-                        </div>
-                    </div>
+    <button onclick="toggleSoundPanel()" id="soundBtn" class="left-btn" style="width:100%;" data-i18n="game.sounds">
+        🔊 Garsai
+    </button>
+    
+    <div id="soundPanel" style="display:none; position:absolute; top:100%; left:0; width:280px; max-width:90vw; z-index:9999; background:rgba(0,0,0,0.95); border-radius:8px; padding:12px; margin-top:4px; border:1px solid rgba(255,215,0,0.3); box-shadow:0 4px 20px rgba(0,0,0,0.8); box-sizing:border-box; max-height:500px; overflow-y:auto;">
+        
+        <!-- Režimas -->
+        <div style="margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid rgba(255,215,0,0.2);">
+            <div style="font-size:11px; color:#ffd700; margin-bottom:6px; font-weight:700;" data-i18n="game.soundMode">🎧 Režimas</div>
+            
+            <label style="display:flex; align-items:center; gap:6px; margin-bottom:5px; cursor:pointer; font-size:11px; color:#fff;">
+                <input type="radio" name="soundMode" value="my" onchange="setSoundMode('my')" style="cursor:pointer;">
+                <span>🎧 Tik mano</span>
+            </label>
+            
+            <label style="display:flex; align-items:center; gap:6px; margin-bottom:5px; cursor:pointer; font-size:11px; color:#fff;">
+                <input type="radio" name="soundMode" value="all" onchange="setSoundMode('all')" style="cursor:pointer;">
+                <span>🔊 Visi garsai</span>
+            </label>
+            
+            <label style="display:flex; align-items:center; gap:6px; margin-bottom:5px; cursor:pointer; font-size:11px; color:#fff;">
+                <input type="radio" name="soundMode" value="off" onchange="setSoundMode('off')" style="cursor:pointer;">
+                <span>🔇 Išjungti garsus</span>
+            </label>
+        </div>
+        
+        <!-- Efektų garsumas -->
+        <div style="margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                <span style="font-size:11px; color:#ffd700; font-weight:700;" data-i18n="game.sfxVolume">🔊 Efektai</span>
+                <span id="sfxVolumeValue" style="font-size:10px; font-weight:700; color:#ffd700; margin-left:auto;">50</span>
+            </div>
+            <input type="range" id="sfxVolumeSlider" min="0" max="100" value="50" 
+                   oninput="changeSfxVolume(this.value)" 
+                   style="width:100%; cursor:pointer; box-sizing:border-box;">
+        </div>
+        
+        <!-- Atskiri garsai (rodomi tik jei admin įjungęs) -->
+        <div id="soundAdvancedSection" style="display:none;">
+            <div style="font-size:11px; color:#ffd700; margin-bottom:8px; font-weight:700; padding-top:10px; border-top:1px solid rgba(255,215,0,0.2);">
+                📋 ATSKIRI GARSAI
+            </div>
+            
+            <div id="soundLevelsList" style="max-height:250px; overflow-y:auto; padding-right:4px;">
+                <!-- JavaScript užpildys -->
+            </div>
+            
+            <!-- Mygtukai -->
+            <div style="display:flex; gap:6px; margin-top:10px;">
+                <button onclick="resetSoundSettings()" style="flex:1; padding:6px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                    🔄 Standartas
+                </button>
+                <button onclick="saveSoundSettings()" style="flex:1; padding:6px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                    💾 Išsaugoti
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mute mygtukas -->
+        <button onclick="toggleMute()" id="muteBtn" style="width:100%; padding:6px; border:none; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; background:#0d1f0d; color:#ffd700; margin-top:10px;" data-i18n="game.soundOff">
+            🔇 Išjungti garsą
+        </button>
+    </div>
+</div>
 
                     <button onclick="toggleTheme()" id="themeBtn" class="left-btn" style="background: linear-gradient(145deg, #34495e, #2c3e50); color: #fff; border-color: #5d6d7e;" data-i18n="game.themeDark">
     🌙 Tamsus

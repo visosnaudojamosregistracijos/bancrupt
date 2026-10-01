@@ -186,6 +186,134 @@ socket = io(SERVER_URL, {
         }
     });
 
+   // ============================================
+// 🆕 BOARD ATNAUJINIMAS IŠ ADMIN PANELĖS (LIVE)
+// ============================================
+socket.on('boardUpdated', (newBoard) => {
+    console.log('🎨 Lentos atnaujinimas iš admin panelės:', newBoard.length, 'langeliai');
+    
+    if (gameState) {
+        gameState.board = newBoard;
+        updateBoard(gameState);
+        
+        if (typeof updateUI === 'function' && gameState.players) {
+            updateUI(gameState);
+        }
+    }
+    
+    if (typeof addNotification === 'function') {
+        addNotification('🎨 Lenta atnaujinta iš admin panelės!');
+    }
+    
+    if (typeof addJournal === 'function') {
+        addJournal('🎨 Lenta atnaujinta!');
+    }
+});
+
+// ============================================
+// 🆕 VIDURIO LANGELIŲ ATNAUJINIMAS (CENTER)
+// ============================================
+socket.on('centerCells', (cells) => {
+    console.log('🎨 Vidurio langeliai užkrauti:', cells.length);
+    applyCenterCells(cells);
+});
+
+socket.on('centerUpdated', (cells) => {
+    console.log('🎨 Vidurio langeliai atnaujinti:', cells.length);
+    applyCenterCells(cells);
+    
+    if (typeof addNotification === 'function') {
+        addNotification('🎨 Vidurio langeliai atnaujinti!');
+    }
+});
+
+// ============================================
+// 🆕 GARSO NUSTATYMAI IŠ SERVERIO   ← NAUJA!
+// ============================================
+socket.on('soundSettings', (settings) => {
+    console.log('🔊 Gauti garso nustatymai:', settings);
+    
+    if (!settings) return;
+    
+    // Išsaugoti globaliai
+    window.serverSoundSettings = settings;
+    
+    // 🆕 Mygtukas VISADA rodomas
+    const soundBtn = document.getElementById('soundBtn');
+    if (soundBtn) soundBtn.style.display = '';
+    
+    if (settings.player_control_enabled === false) {
+        // 🆕 Paprasta versija – naudoti standartinius nustatymus
+        if (settings.default_mode) {
+            soundMode = settings.default_mode;
+            localStorage.setItem('bancrupt_soundMode', soundMode);
+        }
+        if (settings.default_sfx_volume !== undefined) {
+            audioManager.setSfxVolume(settings.default_sfx_volume / 100);
+            localStorage.setItem('bancrupt_sfxVolume', settings.default_sfx_volume);
+        }
+        
+        console.log('🔇 Paprasta garso panelė (admin išjungė išplėstą)');
+    } else {
+        console.log('🔊 Išplėstinė garso panelė');
+    }
+    
+    // 🆕 Atnaujinti panelės išvaizdą
+    updateSoundPanelVisibility();
+});
+
+socket.on('soundSettingsUpdated', (settings) => {
+    console.log('🔊 Garso nustatymai atnaujinti:', settings);
+    
+    if (!settings) return;
+    
+    window.serverSoundSettings = settings;
+    
+    // 🆕 Mygtukas VISADA rodomas
+    const soundBtn = document.getElementById('soundBtn');
+    if (soundBtn) soundBtn.style.display = '';
+    
+    if (settings.player_control_enabled === false) {
+        // 🆕 Paprasta versija – naudoti standartinius nustatymus
+        if (settings.default_mode) {
+            soundMode = settings.default_mode;
+            localStorage.setItem('bancrupt_soundMode', soundMode);
+        }
+        if (settings.default_sfx_volume !== undefined) {
+            audioManager.setSfxVolume(settings.default_sfx_volume / 100);
+            localStorage.setItem('bancrupt_sfxVolume', settings.default_sfx_volume);
+        }
+        
+        if (typeof addNotification === 'function') {
+            addNotification('🔇 Garso panelė perjungta į paprastą');
+        }
+    } else {
+        if (typeof addNotification === 'function') {
+            addNotification('🔊 Garso panelė perjungta į išplėstą');
+        }
+    }
+    
+    // 🆕 Atnaujinti panelės išvaizdą
+    updateSoundPanelVisibility();
+});
+
+// ============================================
+// 🆕 GARSO FAILAI IŠ SERVERIO   ← NAUJA!
+// ============================================
+socket.on('soundFiles', (files) => {
+    console.log('📁 Gauti garso failai:', files);
+    audioManager.updateSoundFiles(files);
+});
+
+socket.on('soundFilesUpdated', (files) => {
+    console.log('📁 Garso failai atnaujinti:', files);
+    audioManager.updateSoundFiles(files);
+    
+    if (typeof addNotification === 'function') {
+        addNotification('📁 Garso failai atnaujinti!');
+    }
+});
+
     socket.on('yourTurn', (data) => {
         console.log('🎵 Tavo eilė!', data);
         
@@ -327,6 +455,22 @@ socket = io(SERVER_URL, {
         renderPublicGames(games);
     });
 
+    // ============================================
+    // 🆕 PENDING PURCHASE (pasiūlymas prieš metimą)   ← NAUJA!
+    // ============================================
+    socket.on('pendingPurchase', (data) => {
+        console.log('💰 Pending purchase:', data);
+        
+        showBuyChoice({
+            fieldId: data.fieldId,
+            fieldName: data.fieldName,
+            fieldCost: data.fieldCost,
+            playerId: data.playerId
+        });
+        
+        playNotificationSound();
+    });
+
     socket.on('diceRolled', async (data) => {
         console.log('🎲 Kauliukai mesti:', data);
         playSoundForPlayer('dice', data.player.id);
@@ -343,21 +487,19 @@ socket = io(SERVER_URL, {
         }
         
         if (data.oldPosition !== undefined && data.newPosition !== undefined) {
-            isAnimating = true;   // 🆕 PRADEDAM animaciją
+            isAnimating = true;
             await animateMovement(data.player.id, data.oldPosition, data.newPosition);
-            isAnimating = false;   // 🆕 BAIGĖM animaciją
+            isAnimating = false;
         }
         
         window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
 
-
-        
         // 🆕 Siunčiam movementFinished TIK jei AŠ mečiau kauliukus
-if (data.needsProcessField && data.player.id === playerId) {
-    console.log('✅ Animacija baigta, siunčiam movementFinished');
-    socket.emit('movementFinished');
-    return;
-}
+        if (data.needsProcessField && data.player.id === playerId) {
+            console.log('✅ Animacija baigta, siunčiam movementFinished');
+            socket.emit('movementFinished');
+            return;
+        }
         
         const isMe = data.player.id === playerId;
 
@@ -373,27 +515,28 @@ if (data.needsProcessField && data.player.id === playerId) {
             return;
         }
         
-        if (data.field) {
-            const fpId = data.player.id;
-            
-            if (data.field.id === 2) playSoundForPlayer('dujos', fpId);
-            else if (data.field.id === 14) playSoundForPlayer('siuksles', fpId);
-            else if (data.field.id === 28) playSoundForPlayer('elektra', fpId);
-            else if (data.field.id === 44) playSoundForPlayer('vanduo', fpId);
-            else if (data.field.id === 8) playSoundForPlayer('air-port', fpId);
-            else if (data.field.id === 19) playSoundForPlayer('train', fpId);
-            else if (data.field.id === 37) playSoundForPlayer('port', fpId);
-            else if (data.field.id === 46) playSoundForPlayer('bus', fpId);
-            else if (data.field.id === 13) playSoundForPlayer('hospital', fpId);
-            else if (data.field.id === 21) playSoundForPlayer('latras', fpId, true);
-            else if (data.field.id === 32) playSoundForPlayer('pirtis', fpId);
-            else if (data.field.id === 11) playSoundForPlayer('spa', fpId);
-            else if (data.field.id === 24) playSoundForPlayer('baseinas', fpId);
-            else if (data.field.id === 48) playSoundForPlayer('papludimys', fpId);
-            else if (data.field.id === 50) playSoundForPlayer('birthday', fpId, true);
-            else if (data.field.id === 42) playSoundForPlayer('jail_in', fpId, true);
-            else if (data.field.id === 16) playSoundForPlayer('jail', fpId);
-        }
+        // 🆕 Garsai pagal lauką (IŠTRINTA – fieldResult jau groja)
+// if (data.field) {
+//     const fpId = data.player.id;
+//     
+//     if (data.field.id === 2) playSoundForPlayer('dujos', fpId);
+//     else if (data.field.id === 14) playSoundForPlayer('siuksles', fpId);
+//     else if (data.field.id === 28) playSoundForPlayer('elektra', fpId);
+//     else if (data.field.id === 44) playSoundForPlayer('vanduo', fpId);
+//     else if (data.field.id === 8) playSoundForPlayer('air-port', fpId);
+//     else if (data.field.id === 19) playSoundForPlayer('train', fpId);
+//     else if (data.field.id === 37) playSoundForPlayer('port', fpId);
+//     else if (data.field.id === 46) playSoundForPlayer('bus', fpId);
+//     else if (data.field.id === 13) playSoundForPlayer('hospital', fpId);
+//     else if (data.field.id === 21) playSoundForPlayer('latras', fpId, true);
+//     else if (data.field.id === 32) playSoundForPlayer('pirtis', fpId);
+//     else if (data.field.id === 11) playSoundForPlayer('spa', fpId);
+//     else if (data.field.id === 24) playSoundForPlayer('baseinas', fpId);
+//     else if (data.field.id === 48) playSoundForPlayer('papludimys', fpId);
+//     else if (data.field.id === 50) playSoundForPlayer('birthday', fpId, true);
+//     else if (data.field.id === 42) playSoundForPlayer('jail_in', fpId, true);
+//     else if (data.field.id === 16) playSoundForPlayer('jail', fpId);
+// }
         
         if (data.field && data.result) {
             const fieldId = data.field.id;
@@ -462,12 +605,37 @@ if (data.needsProcessField && data.player.id === playerId) {
                 }
             }
             
-            updateUI(gameState);
-            return;
+            // 🆕 NUOMOS GARSAI
+            if (data.result.action === 'pay_rent') {
+                const rentFieldId = data.field?.id;
+                const rentOwner = gameState?.players?.find(p => 
+                    p.properties?.includes(rentFieldId) && !p.bankrupt && !p.left && !p.kicked
+                );
+                
+                console.log('🔍 NUOMOS GARSAS:');
+                console.log('  - rentFieldId:', rentFieldId);
+                console.log('  - rentOwner:', rentOwner?.name);
+                console.log('  - rentOwner?.id:', rentOwner?.id);
+                console.log('  - playerId:', playerId);
+                console.log('  - data.player.id:', data.player.id);
+                console.log('  - isMe:', isMe);
+                console.log('  - BENDRA SĄLYGA:', rentOwner && rentOwner.id === playerId && rentOwner.id !== data.player.id);
+                
+                if (rentOwner && rentOwner.id === playerId && rentOwner.id !== data.player.id) {
+                    // 🎉 TU gauni nuomą
+                    playSoundForPlayer('rent-received', playerId);
+                    console.log('💰 Nuomos gavimo garsas:', playerId);
+                } else if (isMe) {
+                    // 💸 TU moki nuomą
+                    playSoundForPlayer('pay1', playerId);
+                    console.log('💸 Nuomos mokėjimo garsas:', playerId);
+                } else {
+                    console.log('⚠️ Nė vienas nelyginys netinka!');
+                }
+            }
         }
         
-        const fallbackMsg = `${data.player.name} metė ${data.dice[0]}+${data.dice[1]}=${data.total}`;
-        addJournal(fallbackMsg);
+        // 🆕 IŠTRINTA – serveris jau siunčia metimo pranešimą
         
         updateUI(gameState);
     });
@@ -681,9 +849,31 @@ if (data.needsProcessField && data.player.id === playerId) {
         else if (fieldId === 42) playSoundForPlayer('jail_in', data.playerId, true);
         else if (fieldId === 16) playSoundForPlayer('jail', data.playerId);
         
-        // 🆕 Nuomos mokėjimo garsas
+        // 🆕 NUOMOS GARSAI (mokėjimas arba gavimas)
         if (result.action === 'pay_rent') {
-            playSoundForPlayer('pay1', null);
+            const rentFieldId = data.field?.id;
+            const rentOwner = gameState?.players?.find(p => 
+                p.properties?.includes(rentFieldId) && !p.bankrupt && !p.left && !p.kicked
+            );
+            const isMe = data.playerId === playerId;
+            
+            console.log('🔍 NUOMOS GARSAS (fieldResult):');
+            console.log('  - rentFieldId:', rentFieldId);
+            console.log('  - rentOwner:', rentOwner?.name);
+            console.log('  - rentOwner?.id:', rentOwner?.id);
+            console.log('  - playerId:', playerId);
+            console.log('  - data.playerId:', data.playerId);
+            console.log('  - isMe:', isMe);
+            
+            if (rentOwner && rentOwner.id === playerId && rentOwner.id !== data.playerId) {
+                // 🎉 TU gauni nuomą
+                playSoundForPlayer('rent-received', playerId);
+                console.log('💰 Nuomos gavimo garsas:', playerId);
+            } else if (isMe) {
+                // 💸 TU moki nuomą
+                playSoundForPlayer('pay1', playerId);
+                console.log('💸 Nuomos mokėjimo garsas:', playerId);
+            }
         }
         
         // 🆕 Pranešimas
@@ -1842,6 +2032,8 @@ function toggleSoundPanel() {
     
     if (panel.style.display === 'none' || panel.style.display === '') {
         panel.style.display = 'block';
+        updateSoundPanelVisibility();
+        updateSoundModeRadios();
     } else {
         panel.style.display = 'none';
     }
@@ -1860,27 +2052,162 @@ function toggleMusicPanel() {
     playClickSound();
 }
 
-function toggleSoundMode() {
-    const btn = document.getElementById('soundModeBtn');
+function setSoundMode(mode) {
+    soundMode = mode;
+    localStorage.setItem('bancrupt_soundMode', mode);
     
-    if (soundMode === 'my') {
-        soundMode = 'all';
-        if (btn) {
-            btn.innerHTML = '🔊 Garsai: Visi';
-            btn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';
-            btn.style.borderColor = '#4ade80';
-        }
+    // Atnaujinti radio buttons
+    document.querySelectorAll('input[name="soundMode"]').forEach(r => {
+        r.checked = (r.value === mode);
+    });
+    
+    // Jei "off" – išjungti visus garsus
+    if (mode === 'off') {
+        audioManager.isEnabled = false;
     } else {
-        soundMode = 'my';
-        if (btn) {
-            btn.innerHTML = '🎧 Garsai: Tik mano';
-            btn.style.background = 'linear-gradient(145deg, #17a2b8, #138496)';
-            btn.style.borderColor = '#4dd0e1';
-        }
+        audioManager.isEnabled = true;
     }
     
-    localStorage.setItem('bancrupt_soundMode', soundMode);
+    console.log(`🎧 Garso režimas: ${mode}`);
     playClickSound();
+}
+
+// 🆕 Atnaujinti radio buttons pagal esamą režimą
+function updateSoundModeRadios() {
+    document.querySelectorAll('input[name="soundMode"]').forEach(r => {
+        r.checked = (r.value === soundMode);
+    });
+}
+
+// 🆕 Atnaujinti garso panelę pagal serverio nustatymus
+function updateSoundPanelVisibility() {
+    const settings = window.serverSoundSettings;
+    if (!settings) return;
+    
+    const advancedSection = document.getElementById('soundAdvancedSection');
+    
+    if (settings.player_control_enabled === true) {
+        if (advancedSection) advancedSection.style.display = 'block';
+        renderSoundLevels();
+        console.log('🔊 Išplėstinė garso panelė rodoma');
+    } else {
+        if (advancedSection) advancedSection.style.display = 'none';
+        console.log('🔇 Paprasta garso panelė');
+    }
+}
+
+// 🆕 Atvaizduoti atskirų garsų sąrašą
+function renderSoundLevels() {
+    const container = document.getElementById('soundLevelsList');
+    if (!container) return;
+    
+    const soundNames = {
+        dice: '🎲 Kauliukų metimas',
+        move: '🚶 Judėjimas',
+        click: '👆 Paspaudimas',
+        'your-turn': '🎵 Tavo eilė',
+        cash: '💰 Pinigų gavimas',
+        pay: '💸 Pinigų mokėjimas',
+        pay1: '💸 Nuomos mokėjimas',
+        'rent-received': '💰 Nuomos gavimas',
+        buy: '🏠 Pirkimas',
+        build: '🏗️ Statyba',
+        hotel: '🏨 Viešbutis',
+        demolish: '🏚️ Griovimas',
+        tax: '💸 Mokesčiai',
+        latras: '🍺 Latrų baras',
+        pirtis: '🧖 Pirtis',
+        hospital: '🏥 Ligoninė',
+        birthday: '🎂 Gimtadienis',
+        chance: '🎲 Šansas',
+        special: '⭐ Specialus',
+        dujos: '🔥 Dujos',
+        siuksles: '🗑️ Šiukšlės',
+        elektra: '💡 Elektra',
+        vanduo: '💧 Vanduo',
+        'air-port': '✈️ Oro uostas',
+        train: '🚂 Traukinių stotis',
+        port: '⚓ Uostas',
+        bus: '🚌 Autobusų stotis',
+        spa: '🛀 SPA',
+        baseinas: '🏊 Baseinas',
+        papludimys: '🏖️ Paplūdimys',
+        jail: '⛓️ Kalėjimas',
+        jail_in: '🚔 Į kalėjimą',
+        jail_out: '🚪 Iš kalėjimo',
+        trade: '🤝 Prekyba',
+        auction: '🔨 Aukcionas',
+        start: '🏁 Start',
+        'game-start': '🎮 Žaidimo startas',
+        win: '🏆 Laimėjimas',
+        celebrate: '🎉 Šventimas',
+        gameover: '🏁 Žaidimo pabaiga',
+        bankrupt: '💀 Bankrotas',
+        notification: '📢 Pranešimas',
+        error: '❌ Klaida'
+    };
+    
+    let html = '';
+    for (const [soundName, label] of Object.entries(soundNames)) {
+        const level = audioManager.getSoundLevel(soundName);
+        html += `
+            <div style="margin-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+                    <span style="font-size:10px; color:#fff; flex:1;">${label}</span>
+                    <span id="level-${soundName}" style="font-size:9px; font-weight:700; color:#ffd700;">${level}</span>
+                </div>
+                <input type="range" min="0" max="10" value="${level}" 
+                       oninput="changeSoundLevel('${soundName}', this.value)"
+                       style="width:100%; cursor:pointer;">
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+// 🆕 Keisti atskiro garso lygį
+function changeSoundLevel(soundName, level) {
+    audioManager.setSoundLevel(soundName, level);
+    const levelEl = document.getElementById('level-' + soundName);
+    if (levelEl) levelEl.textContent = level;
+}
+
+// 🆕 Atkurti standartą
+function resetSoundSettings() {
+    if (!confirm('🔄 Atkurti standartinius garso nustatymus?')) return;
+    
+    audioManager.soundLevels = {
+        dice: 5, move: 5, click: 5, 'your-turn': 5,
+        cash: 5, pay: 5, pay1: 5, 'rent-received': 5, buy: 5,
+        build: 5, hotel: 5, demolish: 5,
+        tax: 5, latras: 5, pirtis: 5, hospital: 5, birthday: 5, chance: 5, special: 5,
+        dujos: 5, siuksles: 5, elektra: 5, vanduo: 5,
+        'air-port': 5, train: 5, port: 5, bus: 5,
+        spa: 5, baseinas: 5, papludimys: 5,
+        jail: 5, jail_in: 5, jail_out: 5,
+        trade: 5, auction: 5,
+        start: 5, 'game-start': 5, win: 5, celebrate: 5,
+        gameover: 5, bankrupt: 5, notification: 5, error: 5
+    };
+    audioManager.saveSoundLevels();
+    
+    renderSoundLevels();
+    playClickSound();
+    
+    if (typeof addNotification === 'function') {
+        addNotification('🔄 Garso nustatymai atkurti');
+    }
+}
+
+// 🆕 Išsaugoti garso nustatymus
+function saveSoundSettings() {
+    audioManager.saveSoundLevels();
+    playClickSound();
+    
+    if (typeof addNotification === 'function') {
+        addNotification('💾 Garso nustatymai išsaugoti');
+    }
 }
 
 function playSoundForPlayer(soundName, soundPlayerId = null, isPublicSound = false) {
@@ -2440,20 +2767,17 @@ function enterGame() {
     
     loadJournalFromStorage();
 
-    const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
+   const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
     soundMode = savedSoundMode;
     
-    const soundModeBtn = document.getElementById('soundModeBtn');
-    if (soundModeBtn) {
-        if (soundMode === 'all') {
-            soundModeBtn.innerHTML = '🔊 Garsai: Visi';
-            soundModeBtn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';
-            soundModeBtn.style.borderColor = '#4ade80';
-        } else {
-            soundModeBtn.innerHTML = '🎧 Garsai: Tik mano';
-            soundModeBtn.style.background = 'linear-gradient(145deg, #17a2b8, #138496)';
-            soundModeBtn.style.borderColor = '#4dd0e1';
-        }
+    // 🆕 Atnaujinti radio buttons
+    updateSoundModeRadios();
+    
+    // 🆕 Jei "off" – išjungti garsus
+    if (soundMode === 'off') {
+        audioManager.isEnabled = false;
+    } else {
+        audioManager.isEnabled = true;
     }
     
     if (gameState && gameState.players && gameState.players.length > 0) {
@@ -2469,8 +2793,8 @@ function enterGame() {
     const gameIdLeft = document.getElementById('gameIdDisplayLeft');
     if (gameIdLeft) gameIdLeft.textContent = gameId;
     
-    const savedMusicVolume = localStorage.getItem('bancrupt_musicVolume') || 15;
-    const savedSfxVolume = localStorage.getItem('bancrupt_sfxVolume') || 50;
+    const savedMusicVolume = localStorage.getItem('bancrupt_musicVolume') || 5;
+    const savedSfxVolume = localStorage.getItem('bancrupt_sfxVolume') || 10;
     
     const musicSlider = document.getElementById('musicVolumeSlider');
     const sfxSlider = document.getElementById('sfxVolumeSlider');
@@ -3701,20 +4025,20 @@ function updateUI(state) {
         const newMoney = me.money;
         
         document.getElementById('myInfo').innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
-                <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
-                <div class="player-name" style="font-size:16px; font-weight:600;">${me.name}</div>
-            </div>
+    <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
+        <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
+        <div class="player-name">${me.name}</div>
+    </div>
 
-            <div class="player-money" style="font-size:28px; font-weight:700; color:${me.money < 0 ? '#dc3545' : '#000000'};" data-target="${newMoney}">💰 €${newMoney}</div>
-            <div style="font-size:12px; color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
-            <div style="font-size:11px; color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
-            ${me.inJail ? '<div style="color:#dc3545; font-size:11px;">⛓️ KALĖJIME</div>' : ''}
-            ${me.bankrupt ? '<div style="color:#dc3545; font-size:11px;">💀 BANKROTAS</div>' : ''}
-            ${me.left ? '<div style="color:#6c757d; font-size:11px;">😭 PASITRAUKEI</div>' : ''}
-            ${me.kicked ? '<div style="color:#dc3545; font-size:14px; font-weight:700;">🚫 PAŠALINTAS</div>' : ''}
-            ${me.isDebtor ? '<div style="color:#dc3545; font-size:14px; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
-        `;
+    <div class="player-money ${me.money < 0 ? 'negative' : ''}" data-target="${newMoney}">💰 €${newMoney}</div>
+    <div style="color:#3d2b1f;">📍 ${state.board[me.position]?.name || me.position}</div>
+    <div style="color:#3d2b1f;">🏠 ${me.properties.length} objektai (${housesInfo} namai)</div>
+    ${me.inJail ? '<div style="color:#dc3545; font-weight:700;">⛓️ KALĖJIME</div>' : ''}
+    ${me.bankrupt ? '<div style="color:#dc3545; font-weight:700;">💀 BANKROTAS</div>' : ''}
+    ${me.left ? '<div style="color:#6c757d; font-weight:700;">😭 PASITRAUKEI</div>' : ''}
+    ${me.kicked ? '<div style="color:#dc3545; font-weight:700;">🚫 PAŠALINTAS</div>' : ''}
+    ${me.isDebtor ? '<div style="color:#dc3545; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
+`;
 
         const center1 = document.getElementById('center-1');
         let miniCardsContainer = center1.querySelector('.mini-cards-container');
@@ -3946,6 +4270,85 @@ if (jailBtn) {
 }
 
 // ============================================
+// 🆕 VIDURIO LANGELIŲ PRITAIKYMAS
+// ============================================
+function applyCenterCells(cells) {
+    if (!cells || !Array.isArray(cells)) return;
+    
+    cells.forEach(c => {
+        const cellEl = document.getElementById('center-' + c.cell_id);
+        if (!cellEl) return;
+        
+        // Fonas (gradientas) — per CSS kintamąjį
+        if (c.bg_color && c.bg_color2) {
+            cellEl.style.setProperty('--center-bg', `linear-gradient(145deg, ${c.bg_color}, ${c.bg_color2})`);
+        } else if (c.bg_color) {
+            cellEl.style.setProperty('--center-bg', c.bg_color);
+        }
+        
+        // Border — per CSS kintamąjį
+        if (c.border_color) {
+            cellEl.style.setProperty('--center-border', c.border_color);
+        }
+        
+        // Teksto spalva ir dydis — per CSS kintamuosius
+        if (c.font_color) {
+            cellEl.style.setProperty('--center-font-color', c.font_color);
+        }
+        if (c.font_size) {
+            cellEl.style.setProperty('--center-font-size', c.font_size + 'px');
+        }
+        if (c.font_size_min) {
+            cellEl.style.setProperty('--center-font-size-min', c.font_size_min + 'px');
+        }
+        if (c.font_size_max) {
+            cellEl.style.setProperty('--center-font-size-max', c.font_size_max + 'px');
+        }
+        
+        // 🆕 #myInfo elementai — vardas, pinigai, bendras tekstas
+        if (c.myinfo_name_size) {
+            cellEl.style.setProperty('--myinfo-name-size', c.myinfo_name_size + 'px');
+        }
+        if (c.myinfo_name_color) {
+            cellEl.style.setProperty('--myinfo-name-color', c.myinfo_name_color);
+        }
+        if (c.myinfo_money_size) {
+            cellEl.style.setProperty('--myinfo-money-size', c.myinfo_money_size + 'px');
+        }
+        if (c.myinfo_money_color) {
+            cellEl.style.setProperty('--myinfo-money-color', c.myinfo_money_color);
+        }
+        if (c.myinfo_text_size) {
+            cellEl.style.setProperty('--myinfo-text-size', c.myinfo_text_size + 'px');
+        }
+        if (c.myinfo_text_color) {
+            cellEl.style.setProperty('--myinfo-text-color', c.myinfo_text_color);
+        }
+        
+        // Antraštė (h4) — tekstas, spalva, dydis
+        const h4 = cellEl.querySelector('h4');
+        if (h4) {
+            const iconPart = c.icon || '';
+            const titlePart = c.title || '';
+            h4.textContent = iconPart + (iconPart && titlePart ? ' ' : '') + titlePart;
+            
+            if (c.title_color) {
+                h4.style.setProperty('--center-title-color', c.title_color);
+            }
+            if (c.title_size) {
+                h4.style.setProperty('--center-title-size', c.title_size + 'px');
+            }
+            if (c.title_size_min) {
+                h4.style.setProperty('--center-title-size-min', c.title_size_min + 'px');
+            }
+            if (c.title_size_max) {
+                h4.style.setProperty('--center-title-size-max', c.title_size_max + 'px');
+            }
+        }
+    });
+}
+
+// ============================================
 // LENTOS ATNAUJINIMAS
 // ============================================
 
@@ -4036,35 +4439,46 @@ function updateBoard(state) {
             cell.classList.add('edge');
         }
         
-        if (field.color && field.type === 'property') {
-            cell.setAttribute('data-group', field.color);
-            cell.style.setProperty('--group-color', field.color);
-            
-            if (owner) {
-                cell.style.setProperty('--owner-color', owner.color || '#ffd700');
-                
-                const group = COLOR_GROUPS[field.color] || [];
-                if (group.length > 0) {
-                    const hasAll = group.every(id => owner.properties.includes(id));
-                    if (hasAll) {
-                        cell.classList.add('full-group');
-                    } else {
-                        cell.classList.remove('full-group');
-                    }
-                }
+        // 🆕 VISIEMS langeliams su color — nustatyti data-group ir --group-color
+if (field.color) {
+    cell.setAttribute('data-group', field.color);
+    cell.style.setProperty('--group-color', field.color);
+    cell.style.setProperty('--property-color', field.color);
+} else {
+    cell.removeAttribute('data-group');
+    cell.style.removeProperty('--group-color');
+    cell.style.removeProperty('--property-color');
+}
+
+// 🆕 Antra spalva (gradientui)
+if (field.color2) {
+    cell.style.setProperty('--group-color2', field.color2);
+} else {
+    cell.style.removeProperty('--group-color2');
+}
+
+// 🆕 Owner logika TIK property tipo langeliams
+if (field.color && field.type === 'property') {
+    if (owner) {
+        cell.style.setProperty('--owner-color', owner.color || '#ffd700');
+        
+        const group = COLOR_GROUPS[field.color] || [];
+        if (group.length > 0) {
+            const hasAll = group.every(id => owner.properties.includes(id));
+            if (hasAll) {
+                cell.classList.add('full-group');
             } else {
                 cell.classList.remove('full-group');
-                cell.style.removeProperty('--owner-color');
             }
-        } else {
-            cell.removeAttribute('data-group');
-            cell.classList.remove('full-group');
-            cell.style.removeProperty('--owner-color');
         }
-        
-        if (field.color) {
-            cell.style.setProperty('--property-color', field.color);
-        }
+    } else {
+        cell.classList.remove('full-group');
+        cell.style.removeProperty('--owner-color');
+    }
+} else {
+    cell.classList.remove('full-group');
+    cell.style.removeProperty('--owner-color');
+}
     });
 }
 
