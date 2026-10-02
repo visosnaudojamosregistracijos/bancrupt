@@ -168,6 +168,9 @@ function checkSocketRateLimit(socket, eventName) {
 
 const games = new Map();
 
+// 🆕 Perduoti games į admin routes (statistikai)
+app.set('games', games);
+
 // ============================================
 // GAUTI KLIENTO IP
 // ============================================

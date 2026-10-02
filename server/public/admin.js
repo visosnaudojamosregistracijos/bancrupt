@@ -33,8 +33,13 @@ function switchTab(tab) {
         loadSoundSettings();
     }
     
-    if (tab === 'sound-files') {                    // ← NAUJA!
+    if (tab === 'sound-files') {
         loadSoundFiles();
+    }
+    
+    if (tab === 'stats') {                    // ← NAUJA!
+        loadStats();
+        startStatsAutoRefresh();
     }
 }
 
@@ -446,15 +451,14 @@ async function saveSoundSettings() {
 }
 
 // ============================================
-// 🆕 GARSO FAILAI   ← NAUJA!
+// 🆕 GARSO FAILAI
 // ============================================
 
 let allSoundFiles = [];
-let allSoundFilesList = [];   // 🆕 Visi .mp3 failai iš sounds/ katalogo
+let allSoundFilesList = [];
 
 async function loadSoundFiles() {
     try {
-        // 🆕 Gauti visų .mp3 failų sąrašą
         try {
             const soundsRes = await fetch('/api/admin/sounds-list', {
                 headers: { 'Authorization': 'Bearer ' + token }
@@ -467,7 +471,6 @@ async function loadSoundFiles() {
             console.warn('⚠️ Nepavyko gauti garso failų sąrašo:', err);
         }
         
-        // Gauti garso failų priskyrimus iš DB
         const res = await fetch('/api/admin/sound-files', {
             headers: { 'Authorization': 'Bearer ' + token }
         });
@@ -498,7 +501,6 @@ function renderSoundFiles(files) {
     files.forEach(f => {
         const tr = document.createElement('tr');
         
-        // 🆕 Select su visais garso failais
         let selectHtml = `<select id="file-${f.sound_name}" 
                                   onchange="playSoundFile(this.value)"
                                   style="width:100%; padding:4px; font-size:12px; background:#0f3460; color:#fff; border:1px solid #444; border-radius:4px; cursor:pointer;">`;
@@ -508,7 +510,6 @@ function renderSoundFiles(files) {
             selectHtml += `<option value="${soundFile}" ${selected}>${soundFile}</option>`;
         });
         
-        // Jei esamas kelias nėra sąraše – pridėti jį
         if (!allSoundFilesList.includes(f.file_path)) {
             selectHtml += `<option value="${f.file_path}" selected>${f.file_path} (nėra kataloge)</option>`;
         }
@@ -580,7 +581,6 @@ async function saveSoundFile(soundName) {
         
         showMsg(`✅ ${soundName} → ${filePath}`, true);
         
-        // 🆕 Perkrauti lentelę, kad atsinaujintų
         setTimeout(() => {
             loadSoundFiles();
         }, 500);
@@ -591,6 +591,87 @@ async function saveSoundFile(soundName) {
 }
 
 // ============================================
+// 🆕 STATISTIKA   ← NAUJA!
+// ============================================
+
+let statsInterval = null;
+
+async function loadStats() {
+    try {
+        const res = await fetch('/api/admin/stats', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!res.ok) {
+            if (res.status === 401 || res.status === 403) {
+                console.warn('Nėra admin teisių statistikai');
+                return;
+            }
+            throw new Error('HTTP ' + res.status);
+        }
+        
+        const data = await res.json();
+        
+        const setText = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
+        
+        setText('stat-total-games', data.totalGames ?? 0);
+        setText('stat-active-games', data.activeGames ?? 0);
+        setText('stat-waiting-games', data.waitingGames ?? 0);
+        setText('stat-total-players', data.totalPlayers ?? 0);
+        setText('stat-total-money', ((data.totalMoney || 0).toLocaleString('lt-LT')) + ' €');
+        setText('stat-total-properties', data.totalProperties ?? 0);
+        
+        setText('stats-updated', new Date(data.timestamp).toLocaleTimeString('lt-LT'));
+        
+        const tbody = document.getElementById('games-tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        if (!data.gameList || data.gameList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">Nėra aktyvių žaidimų</td></tr>';
+            return;
+        }
+        
+        data.gameList.forEach(g => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><code>${g.gameId}</code></td>
+                <td>${g.players}</td>
+                <td>${g.started ? '🟢 Žaidžiama' : '⏳ Laukiama'}</td>
+                <td>${g.host}</td>
+                <td>${g.currentPlayer || '-'}</td>
+                <td>${(g.money || 0).toLocaleString('lt-LT')} €</td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+    } catch (err) {
+        console.error('Klaida kraunant statistiką:', err);
+    }
+}
+
+function startStatsAutoRefresh() {
+    if (statsInterval) clearInterval(statsInterval);
+    
+    const checkbox = document.getElementById('auto-refresh');
+    if (checkbox && checkbox.checked) {
+        statsInterval = setInterval(loadStats, 5000);
+    }
+}
+
+// ============================================
 // PALEISTI
 // ============================================
 loadUsers();
+
+// Auto-refresh checkbox klausymas
+document.addEventListener('DOMContentLoaded', () => {
+    const checkbox = document.getElementById('auto-refresh');
+    if (checkbox) {
+        checkbox.addEventListener('change', startStatsAutoRefresh);
+    }
+});

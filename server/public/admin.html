@@ -178,6 +178,93 @@
     #tab-board::-webkit-scrollbar-thumb:hover {
         background: #ffed4e;
     }
+
+    /* ============================================ */
+    /* 🆕 STATISTIKA                                */
+    /* ============================================ */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+
+    .stat-card {
+        background: #16213e;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        border: 2px solid #0f3460;
+        transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+        border-color: #ffd700;
+        transform: translateY(-2px);
+    }
+
+    .stat-card.active {
+        border-color: #4CAF50;
+        background: #1e3a1e;
+    }
+
+    .stat-card.waiting {
+        border-color: #FFC107;
+        background: #3a2e1e;
+    }
+
+    .stat-value {
+        font-size: 2.2em;
+        font-weight: bold;
+        color: #ffd700;
+    }
+
+    .stat-card.active .stat-value {
+        color: #4CAF50;
+    }
+
+    .stat-card.waiting .stat-value {
+        color: #FFC107;
+    }
+
+    .stat-label {
+        color: #aaa;
+        margin-top: 5px;
+        font-size: 0.9em;
+    }
+
+    #games-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        background: #16213e;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    #games-table th {
+        background: #0f3460;
+        padding: 12px;
+        text-align: left;
+        color: #ffd700;
+        font-size: 0.9em;
+    }
+
+    #games-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #444;
+    }
+
+    #games-table tr:hover {
+        background: #1f2b4d;
+    }
+
+    #games-table code {
+        background: #0f3460;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #ffd700;
+    }
 </style>
 </head>
 <body>
@@ -189,12 +276,13 @@
     <div id="msg"></div>
 
     <div class="tabs">
-    <button class="tab active" onclick="switchTab('users')">👥 Vartotojai</button>
-    <button class="tab" onclick="switchTab('board')">🎲 Lenta</button>
-    <button class="tab" onclick="switchTab('center')">🏠 Vidurys</button>
-    <button class="tab" onclick="switchTab('sounds')">🎵 Garsai</button>
-    <button class="tab" onclick="switchTab('sound-files')">📁 Garso failai</button>   ← NAUJA!
-</div>
+        <button class="tab active" onclick="switchTab('users')">👥 Vartotojai</button>
+        <button class="tab" onclick="switchTab('board')">🎲 Lenta</button>
+        <button class="tab" onclick="switchTab('center')">🏠 Vidurys</button>
+        <button class="tab" onclick="switchTab('sounds')">🎵 Garsai</button>
+        <button class="tab" onclick="switchTab('sound-files')">📁 Garso failai</button>
+        <button class="tab" onclick="switchTab('stats')">📊 Statistika</button>   <!-- ← NAUJA! -->
+    </div>
 
      <!-- ==================== USERS TAB ==================== -->
     <div id="tab-users" class="tab-content active">
@@ -375,6 +463,67 @@
             </thead>
             <tbody id="soundFilesTable">
                 <tr><td colspan="5" style="text-align:center;">⏳ Kraunama...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ==================== STATS TAB ==================== -->
+    <div id="tab-stats" class="tab-content">
+        <h2>📊 Serverio statistika</h2>
+        <p style="color:#888; font-size:0.9em;">
+            Paskutinis atnaujinimas: <span id="stats-updated">-</span>
+        </p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total-games">-</div>
+                <div class="stat-label">🎮 Viso žaidimų</div>
+            </div>
+            <div class="stat-card active">
+                <div class="stat-value" id="stat-active-games">-</div>
+                <div class="stat-label">🟢 Aktyvūs</div>
+            </div>
+            <div class="stat-card waiting">
+                <div class="stat-value" id="stat-waiting-games">-</div>
+                <div class="stat-label">⏳ Laukia</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total-players">-</div>
+                <div class="stat-label">👥 Žaidėjai</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total-money">-</div>
+                <div class="stat-label">💰 Pinigai</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total-properties">-</div>
+                <div class="stat-label">🏠 Nuosavybės</div>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+            <h3>🎮 Žaidimų sąrašas</h3>
+            <div>
+                <label style="color:#aaa; font-size:0.9em;">
+                    <input type="checkbox" id="auto-refresh" checked> Auto-refresh (5s)
+                </label>
+                <button onclick="loadStats()" style="margin-left:10px;">🔄 Atnaujinti</button>
+            </div>
+        </div>
+
+        <table id="games-table">
+            <thead>
+                <tr>
+                    <th>Game ID</th>
+                    <th>👥 Žaidėjai</th>
+                    <th>Statusas</th>
+                    <th>👑 Hostas</th>
+                    <th>🎯 Eilė</th>
+                    <th>💰 Pinigai</th>
+                </tr>
+            </thead>
+            <tbody id="games-tbody">
+                <tr><td colspan="6" style="text-align:center; color:#888;">Kraunama...</td></tr>
             </tbody>
         </table>
     </div>

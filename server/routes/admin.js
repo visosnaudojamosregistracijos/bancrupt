@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
-const db = require('../db');  
+const db = require('../db');
+const { getServerStats, getStatsSummary } = require('../stats');  // ← NAUJA
 
 // 🆕 WebSocket instancija (bus nustatyta iš server.js)
 let io = null;
@@ -86,27 +87,27 @@ router.get('/board', requireAdmin, async (req, res) => {
         dbOverrides.forEach(o => overrideMap.set(o.cell_index, o));
 
         const merged = boardData.map(cell => {
-    const override = overrideMap.get(cell.id);
-    if (!override) {
-        return { ...cell, _hasOverride: false };
-    }
-    return {
-        id: cell.id,
-        name: override.name ?? cell.name,
-        type: override.type ?? cell.type,
-        color: override.color ?? cell.color,
-        color2: override.color2 ?? null,
-        cost: override.cost ?? cell.cost,
-        icon: override.icon ?? cell.icon,
-        music: override.music ?? null,
-        font_size: override.font_size ?? 14,
-        font_color: override.font_color ?? null,
-        description: override.description ?? null,
-        custom_data: override.custom_data ?? null,
-        _hasOverride: true,
-        _updatedAt: override.updated_at
-    };
-});
+            const override = overrideMap.get(cell.id);
+            if (!override) {
+                return { ...cell, _hasOverride: false };
+            }
+            return {
+                id: cell.id,
+                name: override.name ?? cell.name,
+                type: override.type ?? cell.type,
+                color: override.color ?? cell.color,
+                color2: override.color2 ?? null,
+                cost: override.cost ?? cell.cost,
+                icon: override.icon ?? cell.icon,
+                music: override.music ?? null,
+                font_size: override.font_size ?? 14,
+                font_color: override.font_color ?? null,
+                description: override.description ?? null,
+                custom_data: override.custom_data ?? null,
+                _hasOverride: true,
+                _updatedAt: override.updated_at
+            };
+        });
 
         res.json(merged);
     } catch (err) {
@@ -128,20 +129,20 @@ router.get('/board/:index', requireAdmin, async (req, res) => {
         const override = await db.getBoardCell(cellIndex);
 
         const merged = {
-    id: cellIndex,
-    name: override?.name ?? defaultCell?.name,
-    type: override?.type ?? defaultCell?.type,
-    color: override?.color ?? defaultCell?.color,
-    color2: override?.color2 ?? null,
-    cost: override?.cost ?? defaultCell?.cost,
-    icon: override?.icon ?? defaultCell?.icon,
-    music: override?.music ?? null,
-    font_size: override?.font_size ?? 14,
-    font_color: override?.font_color ?? null,
-    description: override?.description ?? null,
-    custom_data: override?.custom_data ?? null,
-    _hasOverride: !!override
-};
+            id: cellIndex,
+            name: override?.name ?? defaultCell?.name,
+            type: override?.type ?? defaultCell?.type,
+            color: override?.color ?? defaultCell?.color,
+            color2: override?.color2 ?? null,
+            cost: override?.cost ?? defaultCell?.cost,
+            icon: override?.icon ?? defaultCell?.icon,
+            music: override?.music ?? null,
+            font_size: override?.font_size ?? 14,
+            font_color: override?.font_color ?? null,
+            description: override?.description ?? null,
+            custom_data: override?.custom_data ?? null,
+            _hasOverride: !!override
+        };
 
         res.json(merged);
     } catch (err) {
@@ -159,16 +160,16 @@ router.post('/board/:index', requireAdmin, async (req, res) => {
         }
 
         const {
-    name, type, color, color2, cost, icon,
-    music, font_size, font_color,
-    description, custom_data
-} = req.body;
+            name, type, color, color2, cost, icon,
+            music, font_size, font_color,
+            description, custom_data
+        } = req.body;
 
-await db.upsertBoardCell(cellIndex, {
-    name, type, color, color2, cost, icon,
-    music, font_size, font_color,
-    description, custom_data
-});
+        await db.upsertBoardCell(cellIndex, {
+            name, type, color, color2, cost, icon,
+            music, font_size, font_color,
+            description, custom_data
+        });
 
         // 🆕 Atnaujinti cache ir pranešti visiems žaidėjams
         const Game = require('../gameLogic');
@@ -276,7 +277,7 @@ router.post('/center/:id', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 SOUND SETTINGS API (garso nustatymai)   ← NAUJA!
+// 🆕 SOUND SETTINGS API (garso nustatymai)
 // ============================================
 
 // GET /api/admin/sounds — gauti garso nustatymus
@@ -322,7 +323,7 @@ router.post('/sounds', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 SOUND FILES API (garso failai)   ← NAUJA!
+// 🆕 SOUND FILES API (garso failai)
 // ============================================
 
 // GET /api/admin/sound-files — gauti visus garso failus
@@ -363,7 +364,7 @@ router.post('/sound-files/:name', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 SOUNDS LIST API (visi .mp3 failai)   ← NAUJA!
+// 🆕 SOUNDS LIST API (visi .mp3 failai)
 // ============================================
 
 // GET /api/admin/sounds-list — visi .mp3 failai sounds/ kataloge
@@ -386,6 +387,34 @@ router.get('/sounds-list', requireAdmin, async (req, res) => {
     } catch (err) {
         console.error('admin/sounds-list klaida:', err);
         res.status(500).json({ error: 'Klaida skaitant failus' });
+    }
+});
+
+// ============================================
+// 🆕 STATISTIKA   ← NAUJA SEKCIJA!
+// ============================================
+
+// GET /api/admin/stats — pilna statistika
+router.get('/stats', requireAdmin, async (req, res) => {
+    try {
+        const games = global.games || req.app.get('games') || {};
+        const stats = getServerStats(games);
+        res.json(stats);
+    } catch (err) {
+        console.error('admin/stats klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
+    }
+});
+
+// GET /api/admin/stats/summary — trumpa statistika
+router.get('/stats/summary', requireAdmin, async (req, res) => {
+    try {
+        const games = global.games || req.app.get('games') || {};
+        const stats = getStatsSummary(games);
+        res.json(stats);
+    } catch (err) {
+        console.error('admin/stats/summary klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
     }
 });
 
