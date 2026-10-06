@@ -2871,11 +2871,8 @@ function enterGame() {
     
     loadJournalFromStorage();
 
-   const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
+    const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
     soundMode = savedSoundMode;
-    
-    // 🆕 Atnaujinti radio buttons
-    updateSoundModeRadios();
     
     // 🆕 Jei "off" – išjungti garsus
     if (soundMode === 'off') {
@@ -2903,7 +2900,7 @@ function enterGame() {
     const musicSlider = document.getElementById('musicVolumeSlider');
     const sfxSlider = document.getElementById('sfxVolumeSlider');
     const musicValueDisplay = document.getElementById('musicVolumeValue');
-    const sfxValueDisplay = document.getElementById('sfxVolumeValue');
+    const sfxValueDisplay = document.getElementById('sfxValueValue');
     
     if (musicSlider) musicSlider.value = savedMusicVolume;
     if (sfxSlider) sfxSlider.value = savedSfxVolume;
@@ -2963,6 +2960,7 @@ function enterGame() {
     }, 300);
     
     setTimeout(initInfoResizeObserver, 1000);
+    setTimeout(loadSoundButtonState, 100);   // 🆕 Garso mygtuko būsena
 }
 
 
@@ -5597,6 +5595,54 @@ document.addEventListener('keydown', (e) => {
         }
     }
 }, true);
+
+// ============================================
+// 🆕 PAPRASTAS GARSO MYGTUKAS
+// ============================================
+
+function toggleSoundSimple() {
+    if (soundMode === 'off') {
+        // ĮJUNGIAM
+        soundMode = 'my';
+        audioManager.isEnabled = true;
+        
+        const btn = document.getElementById('soundBtn');
+        if (btn) {
+            btn.innerHTML = '🔊 Garsas: ON';
+            btn.style.background = '';
+        }
+        
+        console.log('🔊 Garsas įjungtas');
+        playClickSound();
+    } else {
+        // IŠJUNGIAM
+        soundMode = 'off';
+        audioManager.isEnabled = false;
+        
+        const btn = document.getElementById('soundBtn');
+        if (btn) {
+            btn.innerHTML = '🔇 Garsas: OFF';
+            btn.style.background = 'rgba(120, 0, 0, 0.5)';
+        }
+        
+        console.log('🔇 Garsas išjungtas');
+    }
+    
+    localStorage.setItem('bancrupt_soundMode', soundMode);
+}
+
+function loadSoundButtonState() {
+    const btn = document.getElementById('soundBtn');
+    if (!btn) return;
+    
+    if (soundMode === 'off') {
+        btn.innerHTML = '🔇 Garsas: OFF';
+        btn.style.background = 'rgba(120, 0, 0, 0.5)';
+    } else {
+        btn.innerHTML = '🔊 Garsas: ON';
+        btn.style.background = '';
+    }
+}
 
 console.log('✅ Pirkimo apsauga aktyvuota!');
 

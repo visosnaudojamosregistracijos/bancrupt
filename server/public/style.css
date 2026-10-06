@@ -695,12 +695,15 @@ button,
     position: absolute;
     top: 100%;
     left: 0;
-    width: 280px;
-    max-width: 90vw;
+    width: 100%;
+    min-width: 260px;
+    max-width: 100%;
     padding: 12px;
     margin-top: 4px;
     max-height: 500px;
     overflow-y: auto;
+    box-sizing: border-box;
+    z-index: 9999;
 }
 
 #musicPanel {
