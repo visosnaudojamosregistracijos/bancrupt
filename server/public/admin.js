@@ -37,9 +37,13 @@ function switchTab(tab) {
         loadSoundFiles();
     }
     
-    if (tab === 'stats') {                    // ← NAUJA!
+    if (tab === 'stats') {
         loadStats();
         startStatsAutoRefresh();
+    }
+    
+    if (tab === 'board-settings') {                    // ← NAUJA
+        loadBoardSettings();
     }
 }
 
@@ -675,3 +679,161 @@ document.addEventListener('DOMContentLoaded', () => {
         checkbox.addEventListener('change', startStatsAutoRefresh);
     }
 });
+
+// ============================================
+// 🆕 BOARD SETTINGS (lentos nustatymai)
+// ============================================
+
+async function loadBoardSettings() {
+    try {
+        const res = await fetch('/api/admin/board-settings', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        const s = await res.json();
+        
+        // 🎯 1. Kampų PLOTIS
+        setVal('bs-corner-width-min', s.corner_width_min, 50);
+        setVal('bs-corner-width-vw', s.corner_width_vw, 8);
+        setVal('bs-corner-width-max', s.corner_width_max, 175);
+        
+        // 🎯 2. Kampų AUKŠTIS
+        setVal('bs-corner-height-min', s.corner_height_min, 50);
+        setVal('bs-corner-height-vh', s.corner_height_vh, 8);
+        setVal('bs-corner-height-max', s.corner_height_max, 175);
+        
+        // 📏 3. KAIRĖS kolonos plotis
+        setVal('bs-left-col-width-min', s.left_col_width_min, 50);
+        setVal('bs-left-col-width-vw', s.left_col_width_vw, 8);
+        setVal('bs-left-col-width-max', s.left_col_width_max, 175);
+        
+        // 📏 4. DEŠINĖS kolonos plotis
+        setVal('bs-right-col-width-min', s.right_col_width_min, 50);
+        setVal('bs-right-col-width-vw', s.right_col_width_vw, 8);
+        setVal('bs-right-col-width-max', s.right_col_width_max, 175);
+        
+        // 📐 5. Viršutinė
+        setVal('bs-top-row-height-min', s.top_row_height_min, 40);
+        setVal('bs-top-row-height-vh', s.top_row_height_vh, 10);
+        setVal('bs-top-row-height-max', s.top_row_height_max, 120);
+        
+        // 📐 6. Apatinė
+        setVal('bs-bottom-row-height-min', s.bottom_row_height_min, 40);
+        setVal('bs-bottom-row-height-vh', s.bottom_row_height_vh, 10);
+        setVal('bs-bottom-row-height-max', s.bottom_row_height_max, 120);
+        
+        // 🔲 7. Tarpai
+        setVal('bs-gap-min', s.gap_min, 1);
+        setVal('bs-gap-vw', s.gap_vw, 0.15);
+        setVal('bs-gap-max', s.gap_max, 5);
+        
+        // 🔤 8. Bendras šriftas
+        setVal('bs-font-size-min', s.font_size_min, 6);
+        setVal('bs-font-size-vw', s.font_size_vw, 0.5);
+        setVal('bs-font-size-max', s.font_size_max, 14);
+        
+        // 🔤 9. Langelio šriftas
+        setVal('bs-cell-font-size-min', s.cell_font_size_min, 8);
+        setVal('bs-cell-font-size-vw', s.cell_font_size_vw, 0.6);
+        setVal('bs-cell-font-size-max', s.cell_font_size_max, 16);
+        
+        // 🔤 10. Kampo šriftas
+        setVal('bs-corner-font-size-min', s.corner_font_size_min, 10);
+        setVal('bs-corner-font-size-vw', s.corner_font_size_vw, 0.7);
+        setVal('bs-corner-font-size-max', s.corner_font_size_max, 18);
+        
+        console.log('✅ Board settings įkelti:', s);
+    } catch (err) {
+        console.error('❌ Board settings klaida:', err);
+        showMsg('Klaida kraunant lentos nustatymus: ' + err.message, false);
+    }
+}
+
+// 🆕 Pagalbinė funkcija
+function setVal(id, value, fallback) {
+    const el = document.getElementById(id);
+    if (el) el.value = value !== undefined && value !== null ? value : fallback;
+}
+
+async function saveBoardSettings() {
+    try {
+        const getVal = (id, fallback) => {
+            const el = document.getElementById(id);
+            return el ? parseFloat(el.value) : fallback;
+        };
+        
+        const data = {
+            // 🎯 1. Kampų PLOTIS
+            corner_width_min: getVal('bs-corner-width-min', 50),
+            corner_width_vw: getVal('bs-corner-width-vw', 8),
+            corner_width_max: getVal('bs-corner-width-max', 175),
+            
+            // 🎯 2. Kampų AUKŠTIS
+            corner_height_min: getVal('bs-corner-height-min', 50),
+            corner_height_vh: getVal('bs-corner-height-vh', 8),
+            corner_height_max: getVal('bs-corner-height-max', 175),
+            
+            // 📏 3. Kairės kolonos
+            left_col_width_min: getVal('bs-left-col-width-min', 50),
+            left_col_width_vw: getVal('bs-left-col-width-vw', 8),
+            left_col_width_max: getVal('bs-left-col-width-max', 175),
+            
+            // 📏 4. Dešinės kolonos
+            right_col_width_min: getVal('bs-right-col-width-min', 50),
+            right_col_width_vw: getVal('bs-right-col-width-vw', 8),
+            right_col_width_max: getVal('bs-right-col-width-max', 175),
+            
+            // 📐 5. Viršutinė
+            top_row_height_min: getVal('bs-top-row-height-min', 40),
+            top_row_height_vh: getVal('bs-top-row-height-vh', 10),
+            top_row_height_max: getVal('bs-top-row-height-max', 120),
+            
+            // 📐 6. Apatinė
+            bottom_row_height_min: getVal('bs-bottom-row-height-min', 40),
+            bottom_row_height_vh: getVal('bs-bottom-row-height-vh', 10),
+            bottom_row_height_max: getVal('bs-bottom-row-height-max', 120),
+            
+            // 🔲 7. Tarpai
+            gap_min: getVal('bs-gap-min', 1),
+            gap_vw: getVal('bs-gap-vw', 0.15),
+            gap_max: getVal('bs-gap-max', 5),
+            
+            // 🔤 8. Bendras šriftas
+            font_size_min: getVal('bs-font-size-min', 6),
+            font_size_vw: getVal('bs-font-size-vw', 0.5),
+            font_size_max: getVal('bs-font-size-max', 14),
+            
+            // 🔤 9. Langelio šriftas
+            cell_font_size_min: getVal('bs-cell-font-size-min', 8),
+            cell_font_size_vw: getVal('bs-cell-font-size-vw', 0.6),
+            cell_font_size_max: getVal('bs-cell-font-size-max', 16),
+            
+            // 🔤 10. Kampo šriftas
+            corner_font_size_min: getVal('bs-corner-font-size-min', 10),
+            corner_font_size_vw: getVal('bs-corner-font-size-vw', 0.7),
+            corner_font_size_max: getVal('bs-corner-font-size-max', 18)
+        };
+        
+        const res = await fetch('/api/admin/board-settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'HTTP ' + res.status);
+        }
+
+        showMsg('✅ Lentos nustatymai išsaugoti!', true);
+        console.log('✅ Išsaugota:', data);
+    } catch (err) {
+        console.error('❌ Klaida:', err);
+        showMsg('Klaida: ' + err.message, false);
+    }
+}

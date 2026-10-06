@@ -455,11 +455,115 @@ socket.on('soundFilesUpdated', (files) => {
         renderPublicGames(games);
     });
 
+   
+
+    // ============================================   ← ČIA PRADEDAM
+    // 🆕 BOARD SETTINGS (lentos nustatymai)
+    // ============================================
+    socket.on('boardSettings', (settings) => {
+    console.log('📐 Gauti lentos nustatymai:', settings);
+    
+    if (!settings) {
+        console.warn('⚠️ boardSettings tuščias');
+        return;
+    }
+    
+    applyBoardSettings(settings);
+    console.log('✅ CSS kintamieji nustatyti');
+});
+
+    // 🆕 Kai admin pakeičia nustatymus – atnaujinti iš karto
+    socket.on('boardSettingsUpdated', (settings) => {
+    console.log('📐 Board settings atnaujinti (live):', settings);
+    
+    if (!settings) return;
+    
+    applyBoardSettings(settings);
+    console.log('✅ CSS kintamieji atnaujinti');
+});
+
+// 🆕 Pagalbinė funkcija – pritaiko boardSettings su clamp()
+function applyBoardSettings(s) {
+    const root = document.documentElement;
+    
+    // 🎯 1. Kampų PLOTIS
+    if (s.corner_width_min !== undefined && s.corner_width_vw !== undefined && s.corner_width_max !== undefined) {
+        root.style.setProperty('--corner-width',
+            `clamp(${s.corner_width_min}px, ${s.corner_width_vw}vw, ${s.corner_width_max}px)`);
+    }
+    
+    // 🎯 2. Kampų AUKŠTIS
+    if (s.corner_height_min !== undefined && s.corner_height_vh !== undefined && s.corner_height_max !== undefined) {
+        root.style.setProperty('--corner-height',
+            `clamp(${s.corner_height_min}px, ${s.corner_height_vh}vh, ${s.corner_height_max}px)`);
+    }
+    
+    // 📏 3. KAIRĖS kolonos plotis
+    if (s.left_col_width_min !== undefined && s.left_col_width_vw !== undefined && s.left_col_width_max !== undefined) {
+        root.style.setProperty('--left-col-width',
+            `clamp(${s.left_col_width_min}px, ${s.left_col_width_vw}vw, ${s.left_col_width_max}px)`);
+    }
+    
+    // 📏 4. DEŠINĖS kolonos plotis
+    if (s.right_col_width_min !== undefined && s.right_col_width_vw !== undefined && s.right_col_width_max !== undefined) {
+        root.style.setProperty('--right-col-width',
+            `clamp(${s.right_col_width_min}px, ${s.right_col_width_vw}vw, ${s.right_col_width_max}px)`);
+    }
+    
+    // 📐 5. Viršutinės eilės aukštis
+    if (s.top_row_height_min !== undefined && s.top_row_height_vh !== undefined && s.top_row_height_max !== undefined) {
+        root.style.setProperty('--top-row-height',
+            `clamp(${s.top_row_height_min}px, ${s.top_row_height_vh}vh, ${s.top_row_height_max}px)`);
+    }
+    
+    // 📐 6. Apatinės eilės aukštis
+    if (s.bottom_row_height_min !== undefined && s.bottom_row_height_vh !== undefined && s.bottom_row_height_max !== undefined) {
+        root.style.setProperty('--bottom-row-height',
+            `clamp(${s.bottom_row_height_min}px, ${s.bottom_row_height_vh}vh, ${s.bottom_row_height_max}px)`);
+    }
+    
+    // 🔲 7. Tarpai
+    if (s.gap_min !== undefined && s.gap_vw !== undefined && s.gap_max !== undefined) {
+        root.style.setProperty('--board-gap',
+            `clamp(${s.gap_min}px, ${s.gap_vw}vw, ${s.gap_max}px)`);
+    }
+    
+    // 🔤 8. Bendras šriftas
+    if (s.font_size_min !== undefined && s.font_size_vw !== undefined && s.font_size_max !== undefined) {
+        root.style.setProperty('--board-font-size',
+            `clamp(${s.font_size_min}px, ${s.font_size_vw}vw, ${s.font_size_max}px)`);
+    }
+    
+    // 🔤 9. Langelio šriftas
+    if (s.cell_font_size_min !== undefined && s.cell_font_size_vw !== undefined && s.cell_font_size_max !== undefined) {
+        root.style.setProperty('--cell-font-size',
+            `clamp(${s.cell_font_size_min}px, ${s.cell_font_size_vw}vw, ${s.cell_font_size_max}px)`);
+    }
+    
+    // 🔤 10. Kampo šriftas
+    if (s.corner_font_size_min !== undefined && s.corner_font_size_vw !== undefined && s.corner_font_size_max !== undefined) {
+        root.style.setProperty('--corner-font-size',
+            `clamp(${s.corner_font_size_min}px, ${s.corner_font_size_vw}vw, ${s.corner_font_size_max}px)`);
+    }
+    
+    // 📊 Board min/max plotis
+    if (s.board_min_width !== undefined) {
+        root.style.setProperty('--board-min-width', s.board_min_width + 'px');
+    }
+    if (s.board_max_width !== undefined) {
+        root.style.setProperty('--board-max-width', s.board_max_width + 'px');
+    }
+}
+
+    // ============================================   ← ČIA BAIGIAM
+
     // ============================================
     // 🆕 PENDING PURCHASE (pasiūlymas prieš metimą)   ← NAUJA!
     // ============================================
     socket.on('pendingPurchase', (data) => {
         console.log('💰 Pending purchase:', data);
+
+    
         
         showBuyChoice({
             fieldId: data.fieldId,
@@ -4107,11 +4211,8 @@ function updateUI(state) {
             center1.appendChild(miniCardsContainer);
         }
 
-        if (me.properties.length > 0) {
-            miniCardsContainer.innerHTML = `
-                <div style="font-size:9px; color:#6c757d; text-align:center; margin-bottom:2px; width:100%;">📋 TURIMOS KORTELĖS</div>
-                ${miniCardsHtml}
-            `;
+       if (me.properties.length > 0) {
+    miniCardsContainer.innerHTML = miniCardsHtml;
         } else {
             miniCardsContainer.innerHTML = `<div style="font-size:9px; color:#6c757d; margin-top:4px; text-align:center; width:100%;">Neturi kortelių</div>`;
         }

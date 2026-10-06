@@ -276,13 +276,14 @@
     <div id="msg"></div>
 
     <div class="tabs">
-        <button class="tab active" onclick="switchTab('users')">👥 Vartotojai</button>
-        <button class="tab" onclick="switchTab('board')">🎲 Lenta</button>
-        <button class="tab" onclick="switchTab('center')">🏠 Vidurys</button>
-        <button class="tab" onclick="switchTab('sounds')">🎵 Garsai</button>
-        <button class="tab" onclick="switchTab('sound-files')">📁 Garso failai</button>
-        <button class="tab" onclick="switchTab('stats')">📊 Statistika</button>   <!-- ← NAUJA! -->
-    </div>
+    <button class="tab active" onclick="switchTab('users')">👥 Vartotojai</button>
+    <button class="tab" onclick="switchTab('board')">🎲 Lenta</button>
+    <button class="tab" onclick="switchTab('center')">🏠 Vidurys</button>
+    <button class="tab" onclick="switchTab('sounds')">🎵 Garsai</button>
+    <button class="tab" onclick="switchTab('sound-files')">📁 Garso failai</button>
+    <button class="tab" onclick="switchTab('stats')">📊 Statistika</button>
+    <button class="tab" onclick="switchTab('board-settings')">📐 Lentos nustatymai</button>  <!-- ← NAUJA -->
+</div>
 
      <!-- ==================== USERS TAB ==================== -->
     <div id="tab-users" class="tab-content active">
@@ -528,6 +529,273 @@
         </table>
     </div>
 
-    <script src="admin.js"></script>
+<!-- ==================== BOARD SETTINGS TAB ==================== -->
+<div id="tab-board-settings" class="tab-content">
+    <h2>📐 Lentos nustatymai</h2>
+    
+    <p style="color: #d4b896; font-size: 13px; margin-bottom: 15px;">
+        ℹ️ Čia galite reguliuoti lentos langelių dydžius, tarpus ir kitus parametrus.
+    </p>
+    
+    <div style="max-width: 700px;">
+        
+        <!-- 🎯 KAMPŲ PLOTIS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                🎯 Kampų plotis (visi 4 kampai)
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-corner-width-min" min="20" max="500" value="50"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VW (%)</label>
+                    <input type="number" id="bs-corner-width-vw" min="0" max="50" step="0.1" value="8"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-corner-width-max" min="50" max="500" value="175"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 🎯 KAMPŲ AUKŠTIS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                🎯 Kampų aukštis (visi 4 kampai)
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-corner-height-min" min="20" max="500" value="50"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VH (%)</label>
+                    <input type="number" id="bs-corner-height-vh" min="0" max="50" step="0.1" value="8"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-corner-height-max" min="50" max="500" value="175"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 📏 KAIRĖS KOLONOS PLOTIS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                📏 Kairės kolonos plotis (43-51)
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-left-col-width-min" min="20" max="500" value="50"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VW (%)</label>
+                    <input type="number" id="bs-left-col-width-vw" min="0" max="50" step="0.1" value="8"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-left-col-width-max" min="50" max="500" value="175"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 📏 DEŠINĖS KOLONOS PLOTIS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                📏 Dešinės kolonos plotis (17-25)
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-right-col-width-min" min="20" max="500" value="50"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VW (%)</label>
+                    <input type="number" id="bs-right-col-width-vw" min="0" max="50" step="0.1" value="8"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-right-col-width-max" min="50" max="500" value="175"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 📐 VIRŠUTINĖS EILĖS AUKŠTIS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                📐 Viršutinės eilės aukštis (1-15)
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-top-row-height-min" min="20" max="500" value="40"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VH (%)</label>
+                    <input type="number" id="bs-top-row-height-vh" min="0" max="50" step="0.1" value="10"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-top-row-height-max" min="50" max="500" value="120"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 📐 APATINĖS EILĖS AUKŠTIS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                📐 Apatinės eilės aukštis (27-41)
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-bottom-row-height-min" min="20" max="500" value="40"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VH (%)</label>
+                    <input type="number" id="bs-bottom-row-height-vh" min="0" max="50" step="0.1" value="10"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-bottom-row-height-max" min="50" max="500" value="120"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔲 TARPAI -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                🔲 Tarpai tarp langelių
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-gap-min" min="0" max="20" value="1"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VW (%)</label>
+                    <input type="number" id="bs-gap-vw" min="0" max="5" step="0.05" value="0.15"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-gap-max" min="1" max="20" value="5"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔤 BENDRAS ŠRIFTAS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                🔤 Bendras šrifto dydis
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-font-size-min" min="4" max="30" value="6"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VW (%)</label>
+                    <input type="number" id="bs-font-size-vw" min="0" max="5" step="0.05" value="0.5"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-font-size-max" min="6" max="30" value="14"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔤 LANGELIO ŠRIFTAS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                🔤 Langelio šrifto dydis
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-cell-font-size-min" min="4" max="30" value="8"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VW (%)</label>
+                    <input type="number" id="bs-cell-font-size-vw" min="0" max="5" step="0.05" value="0.6"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-cell-font-size-max" min="6" max="30" value="16"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔤 KAMPO ŠRIFTAS -->
+        <div style="background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #0f3460;">
+            <label style="color: #ffd700; font-weight: 600; display: block; margin-bottom: 8px;">
+                🔤 Kampo šrifto dydis
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Min (px)</label>
+                    <input type="number" id="bs-corner-font-size-min" min="4" max="30" value="10"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">VW (%)</label>
+                    <input type="number" id="bs-corner-font-size-vw" min="0" max="5" step="0.05" value="0.7"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Max (px)</label>
+                    <input type="number" id="bs-corner-font-size-max" min="6" max="30" value="18"
+                           style="width: 100%; padding: 8px; background: #0f3460; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- IŠSAUGOTI MYGTUKAS -->
+        <button onclick="saveBoardSettings()" 
+                style="width: 100%; padding: 15px; background: #ffd700; color: #000; border: none; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 10px;">
+            💾 Išsaugoti nustatymus
+        </button>
+        
+        <!-- INFO -->
+        <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px solid #ffd700;">
+            <p style="color: #d4b896; font-size: 13px; margin: 0;">
+                ℹ️ <strong>Pastaba:</strong> Pakeitimai taikomi visiems žaidėjams iš karto.
+            </p>
+        </div>
+        
+    </div>
+</div>
+
+<script src="admin.js"></script>
+
 </body>
 </html>

@@ -652,6 +652,15 @@ io.on('connection', (socket) => {
             console.error('❌ soundFiles klaida:', err);
         }
 
+        // 🆕 Siųsti lentos nustatymus   ← NAUJA!
+        try {
+            const boardSettings = await db.getBoardSettings();
+            socket.emit('boardSettings', boardSettings);
+            console.log('📐 boardSettings išsiųstas (createGame)');
+        } catch (err) {
+            console.error('❌ boardSettings klaida:', err);
+        }
+
         if (isPublic) {
             broadcastPublicGames();
         }
@@ -709,43 +718,52 @@ io.on('connection', (socket) => {
         socket.playerId = player.id;
 
         socket.emit('joinedGame', { 
-    playerId: player.id,
-    player: player
-});
+            playerId: player.id,
+            player: player
+        });
 
-io.to(gameId.toUpperCase()).emit('gameState', game.getGameState());
-io.to(gameId.toUpperCase()).emit('waitingRoomUpdate', game.getWaitingRoomState());
-io.to(gameId.toUpperCase()).emit('message', `👋 ${playerName} prisijungė prie žaidimo!`);
+        io.to(gameId.toUpperCase()).emit('gameState', game.getGameState());
+        io.to(gameId.toUpperCase()).emit('waitingRoomUpdate', game.getWaitingRoomState());
+        io.to(gameId.toUpperCase()).emit('message', `👋 ${playerName} prisijungė prie žaidimo!`);
 
-// 🆕 Siųsti vidurio langelius
-try {
-    const centerCells = await db.getCenterCells();
-    socket.emit('centerCells', centerCells);
-} catch (err) {
-    console.error('❌ centerCells klaida:', err);
-}
+        // 🆕 Siųsti vidurio langelius
+        try {
+            const centerCells = await db.getCenterCells();
+            socket.emit('centerCells', centerCells);
+        } catch (err) {
+            console.error('❌ centerCells klaida:', err);
+        }
 
-// 🆕 Siųsti garso nustatymus
-try {
-    const soundSettings = await db.getSoundSettings();
-    socket.emit('soundSettings', soundSettings);
-    console.log('🔊 soundSettings išsiųstas (joinGame)');
-} catch (err) {
-    console.error('❌ soundSettings klaida:', err);
-}
+        // 🆕 Siųsti garso nustatymus
+        try {
+            const soundSettings = await db.getSoundSettings();
+            socket.emit('soundSettings', soundSettings);
+            console.log('🔊 soundSettings išsiųstas (joinGame)');
+        } catch (err) {
+            console.error('❌ soundSettings klaida:', err);
+        }
 
-// 🆕 Siųsti garso failus   ← NAUJA!
-try {
-    const soundFiles = await db.getSoundFiles();
-    socket.emit('soundFiles', soundFiles);
-    console.log('📁 soundFiles išsiųstas (joinGame)');
-} catch (err) {
-    console.error('❌ soundFiles klaida:', err);
-}
+        // 🆕 Siųsti garso failus
+        try {
+            const soundFiles = await db.getSoundFiles();
+            socket.emit('soundFiles', soundFiles);
+            console.log('📁 soundFiles išsiųstas (joinGame)');
+        } catch (err) {
+            console.error('❌ soundFiles klaida:', err);
+        }
 
-if (game.isPublic) {
-    broadcastPublicGames();
-}
+        // 🆕 Siųsti lentos nustatymus   ← NAUJA!
+        try {
+            const boardSettings = await db.getBoardSettings();
+            socket.emit('boardSettings', boardSettings);
+            console.log('📐 boardSettings išsiųstas (joinGame)');
+        } catch (err) {
+            console.error('❌ boardSettings klaida:', err);
+        }
+
+        if (game.isPublic) {
+            broadcastPublicGames();
+        }
     });
 
     // ============================================
@@ -825,7 +843,7 @@ if (game.isPublic) {
             console.error('❌ soundSettings klaida:', err);
         }
 
-        // 🆕 Siųsti garso failus   ← NAUJA!
+        // 🆕 Siųsti garso failus
         try {
             const soundFiles = await db.getSoundFiles();
             socket.emit('soundFiles', soundFiles);
@@ -833,8 +851,17 @@ if (game.isPublic) {
         } catch (err) {
             console.error('❌ soundFiles klaida:', err);
         }
-    });
 
+        // 🆕 Siųsti lentos nustatymus   ← NAUJA!
+        try {
+            const boardSettings = await db.getBoardSettings();
+            socket.emit('boardSettings', boardSettings);
+            console.log('📐 boardSettings išsiųstas (reconnectPlayer)');
+        } catch (err) {
+            console.error('❌ boardSettings klaida:', err);
+        }
+    }); 
+    
     socket.on('rollDice', async () => {
         if (!await checkSocketRateLimit(socket, 'rollDice')) return;
         

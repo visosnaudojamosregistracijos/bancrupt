@@ -418,5 +418,40 @@ router.get('/stats/summary', requireAdmin, async (req, res) => {
     }
 });
 
+// ============================================
+// 🆕 BOARD SETTINGS (lentos nustatymai)
+// ============================================
+
+// GET /api/admin/board-settings — gauti lentos nustatymus
+router.get('/board-settings', requireAdmin, async (req, res) => {
+    try {
+        const settings = await db.getBoardSettings();
+        res.json(settings);
+    } catch (err) {
+        console.error('admin/board-settings GET klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
+    }
+});
+
+// POST /api/admin/board-settings — išsaugoti lentos nustatymus
+router.post('/board-settings', requireAdmin, async (req, res) => {
+    try {
+        // 🆕 Perduodam VISKĄ, ką gaunam iš frontend (senus + naujus laukus)
+        await db.updateBoardSettings(req.body);
+
+        // 🆕 Pranešti visiems žaidėjams
+        if (io) {
+            const updatedSettings = await db.getBoardSettings();
+            io.emit('boardSettingsUpdated', updatedSettings);
+            console.log(`📡 boardSettingsUpdated išsiųstas`);
+        }
+
+        res.json({ success: true, settings: await db.getBoardSettings() });
+    } catch (err) {
+        console.error('admin/board-settings POST klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
+    }
+});
+
 module.exports = router;
 module.exports.setIO = setIO;

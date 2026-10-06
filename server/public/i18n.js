@@ -112,7 +112,7 @@ function autoAddDataI18n() {
         '🎲 Mesti': 'game.rollDice',
         '🏪 Prekyba': 'game.trade',
         '🏠 Statyti namą': 'game.buildHouse',
-        '💀 BANKROTAS': 'game.bankrupt',
+        '💀 Bankrotuoju': 'game.bankrupt',
         '🏚️ Griauti': 'game.demolish',
         '🏃 Pasitraukti': 'game.leave',
         '🗳️ Balsuoti': 'game.voteKick',

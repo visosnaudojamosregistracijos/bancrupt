@@ -146,7 +146,7 @@ async function initDatabase() {
             ADD COLUMN IF NOT EXISTS myinfo_text_color TEXT
         `);
 
-        // 🆕 Garso nustatymų lentelė   ← NAUJA! ČIA!
+        // 🆕 Garso nustatymų lentelė
         await pool.query(`
             CREATE TABLE IF NOT EXISTS sound_settings (
                 id INTEGER PRIMARY KEY DEFAULT 1,
@@ -165,7 +165,7 @@ async function initDatabase() {
             ON CONFLICT (id) DO NOTHING
         `);
 
-        // 🆕 Garso failų lentelė   ← NAUJA!
+        // 🆕 Garso failų lentelė
         await pool.query(`
             CREATE TABLE IF NOT EXISTS sound_files (
                 sound_name TEXT PRIMARY KEY,
@@ -175,7 +175,7 @@ async function initDatabase() {
             )
         `);
 
-        // 🆕 Užpildyti default garso failais   ← NAUJA!
+        // 🆕 Užpildyti default garso failais
         await pool.query(`
             INSERT INTO sound_files (sound_name, file_path, description) VALUES
                 ('dice', 'sounds/dice.mp3', '🎲 Kauliukų metimas'),
@@ -510,7 +510,7 @@ const dbHelpers = {
         );
     },
 
-    // 🆕 SOUND FILES (garso failai)   ← NAUJA!
+    // 🆕 SOUND FILES (garso failai)
     async getSoundFiles() {
         const result = await pool.query(
             'SELECT * FROM sound_files ORDER BY sound_name'
@@ -528,4 +528,208 @@ const dbHelpers = {
     }
 };
 
-module.exports = { pool, initDatabase, ...dbHelpers };
+// ============================================
+// 🆕 BOARD SETTINGS
+// ============================================
+
+async function getBoardSettings() {
+    try {
+        const result = await pool.query('SELECT * FROM board_settings WHERE id = 1');
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('getBoardSettings klaida:', err);
+        return null;
+    }
+}
+
+async function updateBoardSettings(settings) {
+    try {
+        const {
+            // Seni (computed)
+            corner_size,
+            side_col_width,
+            top_row_height,
+            bottom_row_height,
+            gap,
+            board_min_width,
+            board_max_width,
+            font_size,
+            cell_font_size,
+            corner_font_size,
+            
+            // 🆕 Kampų PLOTIS
+            corner_width_min,
+            corner_width_vw,
+            corner_width_max,
+            
+            // 🆕 Kampų AUKŠTIS
+            corner_height_min,
+            corner_height_vh,
+            corner_height_max,
+            
+            // 🆕 KAIRĖS kolonos plotis
+            left_col_width_min,
+            left_col_width_vw,
+            left_col_width_max,
+            
+            // 🆕 DEŠINĖS kolonos plotis
+            right_col_width_min,
+            right_col_width_vw,
+            right_col_width_max,
+            
+            // 📐 Viršutinė
+            top_row_height_min,
+            top_row_height_vh,
+            top_row_height_max,
+            
+            // 📐 Apatinė
+            bottom_row_height_min,
+            bottom_row_height_vh,
+            bottom_row_height_max,
+            
+            // 🔲 Tarpai
+            gap_min,
+            gap_vw,
+            gap_max,
+            
+            // 🔤 Šriftai
+            font_size_min,
+            font_size_vw,
+            font_size_max,
+            cell_font_size_min,
+            cell_font_size_vw,
+            cell_font_size_max,
+            corner_font_size_min,
+            corner_font_size_vw,
+            corner_font_size_max,
+            
+            // 🆕 Seni (paliekam suderinamumui)
+            corner_size_min,
+            corner_size_vw,
+            corner_size_max,
+            side_col_width_min,
+            side_col_width_vw,
+            side_col_width_max
+        } = settings;
+
+        await pool.query(`
+            UPDATE board_settings SET
+                -- Seni computed
+                corner_size = COALESCE($1, corner_size),
+                side_col_width = COALESCE($2, side_col_width),
+                top_row_height = COALESCE($3, top_row_height),
+                bottom_row_height = COALESCE($4, bottom_row_height),
+                gap = COALESCE($5, gap),
+                board_min_width = COALESCE($6, board_min_width),
+                board_max_width = COALESCE($7, board_max_width),
+                font_size = COALESCE($8, font_size),
+                cell_font_size = COALESCE($9, cell_font_size),
+                corner_font_size = COALESCE($10, corner_font_size),
+                
+                -- 🆕 Kampų PLOTIS
+                corner_width_min = COALESCE($11, corner_width_min),
+                corner_width_vw = COALESCE($12, corner_width_vw),
+                corner_width_max = COALESCE($13, corner_width_max),
+                
+                -- 🆕 Kampų AUKŠTIS
+                corner_height_min = COALESCE($14, corner_height_min),
+                corner_height_vh = COALESCE($15, corner_height_vh),
+                corner_height_max = COALESCE($16, corner_height_max),
+                
+                -- 🆕 KAIRĖS kolonos plotis
+                left_col_width_min = COALESCE($17, left_col_width_min),
+                left_col_width_vw = COALESCE($18, left_col_width_vw),
+                left_col_width_max = COALESCE($19, left_col_width_max),
+                
+                -- 🆕 DEŠINĖS kolonos plotis
+                right_col_width_min = COALESCE($20, right_col_width_min),
+                right_col_width_vw = COALESCE($21, right_col_width_vw),
+                right_col_width_max = COALESCE($22, right_col_width_max),
+                
+                -- 📐 Viršutinė
+                top_row_height_min = COALESCE($23, top_row_height_min),
+                top_row_height_vh = COALESCE($24, top_row_height_vh),
+                top_row_height_max = COALESCE($25, top_row_height_max),
+                
+                -- 📐 Apatinė
+                bottom_row_height_min = COALESCE($26, bottom_row_height_min),
+                bottom_row_height_vh = COALESCE($27, bottom_row_height_vh),
+                bottom_row_height_max = COALESCE($28, bottom_row_height_max),
+                
+                -- 🔲 Tarpai
+                gap_min = COALESCE($29, gap_min),
+                gap_vw = COALESCE($30, gap_vw),
+                gap_max = COALESCE($31, gap_max),
+                
+                -- 🔤 Bendras šriftas
+                font_size_min = COALESCE($32, font_size_min),
+                font_size_vw = COALESCE($33, font_size_vw),
+                font_size_max = COALESCE($34, font_size_max),
+                
+                -- 🔤 Langelio šriftas
+                cell_font_size_min = COALESCE($35, cell_font_size_min),
+                cell_font_size_vw = COALESCE($36, cell_font_size_vw),
+                cell_font_size_max = COALESCE($37, cell_font_size_max),
+                
+                -- 🔤 Kampo šriftas
+                corner_font_size_min = COALESCE($38, corner_font_size_min),
+                corner_font_size_vw = COALESCE($39, corner_font_size_vw),
+                corner_font_size_max = COALESCE($40, corner_font_size_max),
+                
+                -- 🆕 Seni (paliekam suderinamumui)
+                corner_size_min = COALESCE($41, corner_size_min),
+                corner_size_vw = COALESCE($42, corner_size_vw),
+                corner_size_max = COALESCE($43, corner_size_max),
+                side_col_width_min = COALESCE($44, side_col_width_min),
+                side_col_width_vw = COALESCE($45, side_col_width_vw),
+                side_col_width_max = COALESCE($46, side_col_width_max),
+                
+                updated_at = NOW()
+            WHERE id = 1
+        `, [
+            // 1-10: Seni
+            corner_size, side_col_width, top_row_height, bottom_row_height, gap,
+            board_min_width, board_max_width, font_size, cell_font_size, corner_font_size,
+            // 11-13: Kampų plotis
+            corner_width_min, corner_width_vw, corner_width_max,
+            // 14-16: Kampų aukštis
+            corner_height_min, corner_height_vh, corner_height_max,
+            // 17-19: Kairės kolonos
+            left_col_width_min, left_col_width_vw, left_col_width_max,
+            // 20-22: Dešinės kolonos
+            right_col_width_min, right_col_width_vw, right_col_width_max,
+            // 23-25: Viršutinė
+            top_row_height_min, top_row_height_vh, top_row_height_max,
+            // 26-28: Apatinė
+            bottom_row_height_min, bottom_row_height_vh, bottom_row_height_max,
+            // 29-31: Tarpai
+            gap_min, gap_vw, gap_max,
+            // 32-34: Bendras šriftas
+            font_size_min, font_size_vw, font_size_max,
+            // 35-37: Langelio šriftas
+            cell_font_size_min, cell_font_size_vw, cell_font_size_max,
+            // 38-40: Kampo šriftas
+            corner_font_size_min, corner_font_size_vw, corner_font_size_max,
+            // 41-46: Seni (suderinamumui)
+            corner_size_min, corner_size_vw, corner_size_max,
+            side_col_width_min, side_col_width_vw, side_col_width_max
+        ]);
+
+        return await getBoardSettings();
+    } catch (err) {
+        console.error('updateBoardSettings klaida:', err);
+        throw err;
+    }
+}
+
+// ============================================
+// MODULE EXPORTS
+// ============================================
+
+module.exports = {
+    pool,
+    initDatabase,
+    ...dbHelpers,
+    getBoardSettings,
+    updateBoardSettings
+};
