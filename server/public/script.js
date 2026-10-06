@@ -2481,21 +2481,58 @@ function showCellInfo(fieldId) {
         html += `</div>`;
     }
     
-    if (field.type === 'service3' || SERVICE3_IDS.includes(field.id)) {
-        const ownedInGroup = owner ? owner.properties.filter(id => SERVICE3_IDS.includes(id)).length : 0;
+    // 🆕 SERVICE grupės (1, 2, 3) — rodo grupės narius + savininkus
+    if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3' || 
+        SERVICE1_IDS.includes(field.id) || SERVICE2_IDS.includes(field.id) || SERVICE3_IDS.includes(field.id)) {
+        
+        // Nustatyti, kuri grupė
+        let groupIds = [];
+        let groupName = '';
+        
+        if (SERVICE1_IDS.includes(field.id) || field.type === 'service1') {
+            groupIds = SERVICE1_IDS;
+            groupName = 'SERVICE 1';
+        } else if (SERVICE2_IDS.includes(field.id) || field.type === 'service2') {
+            groupIds = SERVICE2_IDS;
+            groupName = 'SERVICE 2';
+        } else {
+            groupIds = SERVICE3_IDS;
+            groupName = 'SERVICE 3';
+        }
+        
+        // Grupės pavadinimas (pagal pirmą langelį)
+        const firstField = gameState.board.find(x => x.id === groupIds[0]);
+        if (firstField) groupName = firstField.name;
+        
+        // Grupės nariai
+        const groupFields = groupIds.map(id => {
+            const f = gameState.board.find(x => x.id === id);
+            const o = gameState.players.find(p => p.properties.includes(id) && !p.bankrupt && !p.left && !p.kicked);
+            return { id, field: f, owner: o };
+        });
+        
+        const ownedInGroup = owner ? owner.properties.filter(id => groupIds.includes(id)).length : 0;
         const currentRent = SERVICE_RENT[ownedInGroup] || SERVICE_RENT[1];
         
-        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA (GRUPĖ)</div>`;
-        html += `<div class="info-row"><span class="label">Turi ${ownedInGroup}/4:</span><span class="value green">€${currentRent}</span></div>`;
-        html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
-        html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
-        html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
-        html += `<div class="info-row"><span class="label">4 langeliai:</span><span class="value">€200</span></div>`;
+        // 🆕 Grupės nariai su savininkais
+        html += `<div class="info-section"><div class="info-section-title">🏘️ GRUPĖ: ${groupName}</div>`;
+        groupFields.forEach(({ id, field: f, owner: o }) => {
+            if (!f) return;
+            
+            const ownerText = o ? `<span style="color:${o.color}; font-weight:700;">${o.name}</span>` : '<span class="value green">Laisvas</span>';
+            
+            html += `
+                <div class="info-row" style="font-size:10px;">
+                    <span class="label">#${id} ${f.name}:</span>
+                    <span class="value">${ownerText}</span>
+                </div>
+            `;
+        });
         html += `</div>`;
-    }
-    
-    if (field.type === 'service1' || field.type === 'service2') {
-        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+        
+        // 🆕 Nuomos lentelė
+        html += `<div class="info-section"><div class="info-section-title">💰 NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">Turi ${ownedInGroup}/4:</span><span class="value green">€${currentRent}</span></div>`;
         html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
         html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
         html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
@@ -2704,8 +2741,53 @@ function showMiniCardTooltip(fieldId, cardElement) {
         html += `</div>`;
     }
     
-    if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3') {
-        html += `<div class="info-section"><div class="info-section-title">🏘️ NUOMA</div>`;
+    // 🆕 SERVICE grupės
+    if (field.type === 'service1' || field.type === 'service2' || field.type === 'service3' ||
+        SERVICE1_IDS.includes(field.id) || SERVICE2_IDS.includes(field.id) || SERVICE3_IDS.includes(field.id)) {
+        
+        let groupIds = [];
+        let groupName = '';
+        
+        if (SERVICE1_IDS.includes(field.id) || field.type === 'service1') {
+            groupIds = SERVICE1_IDS;
+            groupName = 'SERVICE 1';
+        } else if (SERVICE2_IDS.includes(field.id) || field.type === 'service2') {
+            groupIds = SERVICE2_IDS;
+            groupName = 'SERVICE 2';
+        } else {
+            groupIds = SERVICE3_IDS;
+            groupName = 'SERVICE 3';
+        }
+        
+        const firstField = gameState.board.find(x => x.id === groupIds[0]);
+        if (firstField) groupName = firstField.name;
+        
+        const groupFields = groupIds.map(id => {
+            const f = gameState.board.find(x => x.id === id);
+            const o = gameState.players.find(p => p.properties.includes(id) && !p.bankrupt && !p.left && !p.kicked);
+            return { id, field: f, owner: o };
+        });
+        
+        const ownedInGroup = owner ? owner.properties.filter(id => groupIds.includes(id)).length : 0;
+        const currentRent = SERVICE_RENT[ownedInGroup] || SERVICE_RENT[1];
+        
+        html += `<div class="info-section"><div class="info-section-title">🏘️ GRUPĖ: ${groupName}</div>`;
+        groupFields.forEach(({ id, field: f, owner: o }) => {
+            if (!f) return;
+            
+            const ownerText = o ? `<span style="color:${o.color}; font-weight:700;">${o.name}</span>` : '<span class="value green">Laisvas</span>';
+            
+            html += `
+                <div class="info-row" style="font-size:10px;">
+                    <span class="label">#${id} ${f.name}:</span>
+                    <span class="value">${ownerText}</span>
+                </div>
+            `;
+        });
+        html += `</div>`;
+        
+        html += `<div class="info-section"><div class="info-section-title">💰 NUOMA</div>`;
+        html += `<div class="info-row"><span class="label">Turi ${ownedInGroup}/4:</span><span class="value green">€${currentRent}</span></div>`;
         html += `<div class="info-row"><span class="label">1 langelis:</span><span class="value">€50</span></div>`;
         html += `<div class="info-row"><span class="label">2 langeliai:</span><span class="value">€100</span></div>`;
         html += `<div class="info-row"><span class="label">3 langeliai:</span><span class="value">€150</span></div>`;
