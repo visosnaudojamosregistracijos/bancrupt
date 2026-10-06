@@ -224,6 +224,93 @@ async function initDatabase() {
             ON CONFLICT (sound_name) DO NOTHING
         `);
 
+        // ============================================
+        // 🆕 BOARD SETTINGS (lentos nustatymai)
+        // ============================================
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS board_settings (
+                id INTEGER PRIMARY KEY DEFAULT 1,
+                
+                -- Seni (computed)
+                corner_size INTEGER DEFAULT 175,
+                side_col_width INTEGER DEFAULT 175,
+                top_row_height INTEGER DEFAULT 120,
+                bottom_row_height INTEGER DEFAULT 120,
+                gap INTEGER DEFAULT 2,
+                board_min_width INTEGER DEFAULT 1600,
+                board_max_width INTEGER DEFAULT 1900,
+                font_size INTEGER DEFAULT 9,
+                cell_font_size INTEGER DEFAULT 11,
+                corner_font_size INTEGER DEFAULT 13,
+                
+                -- Nauji min/vw/max (seni)
+                corner_size_min INTEGER DEFAULT 50,
+                corner_size_vw DECIMAL(4,2) DEFAULT 8.0,
+                corner_size_max INTEGER DEFAULT 175,
+                side_col_width_min INTEGER DEFAULT 50,
+                side_col_width_vw DECIMAL(4,2) DEFAULT 8.0,
+                side_col_width_max INTEGER DEFAULT 175,
+                top_row_height_min INTEGER DEFAULT 40,
+                top_row_height_vh DECIMAL(4,2) DEFAULT 10.0,
+                top_row_height_max INTEGER DEFAULT 120,
+                bottom_row_height_min INTEGER DEFAULT 40,
+                bottom_row_height_vh DECIMAL(4,2) DEFAULT 10.0,
+                bottom_row_height_max INTEGER DEFAULT 120,
+                gap_min INTEGER DEFAULT 1,
+                gap_vw DECIMAL(4,2) DEFAULT 0.15,
+                gap_max INTEGER DEFAULT 5,
+                font_size_min INTEGER DEFAULT 6,
+                font_size_vw DECIMAL(4,2) DEFAULT 0.5,
+                font_size_max INTEGER DEFAULT 14,
+                cell_font_size_min INTEGER DEFAULT 8,
+                cell_font_size_vw DECIMAL(4,2) DEFAULT 0.6,
+                cell_font_size_max INTEGER DEFAULT 16,
+                corner_font_size_min INTEGER DEFAULT 10,
+                corner_font_size_vw DECIMAL(4,2) DEFAULT 0.7,
+                corner_font_size_max INTEGER DEFAULT 18,
+                
+                -- 🆕 NAUJI: atskiri plotis/aukštis
+                corner_width_min INTEGER DEFAULT 50,
+                corner_width_vw DECIMAL(4,2) DEFAULT 8.0,
+                corner_width_max INTEGER DEFAULT 175,
+                corner_height_min INTEGER DEFAULT 50,
+                corner_height_vh DECIMAL(4,2) DEFAULT 8.0,
+                corner_height_max INTEGER DEFAULT 175,
+                left_col_width_min INTEGER DEFAULT 50,
+                left_col_width_vw DECIMAL(4,2) DEFAULT 8.0,
+                left_col_width_max INTEGER DEFAULT 175,
+                right_col_width_min INTEGER DEFAULT 50,
+                right_col_width_vw DECIMAL(4,2) DEFAULT 8.0,
+                right_col_width_max INTEGER DEFAULT 175,
+                
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Įterpti default eilutę
+        await pool.query(`
+            INSERT INTO board_settings (id) 
+            VALUES (1) 
+            ON CONFLICT (id) DO NOTHING
+        `);
+
+        // Jei lentelė jau egzistuoja be naujų stulpelių – pridėti
+        await pool.query(`
+            ALTER TABLE board_settings
+            ADD COLUMN IF NOT EXISTS corner_width_min INTEGER DEFAULT 50,
+            ADD COLUMN IF NOT EXISTS corner_width_vw DECIMAL(4,2) DEFAULT 8.0,
+            ADD COLUMN IF NOT EXISTS corner_width_max INTEGER DEFAULT 175,
+            ADD COLUMN IF NOT EXISTS corner_height_min INTEGER DEFAULT 50,
+            ADD COLUMN IF NOT EXISTS corner_height_vh DECIMAL(4,2) DEFAULT 8.0,
+            ADD COLUMN IF NOT EXISTS corner_height_max INTEGER DEFAULT 175,
+            ADD COLUMN IF NOT EXISTS left_col_width_min INTEGER DEFAULT 50,
+            ADD COLUMN IF NOT EXISTS left_col_width_vw DECIMAL(4,2) DEFAULT 8.0,
+            ADD COLUMN IF NOT EXISTS left_col_width_max INTEGER DEFAULT 175,
+            ADD COLUMN IF NOT EXISTS right_col_width_min INTEGER DEFAULT 50,
+            ADD COLUMN IF NOT EXISTS right_col_width_vw DECIMAL(4,2) DEFAULT 8.0,
+            ADD COLUMN IF NOT EXISTS right_col_width_max INTEGER DEFAULT 175
+        `);
+
         // Indeksai
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
