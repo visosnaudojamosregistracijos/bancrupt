@@ -746,6 +746,8 @@ function applyBoardSettings(s) {
 
    socket.on('message', (msg) => {
     console.log('📢 Pranešimas:', msg);
+
+    
     
     // 🆕 Funkcija, kuri apdoroja pranešimą
     const processMsg = () => {
@@ -850,7 +852,13 @@ function applyBoardSettings(s) {
         processMsg();
     }
 });
-    socket.on('buyConfirmed', (data) => {
+
+socket.on('chatMessage', (data) => {
+    console.log('💬 Chat gautas:', data);
+    addChatMessage(data);
+});
+
+socket.on('buyConfirmed', (data) => {
         console.log('✅ Pirkimas patvirtintas:', data);
         playSoundForPlayer('buy', data.playerId);
         playSoundForPlayer('nope', data.playerId);
