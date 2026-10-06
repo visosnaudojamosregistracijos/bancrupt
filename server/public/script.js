@@ -2961,6 +2961,7 @@ function enterGame() {
     
     setTimeout(initInfoResizeObserver, 1000);
     setTimeout(loadSoundButtonState, 100);   // 🆕 Garso mygtuko būsena
+    setTimeout(loadSoundVolumeSlider, 100);  // 🆕 Slankiklio būsena
 }
 
 
@@ -5642,6 +5643,54 @@ function loadSoundButtonState() {
         btn.innerHTML = '🔊 Garsas: ON';
         btn.style.background = '';
     }
+}
+
+// ============================================
+// 🆕 GARSO REGULIATORIUS
+// ============================================
+
+function changeSoundVolume(value) {
+    const volume = parseInt(value) / 100;
+    
+    // Nustatyti SFX garsumą
+    if (typeof audioManager !== 'undefined' && typeof audioManager.setSfxVolume === 'function') {
+        audioManager.setSfxVolume(volume);
+    }
+    
+    // Atnaujinti rodomą reikšmę
+    const valueDisplay = document.getElementById('soundVolumeValue');
+    if (valueDisplay) valueDisplay.textContent = value;
+    
+    // Išsaugoti localStorage
+    localStorage.setItem('bancrupt_sfxVolume', value);
+    
+    // Jei volume 0 — išjungti garsą automatiškai
+    if (volume === 0) {
+        soundMode = 'off';
+        audioManager.isEnabled = false;
+    } else {
+        if (soundMode === 'off') {
+            soundMode = 'my';
+            audioManager.isEnabled = true;
+        }
+    }
+    
+    // Atnaujinti mygtuko būseną
+    if (typeof loadSoundButtonState === 'function') {
+        loadSoundButtonState();
+    }
+    
+    console.log('🔊 Garsas:', value);
+}
+
+function loadSoundVolumeSlider() {
+    const slider = document.getElementById('soundVolumeSlider');
+    const valueDisplay = document.getElementById('soundVolumeValue');
+    if (!slider) return;
+    
+    const saved = localStorage.getItem('bancrupt_sfxVolume') || 50;
+    slider.value = saved;
+    if (valueDisplay) valueDisplay.textContent = saved;
 }
 
 console.log('✅ Pirkimo apsauga aktyvuota!');
