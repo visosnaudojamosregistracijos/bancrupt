@@ -2173,7 +2173,7 @@ function setSoundMode(mode) {
         r.checked = (r.value === mode);
     });
     
-    // Jei "off" – išjungti visus garsus
+    // 🆕 Jei "off" – išjungti TIK efektus (ne muziką!)
     if (mode === 'off') {
         audioManager.isEnabled = false;
     } else {
@@ -2962,14 +2962,22 @@ function enterGame() {
     loadJournalFromStorage();
 
     const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
-    soundMode = savedSoundMode;
-    
-    // 🆕 Jei "off" – išjungti garsus
-    if (soundMode === 'off') {
-        audioManager.isEnabled = false;
-    } else {
-        audioManager.isEnabled = true;
-    }
+soundMode = savedSoundMode;
+
+// 🔊 Garsas (efektams) – atskirai
+if (soundMode === 'off') {
+    audioManager.isEnabled = false;
+} else {
+    audioManager.isEnabled = true;
+}
+
+// 🎵 Muzika – ATSKIRAI!
+const savedMusicSetting = localStorage.getItem('bancrupt_music');
+if (savedMusicSetting === 'false') {
+    audioManager.isMusicEnabled = false;
+} else {
+    audioManager.isMusicEnabled = true;
+}
     
     if (gameState && gameState.players && gameState.players.length > 0) {
         gameState.players.forEach(p => {
@@ -3000,29 +3008,37 @@ function enterGame() {
     changeMusicVolume(savedMusicVolume);
     changeSfxVolume(savedSfxVolume);
     
-    const savedMusic = localStorage.getItem('bancrupt_music');
-    
-    if (savedMusic === 'false') {
-        backgroundMusicStarted = false;
-        if (typeof loadMusicButtonState === 'function') {
-            setTimeout(loadMusicButtonState, 100);
-        }
-    } else {
-        const startMusicOnFirstInteraction = () => {
-            startBackgroundMusic();
-            if (typeof loadMusicButtonState === 'function') {
-                loadMusicButtonState();
-            }
-            
-            document.removeEventListener('click', startMusicOnFirstInteraction);
-            document.removeEventListener('keydown', startMusicOnFirstInteraction);
-            document.removeEventListener('touchstart', startMusicOnFirstInteraction);
-        };
-        
-        document.addEventListener('click', startMusicOnFirstInteraction, { once: true });
-        document.addEventListener('keydown', startMusicOnFirstInteraction, { once: true });
-        document.addEventListener('touchstart', startMusicOnFirstInteraction, { once: true });
+    // 🎵 Muzika – atskirai
+const savedMusic = localStorage.getItem('bancrupt_music');
+
+if (savedMusic === 'false') {
+    // Muzika buvo išjungta
+    audioManager.isMusicEnabled = false;
+    backgroundMusicStarted = false;
+    if (typeof loadMusicButtonState === 'function') {
+        setTimeout(loadMusicButtonState, 100);
     }
+} else {
+    // Muzika įjungta – grok po pirmo paspaudimo
+    audioManager.isMusicEnabled = true;
+    
+    const startMusicOnFirstInteraction = () => {
+        if (audioManager.isMusicEnabled) {
+            startBackgroundMusic();
+        }
+        if (typeof loadMusicButtonState === 'function') {
+            loadMusicButtonState();
+        }
+        
+        document.removeEventListener('click', startMusicOnFirstInteraction);
+        document.removeEventListener('keydown', startMusicOnFirstInteraction);
+        document.removeEventListener('touchstart', startMusicOnFirstInteraction);
+    };
+    
+    document.addEventListener('click', startMusicOnFirstInteraction, { once: true });
+    document.addEventListener('keydown', startMusicOnFirstInteraction, { once: true });
+    document.addEventListener('touchstart', startMusicOnFirstInteraction, { once: true });
+}
     
     const savedInfoMode = localStorage.getItem('bancrupt_infoMode');
     if (savedInfoMode === 'true') {
@@ -5626,6 +5642,7 @@ let backgroundMusicStarted = false;
 
 function startBackgroundMusic() {
     if (backgroundMusicStarted) return;
+    if (!audioManager.isMusicEnabled) return;   // 🆕 Apsauga
     
     audioManager.playLoop('background');
     backgroundMusicStarted = true;
@@ -5696,7 +5713,7 @@ function toggleSoundSimple() {
     const dot = document.getElementById('soundStatusDot');
     
     if (soundMode === 'off') {
-        // ĮJUNGIAM
+        // ĮJUNGIAM GARSĄ (efektus)
         soundMode = 'my';
         audioManager.isEnabled = true;
         
@@ -5708,7 +5725,7 @@ function toggleSoundSimple() {
         console.log('🔊 Garsas įjungtas');
         playClickSound();
     } else {
-        // IŠJUNGIAM
+        // IŠJUNGIAM GARSĄ (efektus)
         soundMode = 'off';
         audioManager.isEnabled = false;
         
@@ -5721,6 +5738,7 @@ function toggleSoundSimple() {
     }
     
     localStorage.setItem('bancrupt_soundMode', soundMode);
+    // 🆕 NEjudinam muzikos!
 }
 
 // ============================================
@@ -5742,7 +5760,7 @@ function changeSoundVolume(value) {
     // Išsaugoti localStorage
     localStorage.setItem('bancrupt_sfxVolume', value);
     
-    // Jei volume 0 — išjungti garsą automatiškai
+    // 🆕 Jei volume 0 — išjungti TIK efektus
     if (volume === 0) {
         soundMode = 'off';
         audioManager.isEnabled = false;
@@ -5778,14 +5796,15 @@ function loadSoundVolumeSlider() {
 function toggleMusicSimple() {
     const dot = document.getElementById('musicStatusDot');
     
-    if (backgroundMusicStarted) {
-        // IŠJUNGIAM
+    // 🆕 Tikrinam isMusicEnabled, ne backgroundMusicStarted
+    if (audioManager.isMusicEnabled) {
+        // IŠJUNGIAM MUZIKĄ
+        audioManager.isMusicEnabled = false;
+        
         if (typeof stopBackgroundMusic === 'function') {
             stopBackgroundMusic();
         } else {
-            if (typeof audioManager !== 'undefined' && typeof audioManager.stopLoop === 'function') {
-                audioManager.stopLoop('background');
-            }
+            audioManager.stopLoop('background');
             backgroundMusicStarted = false;
         }
         
@@ -5797,13 +5816,13 @@ function toggleMusicSimple() {
         localStorage.setItem('bancrupt_music', 'false');
         console.log('🔇 Muzika išjungta');
     } else {
-        // ĮJUNGIAM
+        // ĮJUNGIAM MUZIKĄ
+        audioManager.isMusicEnabled = true;
+        
         if (typeof startBackgroundMusic === 'function') {
             startBackgroundMusic();
         } else {
-            if (typeof audioManager !== 'undefined' && typeof audioManager.playLoop === 'function') {
-                audioManager.playLoop('background');
-            }
+            audioManager.playLoop('background');
             backgroundMusicStarted = true;
         }
         
@@ -5823,7 +5842,8 @@ function loadMusicButtonState() {
     const dot = document.getElementById('musicStatusDot');
     if (!dot) return;
     
-    if (backgroundMusicStarted) {
+    // 🆕 Tikrinam isMusicEnabled (vėliavėlę), o ne backgroundMusicStarted
+    if (audioManager.isMusicEnabled) {
         dot.style.background = '#28a745';
         dot.style.boxShadow = '0 0 6px #28a745';
     } else {

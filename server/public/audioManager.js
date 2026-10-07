@@ -4,29 +4,30 @@
 
 class AudioManager {
     constructor() {
-        this.sounds = {};
-        this.isEnabled = true;
-        this.musicVolume = 0.05;
-        this.sfxVolume = 0.10;
-        
-        // 🆕 Garso lygiai kiekvienam garsui (0-10)
-        this.soundLevels = {
-            dice: 5, move: 5, click: 5, 'your-turn': 5,
-            cash: 5, pay: 5, pay1: 5, 'rent-received': 5, buy: 5,
-            build: 5, hotel: 5, demolish: 5,
-            tax: 5, latras: 5, pirtis: 5, hospital: 5, birthday: 5, chance: 5, special: 5,
-            dujos: 5, siuksles: 5, elektra: 5, vanduo: 5,
-            'air-port': 5, train: 5, port: 5, bus: 5,
-            spa: 5, baseinas: 5, papludimys: 5,
-            jail: 5, jail_in: 5, jail_out: 5,
-            trade: 5, auction: 5,
-            start: 5, 'game-start': 5, win: 5, celebrate: 5,
-            gameover: 5, bankrupt: 5, notification: 5, error: 5
-        };
-        
-        this.loadSounds();
-        this.loadSoundLevels();
-    }
+    this.sounds = {};
+    this.isEnabled = true;          // 🔊 Efektams
+    this.isMusicEnabled = true;     // 🎵 Muzikai (NAUJA!)
+    this.musicVolume = 0.05;
+    this.sfxVolume = 0.10;
+    
+    // 🆕 Garso lygiai kiekvienam garsui (0-10)
+    this.soundLevels = {
+        dice: 5, move: 5, click: 5, 'your-turn': 5,
+        cash: 5, pay: 5, pay1: 5, 'rent-received': 5, buy: 5,
+        build: 5, hotel: 5, demolish: 5,
+        tax: 5, latras: 5, pirtis: 5, hospital: 5, birthday: 5, chance: 5, special: 5,
+        dujos: 5, siuksles: 5, elektra: 5, vanduo: 5,
+        'air-port': 5, train: 5, port: 5, bus: 5,
+        spa: 5, baseinas: 5, papludimys: 5,
+        jail: 5, jail_in: 5, jail_out: 5,
+        trade: 5, auction: 5,
+        start: 5, 'game-start': 5, win: 5, celebrate: 5,
+        gameover: 5, bankrupt: 5, notification: 5, error: 5
+    };
+    
+    this.loadSounds();
+    this.loadSoundLevels();
+}
     
     // 🆕 Įkelti garso lygius iš localStorage
     loadSoundLevels() {
@@ -173,26 +174,27 @@ class AudioManager {
     }
 
     // 🆕 Groti fono muziką (loop)
-    playLoop(soundName) {
-        if (!this.isEnabled) return;
-        
-        const sound = this.sounds[soundName];
-        if (!sound) {
-            console.warn('⚠️ Garso nėra:', soundName);
-            return;
-        }
-        
-        try {
-            sound.loop = true;
-            sound.volume = this.musicVolume;   // 🆕 Music volume
-            sound.currentTime = 0;
-            
-            const playPromise = sound.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => {});
-            }
-        } catch (e) {}
+    // 🆕 Groti fono muziką (loop)
+playLoop(soundName) {
+    if (!this.isMusicEnabled) return;   // 🆕 TIK muzikos patikra!
+    
+    const sound = this.sounds[soundName];
+    if (!sound) {
+        console.warn('⚠️ Garso nėra:', soundName);
+        return;
     }
+    
+    try {
+        sound.loop = true;
+        sound.volume = this.musicVolume;
+        sound.currentTime = 0;
+        
+        const playPromise = sound.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {});
+        }
+    } catch (e) {}
+}
 
     // 🆕 Sustabdyti fono muziką
     stopLoop(soundName) {
@@ -227,11 +229,16 @@ class AudioManager {
     }
 
     // 🆕 Nustatyti fono muzikos garsumą
-    setMusicVolume(volume) {
-        this.musicVolume = Math.max(0, Math.min(1, volume));
-        const bg = this.sounds['background'];
-        if (bg) bg.volume = this.musicVolume;
+setMusicVolume(volume) {
+    this.musicVolume = Math.max(0, Math.min(1, volume));
+    const bg = this.sounds['background'];
+    if (bg) bg.volume = this.musicVolume;
+    
+    // 🆕 Jei volume > 0 ir muzika įjungta – paleisti
+    if (this.musicVolume > 0 && this.isMusicEnabled && bg && bg.paused) {
+        bg.play().catch(() => {});
     }
+}
 
     // 🆕 Nustatyti žaidimo garsų garsumą
     setSfxVolume(volume) {
