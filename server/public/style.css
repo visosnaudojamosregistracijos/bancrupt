@@ -3161,10 +3161,22 @@ body.dark-mode #cellInfoPanel {
     text-overflow: ellipsis;
 }
 
+
 /* ============================================================
    19. MOBILUS — TELEFONAI (≤ 768px)
    ============================================================ */
 @media (max-width: 768px) {
+
+    /* --- :root override (lentos dydžiai telefone) --- */
+    :root {
+        --corner-width:      clamp(25px, 6vw, 100px);
+        --corner-height:     clamp(25px, 6vh, 100px);
+        --left-col-width:    clamp(25px, 6vw, 80px);
+        --right-col-width:   clamp(25px, 6vw, 80px);
+        --top-row-height:    clamp(25px, 7vh, 80px);
+        --bottom-row-height: clamp(25px, 7vh, 80px);
+        --board-max-width:   100vw;
+    }
 
     /* --- 1. BENDRA --- */
     body {
@@ -3211,7 +3223,6 @@ body.dark-mode #cellInfoPanel {
         font-size: 9px;
     }
 
-    /* Paslėpti kai kuriuos elementus telefone (kad netilptų) */
     #leftPanel #gameIdBox,
     #leftPanel #gameLangSwitcher,
     #leftPanel #leftPlayerCount,
@@ -3219,7 +3230,6 @@ body.dark-mode #cellInfoPanel {
         display: none !important;
     }
 
-    /* Mygtukai horizontaliai */
     #leftPanel .left-btn {
         width: auto !important;
         flex: 0 0 auto;
@@ -3229,7 +3239,6 @@ body.dark-mode #cellInfoPanel {
         white-space: nowrap;
     }
 
-    /* Muzikos / garso blokai – horizontalūs */
     #leftPanel > div {
         display: flex;
         align-items: center;
@@ -3237,18 +3246,16 @@ body.dark-mode #cellInfoPanel {
         flex: 0 0 auto;
     }
 
-    /* Slankikliai – siauresni */
     #leftPanel input[type="range"] {
         width: 50px !important;
         min-width: 40px;
     }
 
-    /* --- 5. TOGGLE MYGTUKAS: paslėpti telefone (nereikia, nes panelė visada matoma) --- */
     #leftPanelToggle {
         display: none !important;
     }
 
-    /* --- 6. LENTA: užima visą likusią vietą --- */
+    /* --- 5. LENTA --- */
     #board {
         flex: 1 1 0 !important;
         width: 100% !important;
@@ -3262,7 +3269,7 @@ body.dark-mode #cellInfoPanel {
         overflow: hidden !important;
     }
 
-    /* --- 7. LANGELIAI: mažesni --- */
+    /* --- 6. LANGELIAI --- */
     .cell {
         font-size: 6px;
         padding: 1px;
@@ -3292,7 +3299,7 @@ body.dark-mode #cellInfoPanel {
         font-size: 2.5em;
     }
 
-    /* --- 8. PLAYER DOT: mažesni --- */
+    /* --- 7. PLAYER DOT --- */
     .cell .players-on-cell .player-dot {
         width: 14px;
         height: 14px;
@@ -3314,7 +3321,7 @@ body.dark-mode #cellInfoPanel {
         font-size: 200%;
     }
 
-    /* --- 9. VIDURIO LANGELIAI --- */
+    /* --- 8. VIDURIO LANGELIAI --- */
     .center-cell {
         padding: 2px 3px;
         border-width: 1px;
@@ -3328,7 +3335,7 @@ body.dark-mode #cellInfoPanel {
         margin-bottom: 2px;
     }
 
-    /* --- 10. KAULIUKAI --- */
+    /* --- 9. KAULIUKAI --- */
     .dice {
         width: 34px;
         height: 34px;
@@ -3352,7 +3359,7 @@ body.dark-mode #cellInfoPanel {
         gap: 8px;
     }
 
-    /* --- 11. MYGTUKAI --- */
+    /* --- 10. MYGTUKAI --- */
     .control-buttons button {
         font-size: 8px;
         padding: 3px 6px;
@@ -3372,7 +3379,7 @@ body.dark-mode #cellInfoPanel {
         padding: 4px 3px;
     }
 
-    /* --- 12. #myInfo --- */
+    /* --- 11. #myInfo --- */
     #myInfo {
         font-size: 7px;
     }
@@ -3390,7 +3397,7 @@ body.dark-mode #cellInfoPanel {
         height: 12px;
     }
 
-    /* --- 13. CHAT / ŽURNALAS / PRANEŠIMAI --- */
+    /* --- 12. CHAT / ŽURNALAS / PRANEŠIMAI --- */
     #chatMessages,
     #journal,
     #notifications,
@@ -3407,319 +3414,20 @@ body.dark-mode #cellInfoPanel {
     }
 }
 
-/* ============================================================
-   20. LABAI MAŽI TELEFONAI (≤ 480px)
-   ============================================================ */
-@media (max-width: 480px) {
-
-    #leftPanel {
-        max-height: 80px;
-        padding: 4px 2px !important;
-        gap: 3px !important;
-    }
-
-    #leftPanel .left-btn {
-        padding: 4px 6px !important;
-        font-size: 9px !important;
-    }
-
-    #leftPanel input[type="range"] {
-        width: 40px !important;
-        min-width: 30px;
-    }
-
-    .cell {
-        font-size: 5px;
-        border-width: 1px;
-    }
-
-    .cell .cell-name {
-        font-size: 6px;
-    }
-
-    .cell-bg-icon {
-        font-size: 2.5em;
-    }
-
-    .cell.corner .cell-bg-icon {
-        font-size: 3em;
-    }
-
-    .dice {
-        width: 28px;
-        height: 28px;
-    }
-
-    .dice-dots-container {
-        width: 20px;
-        height: 20px;
-        gap: 1.5px;
-    }
-
-    .dice-dot {
-        width: 4px;
-        height: 4px;
-    }
-
-    #myInfo .player-money {
-        font-size: 12px;
-    }
-
-    .center-cell h4 {
-        font-size: 7px;
-    }
-}
-
-/* ============================================================
-   19. MOBILUS — TELEFONAI (≤ 768px)
-   ============================================================ */
-@media (max-width: 768px) {
-
-    /* --- 1. BENDRA --- */
-    body {
-        overflow: hidden;
-    }
-
-    #game {
-        height: 100dvh;
-        overflow: hidden;
-    }
-
-    /* --- 2. HEADER --- */
-    #gameHeader {
-        font-size: 10px;
-        padding: 6px 10px;
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-
-    /* --- 3. GAME BODY: keičiam į column (panelė viršuje) --- */
-    #gameBody {
-        flex-direction: column !important;
-        overflow: hidden !important;
-        gap: 0;
-    }
-
-    /* --- 4. KAIRĖ PANELĖ: horizontali juosta viršuje --- */
-    #leftPanel {
-        width: 100% !important;
-        height: auto !important;
-        flex: 0 0 auto !important;
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        align-items: center;
-        justify-content: center;
-        padding: 6px 4px !important;
-        gap: 4px !important;
-        border-radius: 0 !important;
-        border-left: none !important;
-        border-right: none !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        max-height: 90px;
-        font-size: 9px;
-    }
-
-    /* Paslėpti kai kuriuos elementus telefone (kad netilptų) */
-    #leftPanel #gameIdBox,
-    #leftPanel #gameLangSwitcher,
-    #leftPanel #leftPlayerCount,
-    #leftPanel #leftTurnDisplay {
-        display: none !important;
-    }
-
-    /* Mygtukai horizontaliai */
-    #leftPanel .left-btn {
-        width: auto !important;
-        flex: 0 0 auto;
-        padding: 6px 10px !important;
-        font-size: 10px !important;
-        min-width: 44px;
-        white-space: nowrap;
-    }
-
-    /* Muzikos / garso blokai – horizontalūs */
-    #leftPanel > div {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex: 0 0 auto;
-    }
-
-    /* Slankikliai – siauresni */
-    #leftPanel input[type="range"] {
-        width: 50px !important;
-        min-width: 40px;
-    }
-
-    /* --- 5. TOGGLE MYGTUKAS: paslėpti telefone (nereikia, nes panelė visada matoma) --- */
-    #leftPanelToggle {
-        display: none !important;
-    }
-
-    /* --- 6. LENTA: užima visą likusią vietą --- */
-    #board {
-        flex: 1 1 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-        padding: 4px !important;
-        border-radius: 0 !important;
-        border-left: none !important;
-        border-right: none !important;
-        border-bottom: none !important;
-        overflow: hidden !important;
-    }
-
-    /* --- 7. LANGELIAI: mažesni --- */
-    .cell {
-        font-size: 6px;
-        padding: 1px;
-        border-width: 1px;
-        border-radius: 3px;
-    }
-
-    .cell .cell-name {
-        font-size: 7px;
-        max-width: 95%;
-    }
-
-    .cell .cell-cost {
-        font-size: 6px;
-    }
-
-    .cell-bg-icon {
-        font-size: 3em;
-    }
-
-    .cell.corner .cell-bg-icon {
-        font-size: 4em;
-    }
-
-    .row-middle-left .cell-bg-icon,
-    .row-middle-right .cell-bg-icon {
-        font-size: 2.5em;
-    }
-
-    /* --- 8. PLAYER DOT: mažesni --- */
-    .cell .players-on-cell .player-dot {
-        width: 14px;
-        height: 14px;
-        border-width: 1.5px;
-    }
-
-    .cell.corner .players-on-cell .player-dot {
-        width: 12px;
-        height: 12px;
-    }
-
-    .row-middle-left .cell .players-on-cell .player-dot,
-    .row-middle-right .cell .players-on-cell .player-dot {
-        width: 14px;
-        height: 14px;
-    }
-
-    .player-emoji {
-        font-size: 200%;
-    }
-
-    /* --- 9. VIDURIO LANGELIAI --- */
-    .center-cell {
-        padding: 2px 3px;
-        border-width: 1px;
-        border-radius: 4px;
-        min-height: 40px;
-    }
-
-    .center-cell h4 {
-        font-size: 8px;
-        padding-bottom: 1px;
-        margin-bottom: 2px;
-    }
-
-    /* --- 10. KAULIUKAI --- */
-    .dice {
-        width: 34px;
-        height: 34px;
-        border-width: 1.5px;
-        border-radius: 6px;
-    }
-
-    .dice-dots-container {
-        width: 24px;
-        height: 24px;
-        gap: 2px;
-        padding: 2px;
-    }
-
-    .dice-dot {
-        width: 5px;
-        height: 5px;
-    }
-
-    .dice-container {
-        gap: 8px;
-    }
-
-    /* --- 11. MYGTUKAI --- */
-    .control-buttons button {
-        font-size: 8px;
-        padding: 3px 6px;
-        border-radius: 4px;
-    }
-
-    .btn-half {
-        font-size: 8px;
-        padding: 3px 2px;
-    }
-
-    .btn-bankrupt,
-    .btn-jail,
-    .btn-build,
-    .btn-demolish {
-        font-size: 8px;
-        padding: 4px 3px;
-    }
-
-    /* --- 12. #myInfo --- */
-    #myInfo {
-        font-size: 7px;
-    }
-
-    #myInfo .player-money {
-        font-size: 16px;
-    }
-
-    #myInfo .player-name {
-        font-size: 9px;
-    }
-
-    #myInfo .player-color {
-        width: 12px;
-        height: 12px;
-    }
-
-    /* --- 13. CHAT / ŽURNALAS / PRANEŠIMAI --- */
-    #chatMessages,
-    #journal,
-    #notifications,
-    #playersList {
-        font-size: 7px;
-        min-height: 30px;
-    }
-
-    .journal-item,
-    .notification-item,
-    .player-item {
-        font-size: 7px;
-        padding: 1px 3px;
-    }
-}
 
 /* ============================================================
    20. LABAI MAŽI TELEFONAI (≤ 480px)
    ============================================================ */
 @media (max-width: 480px) {
+
+    :root {
+        --corner-width:      clamp(20px, 5vw, 80px);
+        --corner-height:     clamp(20px, 5vh, 80px);
+        --left-col-width:    clamp(20px, 5vw, 60px);
+        --right-col-width:   clamp(20px, 5vw, 60px);
+        --top-row-height:    clamp(20px, 6vh, 60px);
+        --bottom-row-height: clamp(20px, 6vh, 60px);
+    }
 
     #leftPanel {
         max-height: 80px;
