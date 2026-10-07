@@ -1,0 +1,190 @@
+/* ============================================================
+   SIBOLIAI — NPC personažai
+   ============================================================ */
+
+/* Bendra NPC konteinerio klasė */
+.npc {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    transition: left 3s ease-in-out, top 3s ease-in-out;
+}
+
+.npc img,
+.npc svg {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+/* Tėvas — didesnis */
+.npc-tevas {
+    width: 120px;
+}
+
+/* Gražuoliukas — mažesnis */
+.npc-grazuoliukas {
+    width: 100px;
+}
+
+/* ===== ANIMACIJOS ===== */
+
+/* Vaikščiojimas — linguojimas */
+@keyframes npc-walk {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-3px) rotate(-2deg); }
+    75% { transform: translateY(-3px) rotate(2deg); }
+}
+
+/* Šokinėjimas — kai linksmas */
+@keyframes npc-jump {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+/* Linguojimas — kai kalba */
+@keyframes npc-talk {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Pasirodymas */
+@keyframes npc-appear {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Išnykimas */
+@keyframes npc-disappear {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.5); }
+}
+
+.npc-walking {
+    animation: npc-walk 0.6s ease-in-out infinite;
+}
+
+.npc-jumping {
+    animation: npc-jump 0.5s ease-in-out infinite;
+}
+
+.npc-talking {
+    animation: npc-talk 0.3s ease-in-out infinite;
+}
+
+.npc-appearing {
+    animation: npc-appear 0.4s ease-out;
+}
+
+.npc-disappearing {
+    animation: npc-disappear 0.3s ease-in;
+}
+
+/* ===== KALBOS BURBULIUKAS ===== */
+.npc-bubble {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    color: #1a1a2e;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-family: 'Arial', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 2px solid #FFD700;
+    margin-bottom: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.npc-bubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: #FFD700;
+}
+
+.npc-bubble.show {
+    opacity: 1;
+}
+
+/* ===== EMOcijOS ===== */
+.npc-happy { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)); }
+.npc-angry { filter: drop-shadow(0 0 8px rgba(227, 6, 19, 0.8)); }
+.npc-sad { filter: drop-shadow(0 0 8px rgba(52, 152, 219, 0.8)); }
+.npc-greedy { filter: drop-shadow(0 0 8px rgba(46, 204, 113, 0.8)); }
+
+/* ===== KOJŲ ANIMACIJA ===== */
+
+/* Kairė koja — linguoja pirmyn */
+@keyframes tevas-leg-left {
+    0%, 100% { transform: rotate(-12deg); }
+    50% { transform: rotate(12deg); }
+}
+
+/* Dešinė koja — linguoja atgal */
+@keyframes tevas-leg-right {
+    0%, 100% { transform: rotate(12deg); }
+    50% { transform: rotate(-12deg); }
+}
+
+/* Kai Tėvas vaikšto — kojos linguoja */
+.npc-tevas.npc-walking #tevas-left-leg {
+    animation: tevas-leg-left 0.5s ease-in-out infinite;
+    transform-origin: 75px 230px;
+}
+
+.npc-tevas.npc-walking #tevas-right-leg {
+    animation: tevas-leg-right 0.5s ease-in-out infinite;
+    transform-origin: 125px 230px;
+}
+
+/* Kūnas šiek tiek linguoja */
+.npc-tevas.npc-walking #tevas-body {
+    animation: npc-body-bob 0.5s ease-in-out infinite;
+}
+
+@keyframes npc-body-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* ===== GRAŽUOLIUKO KOJŲ ANIMACIJA ===== */
+
+@keyframes grazuoliukas-leg-left {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
+}
+
+@keyframes grazuoliukas-leg-right {
+    0%, 100% { transform: rotate(15deg); }
+    50% { transform: rotate(-15deg); }
+}
+
+.npc-grazuoliukas.npc-walking #grazuoliukas-left-leg {
+    animation: grazuoliukas-leg-left 0.4s ease-in-out infinite;
+    transform-origin: 84px 225px;
+}
+
+.npc-grazuoliukas.npc-walking #grazuoliukas-right-leg {
+    animation: grazuoliukas-leg-right 0.4s ease-in-out infinite;
+    transform-origin: 116px 225px;
+}
+
+/* Kūnas šiek tiek pašokinėja (greitesnis) */
+.npc-grazuoliukas.npc-walking #grazuoliukas-body {
+    animation: npc-body-bob-fast 0.4s ease-in-out infinite;
+}
+
+@keyframes npc-body-bob-fast {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}

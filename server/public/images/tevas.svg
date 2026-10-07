@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="200" height="300">
+  <!-- Šešėlis -->
+  <ellipse cx="100" cy="285" rx="50" ry="8" fill="rgba(0,0,0,0.3)"/>
+
+  <!-- ===== KAIRĖ KOJA ===== -->
+  <g id="tevas-left-leg">
+    <rect x="65" y="220" width="25" height="45" rx="6" fill="#1a1a2e"/>
+    <ellipse cx="75" cy="270" rx="22" ry="12" fill="#4a2c0a"/>
+    <rect x="55" y="258" width="40" height="12" rx="4" fill="#5c3610"/>
+  </g>
+
+  <!-- ===== DEŠINĖ KOJA ===== -->
+  <g id="tevas-right-leg">
+    <rect x="110" y="220" width="25" height="45" rx="6" fill="#1a1a2e"/>
+    <ellipse cx="125" cy="270" rx="22" ry="12" fill="#4a2c0a"/>
+    <rect x="105" y="258" width="40" height="12" rx="4" fill="#5c3610"/>
+  </g>
+
+  <!-- ===== KŪNAS ===== -->
+  <g id="tevas-body">
+    <!-- Pilvas (apvalus) -->
+    <ellipse cx="100" cy="190" rx="55" ry="45" fill="#2d2d5e"/>
+    <ellipse cx="100" cy="190" rx="55" ry="45" fill="none" stroke="#1a1a2e" stroke-width="2"/>
+
+    <!-- Kostiumo švarkas -->
+    <path d="M 45 150 Q 45 120 70 115 L 130 115 Q 155 120 155 150 L 155 200 Q 155 230 100 230 Q 45 230 45 200 Z" fill="#2d2d5e"/>
+    <path d="M 45 150 Q 45 120 70 115 L 130 115 Q 155 120 155 150 L 155 200 Q 155 230 100 230 Q 45 230 45 200 Z" fill="none" stroke="#1a1a2e" stroke-width="2"/>
+
+    <!-- Marškiniai (balti) -->
+    <path d="M 85 115 L 100 145 L 115 115 Z" fill="#f0f0f0"/>
+
+    <!-- Kaklaraištis -->
+    <path d="M 100 145 L 95 160 L 100 200 L 105 160 Z" fill="#c0392b"/>
+
+    <!-- Švarko atvartai -->
+    <path d="M 70 115 L 85 145 L 75 190 L 60 150 Z" fill="#252550"/>
+    <path d="M 130 115 L 115 145 L 125 190 L 140 150 Z" fill="#252550"/>
+
+    <!-- Sagos -->
+    <circle cx="100" cy="175" r="3" fill="#FFD700"/>
+    <circle cx="100" cy="195" r="3" fill="#FFD700"/>
+
+    <!-- Rankos -->
+    <rect x="30" y="140" width="20" height="70" rx="8" fill="#2d2d5e"/>
+    <rect x="150" y="140" width="20" height="70" rx="8" fill="#2d2d5e"/>
+
+    <!-- Delnai -->
+    <circle cx="40" cy="215" r="12" fill="#e8b88a"/>
+    <circle cx="160" cy="215" r="12" fill="#e8b88a"/>
+
+    <!-- Piniginė -->
+    <rect x="150" y="210" width="30" height="22" rx="4" fill="#8B4513"/>
+    <rect x="150" y="210" width="30" height="8" rx="4" fill="#A0522D"/>
+    <circle cx="175" cy="221" r="3" fill="#FFD700"/>
+
+    <!-- Kaklas -->
+    <rect x="90" y="100" width="20" height="20" fill="#e8b88a"/>
+
+    <!-- Galva -->
+    <ellipse cx="100" cy="75" rx="42" ry="45" fill="#e8b88a"/>
+
+    <!-- Ausys -->
+    <ellipse cx="58" cy="75" rx="8" ry="12" fill="#d4a574"/>
+    <ellipse cx="142" cy="75" rx="8" ry="12" fill="#d4a574"/>
+
+    <!-- Plaukai (ryži, reti) -->
+    <path d="M 58 55 Q 60 30 100 25 Q 140 30 142 55 Q 140 40 100 38 Q 60 40 58 55 Z" fill="#c0c0c0"/>
+    <path d="M 65 45 Q 70 35 100 32 Q 130 35 135 45" fill="none" stroke="#a0a0a0" stroke-width="2"/>
+
+    <!-- Antakiai -->
+    <rect x="72" y="60" width="22" height="5" rx="2" fill="#a0a0a0"/>
+    <rect x="106" y="60" width="22" height="5" rx="2" fill="#a0a0a0"/>
+
+    <!-- Akiniai -->
+    <circle cx="83" cy="75" r="14" fill="none" stroke="#333" stroke-width="3"/>
+    <circle cx="117" cy="75" r="14" fill="none" stroke="#333" stroke-width="3"/>
+    <line x1="97" y1="75" x2="103" y2="75" stroke="#333" stroke-width="3"/>
+    <line x1="69" y1="73" x2="58" y2="70" stroke="#333" stroke-width="3"/>
+    <line x1="131" y1="73" x2="142" y2="70" stroke="#333" stroke-width="3"/>
+
+    <!-- Akys -->
+    <circle cx="83" cy="76" r="4" fill="#1a1a2e"/>
+    <circle cx="117" cy="76" r="4" fill="#1a1a2e"/>
+
+    <!-- Nosis -->
+    <ellipse cx="100" cy="90" rx="8" ry="6" fill="#d4a574"/>
+
+    <!-- Barzda (ryža, trumpa) -->
+    <path d="M 65 95 Q 70 130 100 135 Q 130 130 135 95 Q 130 115 100 118 Q 70 115 65 95 Z" fill="#c0c0c0"/>
+    <path d="M 70 100 Q 75 125 100 128 Q 125 125 130 100" fill="none" stroke="#a0a0a0" stroke-width="1.5"/>
+
+    <!-- Burna (šypsena) -->
+    <path d="M 88 108 Q 100 115 112 108" fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
