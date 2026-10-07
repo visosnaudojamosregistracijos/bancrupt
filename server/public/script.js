@@ -3001,18 +3001,17 @@ function enterGame() {
     changeSfxVolume(savedSfxVolume);
     
     const savedMusic = localStorage.getItem('bancrupt_music');
-    const musicBtn = document.getElementById('musicBtn');
     
     if (savedMusic === 'false') {
         backgroundMusicStarted = false;
-        if (musicBtn) {
-            musicBtn.innerHTML = '🎵 Muzika: 🔴 IŠJ.';
+        if (typeof loadMusicButtonState === 'function') {
+            setTimeout(loadMusicButtonState, 100);
         }
     } else {
         const startMusicOnFirstInteraction = () => {
             startBackgroundMusic();
-            if (musicBtn) {
-                musicBtn.innerHTML = '🎵 Muzika: 🟢 ĮJ.';
+            if (typeof loadMusicButtonState === 'function') {
+                loadMusicButtonState();
             }
             
             document.removeEventListener('click', startMusicOnFirstInteraction);
@@ -3050,8 +3049,10 @@ function enterGame() {
     }, 300);
     
     setTimeout(initInfoResizeObserver, 1000);
-    setTimeout(loadSoundButtonState, 100);   // 🆕 Garso mygtuko būsena
-    setTimeout(loadSoundVolumeSlider, 100);  // 🆕 Slankiklio būsena
+    setTimeout(loadSoundButtonState, 100);
+    setTimeout(loadSoundVolumeSlider, 100);
+    setTimeout(loadMusicButtonState, 100);          // 🆕
+    setTimeout(loadMusicVolumeSliderSimple, 100);   // 🆕
 }
 
 
@@ -5692,15 +5693,16 @@ document.addEventListener('keydown', (e) => {
 // ============================================
 
 function toggleSoundSimple() {
+    const dot = document.getElementById('soundStatusDot');
+    
     if (soundMode === 'off') {
         // ĮJUNGIAM
         soundMode = 'my';
         audioManager.isEnabled = true;
         
-        const btn = document.getElementById('soundBtn');
-        if (btn) {
-            btn.innerHTML = '🔊 Garsas: ON';
-            btn.style.background = '';
+        if (dot) {
+            dot.style.background = '#28a745';
+            dot.style.boxShadow = '0 0 6px #28a745';
         }
         
         console.log('🔊 Garsas įjungtas');
@@ -5710,29 +5712,15 @@ function toggleSoundSimple() {
         soundMode = 'off';
         audioManager.isEnabled = false;
         
-        const btn = document.getElementById('soundBtn');
-        if (btn) {
-            btn.innerHTML = '🔇 Garsas: OFF';
-            btn.style.background = 'rgba(120, 0, 0, 0.5)';
+        if (dot) {
+            dot.style.background = '#dc3545';
+            dot.style.boxShadow = '0 0 6px #dc3545';
         }
         
         console.log('🔇 Garsas išjungtas');
     }
     
     localStorage.setItem('bancrupt_soundMode', soundMode);
-}
-
-function loadSoundButtonState() {
-    const btn = document.getElementById('soundBtn');
-    if (!btn) return;
-    
-    if (soundMode === 'off') {
-        btn.innerHTML = '🔇 Garsas: OFF';
-        btn.style.background = 'rgba(120, 0, 0, 0.5)';
-    } else {
-        btn.innerHTML = '🔊 Garsas: ON';
-        btn.style.background = '';
-    }
 }
 
 // ============================================
@@ -5781,6 +5769,104 @@ function loadSoundVolumeSlider() {
     const saved = localStorage.getItem('bancrupt_sfxVolume') || 50;
     slider.value = saved;
     if (valueDisplay) valueDisplay.textContent = saved;
+}
+
+// ============================================
+// 🆕 PAPRASTAS MUZIKOS MYGTUKAS
+// ============================================
+
+function toggleMusicSimple() {
+    const dot = document.getElementById('musicStatusDot');
+    
+    if (backgroundMusicStarted) {
+        // IŠJUNGIAM
+        if (typeof stopBackgroundMusic === 'function') {
+            stopBackgroundMusic();
+        } else {
+            if (typeof audioManager !== 'undefined' && typeof audioManager.stopLoop === 'function') {
+                audioManager.stopLoop('background');
+            }
+            backgroundMusicStarted = false;
+        }
+        
+        if (dot) {
+            dot.style.background = '#dc3545';
+            dot.style.boxShadow = '0 0 6px #dc3545';
+        }
+        
+        localStorage.setItem('bancrupt_music', 'false');
+        console.log('🔇 Muzika išjungta');
+    } else {
+        // ĮJUNGIAM
+        if (typeof startBackgroundMusic === 'function') {
+            startBackgroundMusic();
+        } else {
+            if (typeof audioManager !== 'undefined' && typeof audioManager.playLoop === 'function') {
+                audioManager.playLoop('background');
+            }
+            backgroundMusicStarted = true;
+        }
+        
+        if (dot) {
+            dot.style.background = '#28a745';
+            dot.style.boxShadow = '0 0 6px #28a745';
+        }
+        
+        localStorage.setItem('bancrupt_music', 'true');
+        console.log('🎵 Muzika įjungta');
+    }
+    
+    playClickSound();
+}
+
+function loadMusicButtonState() {
+    const dot = document.getElementById('musicStatusDot');
+    if (!dot) return;
+    
+    if (backgroundMusicStarted) {
+        dot.style.background = '#28a745';
+        dot.style.boxShadow = '0 0 6px #28a745';
+    } else {
+        dot.style.background = '#dc3545';
+        dot.style.boxShadow = '0 0 6px #dc3545';
+    }
+}
+
+function changeMusicVolumeSimple(value) {
+    const volume = parseInt(value) / 100;
+    
+    if (typeof audioManager !== 'undefined' && typeof audioManager.setMusicVolume === 'function') {
+        audioManager.setMusicVolume(volume);
+    }
+    
+    const valueDisplay = document.getElementById('musicVolumeValueSimple');
+    if (valueDisplay) valueDisplay.textContent = value;
+    
+    localStorage.setItem('bancrupt_musicVolume', value);
+    console.log('🎵 Muzikos garsumas:', value);
+}
+
+function loadMusicVolumeSliderSimple() {
+    const slider = document.getElementById('musicVolumeSliderSimple');
+    const valueDisplay = document.getElementById('musicVolumeValueSimple');
+    if (!slider) return;
+    
+    const saved = localStorage.getItem('bancrupt_musicVolume') || 15;
+    slider.value = saved;
+    if (valueDisplay) valueDisplay.textContent = saved;
+}
+
+function loadSoundButtonState() {
+    const dot = document.getElementById('soundStatusDot');
+    if (!dot) return;
+    
+    if (soundMode === 'off') {
+        dot.style.background = '#dc3545';
+        dot.style.boxShadow = '0 0 6px #dc3545';
+    } else {
+        dot.style.background = '#28a745';
+        dot.style.boxShadow = '0 0 6px #28a745';
+    }
 }
 
 console.log('✅ Pirkimo apsauga aktyvuota!');
