@@ -3176,8 +3176,8 @@ body.dark-mode #cellInfoPanel {
         --top-row-height:    clamp(25px, 7vh, 70px);
         --bottom-row-height: clamp(25px, 7vh, 70px);
         --board-gap:         clamp(1px, 0.2vw, 2px);
-        --board-max-width:   200vw;
-        --board-min-width:   200vw;
+        --board-max-width:   250vw;
+        --board-min-width:   250vw;
     }
 
     /* --- 1. BENDRA --- */
@@ -3242,8 +3242,8 @@ body.dark-mode #cellInfoPanel {
     #board {
         flex: 1 1 0 !important;
         width: 150vw !important;
-        min-width: 200vw !important;
-        max-width: 200vw !important;
+        min-width: 250vw !important;
+        max-width: 250vw !important;
         padding: 4px !important;
         overflow: auto !important;
         -webkit-overflow-scrolling: touch;
