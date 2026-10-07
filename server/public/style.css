@@ -3167,17 +3167,6 @@ body.dark-mode #cellInfoPanel {
    ============================================================ */
 @media (max-width: 768px) {
 
-    /* --- :root override (lentos dydžiai telefone) --- */
-    :root {
-        --corner-width:      clamp(25px, 6vw, 100px);
-        --corner-height:     clamp(25px, 6vh, 100px);
-        --left-col-width:    clamp(25px, 6vw, 80px);
-        --right-col-width:   clamp(25px, 6vw, 80px);
-        --top-row-height:    clamp(25px, 7vh, 80px);
-        --bottom-row-height: clamp(25px, 7vh, 80px);
-        --board-max-width:   100vw;
-    }
-
     /* --- 1. BENDRA --- */
     body {
         overflow: hidden;
@@ -3196,80 +3185,54 @@ body.dark-mode #cellInfoPanel {
         flex-wrap: wrap;
     }
 
-    /* --- 3. GAME BODY: keičiam į column (panelė viršuje) --- */
-    #gameBody {
-        flex-direction: column !important;
-        overflow: hidden !important;
-        gap: 0;
+    /* --- 3. KAIRĖ PANELĖ: lieka šone (kaip desktop) --- */
+    #leftPanel {
+        width: 70px !important;
+        flex: 0 0 70px !important;
+        padding: 4px 3px !important;
+        font-size: 8px;
+        gap: 4px !important;
     }
 
-    /* --- 4. KAIRĖ PANELĖ: horizontali juosta viršuje --- */
-    #leftPanel {
-        width: 100% !important;
-        height: auto !important;
-        flex: 0 0 auto !important;
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        align-items: center;
-        justify-content: center;
-        padding: 6px 4px !important;
-        gap: 4px !important;
-        border-radius: 0 !important;
-        border-left: none !important;
-        border-right: none !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        max-height: 90px;
+    #gameIdBox {
+        font-size: 8px;
+        padding: 4px 2px;
+    }
+
+    #gameIdBox span {
         font-size: 9px;
     }
 
-    #leftPanel #gameIdBox,
-    #leftPanel #gameLangSwitcher,
-    #leftPanel #leftPlayerCount,
-    #leftPanel #leftTurnDisplay {
-        display: none !important;
+    .left-btn {
+        font-size: 8px !important;
+        padding: 5px 3px !important;
+        white-space: normal;
+        line-height: 1.1;
     }
 
-    #leftPanel .left-btn {
-        width: auto !important;
-        flex: 0 0 auto;
-        padding: 6px 10px !important;
-        font-size: 10px !important;
-        min-width: 44px;
-        white-space: nowrap;
-    }
-
-    #leftPanel > div {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex: 0 0 auto;
-    }
-
-    #leftPanel input[type="range"] {
-        width: 50px !important;
-        min-width: 40px;
+    #leftPlayerCount,
+    #leftTurnDisplay {
+        font-size: 8px;
+        padding: 4px 2px;
     }
 
     #leftPanelToggle {
         display: none !important;
     }
 
-    /* --- 5. LENTA --- */
-    #board {
-        flex: 1 1 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-        padding: 4px !important;
-        border-radius: 0 !important;
-        border-left: none !important;
-        border-right: none !important;
-        border-bottom: none !important;
-        overflow: hidden !important;
+    /* Paslėpti kalbos pasirinkimą telefone (per mažai vietos) */
+    #gameLangSwitcher {
+        display: none !important;
     }
 
-    /* --- 6. LANGELIAI --- */
+    /* --- 4. LENTA --- */
+    #board {
+        flex: 1 1 0 !important;
+        min-width: 0;
+        padding: 4px !important;
+    }
+
+    /* --- 5. LANGELIAI --- */
     .cell {
         font-size: 6px;
         padding: 1px;
@@ -3299,7 +3262,7 @@ body.dark-mode #cellInfoPanel {
         font-size: 2.5em;
     }
 
-    /* --- 7. PLAYER DOT --- */
+    /* --- 6. PLAYER DOT --- */
     .cell .players-on-cell .player-dot {
         width: 14px;
         height: 14px;
@@ -3321,7 +3284,7 @@ body.dark-mode #cellInfoPanel {
         font-size: 200%;
     }
 
-    /* --- 8. VIDURIO LANGELIAI --- */
+    /* --- 7. VIDURIO LANGELIAI --- */
     .center-cell {
         padding: 2px 3px;
         border-width: 1px;
@@ -3335,7 +3298,7 @@ body.dark-mode #cellInfoPanel {
         margin-bottom: 2px;
     }
 
-    /* --- 9. KAULIUKAI --- */
+    /* --- 8. KAULIUKAI --- */
     .dice {
         width: 34px;
         height: 34px;
@@ -3359,7 +3322,7 @@ body.dark-mode #cellInfoPanel {
         gap: 8px;
     }
 
-    /* --- 10. MYGTUKAI --- */
+    /* --- 9. MYGTUKAI --- */
     .control-buttons button {
         font-size: 8px;
         padding: 3px 6px;
@@ -3379,13 +3342,13 @@ body.dark-mode #cellInfoPanel {
         padding: 4px 3px;
     }
 
-    /* --- 11. #myInfo --- */
+    /* --- 10. #myInfo --- */
     #myInfo {
         font-size: 7px;
     }
 
     #myInfo .player-money {
-        font-size: 16px;
+        font-size: 14px;
     }
 
     #myInfo .player-name {
@@ -3397,7 +3360,7 @@ body.dark-mode #cellInfoPanel {
         height: 12px;
     }
 
-    /* --- 12. CHAT / ŽURNALAS / PRANEŠIMAI --- */
+    /* --- 11. CHAT / ŽURNALAS / PRANEŠIMAI --- */
     #chatMessages,
     #journal,
     #notifications,
@@ -3411,78 +3374,5 @@ body.dark-mode #cellInfoPanel {
     .player-item {
         font-size: 7px;
         padding: 1px 3px;
-    }
-}
-
-
-/* ============================================================
-   20. LABAI MAŽI TELEFONAI (≤ 480px)
-   ============================================================ */
-@media (max-width: 480px) {
-
-    :root {
-        --corner-width:      clamp(20px, 5vw, 80px);
-        --corner-height:     clamp(20px, 5vh, 80px);
-        --left-col-width:    clamp(20px, 5vw, 60px);
-        --right-col-width:   clamp(20px, 5vw, 60px);
-        --top-row-height:    clamp(20px, 6vh, 60px);
-        --bottom-row-height: clamp(20px, 6vh, 60px);
-    }
-
-    #leftPanel {
-        max-height: 80px;
-        padding: 4px 2px !important;
-        gap: 3px !important;
-    }
-
-    #leftPanel .left-btn {
-        padding: 4px 6px !important;
-        font-size: 9px !important;
-    }
-
-    #leftPanel input[type="range"] {
-        width: 40px !important;
-        min-width: 30px;
-    }
-
-    .cell {
-        font-size: 5px;
-        border-width: 1px;
-    }
-
-    .cell .cell-name {
-        font-size: 6px;
-    }
-
-    .cell-bg-icon {
-        font-size: 2.5em;
-    }
-
-    .cell.corner .cell-bg-icon {
-        font-size: 3em;
-    }
-
-    .dice {
-        width: 28px;
-        height: 28px;
-    }
-
-    .dice-dots-container {
-        width: 20px;
-        height: 20px;
-        gap: 1.5px;
-    }
-
-    .dice-dot {
-        width: 4px;
-        height: 4px;
-    }
-
-    #myInfo .player-money {
-        font-size: 12px;
-    }
-
-    .center-cell h4 {
-        font-size: 7px;
     }
 }
