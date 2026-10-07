@@ -116,6 +116,44 @@ console.log('🔍 API ROUTES UŽREGISTRUOTI');
 console.log('🔍 authRoutes tipas:', typeof authRoutes);
 console.log('🔍 authRoutes stack:', authRoutes.stack ? authRoutes.stack.length : 'nėra');
 console.log('🔍 adminRoutes tipas:', typeof adminRoutes);   // ← NAUJA (neprivaloma)
+
+// ============================================
+// 🆕 FEEDBACK (PRANEŠTI / PASIŪLYTI)
+// ============================================
+app.post('/api/feedback', async (req, res) => {
+    const { type, message, email, page, username } = req.body;
+    
+    console.log('📬 Gautas feedback:', { type, message: message?.substring(0, 50), page, username });
+    
+    // Validacija
+    if (!message || message.length < 5) {
+        return res.status(400).json({ error: 'Aprašymas per trumpas' });
+    }
+    
+    if (!type || !['bug', 'idea', 'complaint'].includes(type)) {
+        return res.status(400).json({ error: 'Neteisingas tipas' });
+    }
+    
+    if (message.length > 2000) {
+        return res.status(400).json({ error: 'Aprašymas per ilgas (max 2000 simbolių)' });
+    }
+    
+    try {
+        await db.pool.query(
+            `INSERT INTO feedback (type, message, email, page, username, created_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())`,
+            [type, message, email, page, username]
+        );
+        
+        console.log(`✅ Feedback išsaugotas: [${type}] nuo ${username || 'svečias'} (${page})`);
+        
+        res.json({ success: true });
+    } catch (err) {
+        console.error('❌ Feedback DB klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -861,7 +899,7 @@ io.on('connection', (socket) => {
             console.error('❌ boardSettings klaida:', err);
         }
     }); 
-    
+
     socket.on('rollDice', async () => {
         if (!await checkSocketRateLimit(socket, 'rollDice')) return;
         

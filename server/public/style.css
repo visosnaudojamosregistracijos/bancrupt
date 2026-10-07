@@ -3161,6 +3161,36 @@ body.dark-mode #cellInfoPanel {
     text-overflow: ellipsis;
 }
 
+/* ============================================================
+   18.5. PAGE FOOTER
+   ============================================================ */
+.page-footer {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(201, 168, 76, 0.3);
+    text-align: center;
+    color: rgba(212, 184, 150, 0.6);
+    font-size: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    pointer-events: none;
+    user-select: none;
+}
+
+@media (max-width: 768px) {
+    .page-footer {
+        margin-top: 20px;
+        padding-top: 10px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-footer {
+        margin-top: 15px;
+        padding-top: 8px;
+        font-size: 10px;
+    }
+}
 
 /* ============================================================
    19. MOBILUS — TELEFONAI (≤ 768px)
@@ -3241,7 +3271,7 @@ body.dark-mode #cellInfoPanel {
     /* --- 4. LENTA: 1.5× PLOTIS, SCROLLINAMA --- */
     #board {
         flex: 1 1 0 !important;
-        width: 150vw !important;
+        width: 300vw !important;
         min-width: 300vw !important;
         max-width: 300vw !important;
         padding: 4px !important;
@@ -3459,5 +3489,177 @@ body.dark-mode #cellInfoPanel {
     /* Footer mygtukai (atnaujinti / uždaryti) */
     #waitingRoomOverlay > div > div:last-child {
         flex-direction: column !important;
+    }
+}
+
+/* ============================================================
+   22. FEEDBACK MYGTUKAS IR MODALAS
+   ============================================================ */
+
+/* Mygtukas žaidimo header'yje */
+#feedbackBtn {
+    padding: 4px 10px;
+    border: 2px solid var(--gold);
+    border-radius: 6px;
+    background: var(--green-deep);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+#feedbackBtn:hover {
+    background: var(--gold);
+    color: var(--green-deep);
+    transform: scale(1.03);
+}
+
+/* Telefone – tik 🐛 ikona */
+@media (max-width: 768px) {
+    #feedbackBtn .btn-text {
+        display: none;
+    }
+    #feedbackBtn {
+        padding: 4px 8px;
+        font-size: 14px;
+    }
+}
+
+/* Modalas */
+#feedbackModal {
+    animation: choiceFadeIn 0.25s ease;
+}
+
+/* Modalas telefone */
+@media (max-width: 768px) {
+    #feedbackModal > div {
+        padding: 20px 15px !important;
+    }
+    
+    #feedbackModal h2 {
+        font-size: 1.2em !important;
+    }
+    
+    #feedbackMessage {
+        height: 100px !important;
+    }
+}
+
+/* ===== LOGO SU PERBRAUKTA RAIDĖ ===== */
+.bankrot-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial Black', 'Impact', sans-serif;
+    position: relative;
+    line-height: 1;
+}
+
+/* Banko ikona — pakelta ir su didesniu tarpu */
+.bank-icon {
+    font-size: clamp(28px, 5vw, 48px);
+    line-height: 1;
+    margin-top: -4px;      /* ← pakelta į viršų */
+    margin-bottom: 10px;   /* ← didesnis tarpas tarp ikonos ir teksto */
+    z-index: 2;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    display: block;
+}
+
+.bankrot-text {
+    display: inline-block;
+    position: relative;
+    font-size: clamp(20px, 4.5vw, 42px);
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #FFD700;
+    text-shadow:
+        2px 2px 0 #B8860B,
+        3px 3px 0 #8B6914,
+        4px 4px 6px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    margin-top: 0;
+}
+
+/* U raidė — VIRŠUJE, perbraukta raudonu X */
+.crossed-u {
+    display: inline-block;
+    position: relative;
+    color: #FFD700;
+    font-size: 1.15em;
+    line-height: 1;
+    transform: translateY(-0.15em); /* pakelta viršuje */
+    text-shadow:
+        0 0 8px rgba(255, 215, 0, 0.9),
+        0 0 16px rgba(255, 215, 0, 0.5),
+        2px 2px 0 #B8860B;
+    z-index: 3;
+}
+
+/* Raudonas X per U */
+.crossed-u::before,
+.crossed-u::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1.1em;
+    height: 4px;
+    background: #E30613; /* raudona */
+    border-radius: 2px;
+    box-shadow: 0 0 4px rgba(227, 6, 19, 0.6);
+    z-index: 4;
+}
+
+.crossed-u::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.crossed-u::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* O raidė — APAČIOJE, be perbraukimo */
+.o-house {
+    display: inline-block;
+    position: relative;
+    color: #FFD700;
+    text-shadow:
+        2px 2px 0 #B8860B,
+        3px 3px 0 #8B6914;
+    z-index: 1;
+}
+
+/* Mobile korekcijos */
+@media (max-width: 600px) {
+    .bankrot-text {
+        font-size: clamp(16px, 5vw, 24px);
+        letter-spacing: 0.5px;
+    }
+
+    .bank-icon {
+        font-size: clamp(22px, 6vw, 32px);
+        margin-top: -2px;
+        margin-bottom: 6px;
+    }
+
+    .crossed-u {
+        font-size: 1.1em;
+        transform: translateY(-0.12em);
+    }
+
+    .crossed-u::before,
+    .crossed-u::after {
+        height: 3px;
+        width: 1em;
+    }
+
+    .o-house {
+        font-size: 1em;
     }
 }

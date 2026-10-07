@@ -453,5 +453,140 @@ router.post('/board-settings', requireAdmin, async (req, res) => {
     }
 });
 
+// ============================================
+// 🆕 FEEDBACK (PRANEŠIMAI / PASIŪLYMAI)
+// ============================================
+
+// GET /api/admin/feedback — visi pranešimai (su filtrais)
+router.get('/feedback', requireAdmin, async (req, res) => {
+    try {
+        const { type, status, limit = 200 } = req.query;
+        
+        let query = 'SELECT * FROM feedback WHERE 1=1';
+        const params = [];
+        let paramIndex = 1;
+        
+        if (type && ['bug', 'idea', 'complaint'].includes(type)) {
+            query += ` AND type = $${paramIndex}`;
+            params.push(type);
+            paramIndex++;
+        }
+        
+        if (status && ['new', 'in_progress', 'fixed', 'rejected'].includes(status)) {
+            query += ` AND status = $${paramIndex}`;
+            params.push(status);
+            paramIndex++;
+        }
+        
+        query += ` ORDER BY created_at DESC LIMIT $${paramIndex}`;
+        params.push(parseInt(limit));
+        
+        const result = await pool.query(query, params);
+        
+        // Bendras skaičius
+        const countsResult = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE status = 'new') AS new_count,
+                COUNT(*) FILTER (WHERE type = 'bug') AS bug_count,
+                COUNT(*) FILTER (WHERE type = 'idea') AS idea_count,
+                COUNT(*) FILTER (WHERE type = 'complaint') AS complaint_count,
+                COUNT(*) AS total_count
+            FROM feedback
+        `);
+        
+        res.json({
+            items: result.rows,
+            counts: countsResult.rows[0]
+        });
+    } catch (err) {
+        console.error('admin/feedback GET klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
+    }
+});
+
+// POST /api/admin/feedback/:id/status — keisti statusą
+router.post('/feedback/:id/status', requireAdmin, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { status } = req.body;
+        
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'Neteisingas ID' });
+        }
+        
+        if (!status || !['new', 'in_progress', 'fixed', 'rejected'].includes(status)) {
+            return res.status(400).json({ error: 'Neteisingas status' });
+        }
+        
+        const result = await pool.query(
+            'UPDATE feedback SET status = $1 WHERE id = $2 RETURNING *',
+            [status, id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Pranešimas nerastas' });
+        }
+        
+        console.log(`📬 Feedback #${id} statusas pakeistas į: ${status}`);
+        res.json({ success: true, item: result.rows[0] });
+    } catch (err) {
+        console.error('admin/feedback status klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
+    }
+});
+
+// POST /api/admin/feedback/:id/reply — išsaugoti atsakymą
+router.post('/feedback/:id/reply', requireAdmin, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { reply } = req.body;
+        
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'Neteisingas ID' });
+        }
+        
+        const result = await pool.query(
+            'UPDATE feedback SET admin_reply = $1, replied_at = NOW() WHERE id = $2 RETURNING *',
+            [reply || null, id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Pranešimas nerastas' });
+        }
+        
+        console.log(`💬 Feedback #${id} atsakymas išsaugotas`);
+        res.json({ success: true, item: result.rows[0] });
+    } catch (err) {
+        console.error('admin/feedback reply klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
+    }
+});
+
+// DELETE /api/admin/feedback/:id — ištrinti pranešimą
+router.delete('/feedback/:id', requireAdmin, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'Neteisingas ID' });
+        }
+        
+        const result = await pool.query(
+            'DELETE FROM feedback WHERE id = $1 RETURNING *',
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Pranešimas nerastas' });
+        }
+        
+        console.log(`🗑️ Feedback #${id} ištrintas`);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('admin/feedback DELETE klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
+    }
+});
+
 module.exports = router;
 module.exports.setIO = setIO;

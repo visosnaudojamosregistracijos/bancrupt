@@ -45,6 +45,10 @@ function switchTab(tab) {
     if (tab === 'board-settings') {                    // ← NAUJA
         loadBoardSettings();
     }
+    
+    if (tab === 'feedback') {                          // ← NAUJA
+        loadFeedback();
+    }
 }
 
 // ============================================
@@ -672,6 +676,16 @@ function startStatsAutoRefresh() {
 // ============================================
 loadUsers();
 
+// 🆕 Automatiškai patikrinti naujų pranešimų skaičių
+setTimeout(() => {
+    loadFeedback();
+}, 1000);
+
+// 🆕 Kas 60s atnaujinti badge
+setInterval(() => {
+    loadFeedback();
+}, 60000);
+
 // Auto-refresh checkbox klausymas
 document.addEventListener('DOMContentLoaded', () => {
     const checkbox = document.getElementById('auto-refresh');
@@ -836,4 +850,322 @@ async function saveBoardSettings() {
         console.error('❌ Klaida:', err);
         showMsg('Klaida: ' + err.message, false);
     }
+}
+
+// ============================================
+// 🆕 FEEDBACK (PRANEŠIMAI / PASIŪLYMAI)
+// ============================================
+
+async function loadFeedback() {
+    try {
+        const type = document.getElementById('fbFilterType')?.value || '';
+        const status = document.getElementById('fbFilterStatus')?.value || '';
+        
+        let url = '/api/admin/feedback?';
+        if (type) url += `type=${type}&`;
+        if (status) url += `status=${status}&`;
+        
+        const res = await fetch(url, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        
+        const data = await res.json();
+        
+        // Skaičiai
+        const setText = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val ?? 0;
+        };
+        
+        setText('fb-stat-total', data.counts?.total_count ?? 0);
+        setText('fb-stat-new', data.counts?.new_count ?? 0);
+        setText('fb-stat-bug', data.counts?.bug_count ?? 0);
+        setText('fb-stat-idea', data.counts?.idea_count ?? 0);
+        setText('fb-stat-complaint', data.counts?.complaint_count ?? 0);
+        
+        // Badge ant tab mygtuko
+        const newCount = data.counts?.new_count ?? 0;
+        const tabBtn = document.getElementById('tab-btn-feedback');
+        if (tabBtn) {
+            tabBtn.innerHTML = `📬 Pranešimai${newCount > 0 ? ` <span style="background:#dc3545;color:#fff;padding:2px 6px;border-radius:10px;font-size:11px;">${newCount}</span>` : ''}`;
+        }
+        
+        // Lentelė
+        renderFeedback(data.items || []);
+        
+        console.log(`✅ Feedback įkeltas: ${data.items?.length || 0} pranešimų`);
+    } catch (err) {
+        console.error('❌ Feedback klaida:', err);
+        showMsg('Klaida kraunant pranešimus: ' + err.message, false);
+        const tbody = document.getElementById('feedbackTable');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">❌ Klaida: ' + err.message + '</td></tr>';
+    }
+}
+
+function renderFeedback(items) {
+    window._feedbackItems = items;   // 🆕 IŠSAUGOM
+    const tbody = document.getElementById('feedbackTable');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!items || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#888;">Nėra pranešimų</td></tr>';
+        return;
+    }
+    
+    const typeIcons = {
+        bug: '🐛 Klaida',
+        idea: '💡 Pasiūlymas',
+        complaint: '⚠️ Nusiskundimas'
+    };
+    
+    const statusIcons = {
+        new: '🆕 Naujas',
+        in_progress: '🔄 Vykdoma',
+        fixed: '✅ Išspręsta',
+        rejected: '❌ Atmesta'
+    };
+    
+    const statusColors = {
+        new: '#ffc107',
+        in_progress: '#17a2b8',
+        fixed: '#28a745',
+        rejected: '#6c757d'
+    };
+    
+    items.forEach(item => {
+        const tr = document.createElement('tr');
+        
+        const date = new Date(item.created_at).toLocaleString('lt-LT', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit'
+        });
+        
+        const message = (item.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escapedMessage = message.replace(/'/g, "\\'").replace(/\n/g, '\\n');
+        
+        const statusColor = statusColors[item.status] || '#888';
+        
+        tr.innerHTML = `
+            <td><strong>${item.id}</strong></td>
+            <td>${typeIcons[item.type] || item.type}</td>
+            <td style="max-width:400px; word-wrap:break-word; white-space:pre-wrap; font-size:12px;">${message}</td>
+            <td style="font-size:11px;">${item.email || '—'}</td>
+            <td><code style="font-size:11px;">${item.page || '—'}</code></td>
+            <td style="font-size:12px;">${item.username || '—'}</td>
+            <td>
+                <span style="background:${statusColor}; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700;">
+                    ${statusIcons[item.status] || item.status}
+                </span>
+            </td>
+            <td style="font-size:11px;">${date}</td>
+            <td>
+                <div style="display:flex; gap:3px; flex-wrap:wrap;">
+                    <button onclick="openFeedbackModal(${item.id})" style="padding:3px 8px; font-size:11px; background:#ffd700; color:#000; font-weight:700;">👁️</button>
+                    ${item.status !== 'in_progress' ? `<button onclick="setFeedbackStatus(${item.id}, 'in_progress')" style="padding:3px 6px; font-size:11px; background:#17a2b8;">🔄</button>` : ''}
+                    ${item.status !== 'fixed' ? `<button onclick="setFeedbackStatus(${item.id}, 'fixed')" style="padding:3px 6px; font-size:11px; background:#28a745;">✅</button>` : ''}
+                    ${item.status !== 'rejected' ? `<button onclick="setFeedbackStatus(${item.id}, 'rejected')" style="padding:3px 6px; font-size:11px; background:#6c757d;">❌</button>` : ''}
+                    ${item.status !== 'new' ? `<button onclick="setFeedbackStatus(${item.id}, 'new')" style="padding:3px 6px; font-size:11px; background:#ffc107; color:#000;">🆕</button>` : ''}
+                    <button onclick="deleteFeedback(${item.id})" style="padding:3px 6px; font-size:11px; background:#dc3545;" class="danger">🗑️</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function setFeedbackStatus(id, status) {
+    try {
+        const res = await fetch(`/api/admin/feedback/${id}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ status })
+        });
+        
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'HTTP ' + res.status);
+        }
+        
+        showMsg(`✅ Pranešimas #${id} → ${status}`, true);
+        loadFeedback();
+    } catch (err) {
+        showMsg('Klaida: ' + err.message, false);
+    }
+}
+
+async function deleteFeedback(id) {
+    if (!confirm(`🗑️ Ar tikrai ištrinti pranešimą #${id}?`)) return;
+    
+    try {
+        const res = await fetch(`/api/admin/feedback/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'HTTP ' + res.status);
+        }
+        
+        showMsg(`🗑️ Pranešimas #${id} ištrintas`, true);
+        loadFeedback();
+    } catch (err) {
+        showMsg('Klaida: ' + err.message, false);
+    }
+}
+
+// ============================================
+// 🆕 FEEDBACK MODAL
+// ============================================
+
+let currentFeedbackId = null;
+
+function openFeedbackModal(id) {
+    // Rasti pranešimą
+    const item = window._feedbackItems?.find(i => i.id === id);
+    if (!item) {
+        showMsg('❌ Pranešimas nerastas', false);
+        return;
+    }
+    
+    currentFeedbackId = id;
+    
+    // Užpildyti
+    document.getElementById('fb-modal-id').textContent = '#' + id;
+    document.getElementById('fb-modal-type').textContent = getTypeLabel(item.type);
+    document.getElementById('fb-modal-status').innerHTML = getStatusBadge(item.status);
+    document.getElementById('fb-modal-username').textContent = item.username || 'Svečias';
+    document.getElementById('fb-modal-email').textContent = item.email || '—';
+    document.getElementById('fb-modal-page').textContent = item.page || '—';
+    document.getElementById('fb-modal-date').textContent = new Date(item.created_at).toLocaleString('lt-LT');
+    document.getElementById('fb-modal-message').textContent = item.message || '';
+    document.getElementById('fb-modal-reply').value = item.admin_reply || '';
+    document.getElementById('fb-modal-error').textContent = '';
+    
+    // Statuso mygtukų highlight
+    ['new', 'in_progress', 'fixed', 'rejected'].forEach(s => {
+        const btn = document.getElementById('fb-btn-' + s);
+        if (btn) {
+            btn.style.opacity = (s === item.status) ? '1' : '0.5';
+            btn.style.border = (s === item.status) ? '3px solid #fff' : 'none';
+        }
+    });
+    
+    document.getElementById('feedbackModal').style.display = 'flex';
+}
+
+function closeFeedbackModal() {
+    document.getElementById('feedbackModal').style.display = 'none';
+    currentFeedbackId = null;
+}
+
+async function fbModalSetStatus(status) {
+    if (!currentFeedbackId) return;
+    
+    try {
+        const res = await fetch(`/api/admin/feedback/${currentFeedbackId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ status })
+        });
+        
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        
+        showMsg(`✅ Statusas → ${status}`, true);
+        await loadFeedback();
+        
+        // Atnaujinti modalą
+        const item = window._feedbackItems?.find(i => i.id === currentFeedbackId);
+        if (item) {
+            document.getElementById('fb-modal-status').innerHTML = getStatusBadge(status);
+            
+            ['new', 'in_progress', 'fixed', 'rejected'].forEach(s => {
+                const btn = document.getElementById('fb-btn-' + s);
+                if (btn) {
+                    btn.style.opacity = (s === status) ? '1' : '0.5';
+                    btn.style.border = (s === status) ? '3px solid #fff' : 'none';
+                }
+            });
+        }
+    } catch (err) {
+        document.getElementById('fb-modal-error').textContent = '❌ ' + err.message;
+    }
+}
+
+async function fbModalSaveReply() {
+    if (!currentFeedbackId) return;
+    
+    const reply = document.getElementById('fb-modal-reply').value.trim();
+    const errEl = document.getElementById('fb-modal-error');
+    
+    errEl.textContent = '';
+    
+    try {
+        const res = await fetch(`/api/admin/feedback/${currentFeedbackId}/reply`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ reply })
+        });
+        
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        
+        showMsg('✅ Atsakymas išsaugotas!', true);
+        await loadFeedback();
+    } catch (err) {
+        errEl.textContent = '❌ ' + err.message;
+    }
+}
+
+async function fbModalDelete() {
+    if (!currentFeedbackId) return;
+    if (!confirm(`🗑️ Ar tikrai ištrinti pranešimą #${currentFeedbackId}?`)) return;
+    
+    try {
+        const res = await fetch(`/api/admin/feedback/${currentFeedbackId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        
+        showMsg(`🗑️ Pranešimas ištrintas`, true);
+        closeFeedbackModal();
+        await loadFeedback();
+    } catch (err) {
+        document.getElementById('fb-modal-error').textContent = '❌ ' + err.message;
+    }
+}
+
+// Pagalbinės
+function getTypeLabel(type) {
+    const labels = {
+        bug: '🐛 Klaida',
+        idea: '💡 Pasiūlymas',
+        complaint: '⚠️ Nusiskundimas'
+    };
+    return labels[type] || type;
+}
+
+function getStatusBadge(status) {
+    const labels = {
+        new: { icon: '🆕', text: 'Naujas', color: '#ffc107', textColor: '#000' },
+        in_progress: { icon: '🔄', text: 'Vykdoma', color: '#17a2b8', textColor: '#fff' },
+        fixed: { icon: '✅', text: 'Išspręsta', color: '#28a745', textColor: '#fff' },
+        rejected: { icon: '❌', text: 'Atmesta', color: '#6c757d', textColor: '#fff' }
+    };
+    const l = labels[status] || { icon: '', text: status, color: '#888', textColor: '#fff' };
+    return `<span style="background:${l.color}; color:${l.textColor}; padding:3px 10px; border-radius:10px; font-size:12px; font-weight:700;">${l.icon} ${l.text}</span>`;
 }

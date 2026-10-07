@@ -5891,3 +5891,83 @@ function loadSoundButtonState() {
 
 console.log('✅ Pirkimo apsauga aktyvuota!');
 
+// ============================================
+// 🆕 FEEDBACK (PRANEŠTI / PASIŪLYTI)
+// ============================================
+
+function openFeedback() {
+    document.getElementById('feedbackModal').style.display = 'flex';
+}
+
+function closeFeedback() {
+    document.getElementById('feedbackModal').style.display = 'none';
+    document.getElementById('feedbackMessage').value = '';
+    document.getElementById('feedbackEmail').value = '';
+    document.getElementById('feedbackError').textContent = '';
+}
+
+async function submitFeedback() {
+    const type = document.querySelector('input[name="feedbackType"]:checked').value;
+    const message = document.getElementById('feedbackMessage').value.trim();
+    const email = document.getElementById('feedbackEmail').value.trim();
+    const errorEl = document.getElementById('feedbackError');
+    
+    errorEl.textContent = '';
+    
+    // Validacija
+    if (!message || message.length < 5) {
+        errorEl.textContent = '❌ Aprašymas per trumpas (bent 5 simboliai)';
+        return;
+    }
+    
+    if (message.length > 2000) {
+        errorEl.textContent = '❌ Aprašymas per ilgas (max 2000 simbolių)';
+        return;
+    }
+    
+    // Gauti vartotojo info
+    let username = null;
+    const userStr = localStorage.getItem('bancrupt_user');
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            username = user.username;
+        } catch (e) {}
+    }
+    
+    // Gauti puslapį
+    let page = 'unknown';
+    const activePage = document.querySelector('.page.active');
+    if (activePage) page = activePage.id.replace('page-', '');
+    
+    console.log('📤 Siunčiam feedback:', { type, message, email, page, username });
+    
+    try {
+        const response = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type,
+                message,
+                email: email || null,
+                page,
+                username
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            errorEl.textContent = '❌ ' + data.error;
+            return;
+        }
+        
+        alert('✅ Dėkojame! Pranešimas gautas.');
+        closeFeedback();
+    } catch (err) {
+        console.error('❌ Feedback klaida:', err);
+        errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+    }
+}
+
+console.log('✅ Feedback funkcijos užkrautos!');

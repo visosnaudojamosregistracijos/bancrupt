@@ -21,7 +21,12 @@
     <!-- PUSLAPIS 1: LANDING -->
     <div id="page-landing" class="page active">
         <div class="landing-container">
-            <h1>🏦 BANCRUPT</h1>
+            <h1 class="bankrot-title">
+    <span class="bank-icon">🏦</span>
+    <span class="bankrot-text">
+        BANKR<span class="crossed-u">U</span><span class="o-house">O</span>TUOJU.LT
+    </span>
+</h1>
             
             <!-- Svečio režimas (kai neprisijungęs) -->
             <div id="landingGuest">
@@ -41,9 +46,12 @@
         📖 Taisyklės
     </button>
     <button class="landing-btn landing-btn-secondary" onclick="goToMenu()" style="background:linear-gradient(145deg, #6c757d, #495057);" data-i18n="landing.playAsGuest">
-        🎮 Žaisti kaip svečias
-    </button>
-</div>
+                    🎮 Žaisti kaip svečias
+                </button>
+                <button class="landing-btn landing-btn-secondary" onclick="openFeedback()" style="background:linear-gradient(145deg, #8b5cf6, #6f42c1);">
+                    🐛 Pranešti apie klaidą / Pasiūlyti idėją
+                </button>
+            </div>
             </div>
             
             <!-- Prisijungusio režimas -->
@@ -66,12 +74,16 @@
                         📖 Taisyklės
                     </button>
                     <button class="landing-btn landing-btn-secondary" onclick="logout()" style="background:linear-gradient(145deg, #dc3545, #a71d2a);">
-                        🚪 Atsijungti
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+                    🚪 Atsijungti
+                </button>
+            </div>  <!-- /landing-buttons -->
+        </div>      <!-- /landingUser -->
+        
+        <!-- 🆕 FOOTER -->
+        <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+        
+    </div>  <!-- /landing-container -->
+</div>  
 
     <!-- PUSLAPIS 1A: REGISTRACIJA -->
     <div id="page-register" class="page" style="display:none;">
@@ -120,10 +132,14 @@
                     </div>
                     
                     <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;" data-i18n="menu.back">🔙 Atgal</button>
-                </div>
-            </div>
-        </div>
-    </div>
+            </div>            <!-- /lobby-form -->
+        </div>                <!-- /lobby-container -->
+        
+        <!-- 🆕 FOOTER -->
+        <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+        
+    </div>                    <!-- /wrapper -->
+</div> 
 
      <!-- PUSLAPIS 1B: PRISIJUNGIMAS -->
     <div id="page-login" class="page" style="display:none;">
@@ -152,10 +168,14 @@
                     </div>
                     
                     <button onclick="goToLanding()" style="margin-top:15px; padding:10px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer; width:100%;" data-i18n="menu.back">🔙 Atgal</button>
-                </div>
-            </div>
-        </div>
-    </div>
+            </div>            <!-- /lobby-form -->
+        </div>                <!-- /lobby-container -->
+        
+        <!-- 🆕 FOOTER -->
+        <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+        
+    </div>                    <!-- /wrapper -->
+</div>                        <!-- /page-login -->
 
 <!-- PUSLAPIS 1C: PAMIRŠAU SLAPTAŽODĮ -->
     <div id="page-forgot-password" class="page" style="display:none;">
@@ -221,13 +241,17 @@
                         <div id="forgotError3" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center;"></div>
                         
                         <button onclick="submitForgotStep3()" class="btn btn-primary" id="forgotBtn3" data-i18n="forgot.submit">
-                            ✅ Pakeisti slaptažodį
+                           ✅ Pakeisti slaptažodį
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+            </div>            <!-- /lobby-container -->
+            
+            <!-- 🆕 FOOTER -->
+            <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+            
+        </div>                <!-- /wrapper -->
+    </div> 
 
     <!-- PUSLAPIS 2: MENU -->
     <div id="page-menu" class="page">
@@ -251,10 +275,17 @@
                 <button class="menu-btn" onclick="menuPublic()" data-i18n="menu.publicGames">
                     🌐 Vieši stalai
                 </button>
+                <button class="menu-btn" onclick="openFeedback()" style="background:linear-gradient(145deg, #8b5cf6, #6f42c1); border-color: #8b5cf6;">
+                    🐛 Pranešti apie klaidą / Pasiūlyti idėją
+                </button>
                 <button class="menu-btn menu-btn-back" onclick="goToLanding()" data-i18n="menu.back">
                     🔙 Atgal
                 </button>
             </div>
+            
+            <!-- 🆕 FOOTER -->
+            <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+            
         </div>
     </div>
 
@@ -290,9 +321,12 @@
                 </div>
                 
                 <div id="createMessages" style="margin-top:20px; color:#d4b896; font-size:14px; min-height:30px;"></div>
-            </div>
-        </div>
-    </div>
+            <!-- 🆕 FOOTER -->
+                <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+                
+            </div>            <!-- /lobby-container -->
+        </div>                <!-- /wrapper -->
+    </div>                    <!-- /page-create -->
 
     <!-- PUSLAPIS 3B: PRISIJUNGTI -->
     <div id="page-join" class="page" style="display:none;">
@@ -322,18 +356,24 @@
                 </div>
                 
                 <div id="joinMessages" style="margin-top:20px; color:#d4b896; font-size:14px; min-height:30px;"></div>
-            </div>
-        </div>
-    </div>
+            <!-- 🆕 FOOTER -->
+                <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+                
+            </div>            <!-- /lobby-container -->
+        </div>                <!-- /wrapper -->
+    </div>                    <!-- /page-join -->
 
     <!-- PUSLAPIS 4: ŽAIDIMAS -->
     <div id="page-game" class="page" style="display:none; flex-direction: column;">
         <div id="game" style="display:flex; flex-direction: column;">
             <div id="gameHeader">
-                <span id="gameIdDisplay">📋 ID: ---</span>
-                <span id="playerCount">👥 0/8</span>
-                <span id="turnDisplay">🎯 Eina: ---</span>
-            </div>
+    <span id="gameIdDisplay">📋 ID: ---</span>
+    <span id="playerCount">👥 0/8</span>
+    <span id="turnDisplay">🎯 Eina: ---</span>
+    <button id="feedbackBtn" onclick="openFeedback()" title="Pranešti apie klaidą / Pasiūlyti idėją">
+        🐛 <span class="btn-text">Bug / Pasiūlymas</span>
+    </button>
+</div>
 
             <div id="gameBody">
             <!-- 🆕 Kairės panelės toggle mygtukas -->
@@ -1067,6 +1107,39 @@
             <button onclick="closeLeaders()" style="width:100%; padding:12px; margin-top:20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;" data-i18n="common.close">
                 ❌ Uždaryti
             </button>
+        </div>
+    </div>
+
+    <!-- 🆕 FEEDBACK MODAL -->
+    <div id="feedbackModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:99999; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
+        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:100%; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <h2 style="color:#1a6b3c; text-align:center; margin-bottom:20px; border-bottom:2px solid #c9a84c; padding-bottom:10px;">
+                🐛 PRANEŠTI / PASIŪLYTI
+            </h2>
+            
+            <label style="color:#3d2b1f; font-weight:700; display:block; margin-bottom:8px;">Tipas:</label>
+            <div style="display:flex; gap:12px; margin-bottom:15px; flex-wrap:wrap;">
+                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="bug" checked> 🐛 Klaida</label>
+                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="idea"> 💡 Pasiūlymas</label>
+                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="complaint"> ⚠️ Nusiskundimas</label>
+            </div>
+            
+            <label style="color:#3d2b1f; font-weight:700; display:block; margin-bottom:8px;">Aprašymas (privalomas):</label>
+            <textarea id="feedbackMessage" placeholder="Aprašyk klaidą arba idėją..." style="width:100%; height:120px; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; resize:vertical; box-sizing:border-box; font-family:inherit;"></textarea>
+            
+            <label style="color:#3d2b1f; font-weight:700; display:block; margin-top:15px; margin-bottom:8px;">El. paštas (nebūtina):</label>
+            <input type="email" id="feedbackEmail" placeholder="tavo@pastas.lt" style="width:100%; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; box-sizing:border-box;">
+            
+            <div id="feedbackError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center; margin-top:10px;"></div>
+            
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button onclick="submitFeedback()" style="flex:1; padding:12px; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer;">
+                    📤 SIŲSTI
+                </button>
+                <button onclick="closeFeedback()" style="flex:1; padding:12px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer;">
+                    ❌ ATGAL
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1973,6 +2046,7 @@ async function changePassword() {
             goToLanding();
             checkUrlParams();
         });
+  
     </script>
 </body>
 </html>
