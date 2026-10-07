@@ -188,3 +188,19 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
 }
+
+/* ===== SKLANDUS JUDĖJIMAS ===== */
+.npc {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    will-change: left, top;
+    transition: none;
+}
+
+.npc img,
+.npc svg {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}

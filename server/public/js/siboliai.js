@@ -12,10 +12,10 @@
             name: 'Tėvas',
             image: '/images/tevas.svg',
             width: 120,
-            speed: 4000,       // ms per judėjimą
-            moveInterval: 8000, // kas kiek ms juda
-            talkInterval: 12000, // kas kiek ms kalba
-            walkAnimation: true, // ar animuoti kojas
+            speed: 8000,
+            moveInterval: 16000,
+            talkInterval: 14000,
+            talkDuration: 5000, // kiek ms rodomas tekstas
             phrases: [
                 'Tėvas viską mato!',
                 'Tu dar jaunas, sūneli...',
@@ -31,12 +31,12 @@
         },
         grazuoliukas: {
             name: 'Gražuoliukas',
-            image: '/images/grazuoliukas.svg',
+            image: '/images/grazuoliukas.svg?v=5',
             width: 100,
-            speed: 2500,
-            moveInterval: 5000,
-            talkInterval: 8000,
-            walkAnimation: true,
+            speed: 6000,
+            moveInterval: 12000,
+            talkInterval: 10000,
+            talkDuration: 5000,
             phrases: [
                 'Aš laimėjau!',
                 'Pirk, pirk, pirk!',
@@ -56,59 +56,66 @@
     function getCorners() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        const margin = 100;
+        const margin = 80;
 
         return [
-            { x: margin, y: h - margin - 200 },           // apačia kairė
-            { x: w - margin - 150, y: h - margin - 200 }, // apačia dešinė
-            { x: margin, y: margin },                      // viršus kairė
-            { x: w - margin - 150, y: margin }             // viršus dešinė
+            { x: margin, y: h - margin - 220 },           // 0: apačia kairė
+            { x: w - margin - 160, y: h - margin - 220 }, // 1: apačia dešinė
+            { x: margin, y: margin + 60 },                 // 2: viršus kairė
+            { x: w - margin - 160, y: margin + 60 }        // 3: viršus dešinė
         ];
     }
 
+    // ===== GLOBALUS KAMPŲ UŽIMTUMAS =====
+    // Saugo, kuris NPC užima kurį kampą
+    const cornerOccupancy = {
+        0: null,
+        1: null,
+        2: null,
+        3: null
+    };
+
     // ===== NPC KLASĖ =====
     class NPC {
-        constructor(config, corners) {
+        constructor(config, corners, startCorner) {
             this.config = config;
             this.corners = corners;
-            this.currentCorner = Math.floor(Math.random() * corners.length);
+            this.currentCorner = startCorner;
             this.element = null;
             this.bubble = null;
             this.moveTimer = null;
             this.talkTimer = null;
             this.isWalking = false;
+            this.isTalking = false;
+
+            // Užimti kampą
+            cornerOccupancy[startCorner] = this.config.name;
 
             this.create();
             this.start();
         }
 
         create() {
-            // Konteineris
             this.element = document.createElement('div');
             this.element.className = 'npc npc-' + this.config.name.toLowerCase();
             this.element.style.width = this.config.width + 'px';
 
-            // Paveikslėlis
             const img = document.createElement('img');
             img.src = this.config.image;
             img.alt = this.config.name;
             img.draggable = false;
             this.element.appendChild(img);
 
-            // Kalbos burbuliukas
             this.bubble = document.createElement('div');
             this.bubble.className = 'npc-bubble';
             this.element.appendChild(this.bubble);
 
-            // Pradinė pozicija
             const corner = this.corners[this.currentCorner];
             this.element.style.left = corner.x + 'px';
             this.element.style.top = corner.y + 'px';
 
-            // Įterpti į DOM
             document.body.appendChild(this.element);
 
-            // Pasirodymo animacija
             this.element.classList.add('npc-appearing');
             setTimeout(() => {
                 this.element.classList.remove('npc-appearing');
@@ -131,25 +138,37 @@
         }
 
         move() {
-            if (this.isWalking) return; // nejudėti, jei jau juda
+            // Nejudėti, jei jau juda arba kalba
+            if (this.isWalking || this.isTalking) return;
 
-            // Pasirinkti kitą kampą (ne tą patį)
-            let newCorner;
-            do {
-                newCorner = Math.floor(Math.random() * this.corners.length);
-            } while (newCorner === this.currentCorner && this.corners.length > 1);
+            // Rasti laisvą kampą (ne tą patį, ne užimtą)
+            const freeCorners = [];
+            for (let i = 0; i < this.corners.length; i++) {
+                if (i !== this.currentCorner && cornerOccupancy[i] === null) {
+                    freeCorners.push(i);
+                }
+            }
 
+            // Jei nėra laisvų kampų — nejudėti
+            if (freeCorners.length === 0) return;
+
+            // Pasirinkti atsitiktinį laisvą kampą
+            const newCorner = freeCorners[Math.floor(Math.random() * freeCorners.length)];
+
+            // Atleisti seną kampą, užimti naują
+            cornerOccupancy[this.currentCorner] = null;
+            cornerOccupancy[newCorner] = this.config.name;
             this.currentCorner = newCorner;
-            const corner = this.corners[this.currentCorner];
+
+            const corner = this.corners[newCorner];
 
             // Judėjimo animacija
             this.isWalking = true;
             this.element.classList.add('npc-walking');
-            this.element.style.transition = `left ${this.config.speed}ms ease-in-out, top ${this.config.speed}ms ease-in-out`;
+            this.element.style.transition = `left ${this.config.speed}ms linear, top ${this.config.speed}ms linear`;
             this.element.style.left = corner.x + 'px';
             this.element.style.top = corner.y + 'px';
 
-            // Sustabdyti po judėjimo
             setTimeout(() => {
                 this.element.classList.remove('npc-walking');
                 this.isWalking = false;
@@ -157,21 +176,34 @@
         }
 
         say(phrase) {
+            // Jei jau kalba — nekalbėti
+            if (this.isTalking) return;
+
+            // Jei juda — sustabdyti judėjimą
+            if (this.isWalking) {
+                // Palaukti, kol baigs judėti
+                setTimeout(() => this.say(phrase), 500);
+                return;
+            }
+
             const text = phrase || this.config.phrases[Math.floor(Math.random() * this.config.phrases.length)];
             this.bubble.textContent = text;
             this.bubble.classList.add('show');
             this.element.classList.add('npc-talking');
+            this.isTalking = true;
 
-            // Paslėpti po 3 sek.
+            // Paslėpti po talkDuration
             setTimeout(() => {
                 this.bubble.classList.remove('show');
                 this.element.classList.remove('npc-talking');
-            }, 3000);
+                this.isTalking = false;
+            }, this.config.talkDuration);
         }
 
         destroy() {
             clearInterval(this.moveTimer);
             clearInterval(this.talkTimer);
+            cornerOccupancy[this.currentCorner] = null;
             if (this.element && this.element.parentNode) {
                 this.element.classList.add('npc-disappearing');
                 setTimeout(() => {
@@ -189,13 +221,12 @@
     function init() {
         const corners = getCorners();
 
-        // Sukurti Tėvą
-        npcs.push(new NPC(NPC_CONFIG.tevas, corners));
+        // Tėvas — pradeda apačia kairė (0)
+        npcs.push(new NPC(NPC_CONFIG.tevas, corners, 0));
 
-        // Gražuoliuką pridėsime vėliau
-        npcs.push(new NPC(NPC_CONFIG.grazuoliukas, corners));
+        // Gražuoliukas — pradeda viršus dešinė (3)
+        npcs.push(new NPC(NPC_CONFIG.grazuoliukas, corners, 3));
 
-        // Atnaujinti kampus pasikeitus ekrano dydžiui
         window.addEventListener('resize', () => {
             const newCorners = getCorners();
             npcs.forEach(npc => {
@@ -204,7 +235,6 @@
         });
     }
 
-    // Paleisti, kai DOM paruoštas
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
@@ -214,13 +244,13 @@
     // ===== GLOBALUS API =====
     window.Siboliai = {
         tevas: () => npcs.find(n => n.config.name === 'Tėvas'),
+        grazuoliukas: () => npcs.find(n => n.config.name === 'Gražuoliukas'),
         visi: () => npcs,
         sustabdyti: () => npcs.forEach(n => n.destroy()),
-        // Pagalbinė funkcija — paleisti NPC
-        paleisti: () => init()
+        kampai: () => cornerOccupancy
     };
 
     console.log('🎩 Siboliai užkrauti!');
-    console.log('   Naudok: Siboliai.visi(), Siboliai.tevas(), Siboliai.sustabdyti()');
+    console.log('   Tėvas + Gražuoliukas');
 
 })();
