@@ -3167,6 +3167,19 @@ body.dark-mode #cellInfoPanel {
    ============================================================ */
 @media (max-width: 768px) {
 
+    /* --- :root: lenta 1.5× platesnė --- */
+    :root {
+        --corner-width:      clamp(20px, 5vw, 60px);
+        --corner-height:     clamp(20px, 5vh, 60px);
+        --left-col-width:    clamp(14px, 3.5vw, 40px);
+        --right-col-width:   clamp(14px, 3.5vw, 40px);
+        --top-row-height:    clamp(25px, 7vh, 70px);
+        --bottom-row-height: clamp(25px, 7vh, 70px);
+        --board-gap:         clamp(1px, 0.2vw, 2px);
+        --board-max-width:   150vw;
+        --board-min-width:   150vw;
+    }
+
     /* --- 1. BENDRA --- */
     body {
         overflow: hidden;
@@ -3225,11 +3238,15 @@ body.dark-mode #cellInfoPanel {
         display: none !important;
     }
 
-    /* --- 4. LENTA --- */
+    /* --- 4. LENTA: 1.5× PLOTIS, SCROLLINAMA --- */
     #board {
         flex: 1 1 0 !important;
-        min-width: 0;
+        width: 150vw !important;
+        min-width: 150vw !important;
+        max-width: 150vw !important;
         padding: 4px !important;
+        overflow: auto !important;
+        -webkit-overflow-scrolling: touch;
     }
 
     /* --- 5. LANGELIAI --- */
@@ -3374,5 +3391,73 @@ body.dark-mode #cellInfoPanel {
     .player-item {
         font-size: 7px;
         padding: 1px 3px;
+    }
+}
+
+/* ============================================================
+   21. WAITING ROOM — MOBILUS (≤ 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* Waiting room overlay */
+    #waitingRoomOverlay {
+        padding: 10px !important;
+        align-items: flex-start !important;
+    }
+
+    /* Vidinis konteineris */
+    #waitingRoomOverlay > div {
+        padding: 15px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* UŽDARYK 2 STULPELIUS — dabar 1 stulpelis */
+    #waitingRoomOverlay > div > div:nth-child(3) {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+
+    /* Visi vidiniai blokai — per visą plotį */
+    #waitingRoomOverlay > div > div:nth-child(3) > div {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* Žaidėjų sąrašas — 1 stulpelis */
+    #waitingPlayersList {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+    }
+
+    /* Stalo kodas */
+    #waitingGameCode {
+        font-size: 22px !important;
+        letter-spacing: 4px !important;
+    }
+
+    /* Mygtukai — per visą plotį */
+    #readyBtn,
+    #addBotBtn,
+    #startGameBtn {
+        width: 100% !important;
+        padding: 12px !important;
+        font-size: 14px !important;
+    }
+
+    /* Header */
+    #waitingRoomOverlay h2 {
+        font-size: 1.5em !important;
+    }
+
+    /* Chat */
+    #waitingChatMessages {
+        height: 80px !important;
+    }
+
+    /* Footer mygtukai (atnaujinti / uždaryti) */
+    #waitingRoomOverlay > div > div:last-child {
+        flex-direction: column !important;
     }
 }
