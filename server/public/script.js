@@ -14,7 +14,7 @@ let auctionTimerInterval = null;
 let auctionEndedSent = false;
 let isMuted = false;
 let lastVolume = 50;
-let infoMode = false;
+let infoMode = true;  // 🆕 VISADA ĮJUNGTAS pagal nutylėjimą
 let lastHoveredField = null;
 let isAnimating = false;
 let soundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
@@ -3111,17 +3111,20 @@ if (savedMusic === 'false') {
     document.addEventListener('touchstart', startMusicOnFirstInteraction, { once: true });
 }
     
-    const savedInfoMode = localStorage.getItem('bancrupt_infoMode');
-    if (savedInfoMode === 'true') {
-        infoMode = true;
-        const btn = document.getElementById('infoBtn');
-        const infoPanel = document.getElementById('cellInfoPanel');
-        if (btn) {
-            btn.classList.add('active');
-            btn.innerHTML = 'ℹ️ Info: 🟢 ĮJ.';
-        }
-        if (infoPanel) infoPanel.classList.add('show');
-    }
+    // 🆕 VISADA ĮJUNGTAS įėjus į žaidimą
+infoMode = true;
+localStorage.setItem('bancrupt_infoMode', 'true');
+
+const btn = document.getElementById('infoBtn');
+const infoPanel = document.getElementById('cellInfoPanel');
+if (btn) {
+    btn.classList.add('active');
+    btn.innerHTML = t('game.leftPanel.infoOn');  // ℹ️ Info: 🟢 ĮJ.
+}
+if (infoPanel) infoPanel.classList.add('show');
+
+// Paleisti info šriftų pritaikymą
+setTimeout(autoFitInfoFont, 200);
     
     socket.emit('getGameState');
     
@@ -3735,35 +3738,91 @@ function updateOfferFields() {
     const container = document.getElementById('tradeOfferFields');
     if (!container || !gameState || !myPlayer) return;
     
-    const player = gameState.players.find(p => p.id === playerId);
-    if (!player) return;
-    
-    const properties = [...(player.properties || [])].sort((a, b) => {
-        const fieldA = gameState.board.find(f => f.id === a);
-        const fieldB = gameState.board.find(f => f.id === b);
-        return (fieldA?.cost || 0) - (fieldB?.cost || 0);
-    });
-    
     let html = '<div class="trade-mini-cards">';
     let count = 0;
     
-    properties.forEach(fieldId => {
-        const field = gameState.board.find(f => f.id === fieldId);
-        if (!field) return;
-        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
-        if (houses > 0) return;
+    // 🆕 COUNTER-OFFER REŽIMAS
+    if (window.isCounterOfferMode && window.counterOfferData) {
+        // Rodome JONO prašytas korteles (kurias jis nori gauti iš manęs)
+        const data = window.counterOfferData;
         
-        const checked = selectedOfferFields.includes(fieldId);
-        
-        html += renderMiniCardForTrade(field, {
-            selected: checked,
-            showCheckbox: true,
-            fieldId: fieldId,
-            onClick: `toggleOfferField(${fieldId})`,
-            houses: houses
+        // Pirmiausia rodom JONO prašytas korteles (Ariogala)
+        data.counterOfferFieldIds.forEach(fieldId => {
+            const field = gameState.board.find(f => f.id === fieldId);
+            if (!field) return;
+            
+            const checked = selectedOfferFields.includes(fieldId);
+            const myPlayer = gameState.players.find(p => p.id === playerId);
+            const houses = myPlayer?.houses?.[fieldId] || 0;
+            
+            html += renderMiniCardForTrade(field, {
+                selected: checked,
+                showCheckbox: true,
+                fieldId: fieldId,
+                onClick: `toggleOfferField(${fieldId})`,
+                houses: houses
+            });
+            count++;
         });
-        count++;
-    });
+        
+        // Tada rodom TAVO kitas korteles (kurias gali pridėti)
+        const myPlayer = gameState.players.find(p => p.id === playerId);
+        const myProps = [...(myPlayer?.properties || [])].sort((a, b) => {
+            const fieldA = gameState.board.find(f => f.id === a);
+            const fieldB = gameState.board.find(f => f.id === b);
+            return (fieldA?.cost || 0) - (fieldB?.cost || 0);
+        });
+        
+        myProps.forEach(fieldId => {
+            // Praleisti jau įtrauktas
+            if (data.counterOfferFieldIds.includes(fieldId)) return;
+            
+            const field = gameState.board.find(f => f.id === fieldId);
+            if (!field) return;
+            
+            const houses = myPlayer?.houses?.[fieldId] || 0;
+            if (houses > 0) return;
+            
+            const checked = selectedOfferFields.includes(fieldId);
+            
+            html += renderMiniCardForTrade(field, {
+                selected: checked,
+                showCheckbox: true,
+                fieldId: fieldId,
+                onClick: `toggleOfferField(${fieldId})`,
+                houses: houses
+            });
+            count++;
+        });
+    } else {
+        // ĮPRASTAS REŽIMAS (naujas pasiūlymas)
+        const player = gameState.players.find(p => p.id === playerId);
+        if (!player) return;
+        
+        const properties = [...(player.properties || [])].sort((a, b) => {
+            const fieldA = gameState.board.find(f => f.id === a);
+            const fieldB = gameState.board.find(f => f.id === b);
+            return (fieldA?.cost || 0) - (fieldB?.cost || 0);
+        });
+        
+        properties.forEach(fieldId => {
+            const field = gameState.board.find(f => f.id === fieldId);
+            if (!field) return;
+            const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
+            if (houses > 0) return;
+            
+            const checked = selectedOfferFields.includes(fieldId);
+            
+            html += renderMiniCardForTrade(field, {
+                selected: checked,
+                showCheckbox: true,
+                fieldId: fieldId,
+                onClick: `toggleOfferField(${fieldId})`,
+                houses: houses
+            });
+            count++;
+        });
+    }
     
     html += '</div>';
     
@@ -3803,61 +3862,120 @@ function updateRequestFields() {
     
     if (!targetSelectElem || !container) return;
     
-    const targetId = parseInt(targetSelectElem.value);
-    
     if (!gameState) {
         container.innerHTML = '<p style="color:#6c757d; padding:10px;">Nėra žaidimo būsenos</p>';
         return;
     }
     
-    if (isNaN(targetId) || targetSelectElem.value === '') {
-        container.innerHTML = '<p style="color:#6c757d; padding:10px;">Pasirink žaidėją</p>';
-        return;
-    }
-    
-    const target = gameState.players.find(p => p.id === targetId);
-    
-    if (!target) {
-        container.innerHTML = '<p style="color:#dc3545; padding:10px;">Žaidėjas nerastas</p>';
-        return;
-    }
-    
-    if (target.properties.length === 0) {
-        container.innerHTML = '<p style="color:#6c757d; padding:10px;">Šis žaidėjas neturi kortelių</p>';
-        return;
-    }
-    
-    const properties = [...(target.properties || [])].sort((a, b) => {
-        const fieldA = gameState.board.find(f => f.id === a);
-        const fieldB = gameState.board.find(f => f.id === b);
-        return (fieldA?.cost || 0) - (fieldB?.cost || 0);
-    });
-    
     let html = '<div class="trade-mini-cards">';
     let count = 0;
     
-    properties.forEach(fieldId => {
-        const field = gameState.board.find(f => f.id === fieldId);
-        if (!field) return;
-        const houses = target.houses && target.houses[fieldId] ? target.houses[fieldId] : 0;
-        if (houses > 0) return;
+    // 🆕 COUNTER-OFFER REŽIMAS
+    if (window.isCounterOfferMode && window.counterOfferData) {
+        const data = window.counterOfferData;
         
-        const checked = selectedRequestFields.includes(fieldId);
-        
-        html += renderMiniCardForTrade(field, {
-            selected: checked,
-            showCheckbox: true,
-            fieldId: fieldId,
-            onClick: `toggleRequestField(${fieldId})`,
-            houses: houses
+        // Pirmiausia rodom JONO siūlytas korteles (ORO UOSTAS)
+        data.counterRequestFieldIds.forEach(fieldId => {
+            const field = gameState.board.find(f => f.id === fieldId);
+            if (!field) return;
+            
+            const checked = selectedRequestFields.includes(fieldId);
+            const jonas = gameState.players.find(p => p.id === data.incoming.fromPlayerId);
+            const houses = jonas?.houses?.[fieldId] || 0;
+            
+            html += renderMiniCardForTrade(field, {
+                selected: checked,
+                showCheckbox: true,
+                fieldId: fieldId,
+                onClick: `toggleRequestField(${fieldId})`,
+                houses: houses
+            });
+            count++;
         });
-        count++;
-    });
+        
+        // Tada rodom JONO kitas korteles (kurias gali paprašyti)
+        const targetId = parseInt(targetSelectElem.value);
+        const target = gameState.players.find(p => p.id === targetId);
+        
+        if (target) {
+            const targetProps = [...(target.properties || [])].sort((a, b) => {
+                const fieldA = gameState.board.find(f => f.id === a);
+                const fieldB = gameState.board.find(f => f.id === b);
+                return (fieldA?.cost || 0) - (fieldB?.cost || 0);
+            });
+            
+            targetProps.forEach(fieldId => {
+                // Praleisti jau įtrauktas
+                if (data.counterRequestFieldIds.includes(fieldId)) return;
+                
+                const field = gameState.board.find(f => f.id === fieldId);
+                if (!field) return;
+                
+                const houses = target.houses?.[fieldId] || 0;
+                if (houses > 0) return;
+                
+                const checked = selectedRequestFields.includes(fieldId);
+                
+                html += renderMiniCardForTrade(field, {
+                    selected: checked,
+                    showCheckbox: true,
+                    fieldId: fieldId,
+                    onClick: `toggleRequestField(${fieldId})`,
+                    houses: houses
+                });
+                count++;
+            });
+        }
+    } else {
+        // ĮPRASTAS REŽIMAS
+        const targetId = parseInt(targetSelectElem.value);
+        
+        if (isNaN(targetId) || targetSelectElem.value === '') {
+            container.innerHTML = '<p style="color:#6c757d; padding:10px;">Pasirink žaidėją</p>';
+            return;
+        }
+        
+        const target = gameState.players.find(p => p.id === targetId);
+        
+        if (!target) {
+            container.innerHTML = '<p style="color:#dc3545; padding:10px;">Žaidėjas nerastas</p>';
+            return;
+        }
+        
+        if (target.properties.length === 0) {
+            container.innerHTML = '<p style="color:#6c757d; padding:10px;">Šis žaidėjas neturi kortelių</p>';
+            return;
+        }
+        
+        const properties = [...(target.properties || [])].sort((a, b) => {
+            const fieldA = gameState.board.find(f => f.id === a);
+            const fieldB = gameState.board.find(f => f.id === b);
+            return (fieldA?.cost || 0) - (fieldB?.cost || 0);
+        });
+        
+        properties.forEach(fieldId => {
+            const field = gameState.board.find(f => f.id === fieldId);
+            if (!field) return;
+            const houses = target.houses && target.houses[fieldId] ? target.houses[fieldId] : 0;
+            if (houses > 0) return;
+            
+            const checked = selectedRequestFields.includes(fieldId);
+            
+            html += renderMiniCardForTrade(field, {
+                selected: checked,
+                showCheckbox: true,
+                fieldId: fieldId,
+                onClick: `toggleRequestField(${fieldId})`,
+                houses: houses
+            });
+            count++;
+        });
+    }
     
     html += '</div>';
     
     if (count === 0) {
-        html = '<p style="color:#6c757d; padding:10px;">Šis žaidėjas neturi kortelių be namų</p>';
+        html = '<p style="color:#6c757d; padding:10px;">Nėra kortelių</p>';
     }
     container.innerHTML = html;
     
@@ -3920,17 +4038,50 @@ function confirmProposeTrade() {
             requestMoney: requestMoney
         };
         
-        socket.emit('proposeTrade', tradeData);
-        closeTrading();
-        const tradeMsg = `📩 Pasiūlymas išsiųstas ${target.name}`;
-        addNotification(tradeMsg);
-        addJournal(tradeMsg);
-        playClickSound();
-        playTradeSound();
+        // 🆕 Counter-offer arba naujas pasiūlymas
+        if (window.lastIncomingTrade) {
+            socket.emit('counterTrade', {
+                tradeId: window.lastIncomingTrade.tradeId,
+                offerFieldIds: selectedOfferFields,
+                requestFieldIds: selectedRequestFields,
+                offerMoney: offerMoney,
+                requestMoney: requestMoney
+            });
+            window.lastIncomingTrade = null;
+            
+            closeTrading();
+            const tradeMsg = `🔄 Pakoreguotas pasiūlymas išsiųstas ${target.name}`;
+            addNotification(tradeMsg);
+            addJournal(tradeMsg);
+            playClickSound();
+            playTradeSound();
+        } else {
+            socket.emit('proposeTrade', tradeData);
+            closeTrading();
+            const tradeMsg = `📩 Pasiūlymas išsiųstas ${target.name}`;
+            addNotification(tradeMsg);
+            addJournal(tradeMsg);
+            playClickSound();
+            playTradeSound();
+        }
     }
 }
 
 function showTradeOffer(data) {
+    // 🆕 Išjungti counter-offer režimą (naujas pasiūlymas)
+    window.isCounterOfferMode = false;
+    window.counterOfferData = null;
+
+    window.lastIncomingTrade = {
+        tradeId: data.tradeId,
+        fromPlayer: data.fromPlayer,
+        fromPlayerId: data.fromPlayerId,
+        offerFieldIds: data.offerFieldIds || [],
+        requestFieldIds: data.requestFieldIds || [],
+        offerMoney: data.offerMoney || 0,
+        requestMoney: data.requestMoney || 0
+    };
+    
     document.getElementById('offerFromPlayer').textContent = data.fromPlayer || 'Nežinomas';
     
     const offerContainer = document.getElementById('offerFieldsContainer');
@@ -4028,10 +4179,53 @@ function rejectTrade() {
 }
 
 function counterTradeOffer() {
-    if (!currentTradeId) return;
+    if (!currentTradeId || !window.lastIncomingTrade) return;
+    
+    const incoming = window.lastIncomingTrade;
+    
     closeTradeOffer();
-    openTrading();
-    alert('🔄 Atidarytas prekybos langas. Sukurk priešingą pasiūlymą.');
+    
+    // 🆕 NUSTATYTI COUNTER-OFFER REŽIMĄ
+    window.isCounterOfferMode = true;
+    
+    // 🆕 IŠ KARTO atidaryti prekybos langą
+    const modal = document.getElementById('tradingModal');
+    modal.style.display = 'flex';
+    document.getElementById('tradingOptions').style.display = 'none';
+    document.getElementById('sellToBankPanel').style.display = 'none';
+    document.getElementById('auctionPanel').style.display = 'none';
+    document.getElementById('tradeToPlayerPanel').style.display = 'block';
+    
+    // 🆕 Pasirinkti Joną kaip target
+    updateTradePlayers();
+    const targetSelect = document.getElementById('tradeTargetPlayer');
+    if (targetSelect && incoming.fromPlayerId) {
+        targetSelect.value = incoming.fromPlayerId;
+    }
+    
+    // 🆕 IŠSAUGOTI counter-offer duomenis ATSKIRAI
+    window.counterOfferData = {
+        incoming: incoming,
+        // Jonas siūlė (dabar PRAŠAU)
+        counterRequestFieldIds: [...(incoming.offerFieldIds || [])],
+        counterRequestMoney: incoming.offerMoney || 0,
+        // Jonas prašė (dabar SIŪLAU)
+        counterOfferFieldIds: [...(incoming.requestFieldIds || [])],
+        counterOfferMoney: incoming.requestMoney || 0
+    };
+    
+    // 🆕 NUSTATYTI selected masyvus
+    selectedOfferFields = [...window.counterOfferData.counterOfferFieldIds];
+    selectedRequestFields = [...window.counterOfferData.counterRequestFieldIds];
+    
+    // 🆕 Užpildyti pinigus
+    document.getElementById('tradeOfferMoney').value = window.counterOfferData.counterOfferMoney;
+    document.getElementById('tradeRequestMoney').value = window.counterOfferData.counterRequestMoney;
+    
+    // 🆕 Užpildyti korteles
+    updateOfferFields();
+    setTimeout(() => updateRequestFields(), 100);
+    
     playClickSound();
 }
 

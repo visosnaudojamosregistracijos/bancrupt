@@ -1548,27 +1548,27 @@ socket.on('movementFinished', () => {
         io.to(socket.gameId).emit('gameState', game.getGameState());
     });
 
-    socket.on('counterTrade', ({ tradeId, newOfferField, newRequestField, newOfferMoney, newRequestMoney }) => {
-        if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
-            return;
-        }
-        
-        const game = games.get(socket.gameId);
-        if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
-            return;
-        }
+    socket.on('counterTrade', ({ tradeId, offerFieldIds, requestFieldIds, offerMoney, requestMoney }) => {
+    if (!socket.gameId || socket.playerId === undefined) {
+        socket.emit('error', 'Neprisijungei prie žaidimo!');
+        return;
+    }
+    
+    const game = games.get(socket.gameId);
+    if (!game) {
+        socket.emit('error', 'Žaidimas nerastas!');
+        return;
+    }
 
-        const result = game.counterTrade(tradeId, socket.playerId, newOfferField, newRequestField, newOfferMoney, newRequestMoney);
-        if (result.error) {
-            socket.emit('error', result.error);
-            return;
-        }
+    const result = game.counterTrade(tradeId, socket.playerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney);
+    if (result.error) {
+        socket.emit('error', result.error);
+        return;
+    }
 
-        io.to(socket.gameId).emit('tradeProposed', result);
-        io.to(socket.gameId).emit('gameState', game.getGameState());
-    });
+    io.to(socket.gameId).emit('tradeProposed', result);
+    io.to(socket.gameId).emit('gameState', game.getGameState());
+});
 
     socket.on('getActiveAuctions', () => {
         if (!socket.gameId) return;

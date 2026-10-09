@@ -105,8 +105,6 @@ class TradingLogic {
                 return { error: `Negali parduoti ${field ? field.name : 'kortelės'} - turi namų!` };
             }
             
-            
-            
             const price = this.getBankBuybackPrice(fieldId);
             totalPrice += price;
             soldFields.push(fieldId);
@@ -210,7 +208,6 @@ class TradingLogic {
             this.endAuctionServerSide(auctionId);
         }, timeLeft);
 
-        // 🆕 Pranešti botams apie aukcioną
         this.notifyBotsAboutAuction(auctionId);
 
         return { 
@@ -243,7 +240,6 @@ class TradingLogic {
         
         console.log(`🤖 ${bots.length} botai informuoti apie aukcioną: ${auction.fieldName}`);
         
-        // 🆕 Kiekvienas botas atskirai nuspręs ar bid'inti
         bots.forEach(bot => {
             setTimeout(() => {
                 this.botBidAuction(bot.id, auctionId);
@@ -251,7 +247,6 @@ class TradingLogic {
         });
     }
 
-    // 🆕 Boto bid'as aukcione
     async botBidAuction(botId, auctionId) {
         const bot = this.game.getPlayerById(botId);
         if (!bot || !bot.isBot) return;
@@ -259,20 +254,15 @@ class TradingLogic {
         const auction = this.auctions.get(auctionId);
         if (!auction || !auction.isActive) return;
         
-        // 🆕 Negali būti pardavėjas
         if (auction.sellerId === botId) return;
-        
-        // 🆕 Ar jau baigėsi?
         if (Date.now() > auction.endTime) return;
         
-        // 🆕 Nuspręsti ar verta
         const shouldBid = this.botShouldBidAuction(bot, auction);
         if (!shouldBid.can) {
             console.log(`🤖 ${bot.name}: nebid'ina ${auction.fieldName} (${shouldBid.reason})`);
             return;
         }
         
-        // 🆕 Apskaičiuoti bid'ą
         const bidAmount = shouldBid.amount;
         
         console.log(`🤖 ${bot.name}: bid'ina €${bidAmount} už ${auction.fieldName}`);
@@ -284,7 +274,6 @@ class TradingLogic {
             return;
         }
         
-        // 🆕 Pranešti visiems
         if (this.game.emitFunction) {
             this.game.emitFunction('auctionUpdated', result);
             this.game.emitFunction('gameState', this.game.getGameState());
@@ -292,78 +281,64 @@ class TradingLogic {
         }
     }
 
-    // 🆕 Boto sprendimas – ar bid'inti aukcione?
     botShouldBidAuction(bot, auction) {
         if (!bot || !auction) return { can: false, reason: 'Nėra duomenų' };
         
         const field = this.game.board.find(f => f.id === auction.fieldId);
         if (!field) return { can: false, reason: 'Kortelė nerasta' };
         
-        // 🆕 1. Ar turi pakankamai pinigų?
         const minMoney = auction.currentBid * 1.5;
         if (bot.money < minMoney) {
             return { can: false, reason: 'nepakanka pinigų' };
         }
         
-        // 🆕 2. Ar verta? (ROI analizė)
         const baseRent = field.cost * C.RENT_BASE_RATIO;
         const roi = (baseRent * 10) / field.cost;
         
-        // 🆕 3. Ar service1/2/3 – visada verta
         const isService = field.type === 'service1' || field.type === 'service2' || field.type === 'service3';
         
-        // 🆕 4. Kiek verta mokėti?
-        let maxBid = Math.floor(field.cost * 1.2);  // Max 120% vertės
+        let maxBid = Math.floor(field.cost * 1.2);
         
-        // 🆕 Jei turi grupę – verta daugiau
         if (field.color) {
             const group = C.COLOR_GROUPS[field.color] || [];
             const ownedInGroup = bot.properties.filter(id => group.includes(id)).length;
             
             if (ownedInGroup >= 1) {
-                maxBid = Math.floor(field.cost * 1.8);  // 180% jei turi grupę
+                maxBid = Math.floor(field.cost * 1.8);
             }
             
             if (ownedInGroup >= group.length - 1) {
-                maxBid = Math.floor(field.cost * 2.5);  // 250% jei trūksta 1
+                maxBid = Math.floor(field.cost * 2.5);
             }
         }
         
-        // 🆕 Service – verta 150%
         if (isService) {
             maxBid = Math.floor(field.cost * 1.5);
         }
         
-        // 🆕 Negali viršyti savo pinigų
         if (maxBid > bot.money * 0.7) {
             maxBid = Math.floor(bot.money * 0.7);
         }
         
-        // 🆕 5. Ar dabartinis bid jau per didelis?
         if (auction.currentBid >= maxBid) {
             return { can: false, reason: 'per brangu' };
         }
         
-        // 🆕 6. Bid'as – šiek tiek daugiau nei dabartinis (5-15%)
         const increment = 1.05 + Math.random() * 0.10;
         let bidAmount = Math.ceil(auction.currentBid * increment);
         
-        // 🆕 Negali viršyti maxBid
         if (bidAmount > maxBid) {
             bidAmount = maxBid;
         }
         
-        // 🆕 Turi būti didesnis už dabartinį
         if (bidAmount <= auction.currentBid) {
             bidAmount = auction.currentBid + 1;
         }
         
-        // 🆕 Negali viršyti bot.money
         if (bidAmount > bot.money) {
             return { can: false, reason: 'nepakanka pinigų bid\'ui' };
         }
         
-        // 🆕 Atsitiktinumas – ar tikrai bid'ins (70%)
         if (Math.random() > 0.7) {
             return { can: false, reason: 'atsitiktinai praleidžia' };
         }
@@ -633,7 +608,9 @@ class TradingLogic {
             success: true,
             tradeId: tradeId,
             fromPlayer: player.name,
+            fromPlayerId: playerId,          // 🆕 PRIDĖTA
             toPlayer: target.name,
+            toPlayerId: targetPlayerId,      // 🆕 PRIDĖTA
             offerField: offerNames,
             requestField: requestNames,
             offerMoney: offerMoney,
@@ -738,6 +715,7 @@ class TradingLogic {
         }
     }
 
+    // 🆕 PAKEISTA: counterTrade grąžina VISUS duomenis
     counterTrade(tradeId, playerId, newOfferFieldIds, newRequestFieldIds, newOfferMoney, newRequestMoney) {
         const trade = this.trades.get(tradeId);
         if (!trade) return { error: 'Pasiūlymas nerastas' };
@@ -750,8 +728,45 @@ class TradingLogic {
         if (!fromPlayer || fromPlayer.bankrupt) return { error: 'Siūlytojas neaktyvus' };
         if (!toPlayer || toPlayer.bankrupt) return { error: 'Gavėjas neaktyvus' };
 
+        // 🆕 VALIDACIJA: ar aš (toPlayer) turiu siūlomas korteles?
+        if (newOfferFieldIds && newOfferFieldIds.length > 0) {
+            for (const fieldId of newOfferFieldIds) {
+                if (!toPlayer.properties.includes(fieldId)) {
+                    const field = this.game.board.find(f => f.id === fieldId);
+                    return { error: `Tu neturi kortelės: ${field ? field.name : fieldId}` };
+                }
+                if (this.hasHouses(playerId, fieldId)) {
+                    const field = this.game.board.find(f => f.id === fieldId);
+                    return { error: `Negali siūlyti kortelės su namais: ${field ? field.name : fieldId}` };
+                }
+                if (this.hasHousesInGroup(playerId, fieldId)) {
+                    const field = this.game.board.find(f => f.id === fieldId);
+                    return { error: `Negali siūlyti ${field ? field.name : fieldId} – grupėje yra pastatytų namų!` };
+                }
+            }
+        }
+
+        // 🆕 VALIDACIJA: ar Jonas (fromPlayer) turi prašomas korteles?
+        if (newRequestFieldIds && newRequestFieldIds.length > 0) {
+            for (const fieldId of newRequestFieldIds) {
+                if (!fromPlayer.properties.includes(fieldId)) {
+                    const field = this.game.board.find(f => f.id === fieldId);
+                    return { error: `${fromPlayer.name} nebeturi kortelės: ${field ? field.name : fieldId}` };
+                }
+                if (this.hasHouses(trade.fromPlayer, fieldId)) {
+                    const field = this.game.board.find(f => f.id === fieldId);
+                    return { error: `Negali prašyti kortelės su namais: ${field ? field.name : fieldId}` };
+                }
+                if (this.hasHousesInGroup(trade.fromPlayer, fieldId)) {
+                    const field = this.game.board.find(f => f.id === fieldId);
+                    return { error: `Negali prašyti ${field ? field.name : fieldId} – grupėje yra pastatytų namų!` };
+                }
+            }
+        }
+
         const newTradeId = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
         
+        // 🆕 Sukuriam NAUJĄ trade'ą (aš -> Jonas)
         this.trades.set(newTradeId, {
             fromPlayer: playerId,
             toPlayer: trade.fromPlayer,
@@ -764,13 +779,44 @@ class TradingLogic {
             timestamp: Date.now()
         });
 
+        // 🆕 Seną pažymim kaip 'countered'
         trade.status = 'countered';
 
         this.game.addMessage(`🔄 ${toPlayer.name} pakoregavo pasiūlymą ${fromPlayer.name}`);
+
+        // 🆕 Paruošti vardus
+        let offerNames = 'pinigai';
+        if (newOfferFieldIds && newOfferFieldIds.length > 0) {
+            const names = newOfferFieldIds.map(id => {
+                const field = this.game.board.find(f => f.id === id);
+                return field ? field.name : `ID:${id}`;
+            }).filter(name => name);
+            if (names.length > 0) offerNames = names.join(', ');
+        }
         
+        let requestNames = 'pinigai';
+        if (newRequestFieldIds && newRequestFieldIds.length > 0) {
+            const names = newRequestFieldIds.map(id => {
+                const field = this.game.board.find(f => f.id === id);
+                return field ? field.name : `ID:${id}`;
+            }).filter(name => name);
+            if (names.length > 0) requestNames = names.join(', ');
+        }
+
+        // 🆕 GRĄŽINAM VISUS DUOMENIS (kad showTradeOffer galėtų užpildyti)
         return { 
             success: true, 
             tradeId: newTradeId,
+            fromPlayer: toPlayer.name,              // Aš (kuris koreguoju)
+            fromPlayerId: playerId,                  // Mano ID
+            toPlayer: fromPlayer.name,              // Jonas (kuriam siunčiu atgal)
+            toPlayerId: trade.fromPlayer,           // Jono ID
+            offerField: offerNames,
+            requestField: requestNames,
+            offerFieldIds: newOfferFieldIds || [],
+            requestFieldIds: newRequestFieldIds || [],
+            offerMoney: newOfferMoney || 0,
+            requestMoney: newRequestMoney || 0,
             message: 'Pakoreguotas pasiūlymas išsiųstas'
         };
     }
@@ -827,8 +873,13 @@ class TradingLogic {
                 result.push({
                     tradeId: id,
                     fromPlayer: fromPlayer ? fromPlayer.name : 'nežinomas',
+                    fromPlayerId: trade.fromPlayer,        // 🆕 PRIDĖTA
+                    toPlayer: fromPlayer ? fromPlayer.name : 'nežinomas',
+                    toPlayerId: trade.toPlayer,            // 🆕 PRIDĖTA
                     offerField: offerNames,
                     requestField: requestNames,
+                    offerFieldIds: trade.offerFieldIds,    // 🆕 PRIDĖTA
+                    requestFieldIds: trade.requestFieldIds, // 🆕 PRIDĖTA
                     offerMoney: trade.offerMoney,
                     requestMoney: trade.requestMoney
                 });
