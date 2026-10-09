@@ -2,13 +2,15 @@
 // i18n.js – KALBŲ SISTEMA
 // ============================================
 
-let currentLang = localStorage.getItem('bancrupt_lang') || 'lt';
+let currentLang = 'lt';  // 🔒 VISADA LT
 let translations = {};
 
 // ============================================
 // ĮKELTI KALBĄ
 // ============================================
 async function loadLanguage(lang) {
+    lang = 'lt';  // 🔒 VISADA LT
+    
     try {
         const response = await fetch(`/lang/${lang}.json`);
         if (!response.ok) throw new Error('Nepavyko įkelti kalbos');

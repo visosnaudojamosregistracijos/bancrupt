@@ -11,12 +11,12 @@
 </head>
 <body>
 
-    <!-- 🌐 KALBOS PASIRINKIMAS (landing/menu puslapiuose) -->
-    <div id="langSwitcher" style="position: fixed; top: 10px; right: 10px; z-index: 999999; display: flex; gap: 5px;">
-        <button class="lang-btn" data-lang="lt" onclick="changeLanguage('lt')">🇱🇹 LT</button>
-        <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')">🇬🇧 EN</button>
-        <button class="lang-btn" data-lang="ru" onclick="changeLanguage('ru')">🇷🇺 RU</button>
-    </div>
+    <!-- 🌐 KALBOS PASIRINKIMAS (laikinai išjungtas) -->
+<!-- <div id="langSwitcher" style="position: fixed; top: 10px; right: 10px; z-index: 999999; display: flex; gap: 5px;">
+    <button class="lang-btn" data-lang="lt" onclick="changeLanguage('lt')">🇱🇹 LT</button>
+    <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')">🇬🇧 EN</button>
+    <button class="lang-btn" data-lang="ru" onclick="changeLanguage('ru')">🇷🇺 RU</button>
+</div> -->
 
    
     <!-- PUSLAPIS 1: LANDING -->
@@ -387,12 +387,14 @@
     <span data-i18n="game.leftPanel.id">📋 ID:</span><br><span id="gameIdDisplayLeft">---</span>
 </div>
 
-                    <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange -->
+                    <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange (laikinai išjungtas) -->
+                    <!-- 
                     <div id="gameLangSwitcher" style="display: flex; gap: 3px; width: 100%; justify-content: center;">
                         <button class="lang-btn" data-lang="lt" onclick="changeLanguage('lt')" style="flex:1; padding:5px 2px; font-size:10px;">🇱🇹</button>
                         <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')" style="flex:1; padding:5px 2px; font-size:10px;">🇬🇧</button>
                         <button class="lang-btn" data-lang="ru" onclick="changeLanguage('ru')" style="flex:1; padding:5px 2px; font-size:10px;">🇷🇺</button>
                     </div>
+                    -->
 
                     <div style="position:relative; width:100%; margin-top:6px;">
     <button onclick="toggleMusicSimple()" id="musicBtn" class="left-btn" style="width:100%; padding:8px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;">
