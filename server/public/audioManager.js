@@ -130,21 +130,23 @@ class AudioManager {
     
     // 🆕 Atnaujinti garso failus iš DB   ← NAUJA!
     updateSoundFiles(files) {
-        if (!files || !Array.isArray(files)) return;
+    if (!files || !Array.isArray(files)) return;
+    
+    console.log('📁 Atnaujinami garso failai iš DB:', files.length);
+    
+    files.forEach(f => {
+        const audio = new Audio(f.file_path);
+        audio.volume = f.sound_name === 'background' ? this.musicVolume : this.sfxVolume;
+        audio.preload = 'auto';
         
-        console.log('📁 Atnaujinami garso failai iš DB:', files.length);
+        this.sounds[f.sound_name] = audio;
         
-        files.forEach(f => {
-            // Sukurti naują Audio su DB keliu
-            const audio = new Audio(f.file_path);
-            audio.volume = f.sound_name === 'background' ? this.musicVolume : this.sfxVolume;
-            audio.preload = 'auto';
-            
-            this.sounds[f.sound_name] = audio;
-            
-            console.log(`  ✅ ${f.sound_name}: ${f.file_path}`);
-        });
-    }
+        // 🆕 IŠIMTA – nespaminti konsolės
+        // console.log(`  ✅ ${f.sound_name}: ${f.file_path}`);
+    });
+    
+    console.log(`✅ ${files.length} garso failų įkelti`);
+}
 
     // 🆕 Groti vieną kartą (restart + play)
     play(soundName) {

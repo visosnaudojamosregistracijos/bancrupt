@@ -15,7 +15,7 @@ async function loadLanguage(lang) {
         translations = await response.json();
         currentLang = lang;
         localStorage.setItem('bancrupt_lang', lang);
-        console.log(`🌐 Kalba įkelta: ${lang}`);
+        // console.log(`🌐 Kalba įkelta: ${lang}`);
         updateAllTexts();
         return true;
     } catch (err) {
@@ -52,6 +52,13 @@ function updateAllTexts() {
         const text = t(key);
         if (text) el.title = text;
     });
+    
+    // 🆕 data-i18n-html — leidžia naudoti HTML žymas (<br>, <strong>)
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.getAttribute('data-i18n-html');
+        const text = t(key);
+        if (text) el.innerHTML = text;
+    });
 }
 
 // ============================================
@@ -61,6 +68,18 @@ async function changeLanguage(lang) {
     const success = await loadLanguage(lang);
     if (success) {
         updateLangButtons();
+        
+        // 🆕 Atnaujinti visus tekstus po kalbos pakeitimo
+        setTimeout(() => {
+            updateAllTexts();
+            console.log('🔄 updateAllTexts() po kalbos pakeitimo');
+            
+            // 🆕 Atnaujinti lentą pagal naują kalbą
+            if (typeof gameState !== 'undefined' && gameState && typeof updateBoard === 'function') {
+                updateBoard(gameState);
+                console.log('🔄 updateBoard() po kalbos pakeitimo');
+            }
+        }, 100);
     }
 }
 
@@ -91,7 +110,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         autoAddDataI18n();
+        // 🆕 Po autoAddDataI18n atnaujinti tekstus
+        updateAllTexts();
+        // console.log('🔄 updateAllTexts() po autoAddDataI18n');   ← 🆕 UŽKOMENTUOTA
     }, 500);
+    
+    // 🆕 Papildomas atnaujinimas po 1500ms (jei script.js ką nors perpiešė)
+    setTimeout(() => {
+        updateAllTexts();
+        // console.log('🔄 Papildomas updateAllTexts() po 1500ms');   ← 🆕 UŽKOMENTUOTA
+    }, 1500);
 });
 
 function autoAddDataI18n() {
@@ -171,5 +199,5 @@ function autoAddDataI18n() {
         }
     });
     
-    console.log('✅ Automatinis data-i18n pridėjimas baigtas');
+    // console.log('✅ Automatinis data-i18n pridėjimas baigtas');   ← 🆕 UŽKOMENTUOTA
 }

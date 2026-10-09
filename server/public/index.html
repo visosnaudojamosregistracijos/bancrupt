@@ -49,34 +49,34 @@
     <button class="landing-btn landing-btn-secondary" onclick="goToMenu()" style="background:linear-gradient(145deg, #6c757d, #495057);" data-i18n="landing.playAsGuest">
                     🎮 Žaisti kaip svečias
                 </button>
-                <button class="landing-btn landing-btn-secondary" onclick="openFeedback()" style="background:linear-gradient(145deg, #8b5cf6, #6f42c1);">
-                    🐛 Pranešti apie klaidą / Pasiūlyti idėją
-                </button>
+                <button class="landing-btn landing-btn-secondary" onclick="openFeedback()" style="background:linear-gradient(145deg, #8b5cf6, #6f42c1);" data-i18n="feedback.title">
+    🐛 Pranešti apie klaidą / Pasiūlyti idėją
+</button>
             </div>
             </div>
             
             <!-- Prisijungusio režimas -->
              <div id="landingUser" style="display:none;">
                 <p class="landing-subtitle" style="font-size:1.4em; color:#ffd700;">
-                    👤 Sveikas, <strong id="landingUsername">---</strong>!
-                </p>
+    <span data-i18n="landing.welcome">👤 Sveikas</span>, <strong id="landingUsername">---</strong>!
+</p>
                 
                 <div class="landing-buttons">
-                    <button class="landing-btn landing-btn-primary" onclick="goToMenu()">
-                        🎮 Žaisti
-                    </button>
-                    <button class="landing-btn landing-btn-secondary" onclick="openStatsModal()">
-                        📊 Mano statistika
-                    </button>
-                    <button class="landing-btn landing-btn-secondary" onclick="openLeaders()" style="background:linear-gradient(145deg, #f39c12, #e67e22);">
-                        🏆 Lyderiai
-                    </button>
-                    <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()">
-                        📖 Taisyklės
-                    </button>
-                    <button class="landing-btn landing-btn-secondary" onclick="logout()" style="background:linear-gradient(145deg, #dc3545, #a71d2a);">
-                    🚪 Atsijungti
-                </button>
+                    <button class="landing-btn landing-btn-primary" onclick="goToMenu()" data-i18n="landing.play">
+    🎮 Žaisti
+</button>
+<button class="landing-btn landing-btn-secondary" onclick="openStatsModal()" data-i18n="landing.stats">
+    📊 Mano statistika
+</button>
+<button class="landing-btn landing-btn-secondary" onclick="openLeaders()" style="background:linear-gradient(145deg, #f39c12, #e67e22);" data-i18n="landing.leaders">
+    🏆 Lyderiai
+</button>
+<button class="landing-btn landing-btn-secondary" onclick="openRulesModal()" data-i18n="landing.rules">
+    📖 Taisyklės
+</button>
+<button class="landing-btn landing-btn-secondary" onclick="logout()" style="background:linear-gradient(145deg, #dc3545, #a71d2a);" data-i18n="landing.logout">
+    🚪 Atsijungti
+</button>
             </div>  <!-- /landing-buttons -->
         </div>      <!-- /landingUser -->
         
@@ -276,9 +276,9 @@
                 <button class="menu-btn" onclick="menuPublic()" data-i18n="menu.publicGames">
                     🌐 Vieši stalai
                 </button>
-                <button class="menu-btn" onclick="openFeedback()" style="background:linear-gradient(145deg, #8b5cf6, #6f42c1); border-color: #8b5cf6;">
-                    🐛 Pranešti apie klaidą / Pasiūlyti idėją
-                </button>
+                <button class="menu-btn" onclick="openFeedback()" style="background:linear-gradient(145deg, #8b5cf6, #6f42c1); border-color: #8b5cf6;" data-i18n="feedback.title">
+    🐛 Pranešti apie klaidą / Pasiūlyti idėją
+</button>
                 <button class="menu-btn menu-btn-back" onclick="goToLanding()" data-i18n="menu.back">
                     🔙 Atgal
                 </button>
@@ -370,9 +370,9 @@
             <div id="gameHeader">
     <span id="gameIdDisplay">📋 ID: ---</span>
     <span id="playerCount">👥 0/8</span>
-    <span id="turnDisplay">🎯 Eina: ---</span>
+    <span id="turnDisplay">🎯 <span data-i18n="game.header.turn">Eina:</span> ---</span>
     <button id="feedbackBtn" onclick="openFeedback()" title="Pranešti apie klaidą / Pasiūlyti idėją">
-        🐛 <span class="btn-text">Bug / Pasiūlymas</span>
+        🐛 <span class="btn-text" data-i18n="game.header.bugReport">Bug / Pasiūlymas</span>
     </button>
 </div>
 
@@ -384,8 +384,8 @@
             
             <aside id="leftPanel">
                 <div id="gameIdBox">
-                    📋 ID:<br><span id="gameIdDisplayLeft">---</span>
-                </div>
+    <span data-i18n="game.leftPanel.id">📋 ID:</span><br><span id="gameIdDisplayLeft">---</span>
+</div>
 
                     <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange -->
                     <div id="gameLangSwitcher" style="display: flex; gap: 3px; width: 100%; justify-content: center;">
@@ -397,7 +397,7 @@
                     <div style="position:relative; width:100%; margin-top:6px;">
     <button onclick="toggleMusicSimple()" id="musicBtn" class="left-btn" style="width:100%; padding:8px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;">
     <span id="musicStatusDot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#28a745; box-shadow:0 0 6px #28a745;"></span>
-    <span>🎵 Muzika</span>
+    <span data-i18n="game.leftPanel.music">🎵 Muzika</span>
 </button>
     
     <div style="display:flex; align-items:center; gap:3px; margin-top:4px; width:100%; box-sizing:border-box;">
@@ -411,9 +411,9 @@
 
 <div style="position:relative; width:100%; margin-top:6px;">
     <button onclick="toggleSoundSimple()" id="soundBtn" class="left-btn" style="width:100%; padding:8px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;">
-        <span id="soundStatusDot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#28a745; box-shadow:0 0 6px #28a745;"></span>
-        <span>🔊 Garsas</span>
-    </button>
+    <span id="soundStatusDot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#28a745; box-shadow:0 0 6px #28a745;"></span>
+    <span data-i18n="game.leftPanel.sound">🔊 Garsas</span>
+</button>
     
     <div style="display:flex; align-items:center; gap:3px; margin-top:4px; width:100%; box-sizing:border-box;">
         <span style="font-size:10px; color:#ffd700; flex-shrink:0;">🔉</span>
@@ -424,35 +424,35 @@
     </div>
 </div>
 
-                    <button onclick="toggleTheme()" id="themeBtn" class="left-btn" style="background: linear-gradient(145deg, #34495e, #2c3e50); color: #fff; border-color: #5d6d7e;" data-i18n="game.themeDark">
+                    <button onclick="toggleTheme()" id="themeBtn" class="left-btn" style="background: linear-gradient(145deg, #34495e, #2c3e50); color: #fff; border-color: #5d6d7e;" data-i18n="game.leftPanel.theme">
     🌙 Tamsus
 </button>
-                    
-                    <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn" data-i18n="game.leave">
+
+<button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn" data-i18n="game.leftPanel.leave">
     🏃 Pasitraukti
 </button>
-                    
-                    <button onclick="toggleMode()" id="modeBtn" class="left-btn" style="background: linear-gradient(145deg, #17a2b8, #138496); color: #fff; border-color: #4dd0e1;" data-i18n="game.modeAdaptive">
+
+<button onclick="toggleMode()" id="modeBtn" class="left-btn" style="background: linear-gradient(145deg, #17a2b8, #138496); color: #fff; border-color: #4dd0e1;" data-i18n="game.leftPanel.mode">
     📊 Režimas: Adaptyvus
 </button>
-                    
-                    <button onclick="openStats()" id="statsBtn" class="left-btn" style="background: linear-gradient(145deg, #6f42c1, #5a32a3); color: #fff; border-color: #8b5cf6;" data-i18n="game.stats">
+
+<button onclick="openStats()" id="statsBtn" class="left-btn" style="background: linear-gradient(145deg, #6f42c1, #5a32a3); color: #fff; border-color: #8b5cf6;" data-i18n="game.leftPanel.stats">
     📈 Statistika
 </button>
-                    
-                    <button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;" data-i18n="game.infoOff">ℹ️ Info: 🔴 IŠJ.</button>
-                    
-                    <button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn" data-i18n="game.voteKick">
+
+<button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;" data-i18n="game.leftPanel.info">ℹ️ Info: 🔴 IŠJ.</button>
+
+<button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn" data-i18n="game.leftPanel.voteKick">
     🗳️ Balsuoti
 </button>
                     
                     <div id="leftPlayerCount">
-                        👥 <span id="playerCountLeft">0/8</span>
-                    </div>
-                    
-                    <div id="leftTurnDisplay">
-                        🎯 <span id="turnDisplayLeft">---</span>
-                    </div>
+    <span data-i18n="game.leftPanel.playerCount">👥</span> <span id="playerCountLeft">0/8</span>
+</div>
+
+<div id="leftTurnDisplay">
+    <span data-i18n="game.leftPanel.turn">🎯</span> <span id="turnDisplayLeft">---</span>
+</div>
                 </aside>
 
                 <div id="board">
@@ -496,7 +496,7 @@
                         <div class="row-middle-center">
                             <div class="center-row">
                                 <div id="center-1" class="center-cell player-info">
-                                    <h4 data-i18n="game.iAm">👤 AŠ</h4>
+                                    <h4 data-i18n="game.controls">🎲 VALDYMAS</h4>
                                     <div id="myInfo">Laukiama...</div>
                                     <div class="mini-cards-container"></div>
                                 </div>
@@ -504,7 +504,7 @@
                                     <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;" data-i18n="game.payJail">⛓️ Išeiti iš kalėjimo (€50)</button>
 
                                     <div class="action-row">
-                                        <button onclick="bankrupt()" id="bankruptBtn" class="btn-bankrupt btn-half" data-i18n="game.bankrupt">💀 Bankrotuoju</button>
+                                        <button onclick="bankrupt()" id="bankruptBtn" class="btn-bankrupt btn-half" data-i18n="game.bankruptButton">💀 Bankrotuoju</button>
                                         <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish btn-half" data-i18n="game.demolish">🏚️ Griauti</button>
                                     </div>
                                     
@@ -816,17 +816,17 @@
     <!-- VIEŠŲ STALŲ MODALAS -->
     <div id="publicGamesModal">
         <div class="public-games-content">
-            <h2>🌐 VIEŠI STALAI</h2>
-            <p style="color:#d4b896; text-align:center; margin-bottom:20px; font-size:13px;">Pasirink stalą ir prisijunk</p>
-            
-            <div id="publicGamesList">
-                <div class="public-games-empty">Kraunama...</div>
-            </div>
-            
-            <div style="display:flex; gap:8px; margin-top:20px;">
-                <button onclick="refreshPublicGames()" style="flex:1; padding:12px; border:none; border-radius:8px; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff; font-weight:700; cursor:pointer;">🔄 Atnaujinti</button>
-                <button onclick="closePublicGamesModal()" style="flex:1; padding:12px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer;">❌ Uždaryti</button>
-            </div>
+            <h2 data-i18n="game.publicGames.title">🌐 VIEŠI STALAI</h2>
+<p style="color:#d4b896; text-align:center; margin-bottom:20px; font-size:13px;" data-i18n="game.publicGames.subtitle">Pasirink stalą ir prisijunk</p>
+
+<div id="publicGamesList">
+    <div class="public-games-empty" data-i18n="game.publicGames.loading">Kraunama...</div>
+</div>
+
+<div style="display:flex; gap:8px; margin-top:20px;">
+    <button onclick="refreshPublicGames()" style="flex:1; padding:12px; border:none; border-radius:8px; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff; font-weight:700; cursor:pointer;" data-i18n="game.publicGames.refresh">🔄 Atnaujinti</button>
+    <button onclick="closePublicGamesModal()" style="flex:1; padding:12px; border:none; border-radius:8px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; font-weight:700; cursor:pointer;" data-i18n="game.publicGames.close">❌ Uždaryti</button>
+</div>
         </div>
     </div>
 
@@ -834,12 +834,12 @@
     <div id="bankruptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:40px; max-width:400px; width:90%; text-align:center; border:3px solid #dc3545; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             <div style="font-size:60px; margin-bottom:10px;">💀</div>
-            <h2 style="color:#dc3545; margin-bottom:10px;">AR TIKRAI NORI BANKROTUOTI?</h2>
-            <p style="color:#3d2b1f; margin-bottom:20px; font-size:16px;">Prarasi visus pinigus ir objektus!<br>Žaidimą galėsi tik stebėti.</p>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button onclick="confirmBankrupt()" style="flex:1; padding:12px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">✅ TAIP, BANKROTUOTI</button>
-                <button onclick="cancelBankrupt()" style="flex:1; padding:12px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">❌ NE, GRĮŽTI</button>
-            </div>
+            <h2 style="color:#dc3545; margin-bottom:10px;" data-i18n="game.bankruptModal.title">AR TIKRAI NORI BANKROTUOTI?</h2>
+<p style="color:#3d2b1f; margin-bottom:20px; font-size:16px;" data-i18n-html="game.bankruptModal.text">Prarasi visus pinigus ir objektus!<br>Žaidimą galėsi tik stebėti.</p>
+<div style="display:flex; gap:10px; justify-content:center;">
+    <button onclick="confirmBankrupt()" style="flex:1; padding:12px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;" data-i18n="game.bankruptModal.confirm">✅ TAIP, BANKROTUOTI</button>
+    <button onclick="cancelBankrupt()" style="flex:1; padding:12px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="game.bankruptModal.cancel">❌ NE, GRĮŽTI</button>
+</div>
         </div>
     </div>
 
@@ -847,30 +847,30 @@
     <div id="bankruptMessage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:40px; max-width:400px; width:90%; text-align:center; border:3px solid #dc3545; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             <div style="font-size:80px; margin-bottom:10px;">💀</div>
-            <h2 style="color:#dc3545; margin-bottom:10px;">TU BANKROTAVAI!</h2>
-            <p style="color:#3d2b1f; margin-bottom:20px; font-size:16px;">Praradai visus pinigus ir objektus.<br>Dabar gali tik stebėti žaidimą ir rašyti chate.</p>
-            <button onclick="closeBankruptMessage()" style="padding:12px 40px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">OK, SUPRASTAU</button>
+<h2 style="color:#dc3545; margin-bottom:10px;" data-i18n="game.bankruptMessage.title">TU BANKROTAVAI!</h2>
+<p style="color:#3d2b1f; margin-bottom:20px; font-size:16px;" data-i18n-html="game.bankruptMessage.text">Praradai visus pinigus ir objektus.<br>Dabar gali tik stebėti žaidimą ir rašyti chate.</p>
+<button onclick="closeBankruptMessage()" style="padding:12px 40px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;" data-i18n="game.bankruptMessage.ok">OK, SUPRASTAU</button>
         </div>
     </div>
 
     <!-- PREKYBOS MODALAS -->
     <div id="tradingModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9998; justify-content:center; align-items:center;">
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-            <h2 style="color:#1a6b3c; margin-bottom:15px;">🏪 PREKYBA</h2>
+            <h2 style="color:#1a6b3c; margin-bottom:15px;" data-i18n="game.trading.title">🏪 PREKYBA</h2>
             
             <div id="tradingOptions">
-                <button onclick="showSellToBank()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
-                    🏦 Parduoti bankui (80%)
-                </button>
-                <button onclick="showAuctionPanel()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
-                    🔨 Skelbti aukcioną
-                </button>
-                <button onclick="showTradeToPlayer()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
-                    🤝 Siūlyti žaidėjui
-                </button>
-                <button onclick="closeTrading()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
-                    ❌ Uždaryti
-                </button>
+                <button onclick="showSellToBank()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;" data-i18n="game.trading.sellToBank">
+    🏦 Parduoti bankui (80%)
+</button>
+<button onclick="showAuctionPanel()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;" data-i18n="game.trading.auction">
+    🔨 Skelbti aukcioną
+</button>
+<button onclick="showTradeToPlayer()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;" data-i18n="game.trading.offerPlayer">
+    🤝 Siūlyti žaidėjui
+</button>
+<button onclick="closeTrading()" class="btn-trade-option" style="width:100%; padding:15px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;" data-i18n="game.trading.close">
+    ❌ Uždaryti
+</button>
             </div>
 
             <div id="sellToBankPanel" style="display:none;">
@@ -933,7 +933,7 @@
     <!-- PASIŪLYMO GAVIMO MODALAS -->
     <div id="tradeOfferModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9997; justify-content:center; align-items:center;">
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:550px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #17a2b8; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-            <h2 style="color:#17a2b8; margin-bottom:15px;">📩 GAUTAS PASIŪLYMAS</h2>
+            <h2 style="color:#17a2b8; margin-bottom:15px;" data-i18n="game.tradeOffer.title">📩 GAUTAS PASIŪLYMAS</h2>
             <div style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
                 <p style="margin-bottom:10px;"><strong>Siūlo:</strong> <span id="offerFromPlayer" style="color:#1a6b3c; font-weight:700;"></span></p>
                 
@@ -971,7 +971,7 @@
     <!-- AUKCIONO MODALAS -->
     <div id="auctionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9996; justify-content:center; align-items:center;">
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:90%; text-align:center; border:3px solid #ffc107; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-            <h2 style="color:#ffc107; margin-bottom:10px;">🔨 AUKCIONAS</h2>
+            <h2 style="color:#ffc107; margin-bottom:10px;" data-i18n="game.auction.title">🔨 AUKCIONAS</h2>
             
             <div id="auctionContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
                 <p style="margin:5px 0;"><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
@@ -1023,8 +1023,8 @@
     <!-- GRIAUTI NAMUS MODALAS -->
     <div id="demolishModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9995; justify-content:center; align-items:center;">
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #dc3545; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-            <h2 style="color:#dc3545; margin-bottom:15px;">🏚️ GRIAUTI NAMUS</h2>
-            <p style="color:#6c757d; font-size:13px; margin-bottom:10px;">Pasirink kortelę iš kurios nori nugriauti vieną namą.<br>Grąžinama 75% statybos sumos.</p>
+            <h2 style="color:#dc3545; margin-bottom:15px;" data-i18n="game.demolish.title">🏚️ GRIAUTI NAMUS</h2>
+<p style="color:#6c757d; font-size:13px; margin-bottom:10px;" data-i18n-html="game.demolish.text">Pasirink kortelę iš kurios nori nugriauti vieną namą.<br>Grąžinama 75% statybos sumos.</p>
             <div id="demolishProperties" style="margin:10px 0; text-align:left; max-height:300px; overflow-y:auto;"></div>
             <button onclick="closeDemolish()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
                 ❌ Uždaryti
@@ -1035,8 +1035,8 @@
     <!-- BALSAVIMO MODALAS -->
     <div id="voteKickModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9994; justify-content:center; align-items:center;">
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:450px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #dc3545; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-            <h2 style="color:#dc3545; margin-bottom:15px;">🗳️ BALSAVIMAS</h2>
-            <p style="color:#6c757d; font-size:13px; margin-bottom:15px;">Pasirink žaidėją, kurį nori pašalinti nuo stalo.</p>
+            <h2 style="color:#dc3545; margin-bottom:15px;" data-i18n="game.voteKick.title">🗳️ BALSAVIMAS</h2>
+<p style="color:#6c757d; font-size:13px; margin-bottom:15px;" data-i18n="game.voteKick.text">Pasirink žaidėją, kurį nori pašalinti nuo stalo.</p>
             <div id="voteKickPlayers" style="margin:10px 0; text-align:left;"></div>
             <div id="voteKickStatus" style="margin:15px 0; padding:10px; background:rgba(255,255,255,0.3); border-radius:8px; font-size:14px; color:#3d2b1f;"></div>
             <button onclick="closeVoteKick()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
@@ -1080,17 +1080,17 @@
     </div>
 
     <!-- 🏆 LAIMĖJIMO MODALAS -->
-    <div id="winnerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; justify-content:center; align-items:center; overflow:hidden;">
-        <div style="text-align:center; padding:40px; position:relative; z-index:2;">
-            <div style="font-size:120px; margin-bottom:20px; animation: winnerBounce 1s ease-in-out infinite;">🏆</div>
-            <h1 style="color:#ffd700; font-size:56px; margin-bottom:20px; text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 20px rgba(0,0,0,0.9); animation: winnerGlow 2s ease-in-out infinite;">LAIMĖTOJAS!</h1>
-            <p id="winnerName" style="color:#fff; font-size:36px; font-weight:700; margin-bottom:30px; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">---</p>
-            <div id="winnerStats" style="color:#d4b896; font-size:16px; margin-bottom:30px;"></div>
-            <button onclick="closeWinnerModal()" style="padding:18px 50px; font-size:20px; font-weight:700; background:linear-gradient(145deg, #ffd700, #f0c000); color:#1a3b1a; border:none; border-radius:14px; cursor:pointer; transition:all 0.3s; box-shadow: 0 8px 30px rgba(255,215,0,0.5);">
-                🎮 ŽAISTI VĖL
-            </button>
-        </div>
+<div id="winnerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; justify-content:center; align-items:center; overflow:hidden;">
+    <div style="text-align:center; padding:40px; position:relative; z-index:2;">
+        <div style="font-size:120px; margin-bottom:20px; animation: winnerBounce 1s ease-in-out infinite;">🏆</div>
+        <h1 style="color:#ffd700; font-size:56px; margin-bottom:20px; text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 20px rgba(0,0,0,0.9); animation: winnerGlow 2s ease-in-out infinite;" data-i18n="game.winner.title">LAIMĖTOJAS!</h1>
+        <p id="winnerName" style="color:#fff; font-size:36px; font-weight:700; margin-bottom:30px; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">---</p>
+        <div id="winnerStats" style="color:#d4b896; font-size:16px; margin-bottom:30px;"></div>
+        <button onclick="closeWinnerModal()" style="padding:18px 50px; font-size:20px; font-weight:700; background:linear-gradient(145deg, #ffd700, #f0c000); color:#1a3b1a; border:none; border-radius:14px; cursor:pointer; transition:all 0.3s; box-shadow: 0 8px 30px rgba(255,215,0,0.5);" data-i18n="game.winner.playAgain">
+            🎮 ŽAISTI VĖL
+        </button>
     </div>
+</div>
 
     <!-- INFO TOOLTIP -->
     <div id="cellInfoTooltip"></div>
@@ -1114,30 +1114,30 @@
     <!-- 🆕 FEEDBACK MODAL -->
     <div id="feedbackModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:99999; justify-content:center; align-items:center; padding:20px; overflow-y:auto;">
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:100%; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-            <h2 style="color:#1a6b3c; text-align:center; margin-bottom:20px; border-bottom:2px solid #c9a84c; padding-bottom:10px;">
+            <h2 style="color:#1a6b3c; text-align:center; margin-bottom:20px; border-bottom:2px solid #c9a84c; padding-bottom:10px;" data-i18n="feedback.title">
                 🐛 PRANEŠTI / PASIŪLYTI
             </h2>
             
-            <label style="color:#3d2b1f; font-weight:700; display:block; margin-bottom:8px;">Tipas:</label>
+            <label style="color:#3d2b1f; font-weight:700; display:block; margin-bottom:8px;" data-i18n="feedback.type">Tipas:</label>
             <div style="display:flex; gap:12px; margin-bottom:15px; flex-wrap:wrap;">
-                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="bug" checked> 🐛 Klaida</label>
-                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="idea"> 💡 Pasiūlymas</label>
-                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="complaint"> ⚠️ Nusiskundimas</label>
+                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="bug" checked> <span data-i18n="feedback.bug">🐛 Klaida</span></label>
+                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="idea"> <span data-i18n="feedback.idea">💡 Pasiūlymas</span></label>
+                <label style="color:#3d2b1f; cursor:pointer;"><input type="radio" name="feedbackType" value="complaint"> <span data-i18n="feedback.complaint">⚠️ Nusiskundimas</span></label>
             </div>
             
-            <label style="color:#3d2b1f; font-weight:700; display:block; margin-bottom:8px;">Aprašymas (privalomas):</label>
-            <textarea id="feedbackMessage" placeholder="Aprašyk klaidą arba idėją..." style="width:100%; height:120px; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; resize:vertical; box-sizing:border-box; font-family:inherit;"></textarea>
+            <label style="color:#3d2b1f; font-weight:700; display:block; margin-bottom:8px;" data-i18n="feedback.message">Aprašymas (privalomas):</label>
+            <textarea id="feedbackMessage" placeholder="Aprašyk klaidą arba idėją..." data-i18n-placeholder="feedback.messagePlaceholder" style="width:100%; height:120px; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; resize:vertical; box-sizing:border-box; font-family:inherit;"></textarea>
             
-            <label style="color:#3d2b1f; font-weight:700; display:block; margin-top:15px; margin-bottom:8px;">El. paštas (nebūtina):</label>
-            <input type="email" id="feedbackEmail" placeholder="tavo@pastas.lt" style="width:100%; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; box-sizing:border-box;">
+            <label style="color:#3d2b1f; font-weight:700; display:block; margin-top:15px; margin-bottom:8px;" data-i18n="feedback.email">El. paštas (nebūtina):</label>
+            <input type="email" id="feedbackEmail" placeholder="tavo@pastas.lt" data-i18n-placeholder="feedback.emailPlaceholder" style="width:100%; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; box-sizing:border-box;">
             
             <div id="feedbackError" style="color:#dc3545; font-size:13px; min-height:20px; text-align:center; margin-top:10px;"></div>
             
             <div style="display:flex; gap:10px; margin-top:15px;">
-                <button onclick="submitFeedback()" style="flex:1; padding:12px; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer;">
+                <button onclick="submitFeedback()" style="flex:1; padding:12px; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer;" data-i18n="feedback.submit">
                     📤 SIŲSTI
                 </button>
-                <button onclick="closeFeedback()" style="flex:1; padding:12px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer;">
+                <button onclick="closeFeedback()" style="flex:1; padding:12px; background:linear-gradient(145deg, #6c757d, #495057); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer;" data-i18n="feedback.cancel">
                     ❌ ATGAL
                 </button>
             </div>
@@ -1145,10 +1145,34 @@
     </div>
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-    <script src="i18n.js"></script>
-    <script src="cellMessages.js"></script>
-    <script src="audioManager.js"></script>
-    <script src="script.js"></script>
+<script src="i18n.js"></script>
+<!-- 🆕 Cell messages pagal kalbą (SINCHRONINIS įkėlimas) -->
+<script>
+    (function() {
+        var lang = 'lt';
+        try {
+            lang = localStorage.getItem('bancrupt_lang') || 'lt';
+        } catch (e) {
+            console.warn('⚠️ Nepavyko nuskaityti kalbos:', e);
+        }
+        
+        var src = 'cellMessages.js';
+        if (lang === 'en') {
+            src = 'cellMessages-en.js';
+            console.log('🇬🇧 Loading cellMessages-en.js');
+        } else if (lang === 'ru') {
+            src = 'cellMessages-ru.js';
+            console.log('🇷🇺 Loading cellMessages-ru.js');
+        } else {
+            console.log('🇱🇹 Loading cellMessages.js');
+        }
+        
+        // SINCHRONINIS įkėlimas per document.write
+        document.write('<script src="' + src + '"><\/script>');
+    })();
+</script>
+<script src="audioManager.js"></script>
+<script src="script.js"></script>
     <script>
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(page => {
@@ -1710,12 +1734,12 @@
     if (!modal || !content) return;
     
     modal.style.display = 'flex';
-    content.innerHTML = '<div style="text-align:center; padding:20px; color:#d4b896;">⏳ Kraunama...</div>';
+    content.innerHTML = `<div style="text-align:center; padding:20px; color:#d4b896;">${t('common.loading')}</div>`;
     
     try {
         const token = localStorage.getItem('bancrupt_token');
         if (!token) {
-            content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Nesi prisijungęs</div>';
+            content.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">${t('common.error')}</div>`;
             return;
         }
         
@@ -1724,7 +1748,7 @@
         });
         
         if (!response.ok) {
-            content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Nepavyko užkrauti statistikos</div>';
+            content.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">${t('common.error')}</div>`;
             return;
         }
         
@@ -1741,18 +1765,18 @@
         const propertiesBought = stats.properties_bought || 0;
         
         // 🏆 Rango nustatymas
-        let rank = '🥉 Pradedantysis';
-        let rankColor = '#cd7f32';
-        if (winRate >= 70 && gamesPlayed >= 10) {
-            rank = '👑 Legenda';
-            rankColor = '#ffd700';
-        } else if (winRate >= 50 && gamesPlayed >= 5) {
-            rank = '🥇 Meistras';
-            rankColor = '#ffd700';
-        } else if (winRate >= 30 && gamesPlayed >= 3) {
-            rank = '🥈 Patyręs';
-            rankColor = '#c0c0c0';
-        }
+let rank = t('game.leaders.rankBeginner');
+let rankColor = '#cd7f32';
+if (winRate >= 70 && gamesPlayed >= 10) {
+    rank = t('game.leaders.rankLegend');
+    rankColor = '#ffd700';
+} else if (winRate >= 50 && gamesPlayed >= 5) {
+    rank = t('game.leaders.rankMaster');
+    rankColor = '#ffd700';
+} else if (winRate >= 30 && gamesPlayed >= 3) {
+    rank = t('game.leaders.rankExperienced');
+    rankColor = '#c0c0c0';
+}
         
         content.innerHTML = `
             <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:15px; border:2px solid #c9a84c;">
@@ -1770,57 +1794,57 @@
             </div>
             
             <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:15px;">
-                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">🎮 ŽAIDIMO STATISTIKA</div>
+                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">${t('game.stats.title')}</div>
                 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                     <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:12px; text-align:center; border:1px solid rgba(255,255,255,0.1);">
                         <div style="font-size:28px; font-weight:700; color:#fff;">${gamesPlayed}</div>
-                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">🎮 Sužaista</div>
+                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">${t('game.stats.gamesPlayed')}</div>
                     </div>
                     
                     <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:12px; text-align:center; border:1px solid rgba(40,167,69,0.3);">
                         <div style="font-size:28px; font-weight:700; color:#28a745;">${gamesWon}</div>
-                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">🏆 Laimėta</div>
+                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">${t('game.stats.gamesWon')}</div>
                     </div>
                     
                     <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:12px; text-align:center; border:1px solid rgba(255,215,0,0.3);">
                         <div style="font-size:28px; font-weight:700; color:#ffd700;">${winRate}%</div>
-                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">📊 Laimėjimų %</div>
+                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">${t('game.stats.winRate')}</div>
                     </div>
                     
                     <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:12px; text-align:center; border:1px solid rgba(220,53,69,0.3);">
                         <div style="font-size:28px; font-weight:700; color:#dc3545;">${bankrupts}</div>
-                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">💀 Bankrotai</div>
+                        <div style="font-size:11px; color:#d4b896; margin-top:4px;">${t('game.stats.bankrupts')}</div>
                     </div>
                 </div>
             </div>
             
             <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:15px;">
-                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">🏠 TURTAS</div>
+                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">${t('game.stats.assets')}</div>
                 
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; padding:6px 0;">
-                    <span style="color:#d4b896;">🏠 Namai pastatyti:</span>
+                    <span style="color:#d4b896;">${t('game.stats.housesBuilt')}:</span>
                     <strong style="color:#fff;">${housesBuilt}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding:6px 0;">
-                    <span style="color:#d4b896;">💰 Objektai pirkti:</span>
+                    <span style="color:#d4b896;">${t('game.stats.propertiesBought')}:</span>
                     <strong style="color:#fff;">${propertiesBought}</strong>
                 </div>
             </div>
             
             <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px;">
-                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">💵 PINIGŲ BALANSAS</div>
+                <div style="color:#ffd700; font-weight:700; margin-bottom:12px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px;">${t('game.stats.moneyBalance')}</div>
                 
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; padding:6px 0;">
-                    <span style="color:#d4b896;">💵 Laimėti pinigai:</span>
+                    <span style="color:#d4b896;">${t('game.stats.moneyWon')}:</span>
                     <strong style="color:#28a745;">+€${moneyWon}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; padding:6px 0;">
-                    <span style="color:#d4b896;">💸 Prarasti pinigai:</span>
+                    <span style="color:#d4b896;">${t('game.stats.moneyLost')}:</span>
                     <strong style="color:#dc3545;">-€${moneyLost}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding:8px 0; border-top:1px solid rgba(255,215,0,0.3); margin-top:4px;">
-                    <span style="color:#d4b896; font-weight:700;">📊 Balansas:</span>
+                    <span style="color:#d4b896; font-weight:700;">${t('game.stats.balance')}:</span>
                     <strong style="color:${(moneyWon - moneyLost) >= 0 ? '#28a745' : '#dc3545'}; font-size:16px;">${(moneyWon - moneyLost) >= 0 ? '+' : ''}€${moneyWon - moneyLost}</strong>
                 </div>
             </div>
