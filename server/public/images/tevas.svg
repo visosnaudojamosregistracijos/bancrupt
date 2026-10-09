@@ -1,95 +1,182 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="200" height="300">
-  <!-- Šešėlis -->
-  <ellipse cx="100" cy="285" rx="50" ry="8" fill="rgba(0,0,0,0.3)"/>
+  <!-- Šešėlis po kojomis -->
+  <ellipse cx="100" cy="288" rx="55" ry="10" fill="rgba(0,0,0,0.35)"/>
+  <ellipse cx="100" cy="288" rx="35" ry="6" fill="rgba(0,0,0,0.5)"/>
 
   <!-- ===== KAIRĖ KOJA ===== -->
   <g id="tevas-left-leg">
-    <rect x="65" y="220" width="25" height="45" rx="6" fill="#1a1a2e"/>
-    <ellipse cx="75" cy="270" rx="22" ry="12" fill="#4a2c0a"/>
-    <rect x="55" y="258" width="40" height="12" rx="4" fill="#5c3610"/>
+    <!-- Batas -->
+    <ellipse cx="72" cy="272" rx="24" ry="13" fill="#3a1f08"/>
+    <ellipse cx="72" cy="270" rx="24" ry="12" fill="#5c3610"/>
+    <rect x="50" y="258" width="44" height="14" rx="5" fill="#6b4018"/>
+    <!-- Batraištis -->
+    <line x1="55" y1="265" x2="90" y2="265" stroke="#3a1f08" stroke-width="2"/>
+    <!-- Kojinė -->
+    <rect x="62" y="238" width="22" height="24" rx="4" fill="#1a1a2e"/>
+    <!-- Kelnių klešnė -->
+    <path d="M 60 220 L 62 240 Q 62 250 72 250 Q 82 250 82 240 L 84 220 Z" fill="#1a1a2e"/>
   </g>
 
   <!-- ===== DEŠINĖ KOJA ===== -->
   <g id="tevas-right-leg">
-    <rect x="110" y="220" width="25" height="45" rx="6" fill="#1a1a2e"/>
-    <ellipse cx="125" cy="270" rx="22" ry="12" fill="#4a2c0a"/>
-    <rect x="105" y="258" width="40" height="12" rx="4" fill="#5c3610"/>
+    <!-- Batas -->
+    <ellipse cx="128" cy="272" rx="24" ry="13" fill="#3a1f08"/>
+    <ellipse cx="128" cy="270" rx="24" ry="12" fill="#5c3610"/>
+    <rect x="106" y="258" width="44" height="14" rx="5" fill="#6b4018"/>
+    <line x1="111" y1="265" x2="146" y2="265" stroke="#3a1f08" stroke-width="2"/>
+    <!-- Kojinė -->
+    <rect x="116" y="238" width="22" height="24" rx="4" fill="#1a1a2e"/>
+    <!-- Kelnių klešnė -->
+    <path d="M 116 220 L 118 240 Q 118 250 128 250 Q 138 250 138 240 L 140 220 Z" fill="#1a1a2e"/>
   </g>
 
   <!-- ===== KŪNAS ===== -->
   <g id="tevas-body">
-    <!-- Pilvas (apvalus) -->
-    <ellipse cx="100" cy="190" rx="55" ry="45" fill="#2d2d5e"/>
-    <ellipse cx="100" cy="190" rx="55" ry="45" fill="none" stroke="#1a1a2e" stroke-width="2"/>
+    <!-- Gradientai -->
+    <defs>
+      <linearGradient id="jacketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#3a3a7a"/>
+        <stop offset="100%" stop-color="#1e1e4a"/>
+      </linearGradient>
+      <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f0c896"/>
+        <stop offset="100%" stop-color="#d4a574"/>
+      </linearGradient>
+      <linearGradient id="hairGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#d8d8d8"/>
+        <stop offset="100%" stop-color="#a0a0a0"/>
+      </linearGradient>
+      <radialGradient id="bellyGrad" cx="50%" cy="40%">
+        <stop offset="0%" stop-color="#3a3a7a"/>
+        <stop offset="100%" stop-color="#1e1e4a"/>
+      </radialGradient>
+    </defs>
 
-    <!-- Kostiumo švarkas -->
-    <path d="M 45 150 Q 45 120 70 115 L 130 115 Q 155 120 155 150 L 155 200 Q 155 230 100 230 Q 45 230 45 200 Z" fill="#2d2d5e"/>
-    <path d="M 45 150 Q 45 120 70 115 L 130 115 Q 155 120 155 150 L 155 200 Q 155 230 100 230 Q 45 230 45 200 Z" fill="none" stroke="#1a1a2e" stroke-width="2"/>
+    <!-- Pilvas -->
+    <ellipse cx="100" cy="192" rx="58" ry="48" fill="url(#bellyGrad)"/>
+    <ellipse cx="100" cy="192" rx="58" ry="48" fill="none" stroke="#0f0f2e" stroke-width="2"/>
 
-    <!-- Marškiniai (balti) -->
-    <path d="M 85 115 L 100 145 L 115 115 Z" fill="#f0f0f0"/>
+    <!-- Švarko liemuo -->
+    <path d="M 45 150 Q 45 118 72 112 L 128 112 Q 155 118 155 150 L 155 200 Q 155 232 100 232 Q 45 232 45 200 Z" fill="url(#jacketGrad)"/>
+    <path d="M 45 150 Q 45 118 72 112 L 128 112 Q 155 118 155 150 L 155 200 Q 155 232 100 232 Q 45 232 45 200 Z" fill="none" stroke="#0f0f2e" stroke-width="2.5"/>
 
-    <!-- Kaklaraištis -->
-    <path d="M 100 145 L 95 160 L 100 200 L 105 160 Z" fill="#c0392b"/>
+    <!-- Marškiniai (balti) su šešėliu -->
+    <path d="M 82 112 L 100 148 L 118 112 Z" fill="#f5f5f5"/>
+    <path d="M 82 112 L 100 148 L 100 115 Z" fill="#e0e0e0"/>
 
-    <!-- Švarko atvartai -->
-    <path d="M 70 115 L 85 145 L 75 190 L 60 150 Z" fill="#252550"/>
-    <path d="M 130 115 L 115 145 L 125 190 L 140 150 Z" fill="#252550"/>
+    <!-- Kaklaraištis su mazgu -->
+    <path d="M 100 148 L 93 165 L 100 210 L 107 165 Z" fill="#c0392b"/>
+    <path d="M 100 148 L 96 155 L 100 165 L 104 155 Z" fill="#a02818"/>
+    <path d="M 100 148 L 93 165 L 100 210 L 107 165 Z" fill="none" stroke="#7a1a10" stroke-width="1"/>
+
+    <!-- Švarko atvartai su šešėliu -->
+    <path d="M 72 112 L 88 148 L 78 195 L 58 152 Z" fill="#2a2a5e"/>
+    <path d="M 72 112 L 88 148 L 78 195 L 58 152 Z" fill="none" stroke="#0f0f2e" stroke-width="1.5"/>
+    <path d="M 128 112 L 112 148 L 122 195 L 142 152 Z" fill="#2a2a5e"/>
+    <path d="M 128 112 L 112 148 L 122 195 L 142 152 Z" fill="none" stroke="#0f0f2e" stroke-width="1.5"/>
+
+    <!-- Kišenė -->
+    <path d="M 130 180 L 145 180 L 145 195 L 138 200 L 130 195 Z" fill="none" stroke="#0f0f2e" stroke-width="1.5"/>
+    <path d="M 130 180 L 145 180" stroke="#FFD700" stroke-width="0.5"/>
 
     <!-- Sagos -->
-    <circle cx="100" cy="175" r="3" fill="#FFD700"/>
-    <circle cx="100" cy="195" r="3" fill="#FFD700"/>
+    <circle cx="100" cy="175" r="3.5" fill="#FFD700"/>
+    <circle cx="100" cy="175" r="2" fill="#c9a84c"/>
+    <circle cx="100" cy="195" r="3.5" fill="#FFD700"/>
+    <circle cx="100" cy="195" r="2" fill="#c9a84c"/>
+    <circle cx="100" cy="215" r="3.5" fill="#FFD700"/>
+    <circle cx="100" cy="215" r="2" fill="#c9a84c"/>
 
-    <!-- Rankos -->
-    <rect x="30" y="140" width="20" height="70" rx="8" fill="#2d2d5e"/>
-    <rect x="150" y="140" width="20" height="70" rx="8" fill="#2d2d5e"/>
+    <!-- Kairė ranka (sulenkta) -->
+    <path d="M 42 145 Q 28 150 25 175 Q 22 200 35 218 Q 42 222 45 215 Q 48 200 42 180 Z" fill="#2a2a5e"/>
+    <path d="M 42 145 Q 28 150 25 175 Q 22 200 35 218 Q 42 222 45 215 Q 48 200 42 180 Z" fill="none" stroke="#0f0f2e" stroke-width="1.5"/>
+    <!-- Delnas -->
+    <ellipse cx="38" cy="220" rx="12" ry="10" fill="url(#skinGrad)"/>
+    <ellipse cx="38" cy="220" rx="12" ry="10" fill="none" stroke="#a07850" stroke-width="1"/>
 
-    <!-- Delnai -->
-    <circle cx="40" cy="215" r="12" fill="#e8b88a"/>
-    <circle cx="160" cy="215" r="12" fill="#e8b88a"/>
+    <!-- Dešinė ranka su pinigine -->
+    <path d="M 158 145 Q 172 150 175 175 Q 178 200 165 218 Q 158 222 155 215 Q 152 200 158 180 Z" fill="#2a2a5e"/>
+    <path d="M 158 145 Q 172 150 175 175 Q 178 200 165 218 Q 158 222 155 215 Q 152 200 158 180 Z" fill="none" stroke="#0f0f2e" stroke-width="1.5"/>
+    <!-- Delnas -->
+    <ellipse cx="162" cy="220" rx="12" ry="10" fill="url(#skinGrad)"/>
+    <ellipse cx="162" cy="220" rx="12" ry="10" fill="none" stroke="#a07850" stroke-width="1"/>
 
     <!-- Piniginė -->
-    <rect x="150" y="210" width="30" height="22" rx="4" fill="#8B4513"/>
-    <rect x="150" y="210" width="30" height="8" rx="4" fill="#A0522D"/>
-    <circle cx="175" cy="221" r="3" fill="#FFD700"/>
+    <rect x="152" y="212" width="28" height="20" rx="4" fill="#8B4513"/>
+    <rect x="152" y="212" width="28" height="7" rx="4" fill="#A0522D"/>
+    <circle cx="175" cy="222" r="2.5" fill="#FFD700"/>
+    <circle cx="175" cy="222" r="1" fill="#c9a84c"/>
+    <!-- Pinigų kupiūra kyšo -->
+    <rect x="155" y="208" width="18" height="6" rx="1" fill="#7cb342" transform="rotate(-15 164 211)"/>
+    <rect x="155" y="208" width="18" height="6" rx="1" fill="none" stroke="#4a7a20" stroke-width="0.5" transform="rotate(-15 164 211)"/>
 
     <!-- Kaklas -->
-    <rect x="90" y="100" width="20" height="20" fill="#e8b88a"/>
+    <path d="M 88 100 L 88 118 Q 100 122 112 118 L 112 100 Z" fill="url(#skinGrad)"/>
+    <path d="M 88 100 L 88 118 Q 100 122 112 118 L 112 100 Z" fill="none" stroke="#a07850" stroke-width="1"/>
+    <!-- Šešėlis po smakru -->
+    <ellipse cx="100" cy="115" rx="10" ry="3" fill="rgba(0,0,0,0.15)"/>
 
     <!-- Galva -->
-    <ellipse cx="100" cy="75" rx="42" ry="45" fill="#e8b88a"/>
+    <ellipse cx="100" cy="72" rx="45" ry="48" fill="url(#skinGrad)"/>
+    <ellipse cx="100" cy="72" rx="45" ry="48" fill="none" stroke="#a07850" stroke-width="1"/>
 
     <!-- Ausys -->
-    <ellipse cx="58" cy="75" rx="8" ry="12" fill="#d4a574"/>
-    <ellipse cx="142" cy="75" rx="8" ry="12" fill="#d4a574"/>
+    <ellipse cx="56" cy="72" rx="8" ry="13" fill="#e0b888"/>
+    <ellipse cx="56" cy="72" rx="8" ry="13" fill="none" stroke="#a07850" stroke-width="1"/>
+    <path d="M 53 70 Q 56 72 53 75" fill="none" stroke="#a07850" stroke-width="1"/>
+    <ellipse cx="144" cy="72" rx="8" ry="13" fill="#e0b888"/>
+    <ellipse cx="144" cy="72" rx="8" ry="13" fill="none" stroke="#a07850" stroke-width="1"/>
+    <path d="M 147 70 Q 144 72 147 75" fill="none" stroke="#a07850" stroke-width="1"/>
 
-    <!-- Plaukai (ryži, reti) -->
-    <path d="M 58 55 Q 60 30 100 25 Q 140 30 142 55 Q 140 40 100 38 Q 60 40 58 55 Z" fill="#c0c0c0"/>
-    <path d="M 65 45 Q 70 35 100 32 Q 130 35 135 45" fill="none" stroke="#a0a0a0" stroke-width="2"/>
+    <!-- Plaukai (natūralesni) -->
+    <path d="M 56 55 Q 55 25 100 22 Q 145 25 144 55 Q 142 42 130 38 Q 115 32 100 34 Q 85 32 70 38 Q 58 42 56 55 Z" fill="url(#hairGrad)"/>
+    <path d="M 56 55 Q 55 25 100 22 Q 145 25 144 55 Q 142 42 130 38 Q 115 32 100 34 Q 85 32 70 38 Q 58 42 56 55 Z" fill="none" stroke="#808080" stroke-width="1"/>
+    <!-- Plaukų šešėliai -->
+    <path d="M 70 40 Q 80 35 100 33" fill="none" stroke="#909090" stroke-width="1.5" opacity="0.7"/>
+    <path d="M 100 33 Q 120 35 130 40" fill="none" stroke="#909090" stroke-width="1.5" opacity="0.7"/>
 
-    <!-- Antakiai -->
-    <rect x="72" y="60" width="22" height="5" rx="2" fill="#a0a0a0"/>
-    <rect x="106" y="60" width="22" height="5" rx="2" fill="#a0a0a0"/>
+    <!-- Antakiai (natūralūs) -->
+    <path d="M 70 58 Q 78 55 88 58" fill="none" stroke="#909090" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 112 58 Q 122 55 130 58" fill="none" stroke="#909090" stroke-width="3" stroke-linecap="round"/>
 
     <!-- Akiniai -->
-    <circle cx="83" cy="75" r="14" fill="none" stroke="#333" stroke-width="3"/>
-    <circle cx="117" cy="75" r="14" fill="none" stroke="#333" stroke-width="3"/>
-    <line x1="97" y1="75" x2="103" y2="75" stroke="#333" stroke-width="3"/>
-    <line x1="69" y1="73" x2="58" y2="70" stroke="#333" stroke-width="3"/>
-    <line x1="131" y1="73" x2="142" y2="70" stroke="#333" stroke-width="3"/>
+    <ellipse cx="82" cy="74" rx="14" ry="13" fill="rgba(200,220,255,0.15)"/>
+    <ellipse cx="82" cy="74" rx="14" ry="13" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
+    <ellipse cx="118" cy="74" rx="14" ry="13" fill="rgba(200,220,255,0.15)"/>
+    <ellipse cx="118" cy="74" rx="14" ry="13" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
+    <!-- Tilts -->
+    <line x1="96" y1="74" x2="104" y2="74" stroke="#2a2a2a" stroke-width="2.5"/>
+    <!-- Kairysis lankelis -->
+    <path d="M 68 72 Q 60 68 56 68" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
+    <!-- Dešinysis lankelis -->
+    <path d="M 132 72 Q 140 68 144 68" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
 
-    <!-- Akys -->
-    <circle cx="83" cy="76" r="4" fill="#1a1a2e"/>
-    <circle cx="117" cy="76" r="4" fill="#1a1a2e"/>
+    <!-- Akys su blizgesiu -->
+    <ellipse cx="82" cy="75" rx="3.5" ry="4" fill="#1a1a2e"/>
+    <ellipse cx="118" cy="75" rx="3.5" ry="4" fill="#1a1a2e"/>
+    <circle cx="81" cy="73.5" r="1.2" fill="white"/>
+    <circle cx="117" cy="73.5" r="1.2" fill="white"/>
 
-    <!-- Nosis -->
-    <ellipse cx="100" cy="90" rx="8" ry="6" fill="#d4a574"/>
+    <!-- Nosis (natūralesnė) -->
+    <path d="M 100 82 Q 96 92 100 95 Q 104 92 100 82" fill="#d4a574" opacity="0.7"/>
+    <ellipse cx="100" cy="95" rx="5" ry="3" fill="#c49464"/>
+    <ellipse cx="100" cy="95" rx="5" ry="3" fill="none" stroke="#a07850" stroke-width="0.8"/>
+    <!-- Šnervės -->
+    <circle cx="98" cy="95" r="1" fill="#8a5c30"/>
+    <circle cx="102" cy="95" r="1" fill="#8a5c30"/>
 
-    <!-- Barzda (ryža, trumpa) -->
-    <path d="M 65 95 Q 70 130 100 135 Q 130 130 135 95 Q 130 115 100 118 Q 70 115 65 95 Z" fill="#c0c0c0"/>
-    <path d="M 70 100 Q 75 125 100 128 Q 125 125 130 100" fill="none" stroke="#a0a0a0" stroke-width="1.5"/>
+    <!-- Barzda (natūralesnė) -->
+    <path d="M 62 92 Q 66 128 100 138 Q 134 128 138 92 Q 132 108 100 112 Q 68 108 62 92 Z" fill="url(#hairGrad)"/>
+    <path d="M 62 92 Q 66 128 100 138 Q 134 128 138 92 Q 132 108 100 112 Q 68 108 62 92 Z" fill="none" stroke="#808080" stroke-width="1"/>
+    <!-- Barzdos šešėliai -->
+    <path d="M 75 100 Q 80 115 100 122" fill="none" stroke="#909090" stroke-width="1" opacity="0.6"/>
+    <path d="M 125 100 Q 120 115 100 122" fill="none" stroke="#909090" stroke-width="1" opacity="0.6"/>
+    <!-- Ūsai -->
+    <path d="M 88 100 Q 100 105 112 100" fill="none" stroke="#b0b0b0" stroke-width="2.5" stroke-linecap="round"/>
 
-    <!-- Burna (šypsena) -->
-    <path d="M 88 108 Q 100 115 112 108" fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"/>
+    <!-- Burna (šypsena su dantimis) -->
+    <path d="M 88 108 Q 100 118 112 108" fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 92 110 Q 100 115 108 110" fill="white" opacity="0.8"/>
+    <path d="M 88 108 Q 100 118 112 108 Z" fill="#5a2a10" opacity="0.3"/>
   </g>
 </svg>

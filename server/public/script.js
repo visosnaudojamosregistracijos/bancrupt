@@ -620,48 +620,61 @@ function applyBoardSettings(s) {
     });
 
     socket.on('diceRolled', async (data) => {
-        console.log('🎲 Kauliukai mesti:', data);
-        playSoundForPlayer('dice', data.player.id);
-        updateDiceDisplay(data.dice[0], data.dice[1]);
+    console.log('🎲 Kauliukai mesti:', data);
+    
+    // 🆕 APSAUGA: jei pending_purchase – praleisti dice animaciją
+    if (data.action === 'pending_purchase') {
+        console.log('💰 pending_purchase – praleidžiame dice animaciją');
+        return;
+    }
+    
+    // 🆕 APSAUGA: jei nėra dice masyvo – praleisti
+    if (!data.dice || !Array.isArray(data.dice) || data.dice.length < 2) {
+        console.warn('⚠️ diceRolled: nėra dice masyvo', data);
+        return;
+    }
+    
+    playSoundForPlayer('dice', data.player.id);
+    updateDiceDisplay(data.dice[0], data.dice[1]);
 
-        if (data.player && data.player.id !== undefined) {
-            const isDouble = data.dice[0] === data.dice[1];
-            incrementRolls(data.player.id, isDouble);
-        }
-        
-        window.animatingPlayers = window.animatingPlayers || [];
-        if (!window.animatingPlayers.includes(data.player.id)) {
-            window.animatingPlayers.push(data.player.id);
-        }
-        
-        if (data.oldPosition !== undefined && data.newPosition !== undefined) {
-            isAnimating = true;
-            await animateMovement(data.player.id, data.oldPosition, data.newPosition);
-            isAnimating = false;
-        }
-        
-        window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
+    if (data.player && data.player.id !== undefined) {
+        const isDouble = data.dice[0] === data.dice[1];
+        incrementRolls(data.player.id, isDouble);
+    }
+    
+    window.animatingPlayers = window.animatingPlayers || [];
+    if (!window.animatingPlayers.includes(data.player.id)) {
+        window.animatingPlayers.push(data.player.id);
+    }
+    
+    if (data.oldPosition !== undefined && data.newPosition !== undefined) {
+        isAnimating = true;
+        await animateMovement(data.player.id, data.oldPosition, data.newPosition);
+        isAnimating = false;
+    }
+    
+    window.animatingPlayers = window.animatingPlayers.filter(id => id !== data.player.id);
 
-        // 🆕 Siunčiam movementFinished TIK jei AŠ mečiau kauliukus
-        if (data.needsProcessField && data.player.id === playerId) {
-            console.log('✅ Animacija baigta, siunčiam movementFinished');
-            socket.emit('movementFinished');
-            return;
-        }
-        
-        const isMe = data.player.id === playerId;
+    // 🆕 Siunčiam movementFinished TIK jei AŠ mečiau kauliukus
+    if (data.needsProcessField && data.player.id === playerId) {
+        console.log('✅ Animacija baigta, siunčiam movementFinished');
+        socket.emit('movementFinished');
+        return;
+    }
+    
+    const isMe = data.player.id === playerId;
 
-        if (data.result && data.result.message && data.result.message.includes('neturi pakankamai pinigų')) {
-            const msg = isMe 
-                ? `❌ Neužtenka pinigų ${data.field.name} pirkti!`
-                : `❌ ${data.player.name} neužtenka pinigų ${data.field.name} pirkti!`;
-            
-            showCellAction(msg, 'tax');
-            addJournal(msg);
-            
-            updateUI(gameState);
-            return;
-        }
+    if (data.result && data.result.message && data.result.message.includes('neturi pakankamai pinigų')) {
+        const msg = isMe 
+            ? `❌ Neužtenka pinigų ${data.field.name} pirkti!`
+            : `❌ ${data.player.name} neužtenka pinigų ${data.field.name} pirkti!`;
+        
+        showCellAction(msg, 'tax');
+        addJournal(msg);
+        
+        updateUI(gameState);
+        return;
+    }
         
         // 🆕 Garsai pagal lauką (IŠTRINTA – fieldResult jau groja)
 // if (data.field) {
