@@ -714,7 +714,7 @@ class Game {
         return { error: 'Laukiama pirkimo sprendimo' };
     }
 
-    console.log(`🤖 ${bot.name} pradeda ėjimą...`);
+    // console.log(`🤖 ${bot.name} pradeda ėjimą...`);
 
         if (bot.money >= 0 && bot.isDebtor === true) {
             console.log(`✅ ${bot.name}: isDebtor → false (money: €${bot.money})`);
@@ -2258,31 +2258,31 @@ class Game {
     }
 
      getGameState() {
-        return {
-            players: this.players
-                .filter(p => !p.left)
-                .map(p => ({
-                    ...p,
-                    isDebtor: p.isDebtor || false,
-                    kicked: p.kicked || false,
-                    ready: p.ready || false
-                })),
-            board: this.board,
-            currentTurn: this.currentTurn,
-            gameStarted: this.gameStarted,
-            maxPlayers: this.maxPlayers,
-            diceValues: this.diceValues,
-            turnHistory: this.turnHistory.slice(-50),
-            waitingForBuy: this.waitingForBuy,
-            consecutiveDoubles: this.consecutiveDoubles,
-            doubleRoll: this.doubleRoll,
-            activeVoteKick: this.activeVoteKick ? this.getVoteKickState() : null,
-            isPublic: this.isPublic,
-            gameId: this.gameId,
-            lastMessageKey: this.lastMessageKey,
-            lastMessageData: this.lastMessageData
-        };
-    }
+    return {
+        players: this.players
+            .filter(p => !p.left)
+            .map(p => ({
+                ...p,
+                isDebtor: p.isDebtor || false,
+                kicked: p.kicked || false,
+                ready: p.ready || false
+            })),
+        board: this.board,
+        currentTurn: this.currentTurn,
+        gameStarted: this.gameStarted,
+        maxPlayers: this.maxPlayers,
+        diceValues: this.diceValues,
+        turnHistory: this.turnHistory.slice(-50),
+        waitingForBuy: this.waitingForBuy,
+        consecutiveDoubles: this.consecutiveDoubles,
+        doubleRoll: this.doubleRoll,
+        activeVoteKick: this.activeVoteKick ? this.getVoteKickState() : null,
+        isPublic: this.isPublic,
+        gameId: this.gameId,
+        lastMessageKey: null,
+        lastMessageData: null
+    };
+}
 
     getRequiredVotes(playerCount) {
         return C.VOTE_KICK_REQUIRED[playerCount] || Math.ceil(playerCount / 2) + 1;

@@ -209,13 +209,13 @@ function initSocket() {
     updateUI(state);
         document.getElementById('bankruptModal').style.display = 'none';
         
-        // 🆕 Jei yra lastMessageKey — rodome vertimą
-        if (state.lastMessageKey) {
-            const text = getTranslatedMessage(state.lastMessageKey, state.lastMessageData || {});
-            if (text && text !== state.lastMessageKey) {
-                addJournal(text);
-            }
-        }
+        // 🆕 IŠIMTA – pranešimai ateina per 'message' event
+        // if (state.lastMessageKey) {
+        //     const text = getTranslatedMessage(state.lastMessageKey, state.lastMessageData || {});
+        //     if (text && text !== state.lastMessageKey) {
+        //         addJournal(text);
+        //     }
+        // }
         
         if (state.players && state.players.length > 0) {
             state.players.forEach(p => {
@@ -4983,9 +4983,22 @@ function addChatMessage(data) {
 
 let journalCount = 0;
 
+// 🆕 Anti-dublikatas
+let lastJournalMessage = '';
+let lastJournalTime = 0;
+
 function addJournal(msg) {
     const container = document.getElementById('journal');
     if (!container) return;
+    
+    // 🆕 Anti-dublikatas (500ms)
+    const now = Date.now();
+    if (msg === lastJournalMessage && now - lastJournalTime < 500) {
+        console.log('⚠️ Dublikatas praleistas:', msg);
+        return;
+    }
+    lastJournalMessage = msg;
+    lastJournalTime = now;
     
     journalCount++;
     const time = new Date().toLocaleTimeString();

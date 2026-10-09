@@ -389,7 +389,7 @@ function startBotLoop(gameId) {
         }
 
         if (currentGame.isRolling) {
-    console.log(`⏳ Botų ciklas: laukiama, kol baigsis metimas`);
+    // console.log(`⏳ Botų ciklas: laukiama, kol baigsis metimas`);
     return;
 }
 
@@ -402,7 +402,7 @@ if (currentGame.pendingFieldPlayerId !== null && currentGame.pendingFieldPlayerI
 currentGame.botTurnInProgress = true;
 
 try {
-    console.log(`🤖 Botas ${currentBot.name} pradeda...`);
+    // console.log(`🤖 Botas ${currentBot.name} pradeda...`);
     
     // 🆕 Jei laukiama pirkimo sprendimo – praleisti
     if (currentGame.waitingForBuy) {
@@ -414,7 +414,7 @@ try {
         io.to(gameId).emit(event, data);
     });
     
-    console.log(`🤖 Botas ${currentBot.name} baigė:`, result);
+    console.log(`🤖 Botas ${currentBot.name} baigė: action=${result.action}, dice=${result.rollResult?.dice?.join('+') || '-'}=${result.rollResult?.total || '-'}`);
     
     io.to(gameId).emit('gameState', currentGame.getGameState());
             
@@ -446,7 +446,7 @@ try {
                             
                             // 🆕 Atblokuoti metimą prieš processField (botas neturi socket'o)
                             currentGame.isRolling = false;
-                            console.log('🔓 isRolling = false (botLoop processField)');
+                         //   console.log('🔓 isRolling = false (botLoop processField)');
                             
                             console.log(`🎯 Botas ${currentBot.name}: processField`);
                             
