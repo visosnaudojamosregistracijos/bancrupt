@@ -1089,37 +1089,57 @@ socket.on('buyConfirmed', (data) => {
     });
 
     socket.on('tradeProposed', (data) => {
-        console.log('📩 Gautas prekybos pasiūlymas:', data);
-        playTradeSound();
-        const msg = `📩 ${data.fromPlayer} pasiūlė prekybą ${data.toPlayer}!`;
-        addNotification(msg);
-        if (data.fromPlayer !== myPlayer?.name) {
-            showPopupMessage(msg, 'move');
-        }
-        addJournal(msg);
-        
-        if (data.toPlayer === myPlayer?.name || data.toPlayer === playerId) {
-            showTradeOffer(data);
-        }
-        
-        if (gameState) updateUI(gameState);
-    });
+    console.log('📩 Gautas prekybos pasiūlymas:', data);
+    playTradeSound();
+    const msg = `📩 ${data.fromPlayer} pasiūlė prekybą ${data.toPlayer}!`;
+    addNotification(msg);
+    if (data.fromPlayer !== myPlayer?.name) {
+        showPopupMessage(msg, 'move');
+    }
+    addJournal(msg);
+    
+    // 🆕 IŠVALYTI senus duomenis PRIEŠ rodant naują
+    window.counterOfferData = null;
+    window.isCounterOfferMode = false;
+    selectedOfferFields = [];
+    selectedRequestFields = [];
+    
+    if (data.toPlayer === myPlayer?.name || data.toPlayer === playerId) {
+        showTradeOffer(data);
+    }
+    
+    if (gameState) updateUI(gameState);
+});
 
     socket.on('tradeResponded', (data) => {
-        console.log('📩 Prekybos atsakymas:', data);
-        if (data.success) {
-            playBuySound();
-            playCashSound();
-            showPopupMessage(data.message || 'Prekyba įvykdyta!', 'buy');
-        } else {
-            playMoveSound();
-            showPopupMessage(data.message || 'Prekyba atmesta', 'move');
-        }
-        addNotification(data.message || 'Prekybos atsakymas gautas');
-        addJournal(data.message || 'Prekybos atsakymas gautas');
-        closeTradeOffer();
-        if (gameState) updateUI(gameState);
-    });
+    console.log('📩 Prekybos atsakymas:', data);
+    if (data.success) {
+        playBuySound();
+        playCashSound();
+        showPopupMessage(data.message || 'Prekyba įvykdyta!', 'buy');
+    } else {
+        playMoveSound();
+        showPopupMessage(data.message || 'Prekyba atmesta', 'move');
+    }
+    addNotification(data.message || 'Prekybos atsakymas gautas');
+    addJournal(data.message || 'Prekybos atsakymas gautas');
+    
+    // 🆕 IŠVALYTI VISUS prekybos duomenis
+    closeTradeOffer();
+    window.counterOfferData = null;
+    window.isCounterOfferMode = false;
+    window.lastIncomingTrade = null;
+    selectedOfferFields = [];
+    selectedRequestFields = [];
+    currentTradeId = null;
+    
+    // 🆕 UŽDARYTI prekybos langą (jei atidarytas)
+    const tradingModal = document.getElementById('tradingModal');
+    if (tradingModal) tradingModal.style.display = 'none';
+    
+    // 🆕 ATNAUJINTI UI (kad kortelės atsinaujintų)
+    if (gameState) updateUI(gameState);
+});
 
     socket.on('auctionStarted', (data) => {
         console.log('🔨 KLIENTAS GAUNA auctionStarted EVENTĄ');
