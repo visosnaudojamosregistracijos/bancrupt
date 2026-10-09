@@ -1255,9 +1255,13 @@ button,
     height: var(--corner-height, 175px);
     max-width: var(--corner-width, 175px);
     max-height: var(--corner-height, 175px);
+    min-width: var(--corner-width, 175px);      /* 🆕 */
+    min-height: var(--corner-height, 175px);    /* 🆕 */
+    box-sizing: border-box;                     /* 🆕 */
     font-size: var(--corner-font-size, 13px);
     border-width: 3px;
     font-weight: 700;
+    overflow: hidden;                           /* 🆕 */
 }
 
 /* Viršutinės/apatinės eilės kampai – aukštis pagal eilutę */
@@ -1979,9 +1983,10 @@ button,
     z-index: 20;
     padding: 2px;
     pointer-events: none;
-    overflow: visible;
-    max-height: 50%;
+    overflow: hidden;               /* 🆕 buvo visible */
+    max-height: 100%;               /* 🆕 buvo 50% */
     max-width: 100%;
+    box-sizing: border-box;         /* 🆕 */
 }
 
 /* Viršutinė eilė – viršuje */
@@ -2062,14 +2067,14 @@ button,
 .cell .players-on-cell[data-count="8"] .player-dot { width: 22px; height: 22px; border-width: 2px; }
 
 /* Kampų mažinimas */
-.cell.corner .players-on-cell .player-dot { width: 38px; height: 38px; }
-.cell.corner .players-on-cell[data-count="2"] .player-dot { width: 30px; height: 30px; border-width: 2px; }
-.cell.corner .players-on-cell[data-count="3"] .player-dot { width: 24px; height: 24px; border-width: 2px; }
+.cell.corner .players-on-cell .player-dot { width: 28px; height: 28px; flex-shrink: 0; }
+.cell.corner .players-on-cell[data-count="2"] .player-dot { width: 24px; height: 24px; border-width: 2px; }
+.cell.corner .players-on-cell[data-count="3"] .player-dot { width: 20px; height: 20px; border-width: 2px; }
 .cell.corner .players-on-cell[data-count="4"] .player-dot,
 .cell.corner .players-on-cell[data-count="5"] .player-dot,
 .cell.corner .players-on-cell[data-count="6"] .player-dot,
 .cell.corner .players-on-cell[data-count="7"] .player-dot,
-.cell.corner .players-on-cell[data-count="8"] .player-dot { width: 18px; height: 18px; border-width: 1.5px; }
+.cell.corner .players-on-cell[data-count="8"] .player-dot { width: 16px; height: 16px; border-width: 1.5px; }
 
 /* Kairė/dešinė – mažesni */
 .row-middle-left .cell .players-on-cell .player-dot,
