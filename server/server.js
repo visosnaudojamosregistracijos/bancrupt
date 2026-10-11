@@ -941,17 +941,23 @@ io.on('connection', (socket) => {
 
             // 🆕 Jei pending_purchase – nesiųsti diceRolled   ← NAUJA!
             if (result.action === 'pending_purchase') {
-                console.log(`💰 pendingPurchase: ${result.player.name} gali pirkti ${result.field.name}`);
-                socket.emit('pendingPurchase', {
-                    playerId: result.player.id,
-                    playerName: result.player.name,
-                    fieldId: result.field.id,
-                    fieldName: result.field.name,
-                    fieldCost: result.field.cost
-                });
-                io.to(socket.gameId).emit('gameState', game.getGameState());
-                return;
-            }
+    console.log(`💰 pendingPurchase: ${result.player.name} gali pirkti ${result.field.name}`);
+    
+    // 🆕 Siųsti pendingPurchase TIK tam žaidėjui
+    socket.emit('pendingPurchase', {
+        playerId: result.player.id,
+        playerName: result.player.name,
+        fieldId: result.field.id,
+        fieldName: result.field.name,
+        fieldCost: result.field.cost
+    });
+    
+    // 🆕 gameState VISIEMS, bet su waitingForBuy tik TAM žaidėjui
+    const state = game.getGameState();
+    io.to(socket.gameId).emit('gameState', state);
+    
+    return;
+}
 
             // 🆕 Jei reikia processField – laikinai išsaugom
             if (result.needsProcessField) {

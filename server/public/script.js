@@ -605,10 +605,13 @@ function applyBoardSettings(s) {
     // 🆕 PENDING PURCHASE (pasiūlymas prieš metimą)   ← NAUJA!
     // ============================================
     socket.on('pendingPurchase', (data) => {
-        console.log('💰 Pending purchase:', data);
-
+    console.log('💰 Pending purchase:', data);
     
-        
+    // 🆕 Išsaugoti, kad TIK AŠ gavau pendingPurchase
+    window.lastPendingPurchasePlayerId = data.playerId;
+    
+    // 🆕 Rodyti TIK jei tai man
+    if (data.playerId === playerId) {
         showBuyChoice({
             fieldId: data.fieldId,
             fieldName: data.fieldName,
@@ -617,7 +620,8 @@ function applyBoardSettings(s) {
         });
         
         playNotificationSound();
-    });
+    }
+});
 
     socket.on('diceRolled', async (data) => {
     console.log('🎲 Kauliukai mesti:', data);
@@ -2650,7 +2654,7 @@ let html = `<div class="info-header">${field.icon || ''} ${infoName} (#${fieldId
     
     if (field.type === 'tax') {
         if (field.id === 5) {
-            html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€200</span></div></div>`;
+    html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€100</span></div></div>`;
         } else if (field.id === 21) {
             html += `<div class="info-section"><div class="info-row"><span class="label">💸 Mokestis:</span><span class="value red">€10</span></div></div>`;
         } else {
@@ -2659,12 +2663,14 @@ let html = `<div class="info-header">${field.icon || ''} ${infoName} (#${fieldId
     }
     
     if (field.type === 'special') {
-        if (field.id === 13) {
-            html += `<div class="info-section"><div class="info-row"><span class="label">🏥 Sumokėsi:</span><span class="value red">€100</span></div></div>`;
-        } else if (field.id === 4) {
-            html += `<div class="info-section"><div class="info-row"><span class="label">🎲 Gausi:</span><span class="value green">€200</span></div></div>`;
-        }
+    if (field.id === 13) {
+        html += `<div class="info-section"><div class="info-row"><span class="label">🏥 Sumokėsi:</span><span class="value red">€100</span></div></div>`;
+    } else if (field.id === 4) {
+        html += `<div class="info-section"><div class="info-row"><span class="label">🎲 Gausi:</span><span class="value green">+€200</span></div></div>`;
+    } else if (field.id === 50) {   // 🆕 GIMTADIENIS
+        html += `<div class="info-section"><div class="info-row"><span class="label">🎂 Gausi:</span><span class="value green">+€200</span></div></div>`;
     }
+}
     
     tooltip.innerHTML = html;
     
@@ -3418,8 +3424,8 @@ function hideBuyChoice() {
 }
 
 function confirmBuy() {
-    // 🆕 Nustatyti vėliau, kad hideBuyChoice praleistų
-    window.buyCancelled = true;  // naudojam tą patį flag'ą
+    window.buyCancelled = true;
+    window.lastPendingPurchasePlayerId = null;  // 🆕 Išvalyti
     
     socket.emit('buyProperty');
     playClickSound();
@@ -3431,8 +3437,8 @@ function confirmBuy() {
 }
 
 function cancelBuy() {
-    // 🆕 Nustatyti vėliau, kad hideBuyChoice praleistų
     window.buyCancelled = true;
+    window.lastPendingPurchasePlayerId = null;  // 🆕 Išvalyti
     
     socket.emit('cancelBuy');
     playClickSound();
@@ -4830,11 +4836,18 @@ if (jailBtn) {
     
     setTimeout(initMiniCardTooltips, 100);
     
-    // 🆕 Jei laukiama pirkimo – atidaryti modalą iš naujo
+// 🆕 Jei laukiama pirkimo – atidaryti modalą iš naujo
     // BET ne, jei ką tik atsisakėme
     if (state.waitingForBuy && !window.buyCancelled) {
         const me = state.players.find(p => p.id === playerId);
         if (me && state.currentTurn === playerId) {
+            // 🆕 APSAUGA: praleisti TIK jei lastPendingPurchasePlayerId NUSTATYTAS ir NE man
+            if (window.lastPendingPurchasePlayerId && 
+                window.lastPendingPurchasePlayerId !== playerId) {
+                console.log('⚠️ waitingForBuy=true, bet pendingPurchase ne man – praleidžiam');
+                return;
+            }
+            
             const field = state.board[me.position];
             if (field && field.cost > 0) {
                 const buyChoice = document.getElementById('buyChoice');
@@ -4850,7 +4863,7 @@ if (jailBtn) {
             }
         }
     }
-}
+}   // ← 🆕 PRIDĖK ŠITĄ (updateUI funkcijos pabaiga)
 
 // ============================================
 // 🆕 VIDURIO LANGELIŲ PRITAIKYMAS
@@ -4965,7 +4978,19 @@ function updateBoard(state) {
         const cellName = (translated && translated !== translationKey) ? translated : (field.name || index);
         html += `<span class="cell-name">${cellName}</span>`;
 
-        if (field.cost > 0) {
+        // 🆕 PIRMIAUSIA specialūs langeliai (su fiksuotu tekstu)
+        if (field.id === 4) {          // HORNY RP
+            html += `<span class="cell-cost" style="color:#28a745; font-weight:900;">€200</span>`;
+        } else if (field.id === 5) {   // VMI
+            html += `<span class="cell-cost" style="color:#dc3545; font-weight:900;">€100</span>`;
+        } else if (field.id === 13) {  // Ligoninė
+            html += `<span class="cell-cost" style="color:#dc3545; font-weight:900;">€100</span>`;
+        } else if (field.id === 21) {  // Latrų baras
+            html += `<span class="cell-cost" style="color:#dc3545; font-weight:900;">€10</span>`;
+        } else if (field.id === 50) {  // Gimtadienis
+            html += `<span class="cell-cost" style="color:#28a745; font-weight:900;">€200</span>`;
+        } else if (field.cost > 0) {
+            // 🆕 Namai / kaina (TIK property / service)
             if (owner && owner.houses && owner.houses[index] && owner.houses[index] > 0) {
                 const houseCount = owner.houses[index];
                 let houseIcons = '';
@@ -5015,7 +5040,7 @@ function updateBoard(state) {
         //     html += `</div>`;
         // }
         
-        // 🆕 PERPIEŠTI TIK JEI PASIKĖITĖ
+         // 🆕 PERPIEŠTI TIK JEI PASIKĖITĖ
         if (oldHTML !== html) {
             cell.innerHTML = html;
         }
@@ -5067,6 +5092,11 @@ function updateBoard(state) {
             if (owner) {
                 cell.style.setProperty('--owner-color', owner.color || '#ffd700');
                 
+                // 🆕 has-owner klasė – kai turi BENT 1 sklypą
+                if (!cell.classList.contains('has-owner')) {
+                    cell.classList.add('has-owner');
+                }
+                
                 const group = COLOR_GROUPS[field.color] || [];
                 if (group.length > 0) {
                     const hasAll = group.every(id => owner.properties.includes(id));
@@ -5081,19 +5111,25 @@ function updateBoard(state) {
                     }
                 }
             } else {
+                if (cell.classList.contains('has-owner')) {
+                    cell.classList.remove('has-owner');
+                }
                 if (cell.classList.contains('full-group')) {
                     cell.classList.remove('full-group');
                 }
                 cell.style.removeProperty('--owner-color');
             }
         } else {
+            if (cell.classList.contains('has-owner')) {
+                cell.classList.remove('has-owner');
+            }
             if (cell.classList.contains('full-group')) {
                 cell.classList.remove('full-group');
             }
             cell.style.removeProperty('--owner-color');
         }
     });
-}
+}         // ← 🆕 IR ŠITĄ (funkcijos pabaiga)
 
 // 🆕 Figūrėlių atnaujinimas ATSKIRAI nuo langelio turinio
 function updatePlayersOnCell(cell, playersHere) {
