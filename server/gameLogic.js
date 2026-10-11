@@ -78,6 +78,9 @@ class Game {
         this.buyTimeoutTimer = null;
         this.reservedColors = new Map();
         this.botTurnInProgress = false;
+        this.turnTimer = null;
+        this.turnTimerEndTime = null;
+        this.turnTimeoutDuration = 60000;   // 60s
     }
 
     setEmitFunction(emitFn) {
@@ -864,6 +867,57 @@ class Game {
         };
     }
 
+    // 🆕 Paleisti turn timer
+startTurnTimer() {
+    this.clearTurnTimer();
+    
+    const currentPlayer = this.getPlayerById(this.currentTurn);
+    if (!currentPlayer || currentPlayer.isBot) return;   // Tik ne-botams
+    
+    this.turnTimerEndTime = Date.now() + this.turnTimeoutDuration;
+    
+    this.turnTimer = setTimeout(() => {
+        console.log(`⏰ Turn timeout – auto-roll (player ${this.currentTurn})`);
+        this.autoRollDice();
+    }, this.turnTimeoutDuration);
+}
+
+// 🆕 Atšaukti turn timer
+clearTurnTimer() {
+    if (this.turnTimer) {
+        clearTimeout(this.turnTimer);
+        this.turnTimer = null;
+        this.turnTimerEndTime = null;
+    }
+}
+
+// 🆕 Auto-roll po timeout
+autoRollDice() {
+    const currentPlayer = this.getPlayerById(this.currentTurn);
+    if (!currentPlayer || currentPlayer.isBot) return;
+    if (!currentPlayer.isActive || currentPlayer.bankrupt || currentPlayer.left || currentPlayer.kicked) return;
+    if (this.isRolling) return;
+    
+    console.log(`⏰ Auto-roll: ${currentPlayer.name}`);
+    
+    const result = this.rollDice(this.currentTurn, currentPlayer.socketId);
+    
+    if (result.error) {
+        console.error('❌ Auto-roll klaida:', result.error);
+        return;
+    }
+    
+    if (this.emitFunction) {
+        this.emitFunction('diceRolled', result);
+        this.emitFunction('gameState', this.getGameState());
+        
+        if (result.dice && currentPlayer) {
+            const rollMsg = `${currentPlayer.name} metė ${result.dice[0]}+${result.dice[1]}=${result.total} (AFK)`;
+            this.emitFunction('message', rollMsg);
+        }
+    }
+}
+
     botSleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -1049,6 +1103,9 @@ class Game {
                 }, firstPlayer.socketId);
             }, 4000);
         }
+
+// 🆕 PALEISTI TIMER
+this.startTurnTimer();
 
         return {
             success: true,
@@ -1250,6 +1307,9 @@ class Game {
         if (socketId) {
             player.socketId = socketId;
         }
+
+// 🆕 ATŠAUKTI TIMER
+this.clearTurnTimer();
 
         this.isRolling = true;
         this.currentPlayerId = playerId;
@@ -1793,24 +1853,29 @@ class Game {
 }
 
     startBuyTimeout(playerId) {
-        if (this.buyTimeoutTimer) {
-            clearTimeout(this.buyTimeoutTimer);
-            this.buyTimeoutTimer = null;
-        }
-
-        this.buyTimeoutTimer = setTimeout(() => {
-            console.log(`⏰ Buy timeout - auto-cancel (player ${playerId})`);
-            this.cancelBuy(playerId, true);
-            this.buyTimeoutTimer = null;
-        }, C.BUY_TIMEOUT);
+    if (this.buyTimeoutTimer) {
+        clearTimeout(this.buyTimeoutTimer);
+        this.buyTimeoutTimer = null;
     }
+
+    // 🆕 PRIDĖTA: buyTimeoutEndTime
+    this.buyTimeoutEndTime = Date.now() + C.BUY_TIMEOUT;
+
+    this.buyTimeoutTimer = setTimeout(() => {
+        console.log(`⏰ Buy timeout - auto-cancel (player ${playerId})`);
+        this.cancelBuy(playerId, true);
+        this.buyTimeoutTimer = null;
+        this.buyTimeoutEndTime = null;   // 🆕 PRIDĖTA
+    }, C.BUY_TIMEOUT);
+}
 
     clearBuyTimeout() {
-        if (this.buyTimeoutTimer) {
-            clearTimeout(this.buyTimeoutTimer);
-            this.buyTimeoutTimer = null;
-        }
+    if (this.buyTimeoutTimer) {
+        clearTimeout(this.buyTimeoutTimer);
+        this.buyTimeoutTimer = null;
+        this.buyTimeoutEndTime = null;   // 🆕 PRIDĖTA
     }
+}
 
     buyProperty(playerId) {
     this.clearBuyTimeout();
@@ -2153,16 +2218,19 @@ class Game {
 });
 
         this.players.forEach(p => {
-            if (p.isActive && !p.bankrupt && !p.left && !p.kicked) {
-                if (p.money >= 0 && p.isDebtor === true) {
-                    console.log(`✅ ${p.name}: isDebtor → false (money: €${p.money})`);
-                    p.isDebtor = false;
-                }
-            }
-        });
-
-        return { nextPlayer: this.currentTurn };
+    if (p.isActive && !p.bankrupt && !p.left && !p.kicked) {
+        if (p.money >= 0 && p.isDebtor === true) {
+            console.log(`✅ ${p.name}: isDebtor → false (money: €${p.money})`);
+            p.isDebtor = false;
+        }
     }
+});
+
+// 🆕 PALEISTI TIMER NAUJAM ŽAIDĖJUI
+this.startTurnTimer();
+
+return { nextPlayer: this.currentTurn };
+}
 
     async endGame() {
         this.gameStarted = false;
@@ -2280,7 +2348,17 @@ class Game {
         isPublic: this.isPublic,
         gameId: this.gameId,
         lastMessageKey: null,
-        lastMessageData: null
+        lastMessageData: null,
+
+        // 🆕 TURN TIMER
+        turnTimeLeft: this.turnTimerEndTime ? Math.max(0, Math.floor((this.turnTimerEndTime - Date.now()) / 1000)) : 0,
+        turnTimerActive: !!this.turnTimer,
+        turnTimerEndTime: this.turnTimerEndTime,
+
+        // 🆕 BUY TIMER
+        buyTimeoutEndTime: this.buyTimeoutEndTime || null,
+        buyTimeoutActive: !!this.buyTimeoutTimer
+
     };
 }
 

@@ -370,7 +370,10 @@
             <div id="gameHeader">
     <span id="gameIdDisplay">📋 ID: ---</span>
     <span id="playerCount">👥 0/8</span>
-    <span id="turnDisplay">🎯 <span data-i18n="game.header.turn">Eina:</span> ---</span>
+    <span id="turnDisplay">
+    🎯 <span data-i18n="game.header.turn">Eina:</span> ---
+    <span id="turnTimer" style="margin-left:10px; color:#ffd700; font-weight:700;">⏱️ ---</span>
+</span>
     <button id="feedbackBtn" onclick="openFeedback()" title="Pranešti apie klaidą / Pasiūlyti idėją">
         🐛 <span class="btn-text" data-i18n="game.header.bugReport">Bug / Pasiūlymas</span>
     </button>
@@ -386,6 +389,8 @@
                 <div id="gameIdBox">
     <span data-i18n="game.leftPanel.id">📋 ID:</span><br><span id="gameIdDisplayLeft">---</span>
 </div>
+
+
 
                     <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange (laikinai išjungtas) -->
                     <!-- 
@@ -455,6 +460,14 @@
 <div id="leftTurnDisplay">
     <span data-i18n="game.leftPanel.turn">🎯</span> <span id="turnDisplayLeft">---</span>
 </div>
+
+<!-- 🆕 TURN TIMER -->
+<div id="turnTimerBox" style="background: rgba(0,0,0,0.3); border: 2px solid #ffd700; border-radius: 8px; padding: 8px 6px; text-align: center; display: none;">
+    <div id="turnTimerLabel" style="color: #ffd700; font-size: 10px; font-weight: 700; margin-bottom: 2px;">⏱️ LIKO LAIKO</div>
+    <div id="turnTimer" style="color: #fff; font-size: 20px; font-weight: 900; text-shadow: 0 0 10px rgba(255,215,0,0.5);">---</div>
+    <div id="turnTimerPlayer" style="color: #d4b896; font-size: 9px; margin-top: 2px;">---</div>
+</div>
+
                 </aside>
 
                 <div id="board">

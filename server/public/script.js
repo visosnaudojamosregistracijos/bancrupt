@@ -1643,12 +1643,20 @@ if (statusEl) {
     if (playerId === state.hostId) {
         startBtn.style.display = 'block';
         if (state.canStart) {
+            // 🆕 VISI PASIRUOŠĘ – ŽALIAS
             startBtn.disabled = false;
             startBtn.style.opacity = '1';
+            startBtn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';   // 🆕 ŽALIA
+            startBtn.style.borderColor = '#4ade80';                                     // 🆕 ŽALIA
+            startBtn.style.boxShadow = '0 0 20px rgba(40, 167, 69, 0.5)';              // 🆕 ŠVYTĖJIMAS
             startBtn.innerHTML = t('game.waiting.startBtn');
         } else {
+            // 🆕 NE VISI PASIRUOŠĘ – RAUDONAS
             startBtn.disabled = true;
-            startBtn.style.opacity = '0.5';
+            startBtn.style.opacity = '0.7';
+            startBtn.style.background = 'linear-gradient(145deg, #dc3545, #a71d2a)';   // 🆕 RAUDONA
+            startBtn.style.borderColor = '#ff6b6b';                                     // 🆕 RAUDONA
+            startBtn.style.boxShadow = 'none';                                          // 🆕 Be švytėjimo
             startBtn.innerHTML = t('game.waiting.startBtnDisabled');
         }
     } else {
@@ -4412,7 +4420,7 @@ function payJailFine() {
     if (confirm(`⛓️ Sumokėti €50 ir išeiti iš kalėjimo?`)) {
         socket.emit('payJailFine');
         playClickSound();
-        playPaySound();
+        // playPaySound();
     }
 }
 
@@ -6459,5 +6467,64 @@ async function submitFeedback() {
         errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
     }
 }
+
+// ============================================
+// 🆕 TURN TIMER + BUY TIMER
+// ============================================
+setInterval(() => {
+    const turnTimerBox = document.getElementById('turnTimerBox');
+    const turnTimerEl = document.getElementById('turnTimer');
+    const turnTimerPlayer = document.getElementById('turnTimerPlayer');
+    const turnTimerLabel = document.getElementById('turnTimerLabel');
+    
+    if (!turnTimerBox || !turnTimerEl) return;
+    
+    // 🆕 1. PIRKIMO LAIKAS (prioritetas)
+    if (gameState?.buyTimeoutActive && gameState?.buyTimeoutEndTime) {
+        const buyTimeLeft = Math.max(0, Math.floor((gameState.buyTimeoutEndTime - Date.now()) / 1000));
+        const currentPlayer = gameState.players?.find(p => p.id === gameState.currentTurn);
+        
+        if (buyTimeLeft > 0) {
+            if (turnTimerLabel) turnTimerLabel.textContent = '🛒 PIRKIMO LAIKAS';
+            turnTimerEl.textContent = `${buyTimeLeft}s`;
+            if (turnTimerPlayer) turnTimerPlayer.textContent = currentPlayer?.name || '---';
+            turnTimerBox.style.display = 'block';
+            
+            if (buyTimeLeft <= 5) {
+                turnTimerEl.style.color = '#ff1a1a';   // Raudona
+            } else if (buyTimeLeft <= 10) {
+                turnTimerEl.style.color = '#ff8c00';   // Oranžinė
+            } else {
+                turnTimerEl.style.color = '#28a745';   // Žalia
+            }
+            return;
+        }
+    }
+    
+    // 🆕 2. ĖJIMO LAIKAS
+    if (gameState?.turnTimerActive && gameState?.turnTimerEndTime) {
+        const timeLeft = Math.max(0, Math.floor((gameState.turnTimerEndTime - Date.now()) / 1000));
+        const currentPlayer = gameState.players?.find(p => p.id === gameState.currentTurn);
+        
+        if (timeLeft > 0) {
+            if (turnTimerLabel) turnTimerLabel.textContent = '⏱️ LIKO LAIKO';
+            turnTimerEl.textContent = `${timeLeft}s`;
+            if (turnTimerPlayer) turnTimerPlayer.textContent = currentPlayer?.name || '---';
+            turnTimerBox.style.display = 'block';
+            
+            if (timeLeft <= 10) {
+                turnTimerEl.style.color = '#ff1a1a';
+            } else if (timeLeft <= 30) {
+                turnTimerEl.style.color = '#ff8c00';
+            } else {
+                turnTimerEl.style.color = '#fff';
+            }
+            return;
+        }
+    }
+    
+    // 🆕 3. Niekas neaktyvus
+    turnTimerBox.style.display = 'none';
+}, 500);
 
 console.log('✅ Feedback funkcijos užkrautos!');
