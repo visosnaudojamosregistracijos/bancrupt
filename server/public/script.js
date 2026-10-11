@@ -47,7 +47,7 @@ const SERVICE_RENT = { 1: 50, 2: 100, 3: 150, 4: 200 };
 const COLOR_GROUPS = {
     '#ffd700': [1, 3],
     '#4a90d9': [6, 7, 9],
-    '#2ecc71': [10, 12, 15],
+    '#ff8c00': [10, 12, 15],   // ← 🆕 ORANŽINĖ (buvo žalia)
     '#9b59b6': [17, 18, 20],
     '#e74c3c': [22, 23, 25],
     '#8B6914': [27, 29, 30],
@@ -4844,21 +4844,21 @@ if (jailBtn) {
             // 🆕 APSAUGA: praleisti TIK jei lastPendingPurchasePlayerId NUSTATYTAS ir NE man
             if (window.lastPendingPurchasePlayerId && 
                 window.lastPendingPurchasePlayerId !== playerId) {
-                console.log('⚠️ waitingForBuy=true, bet pendingPurchase ne man – praleidžiam');
-                return;
-            }
-            
-            const field = state.board[me.position];
-            if (field && field.cost > 0) {
-                const buyChoice = document.getElementById('buyChoice');
-                if (buyChoice && buyChoice.style.display !== 'flex') {
-                    console.log('🆕 updateUI: atidarome buyChoice (waitingForBuy)');
-                    showBuyChoice({
-                        fieldId: field.id,
-                        fieldName: field.name,
-                        fieldCost: field.cost,
-                        playerId: me.id
-                    });
+                console.log('⚠️ waitingForBuy=true, bet pendingPurchase ne man – praleidžiam buyChoice');
+                // 🆕 NĖRA return! Tik praleisti buyChoice
+            } else {
+                const field = state.board[me.position];
+                if (field && field.cost > 0) {
+                    const buyChoice = document.getElementById('buyChoice');
+                    if (buyChoice && buyChoice.style.display !== 'flex') {
+                        console.log('🆕 updateUI: atidarome buyChoice (waitingForBuy)');
+                        showBuyChoice({
+                            fieldId: field.id,
+                            fieldName: field.name,
+                            fieldCost: field.cost,
+                            playerId: me.id
+                        });
+                    }
                 }
             }
         }
