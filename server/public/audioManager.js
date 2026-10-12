@@ -72,7 +72,7 @@ class AudioManager {
             'papludimys': 'sounds/papludimys.mp3',
             'air-port': 'sounds/air-port.mp3',
             'air-in': 'sounds/air-in.mp3',
-            'hospital': 'sounds/hospital.mp3',
+            'hospital': 'sounds/hospital1.mp3',
             'dujos': 'sounds/dujos.mp3',
             'dujos1': 'sounds/dujos1.mp3',
             'siuksles': 'sounds/siuksles.mp3',
