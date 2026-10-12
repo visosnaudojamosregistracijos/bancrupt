@@ -2693,7 +2693,7 @@ let html = `<div class="info-header">${field.icon || ''} ${infoName} (#${fieldId
     
     if (field.type === 'special') {
     if (field.id === 13) {
-        html += `<div class="info-section"><div class="info-row"><span class="label">🏥 Sumokėsi:</span><span class="value red">€100</span></div></div>`;
+        html += `<div class="info-section"><div class="info-row"><span class="label">🏥 Sumokėsi:</span><span class="value red">€50</span></div></div>`;
     } else if (field.id === 4) {
         html += `<div class="info-section"><div class="info-row"><span class="label">🎲 Gausi:</span><span class="value green">+€200</span></div></div>`;
     } else if (field.id === 50) {   // 🆕 GIMTADIENIS
@@ -5033,7 +5033,7 @@ function updateBoard(state) {
         } else if (field.id === 5) {   // VMI
             html += `<span class="cell-cost" style="color:#dc3545; font-weight:900;">€100</span>`;
         } else if (field.id === 13) {  // Ligoninė
-            html += `<span class="cell-cost" style="color:#dc3545; font-weight:900;">€100</span>`;
+            html += `<span class="cell-cost" style="color:#dc3545; font-weight:900;">€50</span>`;
         } else if (field.id === 21) {  // Latrų baras
             html += `<span class="cell-cost" style="color:#dc3545; font-weight:900;">€10</span>`;
         } else if (field.id === 50) {  // Gimtadienis
