@@ -2438,12 +2438,14 @@ button,
 }
 
 @keyframes diceRollEnhanced {
-    0%   { transform: rotate(0deg) scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
-    20%  { transform: rotate(72deg) scale(1.15); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
-    40%  { transform: rotate(144deg) scale(0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
-    60%  { transform: rotate(216deg) scale(1.2); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
-    80%  { transform: rotate(288deg) scale(0.95); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
-    100% { transform: rotate(360deg) scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
+    0%   { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1); }
+    15%  { transform: rotateX(180deg) rotateY(90deg) rotateZ(-45deg) scale(1.15); }
+    30%  { transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg) scale(0.9); }
+    45%  { transform: rotateX(540deg) rotateY(270deg) rotateZ(-135deg) scale(1.2); }
+    60%  { transform: rotateX(720deg) rotateY(360deg) rotateZ(180deg) scale(0.95); }
+    75%  { transform: rotateX(900deg) rotateY(450deg) rotateZ(-90deg) scale(1.1); }
+    90%  { transform: rotateX(1080deg) rotateY(540deg) rotateZ(45deg) scale(0.98); }
+    100% { transform: rotateX(1080deg) rotateY(720deg) rotateZ(0deg) scale(1); }
 }
 
 @keyframes diceGlow {
@@ -3707,4 +3709,28 @@ body.dark-mode #cellInfoPanel {
     filter: drop-shadow(0 0 6px var(--owner-color, var(--gold))) 
             drop-shadow(0 0 12px var(--owner-color, var(--gold)));
     z-index: 2;
+}
+
+/* 🆕 AUKCIONO MODALAS — tekstas turi būti tamsus */
+#auctionModal > div:not([class]) {
+    color: #3d2b1f;
+}
+
+#auctionModal > div > h2 {
+    color: #ffc107;
+}
+
+#auctionModal #auctionContent,
+#auctionModal #auctionContent p,
+#auctionModal #auctionContent strong,
+#auctionModal #auctionContent span {
+    color: #3d2b1f;
+}
+
+#auctionModal #auctionCurrentBid {
+    color: #28a745 !important;
+}
+
+#auctionModal #auctionTimer {
+    color: #dc3545 !important;
 }

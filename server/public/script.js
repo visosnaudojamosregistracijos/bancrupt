@@ -962,34 +962,55 @@ socket.on('buyConfirmed', (data) => {
             }
         }
         
-        hideBuyChoice();
+        hideBuyChoice(true);
     });
 
     socket.on('buyCancelled', (data) => {
-        console.log('❌ Pirkimas atšauktas:', data);
-        playMoveSound();
+    console.log('❌ Pirkimas atšauktas:', data);
+    playMoveSound();
+    
+    let msg;
+    if (data.playerId === playerId) {
+        msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
+    } else {
+        msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+    }
+    
+    addJournal(msg);
+    
+    if (data.fieldName && gameState && gameState.board) {
+        const field = gameState.board.find(f => f.name === data.fieldName);
+        const player = gameState.players.find(p => p.id === data.playerId);
         
-        let msg;
-        if (data.playerId === playerId) {
-            msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
-        } else {
-            msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
+        if (field && player) {
+            highlightCell(field.id, 'red', 5000);
+            showBuyCard(field, player, 'cancel');
         }
-        
-        addJournal(msg);
-        
-        if (data.fieldName && gameState && gameState.board) {
-            const field = gameState.board.find(f => f.name === data.fieldName);
-            const player = gameState.players.find(p => p.id === data.playerId);
-            
-            if (field && player) {
-                highlightCell(field.id, 'red', 5000);
-                showBuyCard(field, player, 'cancel');
-            }
-        }
-        
-        hideBuyChoice();
-    });
+    }
+    
+    // 🆕 PRIVERSTINAI UŽDARYTI — apeiti visas apsaugas
+    window.buyCancelled = true;
+    window.lastPendingPurchasePlayerId = null;
+    
+    // 🆕 Sinchronizuoti gameState
+    if (gameState) {
+        gameState.waitingForBuy = false;
+    }
+    
+    // 🆕 Tiesioginis modal uždarymas
+    const buyChoice = document.getElementById('buyChoice');
+    if (buyChoice) {
+        buyChoice.style.display = 'none';
+        buyChoice.classList.remove('show');
+    }
+    
+    // 🆕 Grąžinti flag po 500ms
+    setTimeout(() => {
+        window.buyCancelled = false;
+    }, 500);
+    
+    if (gameState) updateUI(gameState);
+});
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
@@ -3270,20 +3291,30 @@ function leaveGame() {
 // ============================================
 
 function updateDiceDisplay(value1, value2) {
-    updateSingleDice('centerDice1', value1);
-    updateSingleDice('centerDice2', value2);
-    
     const dice1 = document.getElementById('centerDice1');
     const dice2 = document.getElementById('centerDice2');
     
     if (dice1) dice1.classList.add('rolling');
     if (dice2) dice2.classList.add('rolling');
     
+    // 🆕 METIMO METU RODYTI ATSITIKTINIUS SKAIČIUS (intriga!)
+    const randomInterval = setInterval(() => {
+        const r1 = Math.floor(Math.random() * 6) + 1;
+        const r2 = Math.floor(Math.random() * 6) + 1;
+        updateSingleDice('centerDice1', r1);
+        updateSingleDice('centerDice2', r2);
+    }, 80);   // kas 80ms
+    
     if (navigator.vibrate) {
         navigator.vibrate([50, 30, 50, 30, 100]);
     }
     
+    // 🆕 PO 800ms SUSTABDYTI ir parodyti TIKRĄ rezultatą
     setTimeout(() => {
+        clearInterval(randomInterval);   // ← 🆕 sustabdyti atsitiktinius
+        updateSingleDice('centerDice1', value1);   // ← TIKRAS
+        updateSingleDice('centerDice2', value2);   // ← TIKRAS
+        
         if (dice1) {
             dice1.classList.remove('rolling');
             dice1.classList.add('settle');
@@ -3416,10 +3447,9 @@ function showBuyChoice(data) {
     playNotificationSound();
 }
 
-function hideBuyChoice() {
-    // 🆕 NELEISTI uždaryti, jei server'yje waitingForBuy
-    // BET leisti, jei tai cancelBuy
-    if (gameState && gameState.waitingForBuy && !window.buyCancelled) {
+function hideBuyChoice(force = false) {
+    // 🆕 Jei force=true – priverstinai uždaryti (apeiti apsaugą)
+    if (!force && gameState && gameState.waitingForBuy && !window.buyCancelled) {
         console.log('⚠️ Negalima uždaryti pirkimo – laukiama sprendimo!');
         return;
     }
@@ -4843,6 +4873,17 @@ if (jailBtn) {
     autoUpdateLeaders();
     
     setTimeout(initMiniCardTooltips, 100);
+
+    // 🆕 Jei serveris išvalė waitingForBuy – uždaryti modalą
+    if (!state.waitingForBuy) {
+        const buyChoice = document.getElementById('buyChoice');
+        if (buyChoice && buyChoice.style.display === 'flex') {
+            console.log('🆕 updateUI: serveris išvalė waitingForBuy – uždarome buyChoice');
+            buyChoice.style.display = 'none';
+            buyChoice.classList.remove('show');
+            window.lastPendingPurchasePlayerId = null;
+        }
+    }
     
 // 🆕 Jei laukiama pirkimo – atidaryti modalą iš naujo
     // BET ne, jei ką tik atsisakėme
@@ -4871,7 +4912,7 @@ if (jailBtn) {
             }
         }
     }
-}   // ← 🆕 PRIDĖK ŠITĄ (updateUI funkcijos pabaiga)
+}   // ← updateUI pabaiga
 
 // ============================================
 // 🆕 VIDURIO LANGELIŲ PRITAIKYMAS
@@ -5241,11 +5282,11 @@ function addChatMessage(data) {
         const botIcon = isBot ? '🤖 ' : '';
         
         waitingContainer.innerHTML += `
-            <div style="color:#3d2b1f; display:flex; align-items:center; gap:4px; margin-bottom:4px; ${isBot ? 'background:rgba(111,66,193,0.1); padding:2px 4px; border-radius:4px;' : ''}">
-                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${data.color}; border:1px solid rgba(0,0,0,0.2); flex-shrink:0;"></span>
-                <b>${botIcon}${data.player}:</b> 
-                <span>${data.message}</span>
-                <span style="font-size:9px; color:rgba(61,43,31,0.4); margin-left:auto;">${time}</span>
+            <div style="color:#fff; display:flex; align-items:center; gap:4px; margin-bottom:4px; ${isBot ? 'background:rgba(111,66,193,0.2); padding:2px 4px; border-radius:4px;' : ''}">
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${data.color}; border:1px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
+                <b style="color:${data.color};">${botIcon}${data.player}:</b> 
+                <span style="color:#fff;">${data.message}</span>
+                <span style="font-size:9px; color:rgba(255,255,255,0.5); margin-left:auto;">${time}</span>
             </div>
         `;
         waitingContainer.scrollTop = waitingContainer.scrollHeight;

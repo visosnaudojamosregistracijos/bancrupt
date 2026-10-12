@@ -1992,12 +1992,8 @@ this.clearTurnTimer();
     
     const wasPendingPurchase = player.pendingPurchase !== null;
     
-    if (!isTimeout) {
-        player.pendingPurchase = null;
-        console.log(`❌ ${player.name}: pendingPurchase išvalytas (atsisakė)`);
-    } else {
-        console.log(`⏰ ${player.name}: pendingPurchase paliktas (timeout)`);
-    }
+    player.pendingPurchase = null;
+    console.log(`❌ ${player.name}: pendingPurchase išvalytas (${isTimeout ? 'timeout' : 'atsisakė'})`);
     
     this.addMessageKey('game.cancelledBuy', {
         player: player.name,
@@ -2043,6 +2039,13 @@ this.clearTurnTimer();
     }
 
     this.endTurn();
+    
+    // 🆕 SIŲSTI gameState VISIEMS po endTurn
+    if (this.emitFunction) {
+        this.emitFunction('gameState', this.getGameState());
+        console.log('📊 gameState išsiųstas po cancelBuy (timeout)');
+    }
+    
     return {
         success: true,
         messageKey: isTimeout ? 'game.buyTimeout' : 'game.cancelledBuy',
