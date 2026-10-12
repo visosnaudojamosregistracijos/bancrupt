@@ -18,23 +18,23 @@ async function loadBoardCache() {
         overrides.forEach(o => overrideMap.set(o.cell_index, o));
 
         globalBoardCache = boardData.map(cell => {
-    const ov = overrideMap.get(cell.id);
-    if (!ov) return { ...cell };
-    return {
-        ...cell,
-        name: ov.name ?? cell.name,
-        type: ov.type ?? cell.type,
-        color: ov.color ?? cell.color,
-        color2: ov.color2 ?? null,
-        cost: ov.cost ?? cell.cost,
-        icon: ov.icon ?? cell.icon,
-        music: ov.music ?? null,
-        font_size: ov.font_size ?? 14,
-        font_color: ov.font_color ?? null,
-        description: ov.description ?? null,
-        custom_data: ov.custom_data ?? null
-    };
-});
+            const ov = overrideMap.get(cell.id);
+            if (!ov) return { ...cell };
+            return {
+                ...cell,
+                name: ov.name ?? cell.name,
+                type: ov.type ?? cell.type,
+                color: ov.color ?? cell.color,
+                color2: ov.color2 ?? null,
+                cost: ov.cost ?? cell.cost,
+                icon: ov.icon ?? cell.icon,
+                music: ov.music ?? null,
+                font_size: ov.font_size ?? 14,
+                font_color: ov.font_color ?? null,
+                description: ov.description ?? null,
+                custom_data: ov.custom_data ?? null
+            };
+        });
 
         console.log(`🎨 Board cache įkeltas (${overrides.length} override)`);
         return globalBoardCache;
@@ -59,11 +59,11 @@ class Game {
         this.maxPlayers = C.MAX_PLAYERS;
         this.diceValues = [1, 1];
         this.isRolling = false;
-        this.lastRollTime = 0;   // 🆕 Apsauga nuo per greito metimo
+        this.lastRollTime = 0;
         this.consecutiveDoubles = 0;
         this.waitingForBuy = false;
         this.currentPlayerId = null;
-        this.pendingFieldPlayerId = null;   // 🆕 Laukiantis lauko apdorojimo
+        this.pendingFieldPlayerId = null;
         this.doubleRoll = false;
         this.emitFunction = null;
         this.lastMessage = '';
@@ -693,31 +693,28 @@ class Game {
     }
 
     async botTurn(botId, emitFunction) {
-    const bot = this.getPlayerById(botId);
+        const bot = this.getPlayerById(botId);
 
-    if (!bot || !bot.isBot) {
-        return { error: 'Ne botas' };
-    }
+        if (!bot || !bot.isBot) {
+            return { error: 'Ne botas' };
+        }
 
-    if (this.currentTurn !== botId) {
-        return { error: 'Ne boto eilė' };
-    }
+        if (this.currentTurn !== botId) {
+            return { error: 'Ne boto eilė' };
+        }
 
-    if (!this.gameStarted) {
-        return { error: 'Žaidimas neprasidėjęs' };
-    }
+        if (!this.gameStarted) {
+            return { error: 'Žaidimas neprasidėjęs' };
+        }
 
-    if (bot.bankrupt || bot.left || bot.kicked) {
-        return { error: 'Botas neaktyvus' };
-    }
+        if (bot.bankrupt || bot.left || bot.kicked) {
+            return { error: 'Botas neaktyvus' };
+        }
 
-    // 🆕 Jei laukiama pirkimo sprendimo – NELEISTI mesti
-    if (this.waitingForBuy) {
-        console.log(`⏳ Botas ${bot.name}: laukiama pirkimo sprendimo`);
-        return { error: 'Laukiama pirkimo sprendimo' };
-    }
-
-    // console.log(`🤖 ${bot.name} pradeda ėjimą...`);
+        if (this.waitingForBuy) {
+            console.log(`⏳ Botas ${bot.name}: laukiama pirkimo sprendimo`);
+            return { error: 'Laukiama pirkimo sprendimo' };
+        }
 
         if (bot.money >= 0 && bot.isDebtor === true) {
             console.log(`✅ ${bot.name}: isDebtor → false (money: €${bot.money})`);
@@ -726,19 +723,19 @@ class Game {
 
         if (bot.money < 0) {
             console.log(`🤖 ${bot.name}: skolingas €${Math.abs(bot.money)}`);
-            
+
             const housesToDemolish = Object.keys(bot.houses)
                 .filter(id => bot.houses[id] > 0)
                 .map(id => parseInt(id));
 
             if (housesToDemolish.length > 0) {
                 housesToDemolish.sort((a, b) => (bot.houses[a] || 0) - (bot.houses[b] || 0));
-                
+
                 const fieldId = housesToDemolish[0];
                 const field = this.board.find(f => f.id === fieldId);
-                
+
                 console.log(`🤖 ${bot.name}: bando griauti namą ant ${field ? field.name : fieldId}`);
-                
+
                 const result = this.demolishHouse(bot.id, fieldId);
                 console.log(`🤖 ${bot.name} nugriovė namą:`, result);
                 await this.botSleep(1500);
@@ -746,10 +743,10 @@ class Game {
                 if (bot.money >= 0) {
                     return { action: 'demolished', message: `${bot.name} nugriovė namą` };
                 }
-                
+
                 console.log(`🤖 ${bot.name}: vis dar minuse (€${bot.money}), tęsia...`);
             }
-            
+
             const sellable = bot.properties
                 .filter(id => !bot.houses[id] || bot.houses[id] === 0)
                 .map(id => this.board.find(f => f.id === id))
@@ -758,7 +755,7 @@ class Game {
 
             if (sellable.length > 0) {
                 console.log(`🤖 ${bot.name}: bando parduoti ${sellable[0].name}`);
-                
+
                 const result = this.sellToBank(bot.id, [sellable[0].id]);
                 console.log(`🤖 ${bot.name} pardavė sklypą:`, result);
                 await this.botSleep(1500);
@@ -767,7 +764,7 @@ class Game {
                     return { action: 'sold', message: `${bot.name} pardavė turtą` };
                 }
             }
-            
+
             console.log(`🤖 ${bot.name}: NEGALI IŠEITI IŠ MINUSO – bankrutuoja!`);
             const result = this.bankruptPlayer(bot.id);
             return { action: 'bankrupt', result };
@@ -780,19 +777,19 @@ class Game {
                 await this.botSleep(1000);
                 return { action: 'paid_jail', message: `${bot.name} išėjo iš kalėjimo` };
             }
-            
+
             console.log(`🤖 ${bot.name}: meta kauliukus kalėjime (bandymas ${(bot.jailTurns || 0) + 1}/3)`);
             const rollResult = this.rollDice(botId, null);
-            
+
             if (rollResult.error) {
                 console.log(`🤖 ${bot.name}: klaida metant:`, rollResult.error);
                 return { error: rollResult.error };
             }
-            
+
             await this.botSleep(1000);
-            
-            return { 
-                action: 'jail_roll', 
+
+            return {
+                action: 'jail_roll',
                 rollResult,
                 message: `${bot.name} metė kauliukus kalėjime`
             };
@@ -868,55 +865,74 @@ class Game {
     }
 
     // 🆕 Paleisti turn timer
-startTurnTimer() {
-    this.clearTurnTimer();
-    
-    const currentPlayer = this.getPlayerById(this.currentTurn);
-    if (!currentPlayer || currentPlayer.isBot) return;   // Tik ne-botams
-    
-    this.turnTimerEndTime = Date.now() + this.turnTimeoutDuration;
-    
-    this.turnTimer = setTimeout(() => {
-        console.log(`⏰ Turn timeout – auto-roll (player ${this.currentTurn})`);
-        this.autoRollDice();
-    }, this.turnTimeoutDuration);
-}
+    startTurnTimer() {
+        this.clearTurnTimer();
 
-// 🆕 Atšaukti turn timer
-clearTurnTimer() {
-    if (this.turnTimer) {
-        clearTimeout(this.turnTimer);
-        this.turnTimer = null;
-        this.turnTimerEndTime = null;
-    }
-}
+        const currentPlayer = this.getPlayerById(this.currentTurn);
+        if (!currentPlayer || currentPlayer.isBot) return;
 
-// 🆕 Auto-roll po timeout
-autoRollDice() {
-    const currentPlayer = this.getPlayerById(this.currentTurn);
-    if (!currentPlayer || currentPlayer.isBot) return;
-    if (!currentPlayer.isActive || currentPlayer.bankrupt || currentPlayer.left || currentPlayer.kicked) return;
-    if (this.isRolling) return;
-    
-    console.log(`⏰ Auto-roll: ${currentPlayer.name}`);
-    
-    const result = this.rollDice(this.currentTurn, currentPlayer.socketId);
-    
-    if (result.error) {
-        console.error('❌ Auto-roll klaida:', result.error);
-        return;
+        this.turnTimerEndTime = Date.now() + this.turnTimeoutDuration;
+
+        this.turnTimer = setTimeout(() => {
+            console.log(`⏰ Turn timeout – auto-roll (player ${this.currentTurn})`);
+            this.autoRollDice();
+        }, this.turnTimeoutDuration);
     }
-    
-    if (this.emitFunction) {
-        this.emitFunction('diceRolled', result);
-        this.emitFunction('gameState', this.getGameState());
-        
-        if (result.dice && currentPlayer) {
-            const rollMsg = `${currentPlayer.name} metė ${result.dice[0]}+${result.dice[1]}=${result.total} (AFK)`;
-            this.emitFunction('message', rollMsg);
+
+    // 🆕 Atšaukti turn timer
+    clearTurnTimer() {
+        if (this.turnTimer) {
+            clearTimeout(this.turnTimer);
+            this.turnTimer = null;
+            this.turnTimerEndTime = null;
         }
     }
-}
+
+    // 🆕 Auto-roll po timeout
+    autoRollDice() {
+        const currentPlayer = this.getPlayerById(this.currentTurn);
+        if (!currentPlayer || currentPlayer.isBot) return;
+        if (!currentPlayer.isActive || currentPlayer.bankrupt || currentPlayer.left || currentPlayer.kicked) return;
+        if (this.isRolling) return;
+
+        console.log(`⏰ Auto-roll: ${currentPlayer.name}`);
+
+        const result = this.rollDice(this.currentTurn, currentPlayer.socketId);
+
+        if (result.error) {
+            console.error('❌ Auto-roll klaida:', result.error);
+            return;
+        }
+
+        if (this.emitFunction) {
+            this.emitFunction('diceRolled', result);
+            this.emitFunction('gameState', this.getGameState());
+
+            if (result.dice && currentPlayer) {
+                const rollMsg = `${currentPlayer.name} metė ${result.dice[0]}+${result.dice[1]}=${result.total} (AFK)`;
+                this.emitFunction('message', rollMsg);
+            }
+        }
+
+        // ✅ PATAISYTA: apsauga nuo isRolling užstrigimo po auto-roll
+        const rolledPlayerId = currentPlayer.id;
+        const rolledPlayerName = currentPlayer.name;
+        setTimeout(() => {
+            if (this.isRolling && this.currentTurn === rolledPlayerId) {
+                console.warn(`⚠️ isRolling užstrigo po auto-roll (${rolledPlayerName}) – atblokuojam`);
+                this.isRolling = false;
+
+                // ✅ Paleisti turn timer iš naujo, kad žaidėjas galėtų mesti
+                if (!this.waitingForBuy) {
+                    this.startTurnTimer();
+                }
+
+                if (this.emitFunction) {
+                    this.emitFunction('gameState', this.getGameState());
+                }
+            }
+        }, 3000);
+    }
 
     botSleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -1032,8 +1048,7 @@ autoRollDice() {
 
         player.ready = ready === true;
         this.lastActivity = Date.now();
-        
-        // 🆕 PAKEISTA: addMessage → addMessageKey
+
         this.addMessageKey(
             player.ready ? 'game.playerReady' : 'game.playerUnready',
             { player: player.name }
@@ -1091,7 +1106,6 @@ autoRollDice() {
         this.gameStarted = true;
         this.lastActivity = Date.now();
 
-        // 🆕 PAKEISTA: addMessage → addMessageKey
         this.addMessageKey('game.gameStarted', { player: shuffled[0].name });
 
         const firstPlayer = shuffled[0];
@@ -1104,8 +1118,7 @@ autoRollDice() {
             }, 4000);
         }
 
-// 🆕 PALEISTI TIMER
-this.startTurnTimer();
+        this.startTurnTimer();
 
         return {
             success: true,
@@ -1148,8 +1161,7 @@ this.startTurnTimer();
         target.ready = false;
 
         this.lastActivity = Date.now();
-        
-        // 🆕 PAKEISTA: addMessage → addMessageKey
+
         this.addMessageKey('game.kicked', { player: targetName });
 
         return {
@@ -1220,11 +1232,10 @@ this.startTurnTimer();
 
         if (player.money < 0) {
             player.isDebtor = true;
-            
-            // 🆕 PAKEISTA: addMessage → addMessageKey
-            this.addMessageKey('game.debtor', { 
-                player: player.name, 
-                amount: Math.abs(player.money) 
+
+            this.addMessageKey('game.debtor', {
+                player: player.name,
+                amount: Math.abs(player.money)
             });
         } else {
             if (player.isDebtor === true) {
@@ -1246,12 +1257,12 @@ this.startTurnTimer();
         if (!player || !player.isActive || player.bankrupt || player.left || player.kicked) {
             return { error: 'Žaidėjas neaktyvus' };
         }
-        
+
         if (player.pendingPurchase) {
             const pending = player.pendingPurchase;
             const field = this.board[pending.fieldId];
             const owner = this.players.find(p => p.properties.includes(pending.fieldId) && !p.bankrupt && !p.left && !p.kicked);
-            
+
             console.log(`🔍 pendingPurchase patikra: ${player.name}`);
             console.log(`  - field: ${field?.name}`);
             console.log(`  - player.position: ${player.position}`);
@@ -1259,7 +1270,7 @@ this.startTurnTimer();
             console.log(`  - owner: ${owner?.name || 'nėra'}`);
             console.log(`  - player.money: €${player.money}`);
             console.log(`  - pending.fieldCost: €${pending.fieldCost}`);
-            
+
             if (player.position !== pending.fieldId) {
                 console.log(`  ❌ Ne, jau ne ant to sklypo`);
                 player.pendingPurchase = null;
@@ -1270,9 +1281,9 @@ this.startTurnTimer();
             }
             else if (player.money >= pending.fieldCost) {
                 console.log(`  ✅ TAIP! Galima pasiūlyti pirkti`);
-                
+
                 this.waitingForBuy = true;
-                
+
                 if (this.emitFunction) {
                     this.emitFunction('pendingPurchase', {
                         playerId: player.id,
@@ -1282,9 +1293,9 @@ this.startTurnTimer();
                         fieldCost: field.cost
                     });
                 }
-                
+
                 this.startBuyTimeout(playerId);
-                
+
                 return {
                     action: 'pending_purchase',
                     player: player,
@@ -1296,7 +1307,7 @@ this.startTurnTimer();
                 console.log(`  ❌ Ne, vis dar trūksta pinigų`);
             }
         }
-        
+
         if (player.isDebtor) {
             return { error: '⚠️ Tu skolingas! Parduok turtą, kad išsigelbėtum!' };
         }
@@ -1308,8 +1319,7 @@ this.startTurnTimer();
             player.socketId = socketId;
         }
 
-// 🆕 ATŠAUKTI TIMER
-this.clearTurnTimer();
+        this.clearTurnTimer();
 
         this.isRolling = true;
         this.currentPlayerId = playerId;
@@ -1332,47 +1342,46 @@ this.clearTurnTimer();
         }
 
         if (player.consecutiveDoubles >= 3) {
-    player.consecutiveDoubles = 0;
-    player.position = 16;
-    player.inJail = true;
-    this.isRolling = false;
-    this.addMessageKey('game.threeDoubles', { player: player.name });
+            player.consecutiveDoubles = 0;
+            player.position = 16;
+            player.inJail = true;
+            this.isRolling = false;
+            this.addMessageKey('game.threeDoubles', { player: player.name });
 
-    try {
-        this.endTurn();
-    } catch (err) {
-        console.error('❌ endTurn klaida (3 dubliai):', err);
-    }
+            try {
+                this.endTurn();
+            } catch (err) {
+                console.error('❌ endTurn klaida (3 dubliai):', err);
+            }
 
-    return {
-        dice: [dice1, dice2],
-        total,
-        player,
-        field: this.board[16],
-        inJail: true,
-        double: true,
-        goToJail: true,
-        messageKey: 'game.threeDoubles',
-        messageData: { player: player.name }
-    };
-}
+            return {
+                dice: [dice1, dice2],
+                total,
+                player,
+                field: this.board[16],
+                inJail: true,
+                double: true,
+                goToJail: true,
+                messageKey: 'game.threeDoubles',
+                messageData: { player: player.name }
+            };
+        }
 
         const oldPosition = player.position;
         let newPosition = (player.position + total) % this.board.length;
 
         if (newPosition < player.position) {
-    player.money += C.START_BONUS;
-    this.addMessageKey('game.passedStart', {
-        player: player.name,
-        bonus: C.START_BONUS
-    });
-}
+            player.money += C.START_BONUS;
+            this.addMessageKey('game.passedStart', {
+                player: player.name,
+                bonus: C.START_BONUS
+            });
+        }
 
         player.position = newPosition;
         const currentField = this.board[newPosition];
 
-        // this.isRolling = false;
-        this.pendingFieldPlayerId = playerId;   // 🆕 Laukiantis lauko apdorojimo
+        this.pendingFieldPlayerId = playerId;
 
         return {
             dice: [dice1, dice2],
@@ -1388,65 +1397,63 @@ this.clearTurnTimer();
     }
 
     handleJailRoll(player, dice1, dice2) {
-    const isDouble = dice1 === dice2;
-    player.jailTurns++;
+        const isDouble = dice1 === dice2;
+        player.jailTurns++;
 
-    if (isDouble) {
-        player.inJail = false;
-        player.jailTurns = 0;
-        this.addMessageKey('game.leftJail', { player: player.name });
-        // this.isRolling = false;
-        this.pendingFieldPlayerId = player.id;   // 🆕 PRIDĖK ŠITĄ EILUTĘ
-        return this.continueAfterJail(player, dice1, dice2);
-    } else if (player.jailTurns >= 3) {
-        if (player.money < C.JAIL_FINE) {
-            console.log(`💀 ${player.name}: neturi €${C.JAIL_FINE} – BANKROTAS!`);
-            this.addMessageKey('game.jailBankrupt', {
+        if (isDouble) {
+            player.inJail = false;
+            player.jailTurns = 0;
+            this.addMessageKey('game.leftJail', { player: player.name });
+            this.pendingFieldPlayerId = player.id;
+            return this.continueAfterJail(player, dice1, dice2);
+        } else if (player.jailTurns >= 3) {
+            if (player.money < C.JAIL_FINE) {
+                console.log(`💀 ${player.name}: neturi €${C.JAIL_FINE} – BANKROTAS!`);
+                this.addMessageKey('game.jailBankrupt', {
+                    player: player.name,
+                    fine: C.JAIL_FINE
+                });
+                this.bankruptPlayer(player.id);
+                return {
+                    action: 'bankrupt',
+                    player,
+                    messageKey: 'game.jailBankrupt',
+                    messageData: { player: player.name, fine: C.JAIL_FINE }
+                };
+            }
+
+            player.money -= C.JAIL_FINE;
+            player.inJail = false;
+            player.jailTurns = 0;
+            this.addMessageKey('game.paidJailFine', {
                 player: player.name,
                 fine: C.JAIL_FINE
             });
-            this.bankruptPlayer(player.id);
-            return { 
-                action: 'bankrupt', 
-                player, 
-                messageKey: 'game.jailBankrupt',
-                messageData: { player: player.name, fine: C.JAIL_FINE }
+            if (player.money < 0) {
+                this.checkDebtor(player.id);
+            }
+            this.pendingFieldPlayerId = player.id;
+            return this.continueAfterJail(player, dice1, dice2);
+        } else {
+            this.addMessageKey('game.jailAttempt', {
+                player: player.name,
+                attempt: player.jailTurns
+            });
+            this.isRolling = false;
+            this.endTurn();
+            return {
+                dice: [dice1, dice2],
+                total: dice1 + dice2,
+                player,
+                field: this.board[player.position],
+                inJail: true,
+                double: false,
+                jailAttempt: player.jailTurns,
+                messageKey: 'game.jailAttempt',
+                messageData: { player: player.name, attempt: player.jailTurns }
             };
         }
-        
-        player.money -= C.JAIL_FINE;
-        player.inJail = false;
-        player.jailTurns = 0;
-        this.addMessageKey('game.paidJailFine', {
-            player: player.name,
-            fine: C.JAIL_FINE
-        });
-        if (player.money < 0) {
-            this.checkDebtor(player.id);
-        }
-        // this.isRolling = false;
-        this.pendingFieldPlayerId = player.id;   // 🆕 Laukiantis lauko apdorojimo
-        return this.continueAfterJail(player, dice1, dice2);
-    } else {
-        this.addMessageKey('game.jailAttempt', {
-            player: player.name,
-            attempt: player.jailTurns
-        });
-        this.isRolling = false;
-        this.endTurn();
-        return {
-            dice: [dice1, dice2],
-            total: dice1 + dice2,
-            player,
-            field: this.board[player.position],
-            inJail: true,
-            double: false,
-            jailAttempt: player.jailTurns,
-            messageKey: 'game.jailAttempt',
-            messageData: { player: player.name, attempt: player.jailTurns }
-        };
     }
-}
 
     continueAfterJail(player, dice1, dice2) {
         const total = dice1 + dice2;
@@ -1464,8 +1471,7 @@ this.clearTurnTimer();
         player.position = newPosition;
         const currentField = this.board[newPosition];
 
-        // this.isRolling = false;
-        this.pendingFieldPlayerId = player.id;   // 🆕 Laukiantis lauko apdorojimo
+        this.pendingFieldPlayerId = player.id;
 
         return {
             dice: [dice1, dice2],
@@ -1530,7 +1536,6 @@ this.clearTurnTimer();
             player.consecutiveDoubles = 0;
             this.doubleRoll = false;
 
-            // 🆕 PAKEISTA: addMessage → addMessageKey
             this.addMessageKey('game.wentToJail', { player: player.name });
 
             this.turnHistory.push({
@@ -1564,9 +1569,8 @@ this.clearTurnTimer();
         });
 
         if (this.doubleRoll) {
-            // 🆕 PAKEISTA: addMessage → addMessageKey
             this.addMessageKey('game.doubleRollAgain', { player: player.name });
-            
+
             return {
                 success: true,
                 playerId: playerId,
@@ -1619,15 +1623,15 @@ this.clearTurnTimer();
     handleField(player, field) {
         const result = { action: 'stand', message: '' };
 
-        switch(field.type) {
+        switch (field.type) {
             case 'property': {
                 const propOwner = this.players.find(p => p.properties.includes(field.id) && !p.bankrupt && !p.left && !p.kicked);
 
                 if (propOwner) {
-    if (propOwner.id === player.id) {
-        result.messageKey = 'game.ownProperty';
-        result.messageData = { player: player.name, field: field.name };
-    } else {
+                    if (propOwner.id === player.id) {
+                        result.messageKey = 'game.ownProperty';
+                        result.messageData = { player: player.name, field: field.name };
+                    } else {
                         const rent = this.buildingLogic.getRentWithHouses(propOwner.id, field.id);
                         player.money -= rent;
                         propOwner.money += rent;
@@ -1649,19 +1653,19 @@ this.clearTurnTimer();
                         result.field = field;
                         console.log('📢', result.messageKey, result.messageData);
                     } else {
-                         result.action = 'stand';
+                        result.action = 'stand';
                         result.rent = 0;
                         result.field = field;
                         result.messageKey = 'game.notEnoughMoney';
                         result.messageData = { player: player.name, field: field.name };
                         console.log('📢', result.messageKey, result.messageData);
-                        
+
                         player.pendingPurchase = {
                             fieldId: field.id,
                             fieldName: field.name,
                             fieldCost: field.cost
                         };
-                        
+
                         console.log(`📝 ${player.name}: pendingPurchase išsaugotas (${field.name} €${field.cost})`);
                     }
                 }
@@ -1688,11 +1692,11 @@ this.clearTurnTimer();
                 else if (field.id === 48) specialAction = 'akropolis';
 
                 if (serviceOwner) {
-    if (serviceOwner.id === player.id) {
-        result.messageKey = 'game.ownService';
-        result.messageData = { player: player.name, field: field.name };
-        result.action = specialAction;
-    } else {
+                    if (serviceOwner.id === player.id) {
+                        result.messageKey = 'game.ownService';
+                        result.messageData = { player: player.name, field: field.name };
+                        result.action = specialAction;
+                    } else {
                         const rent = this.getServiceRent(serviceOwner, field.type);
                         player.money -= rent;
                         serviceOwner.money += rent;
@@ -1726,33 +1730,33 @@ this.clearTurnTimer();
             }
 
             case 'tax': {
-    if (field.id === 5) {
-        player.money -= 100;
-        result.action = 'pay_tax';
-        result.messageKey = 'game.taxVMI';
-        result.messageData = { player: player.name };
-    } else if (field.id === 21) {
-        player.money -= 10;
-        result.action = 'latras';
-        result.messageKey = 'game.taxLatras';
-        result.messageData = { player: player.name };
-    } else {
-        player.money -= field.cost;
-        result.action = 'pay_tax';
-        result.messageKey = 'game.taxGeneric';
-        result.messageData = { player: player.name, cost: field.cost };
-    }
-    if (player.money < 0) {
-        this.checkDebtor(player.id);
-    }
-    break;
-}
+                if (field.id === 5) {
+                    player.money -= 100;
+                    result.action = 'pay_tax';
+                    result.messageKey = 'game.taxVMI';
+                    result.messageData = { player: player.name };
+                } else if (field.id === 21) {
+                    player.money -= 10;
+                    result.action = 'latras';
+                    result.messageKey = 'game.taxLatras';
+                    result.messageData = { player: player.name };
+                } else {
+                    player.money -= field.cost;
+                    result.action = 'pay_tax';
+                    result.messageKey = 'game.taxGeneric';
+                    result.messageData = { player: player.name, cost: field.cost };
+                }
+                if (player.money < 0) {
+                    this.checkDebtor(player.id);
+                }
+                break;
+            }
 
             case 'jail':
-    result.action = 'visiting_jail';
-    result.messageKey = 'game.visitingJail';
-    result.messageData = { player: player.name };
-    break;
+                result.action = 'visiting_jail';
+                result.messageKey = 'game.visitingJail';
+                result.messageData = { player: player.name };
+                break;
 
             case 'go-to-jail':
                 player.position = 16;
@@ -1764,355 +1768,378 @@ this.clearTurnTimer();
                 break;
 
             case 'start':
-    player.money += C.START_LAND_BONUS;
-    result.messageKey = 'game.landedOnStart';
-    result.messageData = { player: player.name, bonus: C.START_LAND_BONUS };
-    break;
+                player.money += C.START_LAND_BONUS;
+                result.messageKey = 'game.landedOnStart';
+                result.messageData = { player: player.name, bonus: C.START_LAND_BONUS };
+                break;
 
             case 'parking':
-    result.messageKey = 'game.landedOnParking';
-    result.messageData = { player: player.name };
-    break;
+                result.messageKey = 'game.landedOnParking';
+                result.messageData = { player: player.name };
+                break;
 
             case 'chance':
-    if (field.id === 4) {
-        player.money += 200;
-        result.action = 'special';
-        result.messageKey = 'game.hornyRP';
-        result.messageData = { player: player.name };
-    } else {
-        this.handleChance(player);
-        result.action = 'chance';
-        result.messageKey = 'game.gotChance';
-        result.messageData = { player: player.name };
-    }
-    break;
+                if (field.id === 4) {
+                    player.money += 200;
+                    result.action = 'special';
+                    result.messageKey = 'game.hornyRP';
+                    result.messageData = { player: player.name };
+                } else {
+                    this.handleChance(player);
+                    result.action = 'chance';
+                    result.messageKey = 'game.gotChance';
+                    result.messageData = { player: player.name };
+                }
+                break;
 
             case 'special':
-    if (field.id === 50) {
-        player.money += 200;
-        result.action = 'birthday';
-        result.messageKey = 'game.birthday';
-        result.messageData = { player: player.name };
-    } else if (field.id === 13) {
-        const cost = field.cost || 50;
-        player.money -= cost;
-        result.action = 'hospital';
-        result.messageKey = 'game.hospital';
-        result.messageData = { player: player.name, cost: cost };
-        if (player.money < 0) {
-            this.checkDebtor(player.id);
-        }
-    } else if (field.id === 4) {
-        player.money += 200;
-        result.action = 'special';
-        result.messageKey = 'game.hornyRP2';
-        result.messageData = { player: player.name };
-    } else {
-        const random = Math.random();
-        if (random < 0.3) {
-            player.money += 100;
-            result.messageKey = 'game.specialWin';
-            result.messageData = { player: player.name };
-        } else if (random < 0.6) {
-            player.money -= 100;
-            result.messageKey = 'game.specialLose';
-            result.messageData = { player: player.name };
-        } else {
-            result.messageKey = 'game.specialNothing';
-            result.messageData = { player: player.name };
-        }
-        if (player.money < 0) {
-            this.checkDebtor(player.id);
-        }
-    }
-    break;
+                if (field.id === 50) {
+                    player.money += 200;
+                    result.action = 'birthday';
+                    result.messageKey = 'game.birthday';
+                    result.messageData = { player: player.name };
+                } else if (field.id === 13) {
+                    const cost = field.cost || 50;
+                    player.money -= cost;
+                    result.action = 'hospital';
+                    result.messageKey = 'game.hospital';
+                    result.messageData = { player: player.name, cost: cost };
+                    if (player.money < 0) {
+                        this.checkDebtor(player.id);
+                    }
+                } else if (field.id === 4) {
+                    player.money += 200;
+                    result.action = 'special';
+                    result.messageKey = 'game.hornyRP2';
+                    result.messageData = { player: player.name };
+                } else {
+                    const random = Math.random();
+                    if (random < 0.3) {
+                        player.money += 100;
+                        result.messageKey = 'game.specialWin';
+                        result.messageData = { player: player.name };
+                    } else if (random < 0.6) {
+                        player.money -= 100;
+                        result.messageKey = 'game.specialLose';
+                        result.messageData = { player: player.name };
+                    } else {
+                        result.messageKey = 'game.specialNothing';
+                        result.messageData = { player: player.name };
+                    }
+                    if (player.money < 0) {
+                        this.checkDebtor(player.id);
+                    }
+                }
+                break;
         }
 
         return result;
     }
 
     handleChance(player) {
-    const chances = [
-        { key: 'game.chanceWin200', data: { player: player.name }, action: () => { player.money += 200; } },
-        { key: 'game.chanceTax100', data: { player: player.name }, action: () => { player.money -= 100; } },
-        { key: 'game.chanceGoStart', data: { player: player.name }, action: () => { player.position = 0; player.money += 200; } },
-        { key: 'game.chanceWin50', data: { player: player.name }, action: () => { player.money += 50; } },
-        { key: 'game.chancePay50', data: { player: player.name }, action: () => { player.money -= 50; } },
-        { key: 'game.chanceGoJail', data: { player: player.name }, action: () => { player.inJail = true; player.position = 16; } },
-        { key: 'game.chanceWin100', data: { player: player.name }, action: () => { player.money += 100; } },
-        { key: 'game.chanceNothing', data: { player: player.name }, action: () => { } }
-    ];
+        const chances = [
+            { key: 'game.chanceWin200', data: { player: player.name }, action: () => { player.money += 200; } },
+            { key: 'game.chanceTax100', data: { player: player.name }, action: () => { player.money -= 100; } },
+            { key: 'game.chanceGoStart', data: { player: player.name }, action: () => { player.position = 0; player.money += 200; } },
+            { key: 'game.chanceWin50', data: { player: player.name }, action: () => { player.money += 50; } },
+            { key: 'game.chancePay50', data: { player: player.name }, action: () => { player.money -= 50; } },
+            { key: 'game.chanceGoJail', data: { player: player.name }, action: () => { player.inJail = true; player.position = 16; } },
+            { key: 'game.chanceWin100', data: { player: player.name }, action: () => { player.money += 100; } },
+            { key: 'game.chanceNothing', data: { player: player.name }, action: () => { } }
+        ];
 
-    const chance = chances[Math.floor(Math.random() * chances.length)];
-    chance.action();
-    this.addMessageKey(chance.key, chance.data);
-    if (player.money < 0) {
-        this.checkDebtor(player.id);
+        const chance = chances[Math.floor(Math.random() * chances.length)];
+        chance.action();
+        this.addMessageKey(chance.key, chance.data);
+        if (player.money < 0) {
+            this.checkDebtor(player.id);
+        }
     }
-}
 
     startBuyTimeout(playerId) {
-    if (this.buyTimeoutTimer) {
-        clearTimeout(this.buyTimeoutTimer);
-        this.buyTimeoutTimer = null;
+        if (this.buyTimeoutTimer) {
+            clearTimeout(this.buyTimeoutTimer);
+            this.buyTimeoutTimer = null;
+        }
+
+        this.buyTimeoutEndTime = Date.now() + C.BUY_TIMEOUT;
+
+        this.buyTimeoutTimer = setTimeout(() => {
+            console.log(`⏰ Buy timeout - auto-cancel (player ${playerId})`);
+            this.cancelBuy(playerId, true);
+            this.buyTimeoutTimer = null;
+            this.buyTimeoutEndTime = null;
+        }, C.BUY_TIMEOUT);
     }
-
-    // 🆕 PRIDĖTA: buyTimeoutEndTime
-    this.buyTimeoutEndTime = Date.now() + C.BUY_TIMEOUT;
-
-    this.buyTimeoutTimer = setTimeout(() => {
-        console.log(`⏰ Buy timeout - auto-cancel (player ${playerId})`);
-        this.cancelBuy(playerId, true);
-        this.buyTimeoutTimer = null;
-        this.buyTimeoutEndTime = null;   // 🆕 PRIDĖTA
-    }, C.BUY_TIMEOUT);
-}
 
     clearBuyTimeout() {
-    if (this.buyTimeoutTimer) {
-        clearTimeout(this.buyTimeoutTimer);
-        this.buyTimeoutTimer = null;
-        this.buyTimeoutEndTime = null;   // 🆕 PRIDĖTA
+        if (this.buyTimeoutTimer) {
+            clearTimeout(this.buyTimeoutTimer);
+            this.buyTimeoutTimer = null;
+            this.buyTimeoutEndTime = null;
+        }
     }
-}
 
     buyProperty(playerId) {
-    this.clearBuyTimeout();
+        this.clearBuyTimeout();
 
-    if (!this.waitingForBuy) {
-        return { error: 'Čia negalima pirkti' };
-    }
+        if (!this.waitingForBuy) {
+            return { error: 'Čia negalima pirkti' };
+        }
 
-    const player = this.getPlayerById(playerId);
-    if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
+        const player = this.getPlayerById(playerId);
+        if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
 
-    const field = this.board[player.position];
-    if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2' && field.type !== 'service3') {
-        this.waitingForBuy = false;
-        return { error: 'Čia negalima pirkti' };
-    }
+        const field = this.board[player.position];
+        if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2' && field.type !== 'service3') {
+            this.waitingForBuy = false;
+            return { error: 'Čia negalima pirkti' };
+        }
 
-    if (player.properties.includes(field.id)) {
-        this.waitingForBuy = false;
-        return { error: 'Jau turi šį objektą' };
-    }
+        if (player.properties.includes(field.id)) {
+            this.waitingForBuy = false;
+            return { error: 'Jau turi šį objektą' };
+        }
 
-    if (this.players.find(p => p.properties.includes(field.id) && p.id !== player.id && !p.kicked)) {
-        this.waitingForBuy = false;
-        return { error: 'Šis objektas jau priklauso kitam žaidėjui' };
-    }
+        if (this.players.find(p => p.properties.includes(field.id) && p.id !== player.id && !p.kicked)) {
+            this.waitingForBuy = false;
+            return { error: 'Šis objektas jau priklauso kitam žaidėjui' };
+        }
 
-    if (player.money < field.cost) {
-        return { error: 'Nepakanka pinigų' };
-    }
+        if (player.money < field.cost) {
+            return { error: 'Nepakanka pinigų' };
+        }
 
-    const wasPendingPurchase = player.pendingPurchase !== null;
+        const wasPendingPurchase = player.pendingPurchase !== null;
 
-    player.money -= field.cost;
-    player.properties.push(field.id);
-    
-    player.pendingPurchase = null;
-    console.log(`✅ ${player.name}: pendingPurchase išvalytas (nupirko ${field.name})`);
-    
-    this.addMessageKey('game.boughtProperty', {
-        player: player.name,
-        field: field.name,
-        cost: field.cost
-    });
+        player.money -= field.cost;
+        player.properties.push(field.id);
 
-    if (player.userId && !player.isBot) {
-        db.updateStats(player.userId, { properties_bought: 1 }).catch(err => {
-            console.error('❌ properties_bought klaida:', err);
+        player.pendingPurchase = null;
+        console.log(`✅ ${player.name}: pendingPurchase išvalytas (nupirko ${field.name})`);
+
+        this.addMessageKey('game.boughtProperty', {
+            player: player.name,
+            field: field.name,
+            cost: field.cost
         });
+
+        if (player.userId && !player.isBot) {
+            db.updateStats(player.userId, { properties_bought: 1 }).catch(err => {
+                console.error('❌ properties_bought klaida:', err);
+            });
+        }
+
+        this.waitingForBuy = false;
+        this.lastActivity = Date.now();
+
+        if (this.emitFunction) {
+            this.emitFunction('buyConfirmed', {
+                playerId: player.id,
+                playerName: player.name,
+                fieldName: field.name
+            });
+        }
+
+        if (wasPendingPurchase) {
+            this.isRolling = false;
+
+            this.addMessageKey('game.boughtCanRoll', {
+                player: player.name,
+                field: field.name
+            });
+            return {
+                success: true,
+                messageKey: 'game.boughtCanRoll',
+                messageData: { player: player.name, field: field.name },
+                double: false,
+                pendingPurchase: true
+            };
+        }
+
+        if (this.doubleRoll) {
+            this.isRolling = false;
+
+            this.addMessageKey('game.doubleRollAgain', { player: player.name });
+            return {
+                success: true,
+                messageKey: 'game.boughtProperty',
+                messageData: { player: player.name, field: field.name, cost: field.cost },
+                double: true
+            };
+        }
+
+        this.endTurn();
+        return {
+            success: true,
+            messageKey: 'game.boughtProperty',
+            messageData: { player: player.name, field: field.name, cost: field.cost },
+            double: false
+        };
     }
 
-    this.waitingForBuy = false;
-    this.lastActivity = Date.now();
+    cancelBuy(playerId, isTimeout = false) {
+        this.clearBuyTimeout();
 
-    if (this.emitFunction) {
-        this.emitFunction('buyConfirmed', {
-            playerId: player.id,
-            playerName: player.name,
-            fieldName: field.name
-        });
-    }
+        if (!this.waitingForBuy) {
+            return { error: 'Nėra ką pirkti' };
+        }
 
-    if (wasPendingPurchase) {
-        // 🆕 Atblokuoti metimą (žaidėjas gali mesti dar kartą)
-        this.isRolling = false;
-        
-        this.addMessageKey('game.boughtCanRoll', {
+        const player = this.getPlayerById(playerId);
+        if (!player) return { error: 'Žaidėjas nerastas' };
+
+        const field = this.board[player.position];
+        this.waitingForBuy = false;
+
+        const wasPendingPurchase = player.pendingPurchase !== null;
+
+        player.pendingPurchase = null;
+        console.log(`❌ ${player.name}: pendingPurchase išvalytas (${isTimeout ? 'timeout' : 'atsisakė'})`);
+
+        this.addMessageKey('game.cancelledBuy', {
             player: player.name,
             field: field.name
         });
-        return { 
-            success: true, 
-            messageKey: 'game.boughtCanRoll',
-            messageData: { player: player.name, field: field.name },
-            double: false,
-            pendingPurchase: true
-        };
-    }
 
-    if (this.doubleRoll) {
-        // 🆕 Atblokuoti metimą (dublis → meta dar kartą)
-        this.isRolling = false;
-        
-        this.addMessageKey('game.doubleRollAgain', { player: player.name });
-        return { 
-            success: true, 
-            messageKey: 'game.boughtProperty',
-            messageData: { player: player.name, field: field.name, cost: field.cost },
-            double: true 
-        };
-    }
+        this.lastActivity = Date.now();
 
-    this.endTurn();
-    return { 
-        success: true, 
-        messageKey: 'game.boughtProperty',
-        messageData: { player: player.name, field: field.name, cost: field.cost },
-        double: false 
-    };
-} 
+        if (this.emitFunction) {
+            this.emitFunction('buyCancelled', {
+                playerId: player.id,
+                playerName: player.name,
+                fieldName: field.name
+            });
+        }
 
-    cancelBuy(playerId, isTimeout = false) {
-    this.clearBuyTimeout();
+        // ✅ PATAISYTA: DUBLIS turi prioritetą NET jei isTimeout=true
+        if (this.doubleRoll) {
+            this.isRolling = false;
 
-    if (!this.waitingForBuy) {
-        return { error: 'Nėra ką pirkti' };
-    }
+            console.log(`🎲 DUBLIS + ${isTimeout ? 'AFK timeout' : 'atsisakymas'} → žaidėjas meta dar kartą`);
 
-    const player = this.getPlayerById(playerId);
-    if (!player) return { error: 'Žaidėjas nerastas' };
+            // ✅ Paleisti turn timer iš naujo – žaidėjas turi dar kartą mesti
+            this.startTurnTimer();
 
-    const field = this.board[player.position];
-    this.waitingForBuy = false;
-    
-    const wasPendingPurchase = player.pendingPurchase !== null;
-    
-    player.pendingPurchase = null;
-    console.log(`❌ ${player.name}: pendingPurchase išvalytas (${isTimeout ? 'timeout' : 'atsisakė'})`);
-    
-    this.addMessageKey('game.cancelledBuy', {
-        player: player.name,
-        field: field.name
-    });
+            this.addMessageKey('game.doubleRollAgain', { player: player.name });
 
-    this.lastActivity = Date.now();
+            if (this.emitFunction) {
+                this.emitFunction('gameState', this.getGameState());
+            }
 
-    if (this.emitFunction) {
-        this.emitFunction('buyCancelled', {
-            playerId: player.id,
-            playerName: player.name,
-            fieldName: field.name
-        });
-    }
+            return {
+                success: true,
+                messageKey: 'game.cancelledBuy',
+                messageData: { player: player.name, field: field.name },
+                double: true,
+                timeout: isTimeout,
+                canRollAgain: true
+            };
+        }
 
-    if (wasPendingPurchase && !isTimeout) {
-        // 🆕 Atblokuoti metimą (žaidėjas gali mesti dar kartą)
-        this.isRolling = false;
-        
-        this.addMessageKey('game.cancelledCanRoll', {
-            player: player.name
-        });
-        return { 
-            success: true, 
-            messageKey: 'game.cancelledCanRoll',
-            messageData: { player: player.name },
-            double: false,
-            pendingPurchase: true
-        };
-    }
+        // ✅ PATAISYTA: pendingPurchase taip pat NET jei isTimeout=true
+        if (wasPendingPurchase) {
+            this.isRolling = false;
 
-    if (this.doubleRoll && !isTimeout) {
-        // 🆕 Atblokuoti metimą (dublis → meta dar kartą)
-        this.isRolling = false;
-        
+            console.log(`📝 pendingPurchase + ${isTimeout ? 'AFK timeout' : 'atsisakymas'} → žaidėjas meta dar kartą`);
+
+            // ✅ Paleisti turn timer iš naujo
+            this.startTurnTimer();
+
+            this.addMessageKey('game.cancelledCanRoll', {
+                player: player.name
+            });
+
+            if (this.emitFunction) {
+                this.emitFunction('gameState', this.getGameState());
+            }
+
+            return {
+                success: true,
+                messageKey: 'game.cancelledCanRoll',
+                messageData: { player: player.name },
+                double: false,
+                pendingPurchase: true,
+                timeout: isTimeout,
+                canRollAgain: true
+            };
+        }
+
+        // ✅ Tik jei NEI dublio, NEI pendingPurchase → perduoti ėjimą
+        console.log(`➡️ ${player.name}: cancelBuy (${isTimeout ? 'AFK timeout' : 'atsisakymas'}) → endTurn()`);
+
+        this.endTurn();
+
+        if (this.emitFunction) {
+            this.emitFunction('gameState', this.getGameState());
+        }
+
         return {
             success: true,
-            messageKey: 'game.cancelledBuy',
+            messageKey: isTimeout ? 'game.buyTimeout' : 'game.cancelledBuy',
             messageData: { player: player.name, field: field.name },
-            double: true
+            double: false,
+            timeout: isTimeout
         };
     }
 
-    this.endTurn();
-    
-    // 🆕 SIŲSTI gameState VISIEMS po endTurn
-    if (this.emitFunction) {
-        this.emitFunction('gameState', this.getGameState());
-        console.log('📊 gameState išsiųstas po cancelBuy (timeout)');
-    }
-    
-    return {
-        success: true,
-        messageKey: isTimeout ? 'game.buyTimeout' : 'game.cancelledBuy',
-        messageData: { player: player.name, field: field.name },
-        double: false,
-        timeout: isTimeout
-    };
-}
-
     bankruptPlayer(playerId) {
-    const player = this.getPlayerById(playerId);
-    if (!player || player.bankrupt) return { error: 'Žaidėjas jau bankrutavęs' };
+        const player = this.getPlayerById(playerId);
+        if (!player || player.bankrupt) return { error: 'Žaidėjas jau bankrutavęs' };
 
-    player.bankrupt = true;
-    player.isActive = false;
-    player.isDebtor = false;
+        player.bankrupt = true;
+        player.isActive = false;
+        player.isDebtor = false;
 
-    player.properties = [];
-    player.houses = {};
-    player.money = 0;
+        player.properties = [];
+        player.houses = {};
+        player.money = 0;
 
-    this.addMessageKey('game.bankrupt', { player: player.name });
+        this.addMessageKey('game.bankrupt', { player: player.name });
 
-    if (player.userId && !player.isBot) {
-        db.updateStats(player.userId, { bankrupts: 1 }).catch(err => {
-            console.error('❌ bankrupts klaida:', err);
-        });
-    }
+        if (player.userId && !player.isBot) {
+            db.updateStats(player.userId, { bankrupts: 1 }).catch(err => {
+                console.error('❌ bankrupts klaida:', err);
+            });
+        }
 
-    if (player.userId && !player.isBot) {
-        const housesBuilt = player.houses ? Object.values(player.houses).reduce((a, b) => a + b, 0) : 0;
-        db.saveGameHistory(
-            player.userId,
-            this.gameId || 'unknown',
-            'bankrupt',
-            0,
-            this.players.length,
-            housesBuilt,
-            0
-        ).catch(err => console.error('❌ history klaida:', err));
-    }
+        if (player.userId && !player.isBot) {
+            const housesBuilt = player.houses ? Object.values(player.houses).reduce((a, b) => a + b, 0) : 0;
+            db.saveGameHistory(
+                player.userId,
+                this.gameId || 'unknown',
+                'bankrupt',
+                0,
+                this.players.length,
+                housesBuilt,
+                0
+            ).catch(err => console.error('❌ history klaida:', err));
+        }
 
-    if (this.activeVoteKick) {
-        this.cancelVoteKick('Žaidėjas bankrutavo');
-    }
+        if (this.activeVoteKick) {
+            this.cancelVoteKick('Žaidėjas bankrutavo');
+        }
 
-    const activePlayers = this.getActivePlayers();
-    
-    if (activePlayers.length <= 1) {
-        this.endGame();
+        const activePlayers = this.getActivePlayers();
+
+        if (activePlayers.length <= 1) {
+            this.endGame();
+            return {
+                success: true,
+                playerName: player.name,
+                activePlayers: activePlayers.length,
+                gameEnded: true
+            };
+        }
+
+        this.endTurn();
+
         return {
             success: true,
             playerName: player.name,
             activePlayers: activePlayers.length,
-            gameEnded: true
+            gameEnded: false
         };
     }
-
-    this.endTurn();
-
-    return {
-        success: true,
-        playerName: player.name,
-        activePlayers: activePlayers.length,
-        gameEnded: false
-    };
-}
 
     leaveGame(playerId) {
         const player = this.getPlayerById(playerId);
@@ -2176,6 +2203,14 @@ this.clearTurnTimer();
     endTurn() {
         const activePlayers = this.getActivePlayers();
 
+        // ✅ PATAISYTA: Išvalyti pendingPurchase visiems, kurių eilė praėjo
+        this.players.forEach(p => {
+            if (p.pendingPurchase && p.id !== this.currentTurn) {
+                console.log(`🧹 ${p.name}: pendingPurchase išvalytas (endTurn)`);
+                p.pendingPurchase = null;
+            }
+        });
+
         if (activePlayers.length <= 1) {
             this.endGame();
             return { error: 'Žaidimas baigtas' };
@@ -2217,33 +2252,31 @@ this.clearTurnTimer();
         }
 
         this.addMessageKey('game.turnNowMsg', {
-    player: this.players[nextIndex].name
-});
+            player: this.players[nextIndex].name
+        });
 
         this.players.forEach(p => {
-    if (p.isActive && !p.bankrupt && !p.left && !p.kicked) {
-        if (p.money >= 0 && p.isDebtor === true) {
-            console.log(`✅ ${p.name}: isDebtor → false (money: €${p.money})`);
-            p.isDebtor = false;
-        }
+            if (p.isActive && !p.bankrupt && !p.left && !p.kicked) {
+                if (p.money >= 0 && p.isDebtor === true) {
+                    console.log(`✅ ${p.name}: isDebtor → false (money: €${p.money})`);
+                    p.isDebtor = false;
+                }
+            }
+        });
+
+        this.startTurnTimer();
+
+        return { nextPlayer: this.currentTurn };
     }
-});
-
-// 🆕 PALEISTI TIMER NAUJAM ŽAIDĖJUI
-this.startTurnTimer();
-
-return { nextPlayer: this.currentTurn };
-}
 
     async endGame() {
         this.gameStarted = false;
         const activePlayers = this.getActivePlayers();
         const winner = activePlayers[0];
-        
+
         if (winner) {
-            // 🆕 PAKEISTA: addMessage → addMessageKey
             this.addMessageKey('game.winner', { player: winner.name });
-            
+
             if (this.emitFunction) {
                 this.emitFunction('gameFinished', {
                     winner: winner.name,
@@ -2251,9 +2284,8 @@ return { nextPlayer: this.currentTurn };
                 });
             }
         } else {
-            // 🆕 PAKEISTA: addMessage → addMessageKey
             this.addMessageKey('game.noWinner');
-            
+
             if (this.emitFunction) {
                 this.emitFunction('gameFinished', {
                     winner: 'Niekas',
@@ -2261,7 +2293,7 @@ return { nextPlayer: this.currentTurn };
                 });
             }
         }
-        
+
         try {
             for (const player of this.players) {
                 if (player.userId && !player.isBot) {
@@ -2269,7 +2301,7 @@ return { nextPlayer: this.currentTurn };
                     console.log(`📊 ${player.name}: games_played +1`);
                 }
             }
-            
+
             if (winner && winner.userId && !winner.isBot) {
                 await db.updateStats(winner.userId, { games_won: 1 });
                 console.log(`📊 ${winner.name}: games_won +1`);
@@ -2293,10 +2325,10 @@ return { nextPlayer: this.currentTurn };
                     } else {
                         result = 'lose';
                     }
-                    
+
                     const housesBuilt = player.houses ? Object.values(player.houses).reduce((a, b) => a + b, 0) : 0;
                     const propertiesBought = player.properties ? player.properties.length : 0;
-                    
+
                     await db.saveGameHistory(
                         player.userId,
                         this.gameId || 'unknown',
@@ -2328,42 +2360,39 @@ return { nextPlayer: this.currentTurn };
         console.log('📢', key, data);
     }
 
-     getGameState() {
-    return {
-        players: this.players
-            .filter(p => !p.left)
-            .map(p => ({
-                ...p,
-                isDebtor: p.isDebtor || false,
-                kicked: p.kicked || false,
-                ready: p.ready || false
-            })),
-        board: this.board,
-        currentTurn: this.currentTurn,
-        gameStarted: this.gameStarted,
-        maxPlayers: this.maxPlayers,
-        diceValues: this.diceValues,
-        turnHistory: this.turnHistory.slice(-50),
-        waitingForBuy: this.waitingForBuy,
-        consecutiveDoubles: this.consecutiveDoubles,
-        doubleRoll: this.doubleRoll,
-        activeVoteKick: this.activeVoteKick ? this.getVoteKickState() : null,
-        isPublic: this.isPublic,
-        gameId: this.gameId,
-        lastMessageKey: null,
-        lastMessageData: null,
+    getGameState() {
+        return {
+            players: this.players
+                .filter(p => !p.left)
+                .map(p => ({
+                    ...p,
+                    isDebtor: p.isDebtor || false,
+                    kicked: p.kicked || false,
+                    ready: p.ready || false
+                })),
+            board: this.board,
+            currentTurn: this.currentTurn,
+            gameStarted: this.gameStarted,
+            maxPlayers: this.maxPlayers,
+            diceValues: this.diceValues,
+            turnHistory: this.turnHistory.slice(-50),
+            waitingForBuy: this.waitingForBuy,
+            consecutiveDoubles: this.consecutiveDoubles,
+            doubleRoll: this.doubleRoll,
+            activeVoteKick: this.activeVoteKick ? this.getVoteKickState() : null,
+            isPublic: this.isPublic,
+            gameId: this.gameId,
+            lastMessageKey: null,
+            lastMessageData: null,
 
-        // 🆕 TURN TIMER
-        turnTimeLeft: this.turnTimerEndTime ? Math.max(0, Math.floor((this.turnTimerEndTime - Date.now()) / 1000)) : 0,
-        turnTimerActive: !!this.turnTimer,
-        turnTimerEndTime: this.turnTimerEndTime,
+            turnTimeLeft: this.turnTimerEndTime ? Math.max(0, Math.floor((this.turnTimerEndTime - Date.now()) / 1000)) : 0,
+            turnTimerActive: !!this.turnTimer,
+            turnTimerEndTime: this.turnTimerEndTime,
 
-        // 🆕 BUY TIMER
-        buyTimeoutEndTime: this.buyTimeoutEndTime || null,
-        buyTimeoutActive: !!this.buyTimeoutTimer
-
-    };
-}
+            buyTimeoutEndTime: this.buyTimeoutEndTime || null,
+            buyTimeoutActive: !!this.buyTimeoutTimer
+        };
+    }
 
     getRequiredVotes(playerCount) {
         return C.VOTE_KICK_REQUIRED[playerCount] || Math.ceil(playerCount / 2) + 1;
@@ -2414,10 +2443,9 @@ return { nextPlayer: this.currentTurn };
             this.endVoteKick();
         }, timeLeft);
 
-        // 🆕 PAKEISTA: addMessage → addMessageKey
-        this.addMessageKey('game.voteKickStarted', { 
-            initiator: initiator.name, 
-            target: target.name 
+        this.addMessageKey('game.voteKickStarted', {
+            initiator: initiator.name,
+            target: target.name
         });
 
         const bots = this.getBots();
@@ -2458,11 +2486,10 @@ return { nextPlayer: this.currentTurn };
 
         vk.votes[playerId] = vote === true;
 
-        // 🆕 PAKEISTA: addMessage → addMessageKey
-        this.addMessageKey('game.voteKickVoted', { 
-            player: player.name, 
-            vote: vote ? 'FOR' : 'AGAINST', 
-            target: vk.targetName 
+        this.addMessageKey('game.voteKickVoted', {
+            player: player.name,
+            vote: vote ? 'FOR' : 'AGAINST',
+            target: vk.targetName
         });
 
         const result = this.checkVoteKickResult();
@@ -2538,18 +2565,16 @@ return { nextPlayer: this.currentTurn };
 
         if (shouldKick) {
             this.removeKickedPlayer(vk.targetId);
-            // 🆕 PAKEISTA: addMessage → addMessageKey
-            this.addMessageKey('game.voteKickKicked', { 
-                player: vk.targetName, 
-                votes: votesFor, 
-                required: vk.requiredVotes 
+            this.addMessageKey('game.voteKickKicked', {
+                player: vk.targetName,
+                votes: votesFor,
+                required: vk.requiredVotes
             });
         } else {
-            // 🆕 PAKEISTA: addMessage → addMessageKey
-            this.addMessageKey('game.voteKickFailed', { 
-                player: vk.targetName, 
-                votes: votesFor, 
-                required: vk.requiredVotes 
+            this.addMessageKey('game.voteKickFailed', {
+                player: vk.targetName,
+                votes: votesFor,
+                required: vk.requiredVotes
             });
         }
 
@@ -2702,10 +2727,9 @@ return { nextPlayer: this.currentTurn };
         player.inJail = false;
         player.jailTurns = 0;
 
-        // 🆕 PAKEISTA: addMessage → addMessageKey
-        this.addMessageKey('game.paidJailFine', { 
-            player: player.name, 
-            fine: C.JAIL_FINE 
+        this.addMessageKey('game.paidJailFine', {
+            player: player.name,
+            fine: C.JAIL_FINE
         });
 
         return { success: true, message: `${player.name} išėjo iš kalėjimo!` };
