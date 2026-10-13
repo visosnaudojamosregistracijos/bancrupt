@@ -890,49 +890,136 @@ class Game {
 
     // 🆕 Auto-roll po timeout
     autoRollDice() {
-        const currentPlayer = this.getPlayerById(this.currentTurn);
-        if (!currentPlayer || currentPlayer.isBot) return;
-        if (!currentPlayer.isActive || currentPlayer.bankrupt || currentPlayer.left || currentPlayer.kicked) return;
-        if (this.isRolling) return;
+    const currentPlayer = this.getPlayerById(this.currentTurn);
+    if (!currentPlayer || currentPlayer.isBot) return;
+    if (!currentPlayer.isActive || currentPlayer.bankrupt || currentPlayer.left || currentPlayer.kicked) return;
+    if (this.isRolling) return;
 
-        console.log(`⏰ Auto-roll: ${currentPlayer.name}`);
-
-        const result = this.rollDice(this.currentTurn, currentPlayer.socketId);
-
-        if (result.error) {
-            console.error('❌ Auto-roll klaida:', result.error);
+    // 🆕 Jei AFK ir minuse – auto-parduoti turtą, kol išeis iš minuso
+    if (currentPlayer.isDebtor && currentPlayer.money < 0) {
+        console.log(`🤖 AFK + isDebtor: ${currentPlayer.name} (€${currentPlayer.money}) – auto-parduodam turtą`);
+        
+        // ============================================
+        // 1. PIRMA – nugriauti namus (nuo pigiausio sklypo)
+        // ============================================
+        let housesToDemolish = [];
+        for (const fieldId in currentPlayer.houses) {
+            const count = currentPlayer.houses[fieldId];
+            if (count > 0) {
+                const field = this.board.find(f => f.id === parseInt(fieldId));
+                if (field) {
+                    housesToDemolish.push({
+                        fieldId: parseInt(fieldId),
+                        field: field,
+                        houses: count,
+                        cost: field.cost
+                    });
+                }
+            }
+        }
+        
+        // Rikiuoti pagal sklypo kainą (pigiausias pirmas)
+        housesToDemolish.sort((a, b) => a.cost - b.cost);
+        
+        // Griauti po vieną namą, kol išeis iš minuso
+        for (const item of housesToDemolish) {
+            while (currentPlayer.houses[item.fieldId] > 0 && currentPlayer.money < 0) {
+                const result = this.demolishHouse(currentPlayer.id, item.fieldId);
+                
+                if (result.error) {
+                    console.log(`⚠️ ${currentPlayer.name}: griovimo klaida:`, result.error);
+                    break;
+                }
+                
+                console.log(`🏚️ ${currentPlayer.name} auto-nugriovė namą ant ${item.field.name} už €${result.refund} → €${currentPlayer.money}`);
+                
+                if (currentPlayer.money >= 0) break;
+            }
+            
+            if (currentPlayer.money >= 0) break;
+        }
+        
+        // ============================================
+        // 2. TADA – parduoti sklypus be namų (nuo pigiausio)
+        // ============================================
+        if (currentPlayer.money < 0) {
+            const sellable = currentPlayer.properties
+                .filter(id => !currentPlayer.houses[id] || currentPlayer.houses[id] === 0)
+                .map(id => this.board.find(f => f.id === id))
+                .filter(f => f)
+                .sort((a, b) => a.cost - b.cost);
+            
+            for (const field of sellable) {
+                if (currentPlayer.money >= 0) break;
+                
+                const result = this.sellToBank(currentPlayer.id, [field.id]);
+                
+                if (result.error) {
+                    console.log(`⚠️ ${currentPlayer.name}: pardavimo klaida:`, result.error);
+                    break;
+                }
+                
+                console.log(`💰 ${currentPlayer.name} auto-pardavė ${field.name} už €${result.totalPrice} → €${currentPlayer.money}`);
+            }
+        }
+        
+        // ============================================
+        // 3. PATIKRINTI – ar pavyko išeiti iš minuso
+        // ============================================
+        if (currentPlayer.money < 0) {
+            console.log(`💀 ${currentPlayer.name} vis dar minuse (€${currentPlayer.money}) – BANKRUTUOJA!`);
+            this.bankruptPlayer(currentPlayer.id);
             return;
         }
-
+        
+        // Išėjo iš minuso – išvalyti isDebtor
+        if (currentPlayer.isDebtor) {
+            currentPlayer.isDebtor = false;
+            console.log(`✅ ${currentPlayer.name}: isDebtor → false po auto-pardavimo (money: €${currentPlayer.money})`);
+        }
+        
         if (this.emitFunction) {
-            this.emitFunction('diceRolled', result);
             this.emitFunction('gameState', this.getGameState());
+        }
+    }
 
-            if (result.dice && currentPlayer) {
-                const rollMsg = `${currentPlayer.name} metė ${result.dice[0]}+${result.dice[1]}=${result.total} (AFK)`;
-                this.emitFunction('message', rollMsg);
+    console.log(`⏰ Auto-roll: ${currentPlayer.name}`);
+
+    const result = this.rollDice(this.currentTurn, currentPlayer.socketId);
+
+    if (result.error) {
+        console.error('❌ Auto-roll klaida:', result.error);
+        return;
+    }
+
+    if (this.emitFunction) {
+        this.emitFunction('diceRolled', result);
+        this.emitFunction('gameState', this.getGameState());
+
+        if (result.dice && currentPlayer) {
+            const rollMsg = `${currentPlayer.name} metė ${result.dice[0]}+${result.dice[1]}=${result.total} (AFK)`;
+            this.emitFunction('message', rollMsg);
+        }
+    }
+
+    // ✅ Apsauga nuo isRolling užstrigimo po auto-roll
+    const rolledPlayerId = currentPlayer.id;
+    const rolledPlayerName = currentPlayer.name;
+    setTimeout(() => {
+        if (this.isRolling && this.currentTurn === rolledPlayerId) {
+            console.warn(`⚠️ isRolling užstrigo po auto-roll (${rolledPlayerName}) – atblokuojam`);
+            this.isRolling = false;
+
+            if (!this.waitingForBuy) {
+                this.startTurnTimer();
+            }
+
+            if (this.emitFunction) {
+                this.emitFunction('gameState', this.getGameState());
             }
         }
-
-        // ✅ PATAISYTA: apsauga nuo isRolling užstrigimo po auto-roll
-        const rolledPlayerId = currentPlayer.id;
-        const rolledPlayerName = currentPlayer.name;
-        setTimeout(() => {
-            if (this.isRolling && this.currentTurn === rolledPlayerId) {
-                console.warn(`⚠️ isRolling užstrigo po auto-roll (${rolledPlayerName}) – atblokuojam`);
-                this.isRolling = false;
-
-                // ✅ Paleisti turn timer iš naujo, kad žaidėjas galėtų mesti
-                if (!this.waitingForBuy) {
-                    this.startTurnTimer();
-                }
-
-                if (this.emitFunction) {
-                    this.emitFunction('gameState', this.getGameState());
-                }
-            }
-        }, 3000);
-    }
+    }, 3000);
+}
 
     botSleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
