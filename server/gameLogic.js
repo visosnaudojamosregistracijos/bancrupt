@@ -1258,6 +1258,12 @@ class Game {
             return { error: 'Žaidėjas neaktyvus' };
         }
 
+        // 🆕 Jei žaidėjas jau nebe minusе, bet isDebtor dar true – išvalom
+        if (player.money >= 0 && player.isDebtor === true) {
+            console.log(`✅ ${player.name}: isDebtor → false prieš rollDice (money: €${player.money})`);
+            player.isDebtor = false;
+        }
+
         if (player.pendingPurchase) {
             const pending = player.pendingPurchase;
             const field = this.board[pending.fieldId];
