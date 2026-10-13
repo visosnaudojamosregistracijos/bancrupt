@@ -1337,6 +1337,8 @@ socket.on('buyConfirmed', (data) => {
         
         localStorage.removeItem('bancrupt_gameId');
         localStorage.removeItem('bancrupt_playerToken');
+
+         clearChat();  // 🆕 IŠVALYTI CHAT
         
         playWinSound();
         playCelebrateSound();
@@ -3013,6 +3015,7 @@ function createGame() {
     playClickSound();
     
     clearJournal();
+    clearChat();  // 🆕 IŠVALYTI CHAT
     
     const isPublicCheckbox = document.getElementById('createIsPublic');
     const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
@@ -3066,6 +3069,7 @@ function joinGame() {
     playClickSound();
     
     clearJournal();
+    clearChat();  // 🆕 IŠVALYTI CHAT
     
     // 🆕 Gauti userId iš localStorage
     let userId = null;
@@ -3098,6 +3102,7 @@ function enterGame() {
         topLangSwitcher.style.display = 'none';
     }
     
+    clearChat();  // 🆕 IŠVALYTI CHAT PRIEŠ ĮEINANT
     loadJournalFromStorage();
 
     const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
@@ -5372,6 +5377,21 @@ function loadJournalFromStorage() {
         console.warn('⚠️ Nepavyko užkrauti žurnalo:', e);
         journalCount = 0;
     }
+}
+
+// 🆕 Išvalyti chat
+function clearChat() {
+    const chatContainer = document.getElementById('chatMessages');
+    if (chatContainer) {
+        chatContainer.innerHTML = '';
+    }
+    
+    const waitingChatContainer = document.getElementById('waitingChatMessages');
+    if (waitingChatContainer) {
+        waitingChatContainer.innerHTML = '';
+    }
+    
+    console.log('💬 Chat išvalytas');
 }
 
 function clearJournal() {
