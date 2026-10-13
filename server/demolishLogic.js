@@ -229,19 +229,18 @@ class DemolishLogic {
         // Pridėti pinigus
         player.money += refund;
 
+        // 🆕 Patikrinti, ar žaidėjas jau nebe minusе
+        if (player.money >= 0 && player.isDebtor) {
+            player.isDebtor = false;
+            console.log(`✅ ${player.name}: isDebtor → false po nugriovimo (money: €${player.money})`);
+        }
+
         const remainingHouses = player.houses[fieldId] || 0;
         const isHotel = remainingHouses >= 5;
         const typeText = isHotel ? 'VIEŽBUTĮ' : 'namą';
         const message = `🏚️ ${player.name} nugriovė ${typeText} ant ${field.name} ir gavo €${refund}!`;
 
         this.game.addMessage(message);
-        this.game.turnHistory.push({
-            player: player.name,
-            action: 'demolish',
-            field: field.name,
-            refund: refund,
-            timestamp: new Date().toISOString()
-        });
 
         return {
             success: true,
