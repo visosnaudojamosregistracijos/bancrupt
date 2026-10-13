@@ -430,80 +430,86 @@ class TradingLogic {
     }
 
     endAuction(auctionId) {
-        const auction = this.auctions.get(auctionId);
-        if (!auction) return null;
-        
-        if (auction.timer) {
-            clearTimeout(auction.timer);
-            auction.timer = null;
-        }
-        
-        auction.isActive = false;
-        
-        let winner = null;
-        let winnerId = null;
-        let winnerName = null;
+    const auction = this.auctions.get(auctionId);
+    if (!auction) return null;
+    
+    if (auction.timer) {
+        clearTimeout(auction.timer);
+        auction.timer = null;
+    }
+    
+    auction.isActive = false;
+    
+    let winner = null;
+    let winnerId = null;
+    let winnerName = null;
 
-        const seller = this.getPlayer(auction.sellerId);
-        
-        if (auction.currentBidder === 'bank') {
-            if (seller) {
-                seller.money += auction.currentBid;
-                if (seller.money >= 0) {
-                    seller.isDebtor = false;
-                }
+    const seller = this.getPlayer(auction.sellerId);
+    
+    if (auction.currentBidder === 'bank') {
+        if (seller) {
+            seller.money += auction.currentBid;
+            if (seller.money >= 0) {
+                seller.isDebtor = false;
             }
-            
-            this.game.addMessage(`🏦 Bankas laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}. Kortelė grąžinta į rinką.`);
-            
-            this.auctions.delete(auctionId);
-            
-            return { 
-                winner: 'bank',
-                winnerId: 'bank',
-                winnerName: '🏦 Bankas',
-                fieldId: auction.fieldId,
-                fieldName: auction.fieldName,
-                finalBid: auction.currentBid,
-                sellerId: auction.sellerId,
-                sellerName: auction.sellerName,
-                returnedToMarket: true
-            };
         }
         
-        winnerId = auction.currentBidder;
-        winner = this.getPlayer(winnerId);
+        this.game.addMessage(`🏦 Bankas laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}. Kortelė grąžinta į rinką.`);
         
-        if (winner) {
-            winnerName = winner.name;
-            
-            winner.properties.push(auction.fieldId);
-            winner.money -= auction.currentBid;
-            
-            if (seller) {
-                seller.money += auction.currentBid;
-                if (seller.money >= 0) {
-                    seller.isDebtor = false;
-                }
-            }
-            
-            this.game.addMessage(`🔨 ${winner.name} laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}!`);
-        }
-
         this.auctions.delete(auctionId);
         
         return { 
-            winner: winnerId, 
-            winnerId: winnerId,
-            winnerName: winnerName,
+            winner: 'bank',
+            winnerId: 'bank',
+            winnerName: '🏦 Bankas',
             fieldId: auction.fieldId,
             fieldName: auction.fieldName,
             finalBid: auction.currentBid,
             sellerId: auction.sellerId,
             sellerName: auction.sellerName,
-            returnedToMarket: false
+            returnedToMarket: true
         };
     }
+    
+    winnerId = auction.currentBidder;
+    winner = this.getPlayer(winnerId);
+    
+    if (winner) {
+        winnerName = winner.name;
+        
+        winner.properties.push(auction.fieldId);
+        winner.money -= auction.currentBid;
+        
+        // 🆕 Išvalyti winner isDebtor, jei nebe minusе
+        if (winner.money >= 0 && winner.isDebtor) {
+            winner.isDebtor = false;
+            console.log(`✅ ${winner.name}: isDebtor → false po aukciono laimėjimo (money: €${winner.money})`);
+        }
+        
+        if (seller) {
+            seller.money += auction.currentBid;
+            if (seller.money >= 0) {
+                seller.isDebtor = false;
+            }
+        }
+        
+        this.game.addMessage(`🔨 ${winner.name} laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}!`);
+    }
+
+    this.auctions.delete(auctionId);
+    
+    return { 
+        winner: winnerId, 
+        winnerId: winnerId,
+        winnerName: winnerName,
+        fieldId: auction.fieldId,
+        fieldName: auction.fieldName,
+        finalBid: auction.currentBid,
+        sellerId: auction.sellerId,
+        sellerName: auction.sellerName,
+        returnedToMarket: false
+    };
+}
 
     // ============================================
     // 3. SIŪLYTI ŽAIDĖJUI

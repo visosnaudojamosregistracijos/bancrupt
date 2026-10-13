@@ -1429,9 +1429,16 @@ class Game {
             }
 
             player.money -= C.JAIL_FINE;
-            player.inJail = false;
-            player.jailTurns = 0;
-            this.addMessageKey('game.paidJailFine', {
+player.inJail = false;
+player.jailTurns = 0;
+
+// 🆕 Išvalyti isDebtor, jei nebe minusе
+if (player.money >= 0 && player.isDebtor) {
+    player.isDebtor = false;
+    console.log(`✅ ${player.name}: isDebtor → false po kalėjimo mokesčio (jailRoll)`);
+}
+
+this.addMessageKey('game.paidJailFine', {
                 player: player.name,
                 fine: C.JAIL_FINE
             });
@@ -1785,26 +1792,40 @@ class Game {
                 break;
 
             case 'chance':
-                if (field.id === 4) {
-                    player.money += 200;
-                    result.action = 'special';
-                    result.messageKey = 'game.hornyRP';
-                    result.messageData = { player: player.name };
-                } else {
-                    this.handleChance(player);
-                    result.action = 'chance';
-                    result.messageKey = 'game.gotChance';
-                    result.messageData = { player: player.name };
-                }
-                break;
+    if (field.id === 4) {
+        player.money += 200;
+        
+        // 🆕 PRIDĖTI: išvalyti isDebtor, jei nebe minusе
+        if (player.money >= 0 && player.isDebtor) {
+            player.isDebtor = false;
+            console.log(`✅ ${player.name}: isDebtor → false po HORNY RP (chance) (money: €${player.money})`);
+        }
+        
+        result.action = 'special';
+        result.messageKey = 'game.hornyRP';
+        result.messageData = { player: player.name };
+    } else {
+        this.handleChance(player);
+        result.action = 'chance';
+        result.messageKey = 'game.gotChance';
+        result.messageData = { player: player.name };
+    }
+    break;
 
             case 'special':
-                if (field.id === 50) {
-                    player.money += 200;
-                    result.action = 'birthday';
-                    result.messageKey = 'game.birthday';
-                    result.messageData = { player: player.name };
-                } else if (field.id === 13) {
+    if (field.id === 50) {
+        player.money += 200;
+        
+        // 🆕 PRIDĖTI: išvalyti isDebtor, jei nebe minusе
+        if (player.money >= 0 && player.isDebtor) {
+            player.isDebtor = false;
+            console.log(`✅ ${player.name}: isDebtor → false po gimtadienio (money: €${player.money})`);
+        }
+        
+        result.action = 'birthday';
+        result.messageKey = 'game.birthday';
+        result.messageData = { player: player.name };
+    } else if (field.id === 13) {
                     const cost = field.cost || 50;
                     player.money -= cost;
                     result.action = 'hospital';
@@ -1814,11 +1835,18 @@ class Game {
                         this.checkDebtor(player.id);
                     }
                 } else if (field.id === 4) {
-                    player.money += 200;
-                    result.action = 'special';
-                    result.messageKey = 'game.hornyRP2';
-                    result.messageData = { player: player.name };
-                } else {
+    player.money += 200;
+    
+    // 🆕 PRIDĖTI: išvalyti isDebtor, jei nebe minusе
+    if (player.money >= 0 && player.isDebtor) {
+        player.isDebtor = false;
+        console.log(`✅ ${player.name}: isDebtor → false po HORNY RP (money: €${player.money})`);
+    }
+    
+    result.action = 'special';
+    result.messageKey = 'game.hornyRP2';
+    result.messageData = { player: player.name };
+} else {
                     const random = Math.random();
                     if (random < 0.3) {
                         player.money += 100;
@@ -1843,24 +1871,31 @@ class Game {
     }
 
     handleChance(player) {
-        const chances = [
-            { key: 'game.chanceWin200', data: { player: player.name }, action: () => { player.money += 200; } },
-            { key: 'game.chanceTax100', data: { player: player.name }, action: () => { player.money -= 100; } },
-            { key: 'game.chanceGoStart', data: { player: player.name }, action: () => { player.position = 0; player.money += 200; } },
-            { key: 'game.chanceWin50', data: { player: player.name }, action: () => { player.money += 50; } },
-            { key: 'game.chancePay50', data: { player: player.name }, action: () => { player.money -= 50; } },
-            { key: 'game.chanceGoJail', data: { player: player.name }, action: () => { player.inJail = true; player.position = 16; } },
-            { key: 'game.chanceWin100', data: { player: player.name }, action: () => { player.money += 100; } },
-            { key: 'game.chanceNothing', data: { player: player.name }, action: () => { } }
-        ];
+    const chances = [
+        { key: 'game.chanceWin200', data: { player: player.name }, action: () => { player.money += 200; } },
+        { key: 'game.chanceTax100', data: { player: player.name }, action: () => { player.money -= 100; } },
+        { key: 'game.chanceGoStart', data: { player: player.name }, action: () => { player.position = 0; player.money += 200; } },
+        { key: 'game.chanceWin50', data: { player: player.name }, action: () => { player.money += 50; } },
+        { key: 'game.chancePay50', data: { player: player.name }, action: () => { player.money -= 50; } },
+        { key: 'game.chanceGoJail', data: { player: player.name }, action: () => { player.inJail = true; player.position = 16; } },
+        { key: 'game.chanceWin100', data: { player: player.name }, action: () => { player.money += 100; } },
+        { key: 'game.chanceNothing', data: { player: player.name }, action: () => { } }
+    ];
 
-        const chance = chances[Math.floor(Math.random() * chances.length)];
-        chance.action();
-        this.addMessageKey(chance.key, chance.data);
-        if (player.money < 0) {
-            this.checkDebtor(player.id);
-        }
+    const chance = chances[Math.floor(Math.random() * chances.length)];
+    chance.action();
+    this.addMessageKey(chance.key, chance.data);
+    
+    // 🆕 PRIDĖTI: išvalyti isDebtor, jei nebe minusе
+    if (player.money >= 0 && player.isDebtor) {
+        player.isDebtor = false;
+        console.log(`✅ ${player.name}: isDebtor → false po chance (money: €${player.money})`);
     }
+    
+    if (player.money < 0) {
+        this.checkDebtor(player.id);
+    }
+}
 
     startBuyTimeout(playerId) {
         if (this.buyTimeoutTimer) {
@@ -1887,102 +1922,108 @@ class Game {
     }
 
     buyProperty(playerId) {
-        this.clearBuyTimeout();
+    this.clearBuyTimeout();
 
-        if (!this.waitingForBuy) {
-            return { error: 'Čia negalima pirkti' };
-        }
+    if (!this.waitingForBuy) {
+        return { error: 'Čia negalima pirkti' };
+    }
 
-        const player = this.getPlayerById(playerId);
-        if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
+    const player = this.getPlayerById(playerId);
+    if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
 
-        const field = this.board[player.position];
-        if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2' && field.type !== 'service3') {
-            this.waitingForBuy = false;
-            return { error: 'Čia negalima pirkti' };
-        }
-
-        if (player.properties.includes(field.id)) {
-            this.waitingForBuy = false;
-            return { error: 'Jau turi šį objektą' };
-        }
-
-        if (this.players.find(p => p.properties.includes(field.id) && p.id !== player.id && !p.kicked)) {
-            this.waitingForBuy = false;
-            return { error: 'Šis objektas jau priklauso kitam žaidėjui' };
-        }
-
-        if (player.money < field.cost) {
-            return { error: 'Nepakanka pinigų' };
-        }
-
-        const wasPendingPurchase = player.pendingPurchase !== null;
-
-        player.money -= field.cost;
-        player.properties.push(field.id);
-
-        player.pendingPurchase = null;
-        console.log(`✅ ${player.name}: pendingPurchase išvalytas (nupirko ${field.name})`);
-
-        this.addMessageKey('game.boughtProperty', {
-            player: player.name,
-            field: field.name,
-            cost: field.cost
-        });
-
-        if (player.userId && !player.isBot) {
-            db.updateStats(player.userId, { properties_bought: 1 }).catch(err => {
-                console.error('❌ properties_bought klaida:', err);
-            });
-        }
-
+    const field = this.board[player.position];
+    if (field.type !== 'property' && field.type !== 'service1' && field.type !== 'service2' && field.type !== 'service3') {
         this.waitingForBuy = false;
-        this.lastActivity = Date.now();
+        return { error: 'Čia negalima pirkti' };
+    }
 
-        if (this.emitFunction) {
-            this.emitFunction('buyConfirmed', {
-                playerId: player.id,
-                playerName: player.name,
-                fieldName: field.name
-            });
-        }
+    if (player.properties.includes(field.id)) {
+        this.waitingForBuy = false;
+        return { error: 'Jau turi šį objektą' };
+    }
 
-        if (wasPendingPurchase) {
-            this.isRolling = false;
+    if (this.players.find(p => p.properties.includes(field.id) && p.id !== player.id && !p.kicked)) {
+        this.waitingForBuy = false;
+        return { error: 'Šis objektas jau priklauso kitam žaidėjui' };
+    }
 
-            this.addMessageKey('game.boughtCanRoll', {
-                player: player.name,
-                field: field.name
-            });
-            return {
-                success: true,
-                messageKey: 'game.boughtCanRoll',
-                messageData: { player: player.name, field: field.name },
-                double: false,
-                pendingPurchase: true
-            };
-        }
+    if (player.money < field.cost) {
+        return { error: 'Nepakanka pinigų' };
+    }
 
-        if (this.doubleRoll) {
-            this.isRolling = false;
+    const wasPendingPurchase = player.pendingPurchase !== null;
 
-            this.addMessageKey('game.doubleRollAgain', { player: player.name });
-            return {
-                success: true,
-                messageKey: 'game.boughtProperty',
-                messageData: { player: player.name, field: field.name, cost: field.cost },
-                double: true
-            };
-        }
+    player.money -= field.cost;
+    player.properties.push(field.id);
 
-        this.endTurn();
+    // 🆕 PRIDĖTI: išvalyti isDebtor, jei nebe minusе
+    if (player.money >= 0 && player.isDebtor) {
+        player.isDebtor = false;
+        console.log(`✅ ${player.name}: isDebtor → false po pirkimo (money: €${player.money})`);
+    }
+
+    player.pendingPurchase = null;
+    console.log(`✅ ${player.name}: pendingPurchase išvalytas (nupirko ${field.name})`);
+
+    this.addMessageKey('game.boughtProperty', {
+        player: player.name,
+        field: field.name,
+        cost: field.cost
+    });
+
+    if (player.userId && !player.isBot) {
+        db.updateStats(player.userId, { properties_bought: 1 }).catch(err => {
+            console.error('❌ properties_bought klaida:', err);
+        });
+    }
+
+    this.waitingForBuy = false;
+    this.lastActivity = Date.now();
+
+    if (this.emitFunction) {
+        this.emitFunction('buyConfirmed', {
+            playerId: player.id,
+            playerName: player.name,
+            fieldName: field.name
+        });
+    }
+
+    if (wasPendingPurchase) {
+        this.isRolling = false;
+
+        this.addMessageKey('game.boughtCanRoll', {
+            player: player.name,
+            field: field.name
+        });
+        return {
+            success: true,
+            messageKey: 'game.boughtCanRoll',
+            messageData: { player: player.name, field: field.name },
+            double: false,
+            pendingPurchase: true
+        };
+    }
+
+    if (this.doubleRoll) {
+        this.isRolling = false;
+
+        this.addMessageKey('game.doubleRollAgain', { player: player.name });
         return {
             success: true,
             messageKey: 'game.boughtProperty',
             messageData: { player: player.name, field: field.name, cost: field.cost },
-            double: false
+            double: true
         };
     }
+
+    this.endTurn();
+    return {
+        success: true,
+        messageKey: 'game.boughtProperty',
+        messageData: { player: player.name, field: field.name, cost: field.cost },
+        double: false
+    };
+}
 
     cancelBuy(playerId, isTimeout = false) {
         this.clearBuyTimeout();
@@ -2723,23 +2764,29 @@ class Game {
     }
 
     payJailFine(playerId) {
-        const player = this.getPlayerById(playerId);
-        if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
-        if (!player.inJail) return { error: 'Žaidėjas nėra kalėjime' };
-        if (this.currentTurn !== playerId) return { error: 'Ne tavo eilė' };
-        if (player.money < C.JAIL_FINE) return { error: `Nepakanka pinigų (reikia €${C.JAIL_FINE})` };
+    const player = this.getPlayerById(playerId);
+    if (!player || player.bankrupt || player.kicked) return { error: 'Žaidėjas neaktyvus' };
+    if (!player.inJail) return { error: 'Žaidėjas nėra kalėjime' };
+    if (this.currentTurn !== playerId) return { error: 'Ne tavo eilė' };
+    if (player.money < C.JAIL_FINE) return { error: `Nepakanka pinigų (reikia €${C.JAIL_FINE})` };
 
-        player.money -= C.JAIL_FINE;
-        player.inJail = false;
-        player.jailTurns = 0;
+    player.money -= C.JAIL_FINE;
+    player.inJail = false;
+    player.jailTurns = 0;
 
-        this.addMessageKey('game.paidJailFine', {
-            player: player.name,
-            fine: C.JAIL_FINE
-        });
-
-        return { success: true, message: `${player.name} išėjo iš kalėjimo!` };
+    // 🆕 PRIDĖTI: išvalyti isDebtor, jei nebe minusе
+    if (player.money >= 0 && player.isDebtor) {
+        player.isDebtor = false;
+        console.log(`✅ ${player.name}: isDebtor → false po kalėjimo mokesčio (money: €${player.money})`);
     }
+
+    this.addMessageKey('game.paidJailFine', {
+        player: player.name,
+        fine: C.JAIL_FINE
+    });
+
+    return { success: true, message: `${player.name} išėjo iš kalėjimo!` };
+}
 }
 
 module.exports = Game;
