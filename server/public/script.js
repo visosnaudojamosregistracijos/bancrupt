@@ -74,14 +74,15 @@ function initSocket() {
     const token = localStorage.getItem('bancrupt_token');
 
     socket = io(SERVER_URL, {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        auth: {
-            token: token
-        }
-    });
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 50,          // ← DIDESNIS
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,        // ← PRIDĖK
+    auth: {
+        token: token
+    }
+});
     
     socket.on('connect', () => {
         console.log('✅ Prisijungta prie serverio');
@@ -2755,7 +2756,12 @@ function hideCellInfo() {
     const tooltip = document.getElementById('cellInfoTooltip');
     if (tooltip) {
         tooltip.style.display = 'none';
+        // 🆕 Išvalyti TIK turinį, palikti X mygtuką
+        const closeBtn = tooltip.querySelector('.cell-info-close');
         tooltip.innerHTML = '';
+        if (closeBtn) {
+            tooltip.appendChild(closeBtn);
+        }
     }
 }
 
@@ -3184,17 +3190,35 @@ if (savedMusic === 'false') {
     document.addEventListener('touchstart', startMusicOnFirstInteraction, { once: true });
 }
     
-    // 🆕 VISADA ĮJUNGTAS įėjus į žaidimą
-infoMode = true;
-localStorage.setItem('bancrupt_infoMode', 'true');
+    // 🆕 TELEFONE – IŠJUNGTA, KOMPIUTERYJE – ĮJUNGTI
+const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+
+if (isMobile) {
+    infoMode = false;
+    localStorage.setItem('bancrupt_infoMode', 'false');
+    console.log('📱 Telefonas – info režimas IŠJUNGTAS');
+} else {
+    infoMode = true;
+    localStorage.setItem('bancrupt_infoMode', 'true');
+    console.log('💻 Kompiuteris – info režimas ĮJUNGTAS');
+}
 
 const btn = document.getElementById('infoBtn');
 const infoPanel = document.getElementById('cellInfoPanel');
-if (btn) {
-    btn.classList.add('active');
-    btn.innerHTML = t('game.leftPanel.infoOn');  // ℹ️ Info: 🟢 ĮJ.
+
+if (infoMode) {
+    if (btn) {
+        btn.classList.add('active');
+        btn.innerHTML = t('game.leftPanel.infoOn');
+    }
+    if (infoPanel) infoPanel.classList.add('show');
+} else {
+    if (btn) {
+        btn.classList.remove('active');
+        btn.innerHTML = t('game.leftPanel.info');
+    }
+    if (infoPanel) infoPanel.classList.remove('show');
 }
-if (infoPanel) infoPanel.classList.add('show');
 
 // Paleisti info šriftų pritaikymą
 setTimeout(autoFitInfoFont, 200);

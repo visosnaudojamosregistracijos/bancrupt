@@ -786,6 +786,39 @@ button,
     pointer-events: none;
 }
 
+/* 🆕 X MYGTUKAS INFO TOOLTIP */
+.cell-info-close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
+    pointer-events: auto;   /* ← 🆕 PRIDĖTI ŠITĄ! */
+}
+
+.cell-info-close:hover {
+    background: #dc3545;
+    transform: scale(1.1);
+}
+
+.cell-info-close:active {
+    transform: scale(0.95);
+}
+
 #cellInfoTooltip .info-header {
     font-weight: 700;
     font-size: 12px;
