@@ -4,9 +4,9 @@ const router = express.Router();
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
-const { getServerStats, getStatsSummary } = require('../stats');  // ← NAUJA
+const { getServerStats, getStatsSummary } = require('../stats');
 
-// 🆕 WebSocket instancija (bus nustatyta iš server.js)
+// 🆕 WebSocket instancija
 let io = null;
 
 function setIO(ioInstance) {
@@ -42,7 +42,7 @@ function requireAdmin(req, res, next) {
     }
 }
 
-// GET /api/admin/users — visi vartotojai
+// GET /api/admin/users
 router.get('/users', requireAdmin, async (req, res) => {
     try {
         const result = await pool.query(
@@ -55,7 +55,7 @@ router.get('/users', requireAdmin, async (req, res) => {
     }
 });
 
-// POST /api/admin/emoji — priskirti emoji
+// POST /api/admin/emoji
 router.post('/emoji', requireAdmin, async (req, res) => {
     const { userId, emoji } = req.body;
     if (!userId || !emoji) {
@@ -74,10 +74,10 @@ router.post('/emoji', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 BOARD CELLS API
+// BOARD CELLS API
 // ============================================
 
-// GET /api/admin/board — visi langeliai (boardData + DB override)
+// GET /api/admin/board
 router.get('/board', requireAdmin, async (req, res) => {
     try {
         const boardData = require('../boardData');
@@ -116,7 +116,7 @@ router.get('/board', requireAdmin, async (req, res) => {
     }
 });
 
-// GET /api/admin/board/:index — vienas langelis
+// GET /api/admin/board/:index
 router.get('/board/:index', requireAdmin, async (req, res) => {
     try {
         const cellIndex = parseInt(req.params.index);
@@ -151,7 +151,7 @@ router.get('/board/:index', requireAdmin, async (req, res) => {
     }
 });
 
-// POST /api/admin/board/:index — išsaugoti pakeitimą
+// POST /api/admin/board/:index
 router.post('/board/:index', requireAdmin, async (req, res) => {
     try {
         const cellIndex = parseInt(req.params.index);
@@ -171,7 +171,6 @@ router.post('/board/:index', requireAdmin, async (req, res) => {
             description, custom_data
         });
 
-        // 🆕 Atnaujinti cache ir pranešti visiems žaidėjams
         const Game = require('../gameLogic');
         await Game.loadBoardCache();
 
@@ -188,7 +187,7 @@ router.post('/board/:index', requireAdmin, async (req, res) => {
     }
 });
 
-// DELETE /api/admin/board/:index — ištrinti override
+// DELETE /api/admin/board/:index
 router.delete('/board/:index', requireAdmin, async (req, res) => {
     try {
         const cellIndex = parseInt(req.params.index);
@@ -198,7 +197,6 @@ router.delete('/board/:index', requireAdmin, async (req, res) => {
 
         await db.deleteBoardCellOverride(cellIndex);
 
-        // 🆕 Atnaujinti cache ir pranešti visiems žaidėjams
         const Game = require('../gameLogic');
         await Game.loadBoardCache();
 
@@ -216,10 +214,10 @@ router.delete('/board/:index', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 CENTER CELLS API (vidurio langeliai)
+// CENTER CELLS API
 // ============================================
 
-// GET /api/admin/center — visi 6 vidurio langeliai
+// GET /api/admin/center
 router.get('/center', requireAdmin, async (req, res) => {
     try {
         const cells = await db.getCenterCells();
@@ -230,7 +228,7 @@ router.get('/center', requireAdmin, async (req, res) => {
     }
 });
 
-// POST /api/admin/center/:id — išsaugoti vidurio langelį
+// POST /api/admin/center/:id
 router.post('/center/:id', requireAdmin, async (req, res) => {
     try {
         const cellId = parseInt(req.params.id);
@@ -262,7 +260,6 @@ router.post('/center/:id', requireAdmin, async (req, res) => {
             myinfo_text_size, myinfo_text_color
         });
 
-        // 🆕 Pranešti visiems žaidėjams
         if (io) {
             const updatedCells = await db.getCenterCells();
             io.emit('centerUpdated', updatedCells);
@@ -277,10 +274,10 @@ router.post('/center/:id', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 SOUND SETTINGS API (garso nustatymai)
+// SOUND SETTINGS API
 // ============================================
 
-// GET /api/admin/sounds — gauti garso nustatymus
+// GET /api/admin/sounds
 router.get('/sounds', requireAdmin, async (req, res) => {
     try {
         const settings = await db.getSoundSettings();
@@ -291,7 +288,7 @@ router.get('/sounds', requireAdmin, async (req, res) => {
     }
 });
 
-// POST /api/admin/sounds — išsaugoti garso nustatymus
+// POST /api/admin/sounds
 router.post('/sounds', requireAdmin, async (req, res) => {
     try {
         const {
@@ -308,7 +305,6 @@ router.post('/sounds', requireAdmin, async (req, res) => {
             default_sound_levels
         });
 
-        // 🆕 Pranešti visiems žaidėjams, kad nustatymai pasikeitė
         if (io) {
             const updatedSettings = await db.getSoundSettings();
             io.emit('soundSettingsUpdated', updatedSettings);
@@ -323,10 +319,10 @@ router.post('/sounds', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 SOUND FILES API (garso failai)
+// SOUND FILES API
 // ============================================
 
-// GET /api/admin/sound-files — gauti visus garso failus
+// GET /api/admin/sound-files
 router.get('/sound-files', requireAdmin, async (req, res) => {
     try {
         const files = await db.getSoundFiles();
@@ -337,7 +333,7 @@ router.get('/sound-files', requireAdmin, async (req, res) => {
     }
 });
 
-// POST /api/admin/sound-files/:name — išsaugoti garso failą
+// POST /api/admin/sound-files/:name
 router.post('/sound-files/:name', requireAdmin, async (req, res) => {
     try {
         const soundName = req.params.name;
@@ -349,7 +345,6 @@ router.post('/sound-files/:name', requireAdmin, async (req, res) => {
 
         await db.updateSoundFile(soundName, file_path);
 
-        // 🆕 Pranešti visiems žaidėjams
         if (io) {
             const updatedFiles = await db.getSoundFiles();
             io.emit('soundFilesUpdated', updatedFiles);
@@ -364,10 +359,10 @@ router.post('/sound-files/:name', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 SOUNDS LIST API (visi .mp3 failai)
+// SOUNDS LIST API
 // ============================================
 
-// GET /api/admin/sounds-list — visi .mp3 failai sounds/ kataloge
+// GET /api/admin/sounds-list
 router.get('/sounds-list', requireAdmin, async (req, res) => {
     try {
         const fs = require('fs');
@@ -391,10 +386,10 @@ router.get('/sounds-list', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 STATISTIKA   ← NAUJA SEKCIJA!
+// STATISTIKA
 // ============================================
 
-// GET /api/admin/stats — pilna statistika
+// GET /api/admin/stats
 router.get('/stats', requireAdmin, async (req, res) => {
     try {
         const games = global.games || req.app.get('games') || {};
@@ -406,7 +401,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
     }
 });
 
-// GET /api/admin/stats/summary — trumpa statistika
+// GET /api/admin/stats/summary
 router.get('/stats/summary', requireAdmin, async (req, res) => {
     try {
         const games = global.games || req.app.get('games') || {};
@@ -419,10 +414,10 @@ router.get('/stats/summary', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 BOARD SETTINGS (lentos nustatymai)
+// BOARD SETTINGS
 // ============================================
 
-// GET /api/admin/board-settings — gauti lentos nustatymus
+// GET /api/admin/board-settings
 router.get('/board-settings', requireAdmin, async (req, res) => {
     try {
         const settings = await db.getBoardSettings();
@@ -433,13 +428,11 @@ router.get('/board-settings', requireAdmin, async (req, res) => {
     }
 });
 
-// POST /api/admin/board-settings — išsaugoti lentos nustatymus
+// POST /api/admin/board-settings
 router.post('/board-settings', requireAdmin, async (req, res) => {
     try {
-        // 🆕 Perduodam VISKĄ, ką gaunam iš frontend (senus + naujus laukus)
         await db.updateBoardSettings(req.body);
 
-        // 🆕 Pranešti visiems žaidėjams
         if (io) {
             const updatedSettings = await db.getBoardSettings();
             io.emit('boardSettingsUpdated', updatedSettings);
@@ -454,10 +447,10 @@ router.post('/board-settings', requireAdmin, async (req, res) => {
 });
 
 // ============================================
-// 🆕 FEEDBACK (PRANEŠIMAI / PASIŪLYMAI)
+// FEEDBACK
 // ============================================
 
-// GET /api/admin/feedback — visi pranešimai (su filtrais)
+// GET /api/admin/feedback
 router.get('/feedback', requireAdmin, async (req, res) => {
     try {
         const { type, status, limit = 200 } = req.query;
@@ -472,7 +465,7 @@ router.get('/feedback', requireAdmin, async (req, res) => {
             paramIndex++;
         }
         
-        if (status && ['new', 'in_progress', 'fixed', 'rejected'].includes(status)) {
+        if (status && ['new', 'in_progress', 'resolved', 'rejected'].includes(status)) {
             query += ` AND status = $${paramIndex}`;
             params.push(status);
             paramIndex++;
@@ -483,7 +476,6 @@ router.get('/feedback', requireAdmin, async (req, res) => {
         
         const result = await pool.query(query, params);
         
-        // Bendras skaičius
         const countsResult = await pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE status = 'new') AS new_count,
@@ -504,7 +496,7 @@ router.get('/feedback', requireAdmin, async (req, res) => {
     }
 });
 
-// POST /api/admin/feedback/:id/status — keisti statusą
+// POST /api/admin/feedback/:id/status
 router.post('/feedback/:id/status', requireAdmin, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -514,8 +506,8 @@ router.post('/feedback/:id/status', requireAdmin, async (req, res) => {
             return res.status(400).json({ error: 'Neteisingas ID' });
         }
         
-        if (!status || !['new', 'in_progress', 'fixed', 'rejected'].includes(status)) {
-            return res.status(400).json({ error: 'Neteisingas status' });
+        if (!status || !['new', 'in_progress', 'resolved', 'rejected'].includes(status)) {
+            return res.status(400).json({ error: 'Neteisingas statusas' });
         }
         
         const result = await pool.query(
@@ -535,7 +527,7 @@ router.post('/feedback/:id/status', requireAdmin, async (req, res) => {
     }
 });
 
-// POST /api/admin/feedback/:id/reply — išsaugoti atsakymą
+// POST /api/admin/feedback/:id/reply
 router.post('/feedback/:id/reply', requireAdmin, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -545,9 +537,18 @@ router.post('/feedback/:id/reply', requireAdmin, async (req, res) => {
             return res.status(400).json({ error: 'Neteisingas ID' });
         }
         
+        if (!reply || reply.trim().length < 2) {
+            return res.status(400).json({ error: 'Atsakymas per trumpas' });
+        }
+        
         const result = await pool.query(
-            'UPDATE feedback SET admin_reply = $1, replied_at = NOW() WHERE id = $2 RETURNING *',
-            [reply || null, id]
+            `UPDATE feedback 
+             SET admin_response = $1, 
+                 responded_at = NOW(),
+                 responded_by = 'Admin'
+             WHERE id = $2
+             RETURNING *`,
+            [reply.trim(), id]
         );
         
         if (result.rows.length === 0) {
@@ -562,7 +563,7 @@ router.post('/feedback/:id/reply', requireAdmin, async (req, res) => {
     }
 });
 
-// DELETE /api/admin/feedback/:id — ištrinti pranešimą
+// DELETE /api/admin/feedback/:id
 router.delete('/feedback/:id', requireAdmin, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -585,123 +586,6 @@ router.delete('/feedback/:id', requireAdmin, async (req, res) => {
     } catch (err) {
         console.error('admin/feedback DELETE klaida:', err);
         res.status(500).json({ error: 'DB klaida' });
-    }
-});
-
-// ============================================
-// 📬 FEEDBACK ATSAKYMAS
-// ============================================
-
-// POST /api/admin/feedback/:id/respond
-router.post('/feedback/:id/respond', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status, admin_response, responded_by } = req.body;
-        
-        console.log(`📬 Feedback respond: id=${id}, status=${status}`);
-        
-        // Validacija
-        if (!['new', 'in_progress', 'resolved', 'rejected'].includes(status)) {
-            return res.status(400).json({ error: 'Neteisingas statusas' });
-        }
-        
-        if (!admin_response || admin_response.trim().length < 2) {
-            return res.status(400).json({ error: 'Atsakymas per trumpas' });
-        }
-        
-        if (admin_response.length > 2000) {
-            return res.status(400).json({ error: 'Atsakymas per ilgas (max 2000)' });
-        }
-        
-        // Atnaujinti feedback
-        const result = await db.pool.query(
-            `UPDATE feedback 
-             SET status = $1, 
-                 admin_response = $2, 
-                 responded_at = NOW(),
-                 responded_by = $3
-             WHERE id = $4
-             RETURNING *`,
-            [status, admin_response.trim(), responded_by || 'Admin', id]
-        );
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Pranešimas nerastas' });
-        }
-        
-        console.log(`✅ Feedback ${id} atsakytas (${status})`);
-        
-        res.json({ 
-            success: true, 
-            feedback: result.rows[0]
-        });
-        
-    } catch (err) {
-        console.error('❌ Feedback respond klaida:', err);
-        res.status(500).json({ error: 'Serverio klaida' });
-    }
-});
-
-// ============================================
-// 📬 FEEDBACK STATUSAS
-// ============================================
-router.post('/feedback/:id/status', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
-        
-        if (!['new', 'in_progress', 'resolved', 'rejected'].includes(status)) {
-            return res.status(400).json({ error: 'Neteisingas statusas' });
-        }
-        
-        const result = await db.pool.query(
-            `UPDATE feedback SET status = $1 WHERE id = $2 RETURNING *`,
-            [status, id]
-        );
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Pranešimas nerastas' });
-        }
-        
-        console.log(`✅ Feedback ${id} statusas → ${status}`);
-        res.json({ success: true, feedback: result.rows[0] });
-    } catch (err) {
-        console.error('❌ Feedback status klaida:', err);
-        res.status(500).json({ error: 'Serverio klaida' });
-    }
-});
-
-// ============================================
-// 📬 FEEDBACK ATSAKYMAS
-// ============================================
-router.post('/feedback/:id/reply', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { reply } = req.body;
-        
-        if (!reply || reply.trim().length < 2) {
-            return res.status(400).json({ error: 'Atsakymas per trumpas' });
-        }
-        
-        const result = await db.pool.query(
-            `UPDATE feedback 
-             SET admin_response = $1, 
-                 responded_at = NOW(),
-                 responded_by = 'Admin'
-             WHERE id = $2
-             RETURNING *`,
-            [reply.trim(), id]
-        );
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Pranešimas nerastas' });
-        }
-        
-        console.log(`✅ Feedback ${id} atsakytas`);
-        res.json({ success: true, feedback: result.rows[0] });
-    } catch (err) {
-        console.error('❌ Feedback reply klaida:', err);
-        res.status(500).json({ error: 'Serverio klaida' });
     }
 });
 
