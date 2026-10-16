@@ -7,19 +7,19 @@ module.exports = {
     // ============================================
     // SPALVŲ GRUPĖS (sklypai pagal spalvą)
     // ============================================
-    COLOR_GROUPS: {
-        '#ffd700': [1, 3],           // Telšiai, Plungė
-        '#4a90d9': [6, 7, 9],        // Kėdainiai, Ariogala, Ramygala
-        '#2ecc71': [10, 12, 15],     // Utena, Anykščiai, Zarasai
-        '#9b59b6': [17, 18, 20],     // Mažeikiai, Skuodas, N.Akmenė
-        '#e74c3c': [22, 23, 25],     // Marijampolė, Vilkaviškis, Kalvarija
-        '#8B6914': [27, 29, 30],     // Alytus, Lazdijai, Druskininkai
-        '#1abc9c': [31, 33, 34],     // Panevėžys, Pasvalys, Kupiškis
-        '#ff69b4': [35, 36, 38],     // Šiauliai, Kuršėnai, Radviliškis
-        '#2c3e50': [39, 40, 41],     // Klaipėda, Palanga, Gargždai
-        '#1a237e': [43, 45, 47],     // Kaunas, Garliava, Raudondvaris
-        '#bdc3c7': [49, 51]          // Trakai, Vilnius
-    },
+   COLOR_GROUPS: {
+    '#ffd700': [1, 3],           // Telšiai, Plungė
+    '#4a90d9': [6, 7, 9],        // Kėdainiai, Ariogala, Ramygala
+    '#ff8c00': [10, 12, 15],     // Utena, Anykščiai, Zarasai   ← PAKEISTA!
+    '#9b59b6': [17, 18, 20],     // Mažeikiai, Skuodas, N.Akmenė
+    '#e74c3c': [22, 23, 25],     // Marijampolė, Vilkaviškis, Kalvarija
+    '#8B6914': [27, 29, 30],     // Alytus, Lazdijai, Druskininkai
+    '#1abc9c': [31, 33, 34],     // Panevėžys, Pasvalys, Kupiškis
+    '#ff69b4': [35, 36, 38],     // Šiauliai, Kuršėnai, Radviliškis
+    '#2c3e50': [39, 40, 41],     // Klaipėda, Palanga, Gargždai
+    '#1a237e': [43, 45, 47],     // Kaunas, Garliava, Raudondvaris
+    '#bdc3c7': [49, 51]          // Trakai, Vilnius
+},
 
     // ============================================
     // SERVICE GRUPĖS
