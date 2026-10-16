@@ -8,12 +8,14 @@
         max-width: 100vw !important;
         max-height: 75vh !important;
         width: 100vw !important;
-        --corner-width: clamp(50px, 14vw, 75px) !important;
-        --corner-height: clamp(50px, 14vw, 75px) !important;
-        --left-col-width: clamp(24px, 6.5vw, 40px) !important;
-        --right-col-width: clamp(24px, 6.5vw, 40px) !important;
-        --top-row-height: clamp(24px, 6.5vh, 40px) !important;
-        --bottom-row-height: clamp(24px, 6.5vh, 40px) !important;
+        
+        /* 🆕 VISI DYDŽIAI PER vmin – kad būtų VIENODI */
+        --corner-width: clamp(50px, 14vmin, 75px) !important;
+        --corner-height: clamp(50px, 14vmin, 75px) !important;
+        --left-col-width: clamp(24px, 7vmin, 40px) !important;
+        --right-col-width: clamp(24px, 7vmin, 40px) !important;
+        --top-row-height: clamp(24px, 7vmin, 40px) !important;
+        --bottom-row-height: clamp(24px, 7vmin, 40px) !important;
         --board-gap: 1px !important;
         gap: 1px !important;
         padding: 2px !important;
