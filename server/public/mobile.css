@@ -9,13 +9,13 @@
         max-height: 75vh !important;
         width: 100vw !important;
         
-        /* 🆕 VISI DYDŽIAI PER vmin – kad būtų VIENODI */
-        --corner-width: clamp(50px, 14vmin, 75px) !important;
-        --corner-height: clamp(50px, 14vmin, 75px) !important;
-        --left-col-width: clamp(24px, 7vmin, 40px) !important;
-        --right-col-width: clamp(24px, 7vmin, 40px) !important;
-        --top-row-height: clamp(24px, 7vmin, 40px) !important;
-        --bottom-row-height: clamp(24px, 7vmin, 40px) !important;
+        /* 🆕 VISI PER vmin – VIENODI */
+        --corner-width: clamp(60px, 18vmin, 90px) !important;
+        --corner-height: clamp(60px, 18vmin, 90px) !important;
+        --left-col-width: clamp(28px, 7vmin, 45px) !important;
+        --right-col-width: clamp(28px, 7vmin, 45px) !important;
+        --top-row-height: clamp(28px, 7vmin, 45px) !important;
+        --bottom-row-height: clamp(28px, 7vmin, 45px) !important;
         --board-gap: 1px !important;
         gap: 1px !important;
         padding: 2px !important;
