@@ -78,16 +78,16 @@ class DemolishLogic {
                 // Jei visi vienodi - galima griauti iš VISŲ
                 props.forEach(p => {
                     result.push({
-    id: p.id,
-    name: p.name,
-    color: p.color,
-    cost: p.cost,
-    houses: p.houses,
-    isHotel: p.isHotel,
-    refund: p.refund,
-    type: p.type,
-    icon: p.icon
-});
+                        id: p.id,
+                        name: p.name,
+                        color: p.color,
+                        cost: p.cost,
+                        houses: p.houses,
+                        isHotel: p.isHotel,
+                        refund: p.refund,
+                        type: p.type,
+                        icon: p.icon
+                    });
                 });
             } else {
                 // Jei skirtumas > 1 - galima griauti TIK iš tų, kurie turi MAX
@@ -203,7 +203,7 @@ class DemolishLogic {
     // ============================================
     // GRIAUTI NAMĄ
     // ============================================
-    demolishHouse(playerId, fieldId) {
+    demolishHouse(playerId, fieldId, isBailiff = false) {
         const result = this.canDemolish(playerId, fieldId);
         if (!result.can) {
             return { error: result.reason };
@@ -238,7 +238,16 @@ class DemolishLogic {
         const remainingHouses = player.houses[fieldId] || 0;
         const isHotel = remainingHouses >= 5;
         const typeText = isHotel ? 'VIEŽBUTĮ' : 'namą';
-        const message = `🏚️ ${player.name} nugriovė ${typeText} ant ${field.name} ir gavo €${refund}!`;
+        
+        // 🆕 SKIRTINGI PRANEŠIMAI
+        let message;
+        if (isBailiff) {
+            // 🏛️ AFK – antstoliai
+            message = `🏛️ ANSTOLIAI: ${player.name} konfiskavo ${typeText} ant ${field.name} už skolas! Gavo €${refund}`;
+        } else {
+            // 🏚️ Žaidėjas pats
+            message = `🏚️ ${player.name} nugriovė ${typeText} ant ${field.name} ir gavo €${refund}!`;
+        }
 
         this.game.addMessage(message);
 
@@ -248,7 +257,8 @@ class DemolishLogic {
             fieldName: field.name,
             houses: remainingHouses,
             refund: refund,
-            message: message
+            message: message,
+            isBailiff: isBailiff
         };
     }
 }

@@ -871,6 +871,12 @@ io.on('connection', (socket) => {
         player.ip = socket.clientIp;
         
         console.log('✅ Žaidėjas sėkmingai prijungtas atgal:', player.name);
+
+        // 🆕 RESTART BOT LOOP (jei žaidimas prasidėjęs)
+    if (game.gameStarted) {
+        console.log(`🤖 RESTART botų ciklas po rekonekcijos: ${gameId}`);
+        startBotLoop(gameId.toUpperCase());
+    }
         
         socket.emit('reconnected', {
             gameId: gameId.toUpperCase(),
@@ -1286,7 +1292,7 @@ socket.on('movementFinished', () => {
             return;
         }
 
-        const result = game.sellToBank(socket.playerId, fieldIds);
+        const result = game.sellToBank(socket.playerId, fieldIds, false);
         if (result.error) {
             socket.emit('error', result.error);
             return;
@@ -1615,27 +1621,27 @@ socket.on('movementFinished', () => {
     });
 
     socket.on('demolishHouse', ({ fieldId }) => {
-        if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
-            return;
-        }
-        
-        const game = games.get(socket.gameId);
-        if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
-            return;
-        }
+    if (!socket.gameId || socket.playerId === undefined) {
+        socket.emit('error', 'Neprisijungei prie žaidimo!');
+        return;
+    }
+    
+    const game = games.get(socket.gameId);
+    if (!game) {
+        socket.emit('error', 'Žaidimas nerastas!');
+        return;
+    }
 
-        const result = game.demolishHouse(socket.playerId, fieldId);
-        if (result.error) {
-            socket.emit('error', result.error);
-            return;
-        }
+    const result = game.demolishHouse(socket.playerId, fieldId, false);   // ← false = žaidėjas pats
+    if (result.error) {
+        socket.emit('error', result.error);
+        return;
+    }
 
-        io.to(socket.gameId).emit('gameState', game.getGameState());
-        io.to(socket.gameId).emit('message', result.message);
-        io.to(socket.gameId).emit('demolishConfirmed', result);
-    });
+    io.to(socket.gameId).emit('gameState', game.getGameState());
+    io.to(socket.gameId).emit('message', result.message);
+    io.to(socket.gameId).emit('demolishConfirmed', result);
+});
 
     // ============================================
     // VOTE-KICK
@@ -2117,28 +2123,32 @@ socket.on('movementFinished', () => {
     // ATSIJUNGIMAS
     // ============================================
     socket.on('disconnect', () => {
-        console.log('👋 Žaidėjas atsijungė:', socket.id);
-        
-        socket.leave('lobby');
-        
-        if (socket.gameId) {
-            const game = games.get(socket.gameId);
-            if (game) {
-                const player = game.players.find(p => p.id === socket.playerId);
-                if (player) {
-                    player.isActive = false;
-                    io.to(socket.gameId).emit('gameState', game.getGameState());
-                    io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
-                    io.to(socket.gameId).emit('message', `👋 ${player.name} paliko žaidimą`);
-                }
-                
-                const activePlayers = game.getActivePlayers();
-                if (activePlayers.length <= 1 || !game.gameStarted) {
-                    stopBotLoop(socket.gameId);
-                }
+    console.log('👋 Žaidėjas atsijungė:', socket.id);
+    
+    socket.leave('lobby');
+    
+    if (socket.gameId) {
+        const game = games.get(socket.gameId);
+        if (game) {
+            const player = game.players.find(p => p.id === socket.playerId);
+            if (player) {
+                player.isActive = false;
+                io.to(socket.gameId).emit('gameState', game.getGameState());
+                io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
+                io.to(socket.gameId).emit('message', `👋 ${player.name} paliko žaidimą`);
+            }
+            
+            const activePlayers = game.getActivePlayers();
+            
+            // 🆕 SUSTABDYTI BOTUS TIK JEI:
+            // - Žaidimas NEPRASIDĖJĘS
+            // - ARBA nebeliko NĖ VIENO žaidėjo
+            if (!game.gameStarted || activePlayers.length === 0) {
+                stopBotLoop(socket.gameId);
             }
         }
-    });
+    }
+});
 });
 
 // ============================================

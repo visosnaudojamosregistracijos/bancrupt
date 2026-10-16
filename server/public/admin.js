@@ -925,14 +925,14 @@ function renderFeedback(items) {
     const statusIcons = {
         new: '🆕 Naujas',
         in_progress: '🔄 Vykdoma',
-        fixed: '✅ Išspręsta',
+        resolved: '✅ Išspręsta',
         rejected: '❌ Atmesta'
     };
     
     const statusColors = {
         new: '#ffc107',
         in_progress: '#17a2b8',
-        fixed: '#28a745',
+        resolved: '#28a745',
         rejected: '#6c757d'
     };
     
@@ -966,7 +966,7 @@ function renderFeedback(items) {
                 <div style="display:flex; gap:3px; flex-wrap:wrap;">
                     <button onclick="openFeedbackModal(${item.id})" style="padding:3px 8px; font-size:11px; background:#ffd700; color:#000; font-weight:700;">👁️</button>
                     ${item.status !== 'in_progress' ? `<button onclick="setFeedbackStatus(${item.id}, 'in_progress')" style="padding:3px 6px; font-size:11px; background:#17a2b8;">🔄</button>` : ''}
-                    ${item.status !== 'fixed' ? `<button onclick="setFeedbackStatus(${item.id}, 'fixed')" style="padding:3px 6px; font-size:11px; background:#28a745;">✅</button>` : ''}
+                   ${item.status !== 'resolved' ? `<button onclick="setFeedbackStatus(${item.id}, 'resolved')" ...>✅</button>` : ''}
                     ${item.status !== 'rejected' ? `<button onclick="setFeedbackStatus(${item.id}, 'rejected')" style="padding:3px 6px; font-size:11px; background:#6c757d;">❌</button>` : ''}
                     ${item.status !== 'new' ? `<button onclick="setFeedbackStatus(${item.id}, 'new')" style="padding:3px 6px; font-size:11px; background:#ffc107; color:#000;">🆕</button>` : ''}
                     <button onclick="deleteFeedback(${item.id})" style="padding:3px 6px; font-size:11px; background:#dc3545;" class="danger">🗑️</button>
@@ -1050,7 +1050,7 @@ function openFeedbackModal(id) {
     document.getElementById('fb-modal-error').textContent = '';
     
     // Statuso mygtukų highlight
-    ['new', 'in_progress', 'fixed', 'rejected'].forEach(s => {
+    ['new', 'in_progress', 'resolved', 'rejected'].forEach(s => {
         const btn = document.getElementById('fb-btn-' + s);
         if (btn) {
             btn.style.opacity = (s === item.status) ? '1' : '0.5';
@@ -1089,7 +1089,7 @@ async function fbModalSetStatus(status) {
         if (item) {
             document.getElementById('fb-modal-status').innerHTML = getStatusBadge(status);
             
-            ['new', 'in_progress', 'fixed', 'rejected'].forEach(s => {
+            ['new', 'in_progress', 'resolved', 'rejected'].forEach(s => {
                 const btn = document.getElementById('fb-btn-' + s);
                 if (btn) {
                     btn.style.opacity = (s === status) ? '1' : '0.5';
@@ -1163,7 +1163,7 @@ function getStatusBadge(status) {
     const labels = {
         new: { icon: '🆕', text: 'Naujas', color: '#ffc107', textColor: '#000' },
         in_progress: { icon: '🔄', text: 'Vykdoma', color: '#17a2b8', textColor: '#fff' },
-        fixed: { icon: '✅', text: 'Išspręsta', color: '#28a745', textColor: '#fff' },
+        resolved: { icon: '✅', text: 'Išspręsta', color: '#28a745', textColor: '#fff' },
         rejected: { icon: '❌', text: 'Atmesta', color: '#6c757d', textColor: '#fff' }
     };
     const l = labels[status] || { icon: '', text: status, color: '#888', textColor: '#fff' };

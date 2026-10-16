@@ -86,51 +86,63 @@ class TradingLogic {
     // ============================================
     // 1. PARDUOTI BANKUI
     // ============================================
-    sellToBank(playerId, fieldIds) {
-        const player = this.getPlayer(playerId);
-        if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-        if (player.left) return { error: 'Žaidėjas pasitraukęs' };
-        if (player.kicked) return { error: 'Žaidėjas pašalintas' };
+    sellToBank(playerId, fieldIds, isBailiff = false) {
+    const player = this.getPlayer(playerId);
+    if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
+    if (player.left) return { error: 'Žaidėjas pasitraukęs' };
+    if (player.kicked) return { error: 'Žaidėjas pašalintas' };
 
-        let totalPrice = 0;
-        const soldFields = [];
+    let totalPrice = 0;
+    const soldFields = [];
 
-        for (const fieldId of fieldIds) {
-            if (!player.properties.includes(fieldId)) {
-                return { error: `Neturi kortelės ${fieldId}` };
-            }
-            const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
-            if (houses > 0) {
-                const field = this.game.board.find(f => f.id === fieldId);
-                return { error: `Negali parduoti ${field ? field.name : 'kortelės'} - turi namų!` };
-            }
-            
-            const price = this.getBankBuybackPrice(fieldId);
-            totalPrice += price;
-            soldFields.push(fieldId);
+    for (const fieldId of fieldIds) {
+        if (!player.properties.includes(fieldId)) {
+            return { error: `Neturi kortelės ${fieldId}` };
         }
-
-        for (const fieldId of soldFields) {
-            player.properties = player.properties.filter(id => id !== fieldId);
-            if (player.houses) {
-                delete player.houses[fieldId];
-            }
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
+        if (houses > 0) {
+            const field = this.game.board.find(f => f.id === fieldId);
+            return { error: `Negali parduoti ${field ? field.name : 'kortelės'} - turi namų!` };
         }
-
-        player.money += totalPrice;
-        this.game.addMessage(`🏦 ${player.name} pardavė ${soldFields.length} kortelę(-es) bankui už €${totalPrice}!`);
-
-        if (player.money >= 0) {
-            player.isDebtor = false;
-        }
-
-        return { 
-            success: true, 
-            soldFields: soldFields,
-            totalPrice: totalPrice,
-            message: `Parduota už €${totalPrice}`
-        };
+        
+        const price = this.getBankBuybackPrice(fieldId);
+        totalPrice += price;
+        soldFields.push(fieldId);
     }
+
+    for (const fieldId of soldFields) {
+        player.properties = player.properties.filter(id => id !== fieldId);
+        if (player.houses) {
+            delete player.houses[fieldId];
+        }
+    }
+
+    player.money += totalPrice;
+    
+    // 🆕 SKIRTINGI PRANEŠIMAI
+    let message;
+    if (isBailiff) {
+        // 🏛️ AFK – antstoliai
+        message = `🏛️ ANSTOLIAI: ${player.name} konfiskavo ${soldFields.length} sklypą(-us) už skolas! Gavo €${totalPrice}`;
+    } else {
+        // 🏦 Žaidėjas pats
+        message = `🏦 ${player.name} pardavė ${soldFields.length} kortelę(-es) bankui už €${totalPrice}!`;
+    }
+    
+    this.game.addMessage(message);
+
+    if (player.money >= 0) {
+        player.isDebtor = false;
+    }
+
+    return { 
+        success: true, 
+        soldFields: soldFields,
+        totalPrice: totalPrice,
+        message: message,
+        isBailiff: isBailiff
+    };
+}
 
     // ============================================
     // 2. PRADĖTI AUKCIONĄ

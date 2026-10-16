@@ -756,7 +756,7 @@ class Game {
             if (sellable.length > 0) {
                 console.log(`🤖 ${bot.name}: bando parduoti ${sellable[0].name}`);
 
-                const result = this.sellToBank(bot.id, [sellable[0].id]);
+                const result = this.sellToBank(bot.id, [sellable[0].id], false);
                 console.log(`🤖 ${bot.name} pardavė sklypą:`, result);
                 await this.botSleep(1500);
 
@@ -923,8 +923,8 @@ class Game {
         
         // Griauti po vieną namą, kol išeis iš minuso
         for (const item of housesToDemolish) {
-            while (currentPlayer.houses[item.fieldId] > 0 && currentPlayer.money < 0) {
-                const result = this.demolishHouse(currentPlayer.id, item.fieldId);
+    while (currentPlayer.houses[item.fieldId] > 0 && currentPlayer.money < 0) {
+        const result = this.demolishHouse(currentPlayer.id, item.fieldId, true); 
                 
                 if (result.error) {
                     console.log(`⚠️ ${currentPlayer.name}: griovimo klaida:`, result.error);
@@ -940,28 +940,28 @@ class Game {
         }
         
         // ============================================
-        // 2. TADA – parduoti sklypus be namų (nuo pigiausio)
-        // ============================================
-        if (currentPlayer.money < 0) {
-            const sellable = currentPlayer.properties
-                .filter(id => !currentPlayer.houses[id] || currentPlayer.houses[id] === 0)
-                .map(id => this.board.find(f => f.id === id))
-                .filter(f => f)
-                .sort((a, b) => a.cost - b.cost);
-            
-            for (const field of sellable) {
-                if (currentPlayer.money >= 0) break;
-                
-                const result = this.sellToBank(currentPlayer.id, [field.id]);
-                
-                if (result.error) {
-                    console.log(`⚠️ ${currentPlayer.name}: pardavimo klaida:`, result.error);
-                    break;
-                }
-                
-                console.log(`💰 ${currentPlayer.name} auto-pardavė ${field.name} už €${result.totalPrice} → €${currentPlayer.money}`);
-            }
+// 2. TADA – parduoti sklypus be namų (nuo pigiausio)
+// ============================================
+if (currentPlayer.money < 0) {
+    const sellable = currentPlayer.properties
+        .filter(id => !currentPlayer.houses[id] || currentPlayer.houses[id] === 0)
+        .map(id => this.board.find(f => f.id === id))
+        .filter(f => f)
+        .sort((a, b) => a.cost - b.cost);
+    
+    for (const field of sellable) {
+        if (currentPlayer.money >= 0) break;
+        
+        const result = this.sellToBank(currentPlayer.id, [field.id], true);  // ← true = antstoliai
+        
+        if (result.error) {
+            console.log(`⚠️ ${currentPlayer.name}: pardavimo klaida:`, result.error);
+            break;
         }
+        
+        console.log(`💰 ${currentPlayer.name} auto-pardavė ${field.name} už €${result.totalPrice} → €${currentPlayer.money}`);
+    }
+}
         
         // ============================================
         // 3. PATIKRINTI – ar pavyko išeiti iš minuso
@@ -2790,9 +2790,9 @@ this.addMessageKey('game.paidJailFine', {
         };
     }
 
-    sellToBank(playerId, fieldIds) {
-        return this.tradingLogic.sellToBank(playerId, fieldIds);
-    }
+    sellToBank(playerId, fieldIds, isBailiff = false) {
+    return this.tradingLogic.sellToBank(playerId, fieldIds, isBailiff);
+}
 
     startAuction(playerId, fieldId) {
         return this.tradingLogic.startAuction(playerId, fieldId);
@@ -2846,9 +2846,9 @@ this.addMessageKey('game.paidJailFine', {
         return this.demolishLogic.canDemolish(playerId, fieldId);
     }
 
-    demolishHouse(playerId, fieldId) {
-        return this.demolishLogic.demolishHouse(playerId, fieldId);
-    }
+    demolishHouse(playerId, fieldId, isBailiff = false) {
+    return this.demolishLogic.demolishHouse(playerId, fieldId, isBailiff);
+}
 
     payJailFine(playerId) {
     const player = this.getPlayerById(playerId);

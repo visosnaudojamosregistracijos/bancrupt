@@ -588,5 +588,59 @@ router.delete('/feedback/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// ============================================
+// 📬 FEEDBACK ATSAKYMAS
+// ============================================
+
+// POST /api/admin/feedback/:id/respond
+router.post('/feedback/:id/respond', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, admin_response, responded_by } = req.body;
+        
+        console.log(`📬 Feedback respond: id=${id}, status=${status}`);
+        
+        // Validacija
+        if (!['new', 'in_progress', 'resolved', 'rejected'].includes(status)) {
+            return res.status(400).json({ error: 'Neteisingas statusas' });
+        }
+        
+        if (!admin_response || admin_response.trim().length < 2) {
+            return res.status(400).json({ error: 'Atsakymas per trumpas' });
+        }
+        
+        if (admin_response.length > 2000) {
+            return res.status(400).json({ error: 'Atsakymas per ilgas (max 2000)' });
+        }
+        
+        // Atnaujinti feedback
+        const result = await db.pool.query(
+            `UPDATE feedback 
+             SET status = $1, 
+                 admin_response = $2, 
+                 responded_at = NOW(),
+                 responded_by = $3
+             WHERE id = $4
+             RETURNING *`,
+            [status, admin_response.trim(), responded_by || 'Admin', id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Pranešimas nerastas' });
+        }
+        
+        console.log(`✅ Feedback ${id} atsakytas (${status})`);
+        
+        res.json({ 
+            success: true, 
+            feedback: result.rows[0]
+        });
+        
+    } catch (err) {
+        console.error('❌ Feedback respond klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
 module.exports = router;
 module.exports.setIO = setIO;
