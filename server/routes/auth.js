@@ -7,10 +7,10 @@ const express = require('express');
 const router = express.Router();
 const authLogic = require('../authLogic');
 const db = require('../db');
+const jwt = require('jsonwebtoken');
 
 // ============================================
 // GET /api/auth/security-questions
-// Grąžinti saugumo klausimų sąrašą
 // ============================================
 router.get('/security-questions', (req, res) => {
     res.json({
@@ -21,7 +21,6 @@ router.get('/security-questions', (req, res) => {
 
 // ============================================
 // POST /api/auth/register
-// Registracija
 // ============================================
 router.post('/register', async (req, res) => {
     try {
@@ -61,7 +60,6 @@ router.post('/register', async (req, res) => {
 
 // ============================================
 // POST /api/auth/login
-// Prisijungimas
 // ============================================
 router.post('/login', async (req, res) => {
     try {
@@ -95,7 +93,6 @@ router.post('/login', async (req, res) => {
 
 // ============================================
 // GET /api/auth/me
-// Gauti savo profilį (pagal tokeną)
 // ============================================
 router.get('/me', async (req, res) => {
     try {
@@ -140,7 +137,6 @@ router.get('/me', async (req, res) => {
 
 // ============================================
 // GET /api/auth/stats/:userId
-// Gauti kito žaidėjo statistiką
 // ============================================
 router.get('/stats/:userId', async (req, res) => {
     try {
@@ -176,8 +172,7 @@ router.get('/stats/:userId', async (req, res) => {
 });
 
 // ============================================
-// 🆕 GET /api/auth/leaders
-// Gauti Top 10 žaidėjų
+// GET /api/auth/leaders
 // ============================================
 router.get('/leaders', async (req, res) => {
     try {
@@ -197,8 +192,7 @@ router.get('/leaders', async (req, res) => {
 });
 
 // ============================================
-// 🆕 GET /api/auth/history
-// Gauti savo žaidimų istoriją (paskutiniai 10)
+// GET /api/auth/history
 // ============================================
 router.get('/history', async (req, res) => {
     try {
@@ -232,7 +226,7 @@ router.get('/history', async (req, res) => {
 // SLAPTAŽODŽIO ATSTATYMAS
 // ============================================
 
-// 1 ETAPAS: Patikrinti vardą + el. paštą, grąžinti klausimą
+// 1 ETAPAS: Patikrinti vardą + el. paštą
 router.post('/forgot-password/verify-user', async (req, res) => {
     try {
         const { username, email } = req.body;
@@ -314,8 +308,7 @@ router.post('/forgot-password/reset', async (req, res) => {
 });
 
 // ============================================
-// 🆕 POST /api/auth/change-password
-// Slaptažodžio keitimas (prisijungus)
+// POST /api/auth/change-password
 // ============================================
 router.post('/change-password', async (req, res) => {
     try {
@@ -350,6 +343,51 @@ router.post('/change-password', async (req, res) => {
 
     } catch (err) {
         console.error('❌ /change-password klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
+// ============================================
+// 📬 MANO PRANEŠIMAI
+// ============================================
+
+// GET /api/auth/my-feedback — žaidėjo pranešimai
+router.get('/my-feedback', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        let userId = null;
+        
+        // Jei prisijungęs — gauti userId
+        if (authHeader) {
+            const token = authHeader.replace('Bearer ', '');
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                userId = decoded.userId;
+            } catch (err) {
+                console.warn('⚠️ Blogas token my-feedback:', err.message);
+            }
+        }
+        
+        // Jei nėra userId — grąžinti tuščią
+        if (!userId) {
+            return res.json({ feedback: [] });
+        }
+        
+        const result = await db.pool.query(`
+            SELECT id, type, message, status, admin_response, 
+                   responded_at, responded_by, created_at
+            FROM feedback
+            WHERE user_id = $1
+            ORDER BY created_at DESC
+            LIMIT 50
+        `, [userId]);
+        
+        console.log(`📬 Mano pranešimai (userId=${userId}): ${result.rows.length}`);
+        
+        res.json({ feedback: result.rows });
+        
+    } catch (err) {
+        console.error('❌ my-feedback klaida:', err);
         res.status(500).json({ error: 'Serverio klaida' });
     }
 });

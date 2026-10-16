@@ -6480,6 +6480,106 @@ console.log('✅ Pirkimo apsauga aktyvuota!');
 
 function openFeedback() {
     document.getElementById('feedbackModal').style.display = 'flex';
+    
+    // 🆕 Įkelti mano pranešimus
+    loadMyFeedback();
+}
+
+// ============================================
+// 📬 MANO PRANEŠIMAI
+// ============================================
+
+async function loadMyFeedback() {
+    const content = document.getElementById('myFeedbackContent');
+    const countEl = document.getElementById('myFeedbackCount');
+    
+    if (!content) return;
+    
+    content.innerHTML = '<p style="color:#6c757d; text-align:center; font-size:13px;">⏳ Kraunama...</p>';
+    if (countEl) countEl.textContent = '';
+    
+    try {
+        const token = localStorage.getItem('bancrupt_token');
+        
+        const response = await fetch('/api/auth/my-feedback', {
+            headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+        });
+        
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        
+        const data = await response.json();
+        const items = data.feedback || [];
+        
+        renderMyFeedback(items);
+        
+    } catch (err) {
+        console.error('❌ loadMyFeedback klaida:', err);
+        content.innerHTML = '<p style="color:#dc3545; text-align:center; font-size:13px;">❌ Nepavyko įkelti pranešimų</p>';
+    }
+}
+
+function renderMyFeedback(items) {
+    const content = document.getElementById('myFeedbackContent');
+    const countEl = document.getElementById('myFeedbackCount');
+    
+    if (!content) return;
+    
+    if (countEl) {
+        countEl.textContent = items.length > 0 ? `(${items.length})` : '';
+    }
+    
+    if (!items || items.length === 0) {
+        content.innerHTML = '<p style="color:#6c757d; text-align:center; font-size:13px;">📭 Neturi pranešimų</p>';
+        return;
+    }
+    
+    const typeIcons = {
+        bug: '🐛 Klaida',
+        idea: '💡 Pasiūlymas',
+        complaint: '⚠️ Nusiskundimas'
+    };
+    
+    const statusBadges = {
+        new: { icon: '🆕', text: 'Naujas', color: '#ffc107', textColor: '#000' },
+        in_progress: { icon: '🔄', text: 'Vykdoma', color: '#17a2b8', textColor: '#fff' },
+        resolved: { icon: '✅', text: 'Išspręsta', color: '#28a745', textColor: '#fff' },
+        rejected: { icon: '❌', text: 'Atmesta', color: '#6c757d', textColor: '#fff' }
+    };
+    
+    let html = '';
+    
+    items.forEach(item => {
+        const date = new Date(item.created_at).toLocaleString('lt-LT', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit'
+        });
+        
+        const status = statusBadges[item.status] || { icon: '', text: item.status, color: '#888', textColor: '#fff' };
+        const typeLabel = typeIcons[item.type] || item.type;
+        
+        const message = (item.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        html += `
+            <div style="background:rgba(255,255,255,0.5); border-radius:8px; padding:10px; margin-bottom:8px; border-left:4px solid ${status.color};">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                    <span style="font-weight:700; color:#1a6b3c; font-size:13px;">${typeLabel}</span>
+                    <span style="background:${status.color}; color:${status.textColor}; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700;">${status.icon} ${status.text}</span>
+                </div>
+                <div style="font-size:11px; color:#6c757d; margin-bottom:6px;">${date}</div>
+                <div style="font-size:12px; color:#3d2b1f; white-space:pre-wrap; word-wrap:break-word; margin-bottom:${item.admin_response ? '8px' : '0'};">${message}</div>
+                ${item.admin_response ? `
+                    <div style="background:rgba(40,167,69,0.15); border-left:3px solid #28a745; padding:8px; border-radius:4px; margin-top:6px;">
+                        <div style="font-size:11px; font-weight:700; color:#28a745; margin-bottom:4px;">💬 ADMIN ATSAKYMAS:</div>
+                        <div style="font-size:12px; color:#3d2b1f; white-space:pre-wrap; word-wrap:break-word;">${item.admin_response.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
 }
 
 function closeFeedback() {
@@ -6487,6 +6587,14 @@ function closeFeedback() {
     document.getElementById('feedbackMessage').value = '';
     document.getElementById('feedbackEmail').value = '';
     document.getElementById('feedbackError').textContent = '';
+    
+    // 🆕 Išvalyti sąrašą
+    const content = document.getElementById('myFeedbackContent');
+    if (content) {
+        content.innerHTML = '<p style="color:#6c757d; text-align:center; font-size:13px;">⏳ Kraunama...</p>';
+    }
+    const countEl = document.getElementById('myFeedbackCount');
+    if (countEl) countEl.textContent = '';
 }
 
 async function submitFeedback() {
@@ -6510,11 +6618,13 @@ async function submitFeedback() {
     
     // Gauti vartotojo info
     let username = null;
+    let userId = null;
     const userStr = localStorage.getItem('bancrupt_user');
     if (userStr) {
         try {
             const user = JSON.parse(userStr);
             username = user.username;
+            userId = user.userId;   // 🆕 PRIDĖTA
         } catch (e) {}
     }
     
@@ -6523,7 +6633,7 @@ async function submitFeedback() {
     const activePage = document.querySelector('.page.active');
     if (activePage) page = activePage.id.replace('page-', '');
     
-    console.log('📤 Siunčiam feedback:', { type, message, email, page, username });
+    console.log('📤 Siunčiam feedback:', { type, message, email, page, username, userId });
     
     try {
         const response = await fetch('/api/feedback', {
@@ -6534,7 +6644,8 @@ async function submitFeedback() {
                 message,
                 email: email || null,
                 page,
-                username
+                username,
+                userId   // 🆕 PRIDĖTA
             })
         });
         

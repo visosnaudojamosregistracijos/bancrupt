@@ -121,9 +121,9 @@ console.log('🔍 adminRoutes tipas:', typeof adminRoutes);   // ← NAUJA (nepr
 // 🆕 FEEDBACK (PRANEŠTI / PASIŪLYTI)
 // ============================================
 app.post('/api/feedback', async (req, res) => {
-    const { type, message, email, page, username } = req.body;
+    const { type, message, email, page, username, userId } = req.body;   // ← PRIDĖTA userId
     
-    console.log('📬 Gautas feedback:', { type, message: message?.substring(0, 50), page, username });
+    console.log('📬 Gautas feedback:', { type, message: message?.substring(0, 50), page, username, userId });
     
     // Validacija
     if (!message || message.length < 5) {
@@ -140,12 +140,12 @@ app.post('/api/feedback', async (req, res) => {
     
     try {
         await db.pool.query(
-            `INSERT INTO feedback (type, message, email, page, username, created_at)
-             VALUES ($1, $2, $3, $4, $5, NOW())`,
-            [type, message, email, page, username]
+            `INSERT INTO feedback (type, message, email, page, username, user_id, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW())`,                        // ← PRIDĖTA user_id
+            [type, message, email, page, username, userId || null]           // ← PRIDĖTA userId
         );
         
-        console.log(`✅ Feedback išsaugotas: [${type}] nuo ${username || 'svečias'} (${page})`);
+        console.log(`✅ Feedback išsaugotas: [${type}] nuo ${username || 'svečias'} (userId: ${userId || 'nėra'})`);
         
         res.json({ success: true });
     } catch (err) {
