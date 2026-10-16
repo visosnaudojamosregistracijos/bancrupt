@@ -642,5 +642,68 @@ router.post('/feedback/:id/respond', async (req, res) => {
     }
 });
 
+// ============================================
+// 📬 FEEDBACK STATUSAS
+// ============================================
+router.post('/feedback/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        
+        if (!['new', 'in_progress', 'resolved', 'rejected'].includes(status)) {
+            return res.status(400).json({ error: 'Neteisingas statusas' });
+        }
+        
+        const result = await db.pool.query(
+            `UPDATE feedback SET status = $1 WHERE id = $2 RETURNING *`,
+            [status, id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Pranešimas nerastas' });
+        }
+        
+        console.log(`✅ Feedback ${id} statusas → ${status}`);
+        res.json({ success: true, feedback: result.rows[0] });
+    } catch (err) {
+        console.error('❌ Feedback status klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
+// ============================================
+// 📬 FEEDBACK ATSAKYMAS
+// ============================================
+router.post('/feedback/:id/reply', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reply } = req.body;
+        
+        if (!reply || reply.trim().length < 2) {
+            return res.status(400).json({ error: 'Atsakymas per trumpas' });
+        }
+        
+        const result = await db.pool.query(
+            `UPDATE feedback 
+             SET admin_response = $1, 
+                 responded_at = NOW(),
+                 responded_by = 'Admin'
+             WHERE id = $2
+             RETURNING *`,
+            [reply.trim(), id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Pranešimas nerastas' });
+        }
+        
+        console.log(`✅ Feedback ${id} atsakytas`);
+        res.json({ success: true, feedback: result.rows[0] });
+    } catch (err) {
+        console.error('❌ Feedback reply klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
 module.exports = router;
 module.exports.setIO = setIO;

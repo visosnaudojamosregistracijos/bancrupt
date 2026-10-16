@@ -1046,7 +1046,7 @@ function openFeedbackModal(id) {
     document.getElementById('fb-modal-page').textContent = item.page || '—';
     document.getElementById('fb-modal-date').textContent = new Date(item.created_at).toLocaleString('lt-LT');
     document.getElementById('fb-modal-message').textContent = item.message || '';
-    document.getElementById('fb-modal-reply').value = item.admin_reply || '';
+    document.getElementById('fb-modal-reply').value = item.admin_response || '';
     document.getElementById('fb-modal-error').textContent = '';
     
     // Statuso mygtukų highlight
