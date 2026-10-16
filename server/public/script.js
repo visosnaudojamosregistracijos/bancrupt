@@ -3197,16 +3197,10 @@ if (isMobile) {
     infoMode = false;
     localStorage.setItem('bancrupt_infoMode', 'false');
     console.log('📱 Telefonas – info režimas IŠJUNGTAS');
-    
-    // 🆕 Pridėti klasę body
-    document.body.classList.add('mobile-version');
 } else {
     infoMode = true;
     localStorage.setItem('bancrupt_infoMode', 'true');
     console.log('💻 Kompiuteris – info režimas ĮJUNGTAS');
-    
-    // 🆕 Pašalinti klasę body
-    document.body.classList.remove('mobile-version');
 }
 
 const btn = document.getElementById('infoBtn');
