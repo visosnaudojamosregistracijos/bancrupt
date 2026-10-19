@@ -39,6 +39,7 @@ function switchTab(tab) {
     
     if (tab === 'stats') {
         loadStats();
+        loadVisitors();   // 🆕 PRIDĖTA
         startStatsAutoRefresh();
     }
     
@@ -661,6 +662,28 @@ async function loadStats() {
         console.error('Klaida kraunant statistiką:', err);
     }
 }
+
+// 🆕 LANKYTOJŲ STATISTIKA   ← PRIDĖTA ČIA
+async function loadVisitors() {
+    try {
+        const res = await fetch('/api/admin/stats/visitors', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        
+        const data = await res.json();
+        
+        const todayEl = document.getElementById('visitorsToday');
+        const yesterdayEl = document.getElementById('visitorsYesterday');
+        
+        if (todayEl) todayEl.textContent = data.today || 0;
+        if (yesterdayEl) yesterdayEl.textContent = data.yesterday || 0;
+    } catch (err) {
+        console.error('❌ Lankytojų klaida:', err);
+    }
+}
+
 
 function startStatsAutoRefresh() {
     if (statsInterval) clearInterval(statsInterval);

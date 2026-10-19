@@ -1,5 +1,5 @@
 // server/server.js
-require('dotenv').config();   // 🆕 Pirmiausia .env
+require('dotenv').config();
 
 const express = require('express');
 const http = require('http');
@@ -10,7 +10,9 @@ const path = require('path');
 const os = require('os');
 const Game = require('./gameLogic');
 const db = require('./db');
-const { RateLimiterMemory } = require('rate-limiter-flexible');   // 🆕
+const { RateLimiterMemory } = require('rate-limiter-flexible');
+const { v4: uuidv4 } = require('uuid');           // 🆕 PRIDĖTA
+const cookieParser = require('cookie-parser'); 
 
 // ============================================
 // 🆕 LEIDŽIAMI DOMENAI
@@ -59,7 +61,37 @@ app.use(cors({
     credentials: true
 }));
 
+
+
 app.use(express.json());
+
+app.use(cookieParser());   // 🆕
+
+// 🆕 LANKYTOJŲ SKAIČIAVIMAS
+app.use(async (req, res, next) => {
+    // Neskaičiuojame API, admin panelės ar statinių failų
+    if (req.path.startsWith('/api') || req.path.startsWith('/admin') || req.path.includes('.')) {
+        return next();
+    }
+
+    let visitorId = req.cookies.visitor_id;
+    if (!visitorId) {
+        visitorId = uuidv4();
+        res.cookie('visitor_id', visitorId, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: true });
+        
+        try {
+            await db.pool.query(`
+                INSERT INTO site_visits (visit_date, visit_count) 
+                VALUES (CURRENT_DATE, 1)
+                ON CONFLICT (visit_date) 
+                DO UPDATE SET visit_count = site_visits.visit_count + 1
+            `);
+        } catch (err) {
+            console.error('Klaida skaičiuojant lankytojus:', err);
+        }
+    }
+    next();
+});
 
 // ============================================
 // 🆕 HTTP RATE LIMITING
@@ -151,6 +183,22 @@ app.post('/api/feedback', async (req, res) => {
     } catch (err) {
         console.error('❌ Feedback DB klaida:', err);
         res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
+// 🆕 LANKYTOJŲ STATISTIKA (ADMIN)
+app.get('/api/admin/stats/visitors', async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT 
+                (SELECT visit_count FROM site_visits WHERE visit_date = CURRENT_DATE) as today,
+                (SELECT visit_count FROM site_visits WHERE visit_date = CURRENT_DATE - 1) as yesterday
+        `);
+        const data = result.rows[0] || { today: 0, yesterday: 0 };
+        res.json(data);
+    } catch (err) {
+        console.error('❌ Lankytojų statistikos klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
     }
 });
 

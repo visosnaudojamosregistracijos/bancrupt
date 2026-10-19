@@ -287,6 +287,16 @@ async function initDatabase() {
             )
         `);
 
+        // 🆕 LANKYTOJŲ LENTELĖ
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS site_visits (
+                id SERIAL PRIMARY KEY,
+                visit_date DATE DEFAULT CURRENT_DATE,
+                visit_count INTEGER DEFAULT 1,
+                UNIQUE(visit_date)
+            )
+        `);
+
         // Įterpti default eilutę
         await pool.query(`
             INSERT INTO board_settings (id) 
