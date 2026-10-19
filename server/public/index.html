@@ -431,9 +431,20 @@
     </div>
 </div>
 
-                    <button onclick="toggleTheme()" id="themeBtn" class="left-btn" style="background: linear-gradient(145deg, #34495e, #2c3e50); color: #fff; border-color: #5d6d7e;" data-i18n="game.leftPanel.theme">
-    🌙 Tamsus
-</button>
+                    <!-- 🆕 TEMOS PASIRINKIMAS -->
+                    <div style="position: relative; width: 100%; margin-top: 6px;">
+                        <button onclick="toggleThemeMenu()" id="themeBtn" class="left-btn" style="width: 100%; padding: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <span id="themeIcon">☀️</span>
+                            <span>Režimas</span>
+                        </button>
+                        
+                        <!-- Iššokantis meniu -->
+                        <div id="themeMenu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #2a2a2a; border: 2px solid #ffd700; border-radius: 8px; z-index: 1000; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); flex-direction: column; overflow: hidden;">
+                            <button onclick="setTheme('light')" style="padding: 10px; background: transparent; color: #fff; border: none; border-bottom: 1px solid #444; cursor: pointer; font-size: 12px; text-align: left;">☀️ Šviesus</button>
+                            <button onclick="setTheme('dark')" style="padding: 10px; background: transparent; color: #fff; border: none; border-bottom: 1px solid #444; cursor: pointer; font-size: 12px; text-align: left;">🌙 Tamsus</button>
+                            <button onclick="setTheme('neon')" style="padding: 10px; background: transparent; color: #00ffff; border: none; cursor: pointer; font-size: 12px; text-align: left; font-weight: bold;">🌌 Neonas</button>
+                        </div>
+                    </div>
 
 <button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn" data-i18n="game.leftPanel.leave">
     🏃 Pasitraukti

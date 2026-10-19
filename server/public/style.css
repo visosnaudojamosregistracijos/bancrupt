@@ -3774,3 +3774,350 @@ body.dark-mode #cellInfoPanel {
 #auctionModal #auctionTimer {
     color: #dc3545 !important;
 }
+
+/* ============================================ */
+/* 🌌 NEON / KOSMINĖ TEMA                       */
+/* ============================================ */
+
+body.theme-neon {
+    background: radial-gradient(circle at center, #1a0b2e 0%, #000000 100%) !important;
+    color: #00ffff !important;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+body.theme-neon #board {
+    background: rgba(0, 0, 0, 0.5) !important;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2) !important;
+    border: 1px solid #ff00ff !important;
+}
+
+/* 🆕 BALTI PAVADINIMAI IR KAINOS NEON REŽIME */
+body.theme-neon .cell .cell-name,
+body.theme-neon .cell .cell-cost,
+body.theme-neon .cell .cell-number,
+body.theme-neon .cell.corner .cell-name,
+body.theme-neon .cell.corner .cell-cost,
+body.theme-neon .cell.start .cell-name,
+body.theme-neon .cell.start .cell-cost,
+body.theme-neon .cell.jail .cell-name,
+body.theme-neon .cell.jail .cell-cost,
+body.theme-neon .cell.parking .cell-name,
+body.theme-neon .cell.parking .cell-cost,
+body.theme-neon .cell.go-to-jail .cell-name,
+body.theme-neon .cell.go-to-jail .cell-cost {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5) !important;
+}
+
+body.theme-neon .cell:hover {
+    box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.5), 0 0 10px #00ffff !important;
+    border-color: #00ffff !important;
+    transform: scale(1.02);
+}
+
+body.theme-neon .cell[data-group] {
+    background: #0d0d1a !important;
+}
+
+/* Neon švytėjimas spalvotoms juostelėms (išlaikant originalias puses) */
+body.theme-neon .cell.property::before {
+    background: var(--group-color) !important;
+    box-shadow: 0 0 15px var(--group-color) !important;
+}
+
+/* Viršutinė eilė – juostelė apačioje */
+body.theme-neon .row-top .cell.property::before {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    height: 15px !important;
+}
+
+/* Apatinė eilė – juostelė viršuje */
+body.theme-neon .row-bottom .cell.property::before {
+    top: 0 !important;
+    bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    height: 15px !important;
+}
+
+/* Kairė kolona – juostelė dešinėje */
+body.theme-neon .row-middle-left .cell.property::before {
+    top: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    width: 15px !important;
+    height: auto !important;
+}
+
+/* Dešinė kolona – juostelė kairėje */
+body.theme-neon .row-middle-right .cell.property::before {
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    width: 15px !important;
+    height: auto !important;
+}
+
+body.theme-neon .center-cell,
+body.theme-neon #leftPanel,
+body.theme-neon #playersList,
+body.theme-neon #journal,
+body.theme-neon #chatMessages {
+    background: rgba(10, 10, 20, 0.8) !important;
+    border: 1px solid #ff00ff !important;
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.2) !important;
+    color: #00ffff !important;
+}
+
+body.theme-neon h4, body.theme-neon h3, body.theme-neon h2 {
+    color: #ff00ff !important;
+    text-shadow: 0 0 10px #ff00ff !important;
+}
+
+body.theme-neon button {
+    background: transparent !important;
+    border: 1px solid #00ffff !important;
+    color: #00ffff !important;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3) !important;
+    text-shadow: 0 0 5px #00ffff;
+    border-radius: 4px !important;
+}
+
+body.theme-neon button:hover {
+    background: rgba(0, 255, 255, 0.2) !important;
+    box-shadow: 0 0 20px #00ffff !important;
+}
+
+body.theme-neon .btn-dice, 
+body.theme-neon .btn-trade, 
+body.theme-neon #rollBtn, 
+body.theme-neon #tradeBtn {
+    border-color: #ff00ff !important;
+    color: #ff00ff !important;
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
+    text-shadow: 0 0 5px #ff00ff;
+}
+
+body.theme-neon .dice {
+    background: #000 !important;
+    border: 2px solid #00ffff !important;
+    box-shadow: 0 0 20px #00ffff !important;
+}
+body.theme-neon .dice-dot {
+    background: #00ffff !important;
+    box-shadow: 0 0 10px #00ffff !important;
+}
+
+body.theme-neon .modal-content, 
+body.theme-neon .buy-choice-box,
+body.theme-neon #feedbackModal > div {
+    background: #0a0a14 !important;
+    border: 2px solid #ff00ff !important;
+    box-shadow: 0 0 40px rgba(255, 0, 255, 0.4) !important;
+    color: #00ffff !important;
+}
+
+body.theme-neon .left-btn {
+    background: rgba(0, 255, 255, 0.05) !important;
+    border: 1px solid #00ffff !important;
+    color: #00ffff !important;
+}
+
+
+/* 🆕 SERVICE LANGELIŲ NEON STILIUS (Oro uostas, Dujos ir t.t.) */
+body.theme-neon .cell.service1,
+body.theme-neon .cell.service2,
+body.theme-neon .cell.service3 {
+    background: #0d0d1a !important; /* Tamsus fonas */
+    border: 1px solid #00ffff !important; /* Ryškus žydras rėmelis */
+    box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.2), 0 0 10px rgba(0, 255, 255, 0.1) !important;
+}
+
+/* 🆕 SERVICE LANGELIŲ IKONOS (Dūmai, lėktuvas ir t.t.) */
+body.theme-neon .cell.service1 .cell-bg-icon,
+body.theme-neon .cell.service2 .cell-bg-icon,
+body.theme-neon .cell.service3 .cell-bg-icon {
+    opacity: 0.3 !important; /* Šiek tiek matomesnė */
+    filter: drop-shadow(0 0 10px #00ffff) !important; /* Žydras švytėjimas */
+}
+
+/* 🆕 SERVICE LANGELIŲ TEKSTAS */
+body.theme-neon .cell.service1 .cell-name,
+body.theme-neon .cell.service2 .cell-name,
+body.theme-neon .cell.service3 .cell-name,
+body.theme-neon .cell.service1 .cell-cost,
+body.theme-neon .cell.service2 .cell-cost,
+body.theme-neon .cell.service3 .cell-cost {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.8) !important; /* Švelnus žydras švytėjimas tekstui */
+}
+
+/* 🆕 MOKESČIŲ IR SPECIALIŲ LANGELIŲ NEON STILIUS */
+/* Ligoninė, VMI, HORNY RP, Latrų baras, Gimtadienis, Pirtis */
+body.theme-neon .cell.special,
+body.theme-neon .cell.tax {
+    background: #0d0d1a !important; /* Tamsus fonas */
+    border: 1px solid #ff00ff !important; /* Ryškus purpurinis rėmelis (skiriasi nuo service) */
+    box-shadow: inset 0 0 15px rgba(255, 0, 255, 0.2), 0 0 10px rgba(255, 0, 255, 0.1) !important;
+}
+
+/* 🆕 JŲ IKONOS (Švirkštas, Daktaras, Dūmai, Gimtadienio tortas ir t.t.) */
+body.theme-neon .cell.special .cell-bg-icon,
+body.theme-neon .cell.tax .cell-bg-icon {
+    opacity: 0.3 !important; 
+    filter: drop-shadow(0 0 10px #ff00ff) !important; /* Purpurinis švytėjimas */
+}
+
+/* 🆕 JŲ TEKSTAS IR KAINA */
+body.theme-neon .cell.special .cell-name,
+body.theme-neon .cell.special .cell-cost,
+body.theme-neon .cell.tax .cell-name,
+body.theme-neon .cell.tax .cell-cost {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255, 0, 255, 0.8) !important; /* Purpurinis tekstas */
+}
+
+/* 🆕 SPECIALIŲ IR MOKESČIŲ LANGELIŲ NEON STILIUS (pagal ID) */
+/* HORNY RP (4), VMI (5), Ligoninė (13), Latrų baras (21), Gimtadienis (50) */
+body.theme-neon #cell-4,
+body.theme-neon #cell-5,
+body.theme-neon #cell-13,
+body.theme-neon #cell-21,
+body.theme-neon #cell-50 {
+    background: #0d0d1a !important;
+    border: 1px solid #ff00ff !important; /* Purpurinis neonas */
+    box-shadow: inset 0 0 15px rgba(255, 0, 255, 0.2), 0 0 10px rgba(255, 0, 255, 0.1) !important;
+}
+
+/* Šių langelių ikonos (Dūmai, Švirkštas, Tortas ir t.t.) */
+body.theme-neon #cell-4 .cell-bg-icon,
+body.theme-neon #cell-5 .cell-bg-icon,
+body.theme-neon #cell-13 .cell-bg-icon,
+body.theme-neon #cell-21 .cell-bg-icon,
+body.theme-neon #cell-50 .cell-bg-icon {
+    opacity: 0.3 !important; 
+    filter: drop-shadow(0 0 10px #ff00ff) !important;
+}
+
+/* Šių langelių tekstas ir kaina */
+body.theme-neon #cell-4 .cell-name,
+body.theme-neon #cell-4 .cell-cost,
+body.theme-neon #cell-5 .cell-name,
+body.theme-neon #cell-5 .cell-cost,
+body.theme-neon #cell-13 .cell-name,
+body.theme-neon #cell-13 .cell-cost,
+body.theme-neon #cell-21 .cell-name,
+body.theme-neon #cell-21 .cell-cost,
+body.theme-neon #cell-50 .cell-name,
+body.theme-neon #cell-50 .cell-cost {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255, 0, 255, 0.8) !important;
+}
+
+/* 🆕 ŽURNALO, CHATO IR #MYINFO NEON STILIUS */
+
+
+/* 🆕 SUVienodintas CHATO IR ŽURNALO NEON STILIUS */
+
+/* 1. BENDRA TEKSTO SPALVA (labai ryški, kad būtų lengva skaityti) */
+/* Chat tekstas - grynas baltas, aštrus ir su tamsiu fonu */
+body.theme-neon #chatMessages {
+    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.6) !important; /* Tamsus fonas, kad baltas tekstas matytųsi */
+    text-shadow: 0 0 3px #ffffff, 0 0 8px #00ffff !important; /* Didesnis švytėjimas */
+    font-weight: 700; /* Storesnis šriftas */
+}
+
+/* Užtikriname, kad pats žinutės tekstas būtų baltas */
+body.theme-neon #chatMessages span {
+    color: #ffffff !important;
+}
+
+/* Žurnalo tekstas - grynas baltas ir aštrus */
+body.theme-neon #journal {
+    color: #ffffff !important;
+    text-shadow: 0 0 2px #ffffff, 0 0 5px rgba(255, 255, 255, 0.5) !important;
+    font-weight: 600;
+}
+
+/* 2. CHATO VARDŲ ŠVYTĖJIMAS */
+body.theme-neon #chatMessages b {
+    color: #00ffff !important; /* Žydra spalva vardams */
+    text-shadow: 0 0 10px #00ffff, 0 0 20px rgba(0, 255, 255, 0.6) !important;
+    font-weight: 800;
+}
+
+/* 3. ŽURNALO NUMERIŲ ŠVYTĖJIMAS */
+body.theme-neon .journal-item .jnum {
+    color: #ff00ff !important; /* Purpurinė spalva numeriams */
+    text-shadow: 0 0 10px #ff00ff, 0 0 20px rgba(255, 0, 255, 0.6) !important;
+    font-weight: 800;
+}
+
+/* 4. ŽURNALO LAIKO SPALVA */
+body.theme-neon .journal-item .jtime {
+    color: rgba(0, 255, 255, 0.8) !important;
+    text-shadow: 0 0 5px #00ffff !important;
+}
+
+/* 5. ŽURNALO EILUČIŲ APVEDIMAS IR FONAS */
+body.theme-neon .journal-item {
+    border-bottom: 1px solid rgba(255, 0, 255, 0.3) !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+}
+
+body.theme-neon .journal-item .jtext {
+    color: #ffffff !important;
+    text-shadow: 0 0 2px #ffffff !important;
+}
+
+
+/* 3. #myInfo (1 langelis) */
+body.theme-neon #myInfo {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5) !important;
+}
+
+body.theme-neon #myInfo .player-name {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px #ff00ff !important; /* Vardas švies purpurine spalva */
+}
+
+body.theme-neon #myInfo .player-money {
+    color: #00ffff !important; /* Pinigai bus žydri */
+    text-shadow: 0 0 10px #00ffff, 0 0 20px rgba(0, 255, 255, 0.5) !important;
+}
+
+body.theme-neon #myInfo .player-money.negative {
+    color: #ff00ff !important; /* Jei minusе – purpuriniai */
+    text-shadow: 0 0 10px #ff00ff !important;
+}
+
+/* 4. Žaidėjų sąrašas (kad ir jis gražiai atrodytų) */
+body.theme-neon #playersList .player-item .pname {
+    color: #ffffff !important;
+}
+
+body.theme-neon #playersList .player-item .pmoney {
+    color: #00ffff !important;
+    text-shadow: 0 0 5px #00ffff !important;
+}
+
+/* 🆕 #MYINFO PAPILDOMOS EILUTĖS (Vieta ir Objektai) */
+body.theme-neon #myInfo > div {
+    color: #ffffff !important; /* Visos eilutės bus baltos */
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5) !important; /* Švelnus žydras švytėjimas */
+}
+
+/* Kadangi kai kurios eilutės turi savo spalvą (pvz., kalėjimas - raudoną), 
+   mes jas taip pat priverstinai padarysime baltas, BET paliksime joms švytėjimą */
+body.theme-neon #myInfo > div[style*="color"] {
+    color: #ffffff !important;
+}

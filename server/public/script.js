@@ -5557,35 +5557,60 @@ function hideCellAction() {
     }
 }
 
-// 🌙 Tamsaus režimo funkcijos
-function toggleTheme() {
-    const isDark = document.body.classList.toggle('dark-mode');
-    const btn = document.getElementById('themeBtn');
+// ============================================
+// 🎨 TEMŲ VALDYMAS (Šviesus / Tamsus / Neonas)
+// ============================================
+
+function toggleThemeMenu() {
+    const menu = document.getElementById('themeMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+}
+
+function setTheme(theme) {
+    // Nuimam senas klases
+    document.body.classList.remove('dark-mode', 'theme-neon');
     
-    if (isDark) {
-        btn.innerHTML = t('game.leftPanel.themeLight');
-        localStorage.setItem('bancrupt_theme', 'dark');
+    // Pridedam naują
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.textContent = '🌙';
+    } else if (theme === 'neon') {
+        document.body.classList.add('theme-neon');
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.textContent = '🌌';
     } else {
-        btn.innerHTML = t('game.leftPanel.theme');
-        localStorage.setItem('bancrupt_theme', 'light');
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.textContent = '☀️';
     }
     
-    playClickSound();
+    // Išsaugom
+    localStorage.setItem('bancrupt_theme', theme);
+    
+    // Uždarom meniu
+    const menu = document.getElementById('themeMenu');
+    if (menu) menu.style.display = 'none';
+    
+    if (typeof playClickSound === 'function') playClickSound();
 }
 
 function loadTheme() {
-    const saved = localStorage.getItem('bancrupt_theme');
-    const btn = document.getElementById('themeBtn');
-    
-    if (saved === 'dark') {
-        document.body.classList.add('dark-mode');
-        if (btn) btn.innerHTML = t('game.leftPanel.themeLight');
-    } else {
-        document.body.classList.remove('dark-mode');
-        if (btn) btn.innerHTML = t('game.leftPanel.theme');
-    }
+    const saved = localStorage.getItem('bancrupt_theme') || 'light';
+    setTheme(saved);
 }
 
+// Uždarom meniu paspaudus šalia
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('themeMenu');
+    const btn = document.getElementById('themeBtn');
+    if (menu && menu.style.display === 'flex' && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.style.display = 'none';
+    }
+});
+
+// Paleidžiam temą įkėlus puslapį
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', loadTheme);
 } else {
