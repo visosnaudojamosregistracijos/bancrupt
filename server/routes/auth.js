@@ -176,7 +176,7 @@ router.get('/stats/:userId', async (req, res) => {
 // ============================================
 router.get('/leaders', async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);   // 🛡️ ne daugiau 100
         const leaders = await db.getTopPlayers(limit);
 
         res.json({
@@ -207,7 +207,7 @@ router.get('/history', async (req, res) => {
             return res.status(401).json({ error: 'Neteisingas tokenas' });
         }
 
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);   // 🛡️ ne daugiau 100
         const history = await db.getGameHistory(user.userId, limit);
 
         res.json({

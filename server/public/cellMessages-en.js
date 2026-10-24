@@ -103,9 +103,9 @@ window.CELL_MESSAGES = {
         name: 'VMI',
         type: 'tax',
         messages: {
-            visitMine: '💸 You arrived at VMI and paid €200 in taxes! 💰',
-            visitOthers: '💸 {player} arrived at VMI and paid €200 in taxes! 💰',
-            visitObserver: '💸 {player} arrived at VMI and paid €200 in taxes! 💰'
+            visitMine: '💸 You arrived at VMI and paid €100 in taxes! 💰',
+            visitOthers: '💸 {player} arrived at VMI and paid €100 in taxes! 💰',
+            visitObserver: '💸 {player} arrived at VMI and paid €100 in taxes! 💰'
         }
     },
     6: {
@@ -228,8 +228,8 @@ window.CELL_MESSAGES = {
             hotelOthers: '🏨 Property Utena is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Utena is already fully built – there is a hotel.',
             
-            fullGroupMine: '🏘️ You have the full green street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full green street and can start building.'
+            fullGroupMine: '🏘️ You have the full orange street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full orange street and can start building.'
         }
     },
     11: {
@@ -271,17 +271,17 @@ window.CELL_MESSAGES = {
             hotelOthers: '🏨 Property Anykščiai is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Anykščiai is already fully built – there is a hotel.',
             
-            fullGroupMine: '🏘️ You have the full green street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full green street and can start building.'
+            fullGroupMine: '🏘️ You have the full orange street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full orange street and can start building.'
         }
     },
     13: {
         name: 'HOSPITAL',
         type: 'special',
         messages: {
-            visitMine: '🏥 You arrived at the HOSPITAL and paid €100 to Doctor Bubauskas! 👨‍⚕️',
-            visitOthers: '🏥 {player} arrived at the HOSPITAL and paid €100 to Doctor Bubauskas! 👨‍⚕️',
-            visitObserver: '🏥 {player} arrived at the HOSPITAL and paid €100 to Doctor Bubauskas! 👨‍⚕️'
+            visitMine: '🏥 You arrived at the HOSPITAL and paid €50 to Doctor Bubauskas! 👨‍⚕️',
+            visitOthers: '🏥 {player} arrived at the HOSPITAL and paid €50 to Doctor Bubauskas! 👨‍⚕️',
+            visitObserver: '🏥 {player} arrived at the HOSPITAL and paid €50 to Doctor Bubauskas! 👨‍⚕️'
         }
     },
     14: {
@@ -323,8 +323,8 @@ window.CELL_MESSAGES = {
             hotelOthers: '🏨 Property Zarasai is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Zarasai is already fully built – there is a hotel.',
             
-            fullGroupMine: '🏘️ You have the full green street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full green street and can start building.'
+            fullGroupMine: '🏘️ You have the full orange street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full orange street and can start building.'
         }
     },
     16: {
@@ -508,12 +508,12 @@ window.CELL_MESSAGES = {
         }
     },
      26: {
-        name: 'PARKING',
-        type: 'parking',
+        name: 'TAXI',
+        type: 'taxi',
         messages: {
-            visitMine: '🅿️ You arrived at PARKING – nothing happened.',
-            visitOthers: '🅿️ {player} arrived at PARKING – nothing happened.',
-            visitObserver: '🅿️ {player} arrived at PARKING – nothing happened.'
+            visitMine: '🚕 You arrived at the TAXI stand.',
+            visitOthers: '🚕 {player} arrived at the TAXI stand.',
+            visitObserver: '🚕 {player} arrived at the TAXI stand.'
         }
     },
     27: {
@@ -774,8 +774,8 @@ window.CELL_MESSAGES = {
             hotelMine: '🏨 Property Klaipėda is fully built – there is a hotel.',
             hotelOthers: '🏨 Property Klaipėda is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Klaipėda is already fully built – there is a hotel.',
-            fullGroupMine: '🏘️ You have the full dark blue street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full dark blue street and can start building.'
+            fullGroupMine: '🏘️ You have the full graphite street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full graphite street and can start building.'
         }
     },
     40: {
@@ -796,8 +796,8 @@ window.CELL_MESSAGES = {
             hotelMine: '🏨 Property Palanga is fully built – there is a hotel.',
             hotelOthers: '🏨 Property Palanga is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Palanga is already fully built – there is a hotel.',
-            fullGroupMine: '🏘️ You have the full dark blue street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full dark blue street and can start building.'
+            fullGroupMine: '🏘️ You have the full graphite street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full graphite street and can start building.'
         }
     },
     41: {
@@ -818,8 +818,8 @@ window.CELL_MESSAGES = {
             hotelMine: '🏨 Property Gargždai is fully built – there is a hotel.',
             hotelOthers: '🏨 Property Gargždai is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Gargždai is already fully built – there is a hotel.',
-            fullGroupMine: '🏘️ You have the full dark blue street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full dark blue street and can start building.'
+            fullGroupMine: '🏘️ You have the full graphite street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full graphite street and can start building.'
         }
     },
     42: {
@@ -849,8 +849,8 @@ window.CELL_MESSAGES = {
             hotelMine: '🏨 Property Kaunas is fully built – there is a hotel.',
             hotelOthers: '🏨 Property Kaunas is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Kaunas is already fully built – there is a hotel.',
-            fullGroupMine: '🏘️ You have the full dark green street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full dark green street and can start building.'
+            fullGroupMine: '🏘️ You have the full dark blue street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full dark blue street and can start building.'
         }
     },
     44: {
@@ -885,8 +885,8 @@ window.CELL_MESSAGES = {
             hotelMine: '🏨 Property Garliava is fully built – there is a hotel.',
             hotelOthers: '🏨 Property Garliava is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Garliava is already fully built – there is a hotel.',
-            fullGroupMine: '🏘️ You have the full dark green street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full dark green street and can start building.'
+            fullGroupMine: '🏘️ You have the full dark blue street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full dark blue street and can start building.'
         }
     },
     46: {
@@ -921,8 +921,8 @@ window.CELL_MESSAGES = {
             hotelMine: '🏨 Property Raudondvaris is fully built – there is a hotel.',
             hotelOthers: '🏨 Property Raudondvaris is already fully built – there is a hotel.',
             hotelObserver: '🏨 Property Raudondvaris is already fully built – there is a hotel.',
-            fullGroupMine: '🏘️ You have the full dark green street! You can start building.',
-            fullGroupOthers: '🏘️ {player} acquired the full dark green street and can start building.'
+            fullGroupMine: '🏘️ You have the full dark blue street! You can start building.',
+            fullGroupOthers: '🏘️ {player} acquired the full dark blue street and can start building.'
         }
     },
     48: {

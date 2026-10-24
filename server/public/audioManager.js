@@ -462,7 +462,9 @@ function toggleSound() {
     const enabled = audioManager.toggle();
     const status = enabled ? 'ĮJUNGTI' : 'IŠJUNGTI';
     console.log(`🔊 Garsai: ${status}`);
-    if (typeof addNotification === 'function') {
+    if (typeof showSmallNotice === 'function') {
+        showSmallNotice(`🔊 Garsai ${status}`);
+    } else if (typeof addNotification === 'function') {
         addNotification(`🔊 Garsai ${status}`);
     }
     return enabled;

@@ -79,6 +79,18 @@ module.exports = {
     
     // Bonusas atsistojus ant START
     START_LAND_BONUS: 300,
+
+    // 🚕 TAKSI (26 langelis): nuveža į pasirinktą langelį pirmyn
+    TAXI_FIELD_ID: 26,
+    TAXI_COST: 100,
+    TAXI_TIMEOUT: 30000,
+    TAXI_FORBIDDEN: [16, 26, 42],
+
+    // 🏗️ Statybų langas po sustojimo (kiekvienas pastatytas namas laiką atnaujina)
+    BUILD_WINDOW_MS: 15000,
+
+    // 🎲 Figūrėlių formos (žaidėjas renkasi laukimo kambaryje)
+    PIECES: ['pawn', 'cup', 'lamp', 'cat', 'knight', 'piggy', 'basketball', 'tractor'],
     
     // Kalėjimo išpirkimas
     JAIL_FINE: 50,
@@ -109,6 +121,22 @@ module.exports = {
     // ============================================
     // Kiek laiko žaidėjas turi nuspręsti pirkti (ms)
     BUY_TIMEOUT: 30000,
+
+    // ============================================
+    // AFK (neaktyvus žaidėjas, naršyklė atidaryta)
+    // ============================================
+    // Ėjimo laikas pagal AFK lygį: 0 – normalus, 1 – po pirmo auto ėjimo, 2+ – toliau AFK
+    AFK_TURN_TIMES: [60000, 20000, 5000],
+    // Pirkimo sprendimo laikas pagal AFK lygį
+    AFK_BUY_TIMES: [30000, 10000, 5000],
+    // Po tiek automatinių ėjimų iš eilės – priverstinis bankrotas
+    AFK_MAX_AUTO_MOVES: 10,
+
+    // ============================================
+    // ATSIJUNGIMAS (naršyklė uždaryta)
+    // ============================================
+    // Jei žaidėjas negrįžta per tiek laiko – automatinis bankrotas
+    DISCONNECT_BANKRUPT_MS: 5 * 60 * 1000,
 
     // ============================================
     // ŽAIDĖJŲ SPALVOS

@@ -123,6 +123,7 @@ function initSocket() {
     });
 
     socket.on('gameCreated', (data) => {
+        clearCell5Queue();
         console.log('✅ Žaidimas sukurtas:', data);
         gameId = data.gameId;
         playerId = data.playerId;
@@ -150,6 +151,7 @@ function initSocket() {
     });
 
     socket.on('joinedGame', (data) => {
+        clearCell5Queue();
         console.log('✅ Prisijungta prie žaidimo:', data);
         playerId = data.playerId;
         myPlayer = data.player;
@@ -208,7 +210,19 @@ function initSocket() {
     // console.log('📊 Gauta žaidimo būsena');
     gameState = state;
     updateUI(state);
-        document.getElementById('bankruptModal').style.display = 'none';
+    handleTurnPopup(state);
+        // 💀 Bankroto langas lieka atidarytas, kol žaidėjas pats paspaudžia „Taip“ arba „Ne“.
+        // Uždarom tik jei bankrotuoti nebeįmanoma (jau bankrutavęs, pasitraukęs, išmestas ar žaidimas baigtas).
+        {
+            const me = state.players ? state.players.find(p => p.id === playerId) : null;
+            if (!state.gameStarted || !me || me.bankrupt || me.left || me.kicked) {
+                document.getElementById('bankruptModal').style.display = 'none';
+                stopBankruptCountdown();
+            }
+        }
+        updateExitButton();
+        updateAfkBanner();
+        syncPendingBuyTimer(state);
         
         // 🆕 IŠIMTA – pranešimai ateina per 'message' event
         // if (state.lastMessageKey) {
@@ -268,7 +282,7 @@ socket.on('centerUpdated', (cells) => {
     applyCenterCells(cells);
     
     if (typeof addNotification === 'function') {
-        addNotification('🎨 Vidurio langeliai atnaujinti!');
+        showSmallNotice('🎨 Vidurio langeliai atnaujinti!');
     }
 });
 
@@ -330,11 +344,11 @@ socket.on('soundSettingsUpdated', (settings) => {
         }
         
         if (typeof addNotification === 'function') {
-            addNotification('🔇 Garso panelė perjungta į paprastą');
+            showSmallNotice('🔇 Garso panelė perjungta į paprastą');
         }
     } else {
         if (typeof addNotification === 'function') {
-            addNotification('🔊 Garso panelė perjungta į išplėstą');
+            showSmallNotice('🔊 Garso panelė perjungta į išplėstą');
         }
     }
     
@@ -355,7 +369,7 @@ socket.on('soundFilesUpdated', (files) => {
     audioManager.updateSoundFiles(files);
     
     if (typeof addNotification === 'function') {
-        addNotification('📁 Garso failai atnaujinti!');
+        showSmallNotice('📁 Garso failai atnaujinti!');
     }
 });
 
@@ -363,7 +377,7 @@ socket.on('soundFilesUpdated', (files) => {
         console.log('🎵 Tavo eilė!', data);
         
         playYourTurnSound();
-        addNotification(`🎵 Tavo eilė! Mesk kauliukus!`);
+        // 5 langelyje rodomas „🎲 TAVO EILĖ!“ (handleTurnPopup)
     });
 
     socket.on('gameColors', (data) => {
@@ -463,10 +477,56 @@ socket.on('soundFilesUpdated', (files) => {
         const msg = `🎮 Žaidimas pradėtas! Pirmas eina: ${data.firstPlayerName}`;
         addNotification(msg);
         addJournal(msg);
+        const br = (waitingRoomState && waitingRoomState.buildRule) || (gameState && gameState.buildRule) || 2;
+        addJournal(`🏗️ ${tt('game.buildRuleIs', 'Statybų taisyklė')}: ${br}. ${buildRuleLabel(br)}`);
         
         hideWaitingRoom();
         
         if (gameState) updateUI(gameState);
+    });
+
+    // 🏗️ STATYBŲ LANGAS
+    socket.on('buildWindow', (d) => {
+        if (d.playerId === playerId) openBuildWindowPanel(d.ms);
+    });
+    socket.on('buildWindowClosed', (d) => {
+        if (d.playerId === playerId) closeBuildWindowPanel();
+    });
+
+    // 🧪 Testinis perkėlimas ant TAKSI
+    socket.on('debugMove', async (d) => {
+        window.animatingPlayers = window.animatingPlayers || [];
+        if (!window.animatingPlayers.includes(d.playerId)) window.animatingPlayers.push(d.playerId);
+        try { await animateMovement(d.playerId, d.from, d.to, null, { stepMs: 60 }); }
+        finally {
+            window.animatingPlayers = window.animatingPlayers.filter(id => id !== d.playerId);
+            if (gameState) updateUI(gameState);
+        }
+    });
+
+    // 🚕 TAKSI
+    socket.on('taxiOffer', (d) => {
+        if (d.playerId === playerId) {
+            openTaxiPicker(d.cost, d.durationMs, d.forbidden);
+        } else if (typeof showSmallNotice === 'function') {
+            showSmallNotice(tt('taxi.othersPick', '🚕 {player} renkasi, kur važiuoti taksi').replace('{player}', d.playerName));
+        }
+    });
+    socket.on('taxiClosed', (d) => {
+        if (d.playerId === playerId) closeTaxiPicker();
+    });
+    socket.on('taxiRide', async (d) => {
+        if (d.playerId === playerId) closeTaxiPicker();
+        addJournal(tt('game.taxiRide', '🚕 {player} važiuoja taksi į {field} (€{cost})')
+            .replace('{player}', d.playerName).replace('{field}', d.fieldName).replace('{cost}', d.cost));
+        window.animatingPlayers = window.animatingPlayers || [];
+        if (!window.animatingPlayers.includes(d.playerId)) window.animatingPlayers.push(d.playerId);
+        try {
+            await animateMovement(d.playerId, d.from, d.to, null, { stepMs: 75, taxi: true });
+        } finally {
+            window.animatingPlayers = window.animatingPlayers.filter(id => id !== d.playerId);
+            if (gameState) updateUI(gameState);
+        }
     });
 
     socket.on('youWereKicked', () => {
@@ -489,9 +549,9 @@ socket.on('soundFilesUpdated', (files) => {
     socket.on('publicStatusChanged', (data) => {
         console.log('🌐 Viešumo statusas pakeistas:', data);
         if (data.isPublic) {
-            addNotification('🌐 Stalas dabar viešas!');
+            showSmallNotice('🌐 Stalas dabar viešas!');
         } else {
-            addNotification('🔒 Stalas dabar privatus');
+            showSmallNotice('🔒 Stalas dabar privatus');
         }
     });
 
@@ -640,7 +700,7 @@ function applyBoardSettings(s) {
     }
     
     playSoundForPlayer('dice', data.player.id);
-    updateDiceDisplay(data.dice[0], data.dice[1]);
+    const diceLanded = updateDiceDisplay(data.dice[0], data.dice[1]);
 
     if (data.player && data.player.id !== undefined) {
         const isDouble = data.dice[0] === data.dice[1];
@@ -654,7 +714,9 @@ function applyBoardSettings(s) {
     
     if (data.oldPosition !== undefined && data.newPosition !== undefined) {
         isAnimating = true;
-        await animateMovement(data.player.id, data.oldPosition, data.newPosition);
+        // 🎲 Figūrėlė pajuda, kai kauliukai beveik nusileido (bet ne ilgiau nei 0,7 s)
+        await animateMovement(data.player.id, data.oldPosition, data.newPosition,
+            Promise.race([diceLanded, new Promise(r => setTimeout(r, 700))]));
         isAnimating = false;
     }
     
@@ -674,7 +736,7 @@ function applyBoardSettings(s) {
             ? `❌ Neužtenka pinigų ${data.field.name} pirkti!`
             : `❌ ${data.player.name} neužtenka pinigų ${data.field.name} pirkti!`;
         
-        showCellAction(msg, 'tax');
+        showCellAction(msg, 'tax', isMe);
         addJournal(msg);
         
         updateUI(gameState);
@@ -765,9 +827,14 @@ function applyBoardSettings(s) {
                     if (data.result.action === 'pay_rent') actionType = 'rent';
                     else if (data.result.action === 'pay_tax' || data.result.action === 'latras' || data.result.action === 'pirtis') actionType = 'tax';
                     else if (data.result.action === 'chance' || data.result.action === 'special' || data.result.action === 'birthday') actionType = 'chance';
+                    else if (data.result.action === 'go_to_jail') actionType = 'jail';
                     else actionType = 'visit';
                     
-                    showCellAction(msg, actionType);
+                    if (actionType === 'rent' && owner) {
+                        showRentPopup(data.player.id, owner.id, data.result.rent || 0, data.field.name);
+                    } else {
+                        showCellAction(msg, actionType, isMe);
+                    }
                 }
             }
             
@@ -823,6 +890,7 @@ function applyBoardSettings(s) {
         
         const text = getTranslatedMessage(msg.key, msg.data || {});
         addJournal(text);
+        showKeyPopup(msg.key, msg.data, text);
         return;
     }
         
@@ -946,7 +1014,7 @@ socket.on('buyConfirmed', (data) => {
         
         let msg;
         if (data.playerId === playerId) {
-            msg = `✅ Jūs nusipirkote ${data.fieldName}! 🏠`;
+            msg = `✅ Nusipirkai ${data.fieldName}! 🏠`;
         } else {
             msg = `✅ ${data.playerName} nusipirko ${data.fieldName}! 🏠`;
         }
@@ -972,7 +1040,7 @@ socket.on('buyConfirmed', (data) => {
     
     let msg;
     if (data.playerId === playerId) {
-        msg = `❌ Jūs atsisakėte pirkti ${data.fieldName}`;
+        msg = `❌ Atsisakei pirkti ${data.fieldName}`;
     } else {
         msg = `❌ ${data.playerName} atsisakė pirkti ${data.fieldName}`;
     }
@@ -1094,14 +1162,38 @@ socket.on('buyConfirmed', (data) => {
         else if (result.action === 'pay_tax' || result.action === 'latras' || result.action === 'pirtis') actionType = 'tax';
         else if (result.action === 'chance' || result.action === 'special' || result.action === 'birthday') actionType = 'chance';
         else if (result.action === 'can_buy') actionType = 'visit';
+        else if (result.action === 'go_to_jail') actionType = 'jail';
+        
+        const isMeField = data.playerId === playerId;
+        let popupHandled = false;
+        
+        // 🏠 Laisvas sklypas: kiti mato „⏳ svarsto pirkti“ kortelę, pirkėjas – savo pasirinkimą
+        if (result.action === 'can_buy') {
+            popupHandled = true;
+            if (!isMeField && gameState && gameState.players) {
+                const buyer = gameState.players.find(p => p.id === data.playerId);
+                if (buyer) showBuyCard(data.field, buyer, 'pending');
+            }
+        }
+        
+        // 💰 Nuoma – didelis pranešimas „Tomas ➜ Petras €13“
+        if (result.action === 'pay_rent') {
+            const rentOwner = gameState?.players?.find(p =>
+                p.properties?.includes(fieldId) && !p.bankrupt && !p.left && !p.kicked
+            );
+            if (rentOwner) {
+                showRentPopup(data.playerId, rentOwner.id, result.rent || 0, data.field.name);
+                popupHandled = true;
+            }
+        }
         
         if (result.messageKey) {
             const text = getTranslatedMessage(result.messageKey, result.messageData || {});
             addJournal(text);
-            showCellAction(text, actionType);
+            if (!popupHandled) showCellAction(text, actionType, isMeField);
         } else if (result.message) {
             addJournal(result.message);
-            showCellAction(result.message, actionType);
+            if (!popupHandled) showCellAction(result.message, actionType, isMeField);
         }
         
         updateUI(gameState);
@@ -1111,7 +1203,7 @@ socket.on('buyConfirmed', (data) => {
         console.log('🏠 Statybos rezultatas:', data);
         if (data.can) {
             if (data.isHotel) {
-                if (confirm(`🏨 Statyti viežbutį ant "${data.fieldName}" už €${data.cost}?`)) {
+                if (confirm(`🏨 Statyti viešbutį ant "${data.fieldName}" už €${data.cost}?`)) {
                     socket.emit('buildHouse', { fieldId: data.fieldId });
                     playClickSound();
                 }
@@ -1312,6 +1404,7 @@ socket.on('buyConfirmed', (data) => {
 
     socket.on('leftGame', (data) => {
         console.log('🏃 Pasitraukei iš žaidimo:', data);
+        clearCell5Queue();
         
         localStorage.removeItem('bancrupt_gameId');
         localStorage.removeItem('bancrupt_playerToken');
@@ -1604,6 +1697,94 @@ function showWaitingRoom() {
 function hideWaitingRoom() {
     const overlay = document.getElementById('waitingRoomOverlay');
     if (overlay) overlay.style.display = 'none';
+    // Žaidimo ekranas atsidengė – pritaikyti telefono vaizdą / pasukimą / užuominą
+    if (typeof applyCompactLayout === 'function') setTimeout(applyCompactLayout, 60);
+}
+
+// ============================================
+// 🏗️ STATYBŲ TAISYKLĖ – laukimo kambarys
+// ============================================
+const BUILD_RULE_TEXT = {
+    1: ['waiting.buildRule1', 'Bet kada ir bet kur (turint pilną gatvę)'],
+    2: ['waiting.buildRule2', 'Atsistojus ant savo sklypo – po namą visoje gatvėje'],
+    3: ['waiting.buildRule3', 'Tik sklype, ant kurio stovi']
+};
+let buildRuleTouched = {};      // gameId -> kūrėjas jau paspaudė taisyklę (mirksėjimas sustoja)
+let lastBuildRuleSeen = null;
+
+function renderBuildRuleBox(state) {
+    const box = document.getElementById('buildRuleBox');
+    if (!box || !state) return;
+    const rule = state.buildRule || 2;
+    const isHost = state.hostId === playerId;
+    const title = document.getElementById('buildRuleTitle');
+    const gid = state.gameId || gameId;
+    box.classList.toggle('is-host', isHost);
+    box.classList.toggle('blink', isHost && !buildRuleTouched[gid]);
+    if (title) {
+        title.textContent = isHost
+            ? tt('waiting.buildRuleTitleHost', '🏗️ STATYBŲ TAISYKLĖ – GALITE PAKEISTI')
+            : tt('waiting.buildRuleTitle', '🏗️ STATYBŲ TAISYKLĖ');
+    }
+    box.querySelectorAll('.build-rule-opt').forEach(btn => {
+        const r = parseInt(btn.dataset.rule, 10);
+        btn.classList.toggle('active', r === rule);
+        btn.disabled = !isHost;
+    });
+    const note = document.getElementById('buildRuleNote');
+    if (note) {
+        note.textContent = isHost
+            ? tt('waiting.buildRuleNoteHost', 'Pasirinkta: {n}. Visiems žaidėjams galios ši taisyklė.').replace('{n}', rule)
+            : tt('waiting.buildRuleNoteGuest', 'Taisyklę pasirenka stalo kūrėjas 👑');
+    }
+    // Kitiems žaidėjams – trumpas mirktelėjimas, kai kūrėjas pakeičia taisyklę
+    if (!isHost && lastBuildRuleSeen !== null && lastBuildRuleSeen !== rule) {
+        box.classList.remove('changed'); void box.offsetWidth; box.classList.add('changed');
+    }
+    lastBuildRuleSeen = rule;
+}
+
+// 🎲 Figūrėlės pasirinkimas laukimo kambaryje
+function renderPiecePicker(state) {
+    const box = document.getElementById('piecePickerBox');
+    if (!box || !state) return;
+    const me = state.players.find(p => p.id === playerId);
+    if (!me) { box.style.display = 'none'; return; }
+    box.style.display = '';
+    const grid = box.querySelector('.piece-grid');
+    const cur = me.piece || 'pawn';
+    const title = box.querySelector('.piece-title');
+    if (title) title.textContent = tt('piece.title', '🎲 Tavo figūrėlė');
+    grid.innerHTML = '';
+    PIECE_TYPES.forEach(type => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'piece-opt' + (type === cur ? ' active' : '');
+        const nm = PIECE_NAMES[type];
+        b.title = tt(nm[0], nm[1]);
+        b.innerHTML = pieceSvg(type, me.color) + `<span class="piece-name">${escapeHtml(tt(nm[0], nm[1]))}</span>`;
+        b.onclick = () => {
+            playClickSound();
+            grid.querySelectorAll('.piece-opt').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            socket.emit('setPiece', { piece: type });
+        };
+        grid.appendChild(b);
+    });
+}
+
+function chooseBuildRule(rule) {
+    if (!waitingRoomState || waitingRoomState.hostId !== playerId) return;
+    buildRuleTouched[waitingRoomState.gameId || gameId] = true;
+    if (typeof playClickSound === 'function') playClickSound();
+    // Iš karto parodom pasirinkimą, serveris patvirtins
+    renderBuildRuleBox(Object.assign({}, waitingRoomState, { buildRule: rule }));
+    if (socket) socket.emit('setBuildRule', { rule });
+}
+
+function buildRuleLabel(rule) {
+    const t2 = BUILD_RULE_TEXT[rule] || BUILD_RULE_TEXT[2];
+    return tt(t2[0], t2[1]);
 }
 
 function updateWaitingRoom(state) {
@@ -1624,7 +1805,7 @@ function updateWaitingRoom(state) {
                 
                 return `
                     <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'} ${isBot ? 'border-left-color:#8b5cf6;' : ''}">
-                        <span style="width:20px; height:20px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.5); flex-shrink:0;"></span>
+                        <span class="wr-piece">${pieceSvg(p.piece || 'pawn', p.color)}</span>
                         <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${botIcon}${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' ' + t('game.waiting.you') : ''}</span>
                         ${botBadge}
                         <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅' : '⏳'}</span>
@@ -1688,6 +1869,9 @@ if (statusEl) {
     }
 }
     
+    renderBuildRuleBox(state);
+    renderPiecePicker(state);
+
     const publicCheckbox = document.getElementById('waitingIsPublic');
     if (publicCheckbox) {
         publicCheckbox.checked = state.isPublic === true;
@@ -2441,7 +2625,7 @@ function resetSoundSettings() {
     playClickSound();
     
     if (typeof addNotification === 'function') {
-        addNotification('🔄 Garso nustatymai atkurti');
+        showSmallNotice('🔄 Garso nustatymai atkurti');
     }
 }
 
@@ -2451,7 +2635,7 @@ function saveSoundSettings() {
     playClickSound();
     
     if (typeof addNotification === 'function') {
-        addNotification('💾 Garso nustatymai išsaugoti');
+        showSmallNotice('💾 Garso nustatymai išsaugoti');
     }
 }
 
@@ -2704,7 +2888,7 @@ let html = `<div class="info-header">${field.icon || ''} ${infoName} (#${fieldId
     }
 }
     
-    tooltip.innerHTML = html;
+    setTooltipContent(tooltip, html);
     
     tooltip.style.display = 'block';
     tooltip.style.left = '0px';
@@ -2747,8 +2931,27 @@ let html = `<div class="info-header">${field.icon || ''} ${infoName} (#${fieldId
         top = window.innerHeight - tooltipHeight - 10;
     }
     
+    // 🔄 Pasuktame režime ekrano koordinatės nesutampa – rodom per vidurį
+    if (document.body.classList.contains('force-rot')) {
+        const v = viewSize();
+        left = Math.max(10, (v.w - tooltipWidth) / 2);
+        top = Math.max(10, (v.h - tooltipHeight) / 2);
+    }
+    
     tooltip.style.left = left + 'px';
     tooltip.style.top = top + 'px';
+}
+
+// ✅ Info lango turinys keičiamas taip, kad ✕ mygtukas visada liktų kampe
+let cellInfoCloseBtnRef = null;
+function setTooltipContent(tooltip, html) {
+    if (!cellInfoCloseBtnRef) {
+        cellInfoCloseBtnRef = document.getElementById('cellInfoCloseBtn');
+    }
+    tooltip.innerHTML = html;
+    if (cellInfoCloseBtnRef) {
+        tooltip.appendChild(cellInfoCloseBtnRef);
+    }
 }
 
 function hideCellInfo() {
@@ -2756,12 +2959,7 @@ function hideCellInfo() {
     const tooltip = document.getElementById('cellInfoTooltip');
     if (tooltip) {
         tooltip.style.display = 'none';
-        // 🆕 Išvalyti TIK turinį, palikti X mygtuką
-        const closeBtn = tooltip.querySelector('.cell-info-close');
-        tooltip.innerHTML = '';
-        if (closeBtn) {
-            tooltip.appendChild(closeBtn);
-        }
+        setTooltipContent(tooltip, '');
     }
 }
 
@@ -2950,7 +3148,7 @@ let html = `<div class="info-header">${field.icon || ''} ${infoName} (#${fieldId
         html += `</div>`;
     }
     
-    tooltip.innerHTML = html;
+    setTooltipContent(tooltip, html);
     tooltip.style.display = 'block';
     
     const rect = cardElement.getBoundingClientRect();
@@ -2968,6 +3166,13 @@ let html = `<div class="info-header">${field.icon || ''} ${infoName} (#${fieldId
         top = rect.bottom + 10;
     }
     
+    // 🔄 Pasuktame režime ekrano koordinatės nesutampa – rodom per vidurį
+    if (document.body.classList.contains('force-rot')) {
+        const v = viewSize();
+        left = Math.max(10, (v.w - tooltipWidth) / 2);
+        top = Math.max(10, (v.h - tooltipHeight) / 2);
+    }
+    
     tooltip.style.left = left + 'px';
     tooltip.style.top = top + 'px';
 }
@@ -2976,7 +3181,7 @@ function hideMiniCardTooltip() {
     const tooltip = document.getElementById('cellInfoTooltip');
     if (tooltip) {
         tooltip.style.display = 'none';
-        tooltip.innerHTML = '';
+        setTooltipContent(tooltip, '');
     }
 }
 
@@ -2985,7 +3190,17 @@ function hideMiniCardTooltip() {
 // ============================================
 
 function showPopupMessage(message, type) {
-    console.log('📢 Popup:', message);
+    if (!message || typeof message !== 'string') return;
+    // Nuoma, mokesčiai, gimtadienis rodomi per fieldResult – čia nekartojam
+    if (/nuomos|mokesčių|LATRŲ|PIRT|gimtadien/i.test(message)) return;
+    let popupType = 'info';
+    let dedupeKey = message;
+    if (/bankrot|pabėgo/i.test(message)) { popupType = 'bankrupt'; dedupeKey = 'bankrupt-event'; }
+    else if (/skoling/i.test(message)) popupType = 'tax';
+    else if (/aukcion/i.test(message)) popupType = 'auction';
+    else if (/prekyb|pasiūl/i.test(message)) popupType = 'trade';
+    else if (/nugriov/i.test(message)) popupType = 'visit';
+    cell5Enqueue({ type: popupType, text: escapeHtml(message), dedupeKey: dedupeKey });
 }
 
 function addNotification(msg) {
@@ -3251,7 +3466,16 @@ function toggleLeftPanel() {
     const btn = document.getElementById('leftPanelToggle');
     
     if (!panel || !btn) return;
-    
+
+    // 📱 Telefone / planšetėje panelė atsidaro virš lentos ir nekeičia išsaugotos būsenos
+    if (document.body.classList.contains('cmp')) {
+        const open = document.body.classList.toggle('lp-open');
+        btn.innerHTML = open ? '◀' : '▶';
+        btn.title = open ? 'Slėpti panelę' : 'Parodyti panelę';
+        if (typeof playClickSound === 'function') playClickSound();
+        return;
+    }
+
     const isHidden = panel.classList.toggle('hidden');
     
     if (isHidden) {
@@ -3300,133 +3524,1271 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+// 🚪 Žaidimo metu pasitraukti galima tik bankrotuojant (mygtukas „Bankrotuoju“).
+// Iškritęs žaidėjas (bankrutavęs / pašalintas) šiuo mygtuku grįžta į meniu.
 function leaveGame() {
     if (!isConnected || !socket || !socket.connected) {
         alert('❌ Nėra ryšio su serveriu!');
         playErrorSound();
         return;
     }
-    
-    if (!confirm('🏃 Ar tikrai nori pasitraukti?\n\nPrarasi visus pinigus ir korteles!\nNegalėsi grįžti į šį stalą.')) {
+    const out = myPlayer && (myPlayer.bankrupt || myPlayer.kicked || myPlayer.left);
+    if (gameState && gameState.gameStarted && !out) {
+        // Dar žaidžia – siūlom bankrotuoti
+        bankrupt();
         return;
     }
-    
     playClickSound();
     socket.emit('leaveGame');
 }
+
+function updateExitButton() {
+    const btn = document.getElementById('leaveBtn');
+    if (!btn) return;
+    const out = myPlayer && (myPlayer.bankrupt || myPlayer.kicked || myPlayer.left);
+    btn.style.display = out ? '' : 'none';
+}
+
+// ⏸️ AFK juosta: „Tavo ėjimai daromi automatiškai – Aš čia!“
+function updateAfkBanner() {
+    let banner = document.getElementById('afkBanner');
+    const afk = myPlayer && !myPlayer.bankrupt && !myPlayer.left && !myPlayer.kicked &&
+                gameState && gameState.gameStarted && (myPlayer.afkAutoMoves || 0) > 0;
+    if (!afk) {
+        if (banner) banner.style.display = 'none';
+        return;
+    }
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'afkBanner';
+        banner.innerHTML = `<span id="afkBannerText"></span>
+            <button id="afkBackBtn" type="button"></button>`;
+        document.body.appendChild(banner);
+        document.getElementById('afkBackBtn').onclick = () => {
+            if (socket) socket.emit('imBack');
+            banner.style.display = 'none';
+            playClickSound();
+        };
+    }
+    const left = Math.max(0, 10 - (myPlayer.afkAutoMoves || 0));
+    document.getElementById('afkBannerText').textContent =
+        tt('game.afk.banner', '⏸️ Tu AFK – tavo ėjimai daromi automatiškai. Liko automatinių ėjimų iki bankroto: {n}').replace('{n}', left);
+    document.getElementById('afkBackBtn').textContent = tt('game.afk.back', '✋ Aš čia!');
+    banner.style.display = 'flex';
+}
+
+// ============================================
+// 👥 4 LANGELIS: visi žaidėjai telpa be slinkimo (iki 8)
+// ============================================
+function fitPlayersList() {
+    const list = document.getElementById('playersList');
+    if (!list) return;
+    const n = list.children.length;
+    if (!n) return;
+    list.classList.remove('pl-2col');
+    const h = list.clientHeight;
+    if (!h) return;
+    const w = list.clientWidth || 200;
+    const gap = h < 140 ? 2 : 3;
+    // 1 stulpelis
+    const rowH1 = (h - gap * (n - 1)) / n;
+    const font1 = Math.min(18, rowH1 * 0.6, w / 13);
+    // 2 stulpeliai (kai žaidėjų daug, o langelis žemas – pvz. gulsčias telefonas)
+    let cols = 1, rowH = rowH1, font = font1;
+    if (n > 4) {
+        const rows = Math.ceil(n / 2);
+        const rowH2 = (h - gap * (rows - 1)) / rows;
+        const font2 = Math.min(18, rowH2 * 0.6, (w / 2 - gap) / 11);
+        if (font2 > font1 + 0.5) { cols = 2; rowH = rowH2; font = font2; }
+    }
+    font = Math.max(5, font);
+    list.classList.toggle('pl-2col', cols === 2);
+    list.style.setProperty('--pl-font', font.toFixed(1) + 'px');
+    list.style.setProperty('--pl-dot', Math.max(5, Math.min(18, font * 1.05)).toFixed(1) + 'px');
+    list.style.setProperty('--pl-row', Math.max(1, Math.min(rowH, font * 2.6)).toFixed(1) + 'px');
+    list.style.setProperty('--pl-gap', gap + 'px');
+}
+
+(function initPlayersListFit() {
+    const start = () => {
+        const cell = document.getElementById('center-4');
+        if (!cell) return;
+        if (window.ResizeObserver) {
+            new ResizeObserver(() => fitPlayersList()).observe(cell);
+        }
+        window.addEventListener('resize', fitPlayersList);
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+
+// ============================================
+// 📱 TELEFONAS / PLANŠETĖ: lenta prisitaiko prie ekrano be slinkimo
+// ============================================
+// 🧊 Stalo vaizdas: 2D (tiesiai), 3D (pasvirusi lenta), 3D+ (laisvai sukiojama lenta)
+const BOARD_VIEW_KEY = 'bancrupt_boardView';
+function getBoardView() {
+    let v = '2d';
+    try { v = localStorage.getItem(BOARD_VIEW_KEY) || '2d'; } catch (e) {}
+    return (v === '3d' || v === '3dp') ? v : '2d';
+}
+function applyBoardView() {
+    const view = getBoardView();
+    document.body.classList.toggle('board-3d', view === '3d');
+    document.body.classList.toggle('board-3dp', view === '3dp');
+    if (view === '3dp') orbitStart(); else orbitStop();
+    setTimeout(placeDiceShadows, 50);
+    const header = document.getElementById('gameHeader');
+    if (!header) return;
+    let sw = document.getElementById('boardViewSwitch');
+    if (!sw) {
+        sw = document.createElement('span');
+        sw.id = 'boardViewSwitch';
+        sw.innerHTML = '<button type="button" data-v="2d">2D</button><button type="button" data-v="3d">3D</button><button type="button" data-v="3dp">3D+</button><button type="button" class="bv-reset" title="Atstatyti">⟲</button>';
+        sw.title = tt('game.boardView', 'Stalo vaizdas');
+        sw.querySelectorAll('button[data-v]').forEach(b => b.onclick = () => setBoardView(b.dataset.v));
+        sw.querySelector('.bv-reset').onclick = () => { orbitReset(true); if (typeof playClickSound === 'function') playClickSound(); };
+        const idEl = document.getElementById('gameIdDisplay');
+        if (idEl && idEl.nextSibling) header.insertBefore(sw, idEl.nextSibling);
+        else header.appendChild(sw);
+    }
+    sw.querySelectorAll('button[data-v]').forEach(b => b.classList.toggle('active', b.dataset.v === view));
+    renderCameraButton();
+}
+function setBoardView(v) {
+    try { localStorage.setItem(BOARD_VIEW_KEY, (v === '3d' || v === '3dp') ? v : '2d'); } catch (e) {}
+    if (typeof playClickSound === 'function') playClickSound();
+    applyBoardView();
+    if (v === '3dp' && !orbit.hinted) {
+        orbit.hinted = true;
+        if (typeof showSmallNotice === 'function') {
+            showSmallNotice(tt('game.boardView3dpHint', '🖐️ Tempk lentą, kad pasuktum • ratukas / 2 pirštai – priartinti • ⟲ – atstatyti'));
+        }
+    }
+}
+
+// ---- 3D+ : lentos sukiojimas pele / pirštu, su inercija ir lengvu siūbavimu ----
+const orbit = {
+    on: false, rx: 28, rz: 0, sc: 0.92,          // pasvirimas, pasukimas, mastelis
+    vx: 0, vz: 0, drag: null, moved: false, raf: 0, t0: 0, lastInput: 0, pinch: null, hinted: false,
+    bound: false
+};
+const ORBIT_DEFAULT = { rx: 28, rz: 0, sc: 0.92 };
+function orbitLoad() {
+    try {
+        const v = JSON.parse(localStorage.getItem('bancrupt_orbit') || 'null');
+        if (v && isFinite(v.rx) && isFinite(v.rz) && isFinite(v.sc)) { orbit.rx = v.rx; orbit.rz = v.rz; orbit.sc = v.sc; }
+    } catch (e) {}
+}
+function orbitSave() {
+    try { localStorage.setItem('bancrupt_orbit', JSON.stringify({ rx: orbit.rx, rz: orbit.rz, sc: orbit.sc })); } catch (e) {}
+}
+function orbitClamp() {
+    orbit.rx = Math.max(0, Math.min(65, orbit.rx));
+    orbit.sc = Math.max(0.45, Math.min(1.35, orbit.sc));
+    orbit.rz = ((orbit.rz + 540) % 360) - 180;
+}
+function orbitApply(now) {
+    const board = document.getElementById('board');
+    if (!board) return;
+    // Lengvas siūbavimas, kai niekas neliečia (stalas „kraiposi“)
+    let swayX = 0, swayZ = 0;
+    if (!orbit.drag && now - orbit.lastInput > 2500) {
+        const t = (now - orbit.t0) / 1000;
+        swayX = Math.sin(t * 0.6) * 1.6;
+        swayZ = Math.sin(t * 0.37) * 2.2;
+    }
+    const tf = `perspective(1700px) rotateX(${(orbit.rx + swayX).toFixed(2)}deg) rotateZ(${(orbit.rz + swayZ).toFixed(2)}deg) scale(${orbit.sc.toFixed(3)})`;
+    board.style.setProperty('transform', tf, 'important');
+    board.style.setProperty('transform-origin', '50% 50%', 'important');
+    // Figūrėlės lieka stačios ekrano atžvilgiu, kad ir kaip pasuktum lentą
+    board.style.setProperty('--piece-rz', `${-(orbit.rz + swayZ).toFixed(1)}deg`);
+    board.style.setProperty('--piece-rx', `${(orbit.rx + swayX).toFixed(1)}deg`);
+}
+function orbitTick(now) {
+    if (!orbit.on) return;
+    if (!orbit.drag && (Math.abs(orbit.vx) > 0.01 || Math.abs(orbit.vz) > 0.01)) {
+        orbit.rx += orbit.vx; orbit.rz += orbit.vz;
+        orbit.vx *= 0.92; orbit.vz *= 0.92;
+        orbitClamp();
+        if (Math.abs(orbit.vx) <= 0.01 && Math.abs(orbit.vz) <= 0.01) orbitSave();
+    }
+    orbitApply(now);
+    orbit.raf = requestAnimationFrame(orbitTick);
+}
+function orbitReset(animate) {
+    if (!animate) { Object.assign(orbit, ORBIT_DEFAULT); orbitSave(); return; }
+    const from = { rx: orbit.rx, rz: orbit.rz, sc: orbit.sc }, start = performance.now();
+    orbit.vx = orbit.vz = 0;
+    const step = (now) => {
+        const k = Math.min(1, (now - start) / 500), e = 1 - Math.pow(1 - k, 3);
+        orbit.rx = from.rx + (ORBIT_DEFAULT.rx - from.rx) * e;
+        orbit.rz = from.rz + (ORBIT_DEFAULT.rz - from.rz) * e;
+        orbit.sc = from.sc + (ORBIT_DEFAULT.sc - from.sc) * e;
+        orbit.lastInput = now;
+        if (k < 1) requestAnimationFrame(step); else orbitSave();
+    };
+    requestAnimationFrame(step);
+}
+function orbitBind() {
+    if (orbit.bound) return;
+    const board = document.getElementById('board');
+    if (!board) return;
+    orbit.bound = true;
+    const pts = new Map();
+    board.addEventListener('pointerdown', (e) => {
+        if (!orbit.on) return;
+        if (e.target.closest('input, textarea, select, button, a, .chat-input, #journal, #chatMessages')) return;
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pts.size === 2) {
+            const [p1, p2] = [...pts.values()];
+            orbit.pinch = { d: Math.hypot(p1.x - p2.x, p1.y - p2.y), sc: orbit.sc };
+            orbit.drag = null;
+            return;
+        }
+        orbit.drag = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, lt: performance.now(), id: e.pointerId };
+        orbit.moved = false; orbit.vx = orbit.vz = 0;
+    });
+    window.addEventListener('pointermove', (e) => {
+        if (!orbit.on || !pts.has(e.pointerId)) return;
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        orbit.lastInput = performance.now();
+        if (orbit.pinch && pts.size >= 2) {
+            const [p1, p2] = [...pts.values()];
+            const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+            orbit.sc = orbit.pinch.sc * (d / Math.max(1, orbit.pinch.d));
+            orbitClamp(); orbit.moved = true;
+            e.preventDefault();
+            return;
+        }
+        const d = orbit.drag;
+        if (!d || d.id !== e.pointerId) return;
+        if (!orbit.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 7) return;
+        if (!orbit.moved) {
+            orbit.moved = true;
+            try { board.setPointerCapture(e.pointerId); } catch (_) {}
+            if (typeof hideCellInfo === 'function') hideCellInfo();
+            document.body.classList.add('orbit-dragging');
+        }
+        const dx = e.clientX - d.lx, dy = e.clientY - d.ly;
+        orbit.rz -= dx * 0.35;
+        orbit.rx += dy * 0.25;
+        orbitClamp();
+        orbit.vz = -dx * 0.35 * 0.5; orbit.vx = dy * 0.25 * 0.5;
+        d.lx = e.clientX; d.ly = e.clientY; d.lt = performance.now();
+        e.preventDefault();
+    }, { passive: false });
+    const end = (e) => {
+        if (!pts.has(e.pointerId)) return;
+        pts.delete(e.pointerId);
+        if (pts.size < 2) orbit.pinch = null;
+        if (orbit.drag && orbit.drag.id === e.pointerId) {
+            if (performance.now() - orbit.drag.lt > 80) { orbit.vx = orbit.vz = 0; }
+            orbit.drag = null;
+            orbitSave();
+        }
+        document.body.classList.remove('orbit-dragging');
+    };
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    // Po tempimo paspaudimas neturi atidaryti langelio ar spausti mygtuko
+    board.addEventListener('click', (e) => {
+        if (orbit.on && orbit.moved) { e.stopPropagation(); e.preventDefault(); orbit.moved = false; }
+    }, true);
+    board.addEventListener('wheel', (e) => {
+        if (!orbit.on) return;
+        if (e.target.closest('#journal, #chatMessages, #playersList, .info-content')) return;
+        orbit.sc *= Math.exp(-e.deltaY * 0.0012);
+        orbitClamp(); orbit.lastInput = performance.now(); orbitSave();
+        e.preventDefault();
+    }, { passive: false });
+    board.addEventListener('dblclick', (e) => {
+        if (!orbit.on || e.target.closest('.cell, button, input')) return;
+        orbitReset(true);
+    });
+}
+function orbitStart() {
+    if (orbit.on) return;
+    orbitLoad();
+    orbitBind();
+    orbit.on = true; orbit.t0 = performance.now(); orbit.lastInput = 0;
+    cancelAnimationFrame(orbit.raf);
+    orbit.raf = requestAnimationFrame(orbitTick);
+}
+function orbitStop() {
+    if (!orbit.on) return;
+    orbit.on = false;
+    cancelAnimationFrame(orbit.raf);
+    const board = document.getElementById('board');
+    if (board) { board.style.removeProperty('transform'); board.style.removeProperty('transform-origin'); board.style.removeProperty('--piece-rz'); board.style.removeProperty('--piece-rx'); }
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyBoardView);
+else applyBoardView();
+
+// 🔄 Priverstinis gulsčias vaizdas telefone
+const FORCE_LAND_KEY = 'bancrupt_forceLandscape';
+function forceLandPref() {
+    try { return localStorage.getItem(FORCE_LAND_KEY) === 'on'; } catch (e) { return false; }
+}
+function setForceLandPref(on) {
+    try { localStorage.setItem(FORCE_LAND_KEY, on ? 'on' : 'off'); } catch (e) {}
+}
+function isPhoneScreen() {
+    return Math.min(window.innerWidth, window.innerHeight) <= 600;
+}
+function isGameScreenVisible() {
+    const g = document.getElementById('game');
+    const wr = document.getElementById('waitingRoomOverlay');
+    // Laukimo kambarys uždengia žaidimą – tada dar ne žaidimo ekranas
+    if (wr && getComputedStyle(wr).display !== 'none') return false;
+    return !!g && getComputedStyle(g).display !== 'none';
+}
+// Efektyvus ekrano dydis (pasuktame režime plotis ir aukštis sukeičiami)
+function viewSize() {
+    const rot = document.body && document.body.classList.contains('force-rot');
+    return rot ? { w: window.innerHeight, h: window.innerWidth } : { w: window.innerWidth, h: window.innerHeight };
+}
+
+function applyForceRotation() {
+    const body = document.body;
+    if (!body) return;
+    const realPortrait = window.innerHeight > window.innerWidth;
+    const rot = forceLandPref() && realPortrait && isPhoneScreen() && isGameScreenVisible();
+    body.classList.toggle('force-rot', rot);
+    if (rot) {
+        body.style.width = window.innerHeight + 'px';
+        body.style.height = window.innerWidth + 'px';
+    } else {
+        body.style.removeProperty('width');
+        body.style.removeProperty('height');
+    }
+    updateRotateUi();
+}
+
+function updateRotateUi() {
+    const header = document.getElementById('gameHeader');
+    if (!header) return;
+    let btn = document.getElementById('rotateBtn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'rotateBtn';
+        btn.type = 'button';
+        btn.onclick = toggleForceLandscape;
+        const fb = document.getElementById('feedbackBtn');
+        header.insertBefore(btn, fb || null);
+    }
+    const on = forceLandPref();
+    // Rodom tik kai telefonas stačiai (arba pasukimas įjungtas – kad būtų kaip grąžinti)
+    btn.style.display = (isPhoneScreen() && (window.innerHeight > window.innerWidth || on)) ? '' : 'none';
+    const label = on ? tt('game.rotate.back', '↩️ Grąžinti') : tt('game.rotate.btn', '🔄 Versti gulsčiai');
+    const sp = label.indexOf(' ');
+    btn.innerHTML = '';
+    btn.appendChild(document.createTextNode(sp > 0 ? label.slice(0, sp) : label));
+    if (sp > 0) {
+        const txt = document.createElement('span');
+        txt.className = 'rb-txt';
+        txt.textContent = label.slice(sp);
+        btn.appendChild(txt);
+    }
+    btn.title = label;
+    btn.classList.toggle('active', on);
+    maybeShowRotateHint();
+}
+
+let rotateHintShown = false;
+function maybeShowRotateHint() {
+    if (rotateHintShown || forceLandPref()) return;
+    if (!isPhoneScreen() || window.innerHeight <= window.innerWidth || !isGameScreenVisible()) return;
+    try { if (sessionStorage.getItem('bancrupt_rotateHint')) { rotateHintShown = true; return; } } catch (e) {}
+    // Palaukiam truputį ir patikrinam dar kartą – kad nepasirodytų laukimo kambaryje
+    if (!maybeShowRotateHint._pending) {
+        maybeShowRotateHint._pending = setTimeout(() => {
+            maybeShowRotateHint._pending = null;
+            if (!rotateHintShown && isGameScreenVisible() && (!gameState || gameState.gameStarted)) showRotateHintNow();
+        }, 1500);
+    }
+}
+
+function showRotateHintNow() {
+    if (rotateHintShown || forceLandPref()) return;
+    if (!isPhoneScreen() || window.innerHeight <= window.innerWidth) return;
+    rotateHintShown = true;
+    try { sessionStorage.setItem('bancrupt_rotateHint', '1'); } catch (e) {}
+    const hint = document.createElement('div');
+    hint.id = 'rotateHint';
+    hint.innerHTML = '<span></span><button type="button" class="rh-go"></button><button type="button" class="rh-x">✕</button>';
+    hint.querySelector('span').textContent = tt('game.rotate.hint', '📱 Pasuk telefoną – bus patogiau');
+    hint.querySelector('.rh-go').textContent = tt('game.rotate.btn', '🔄 Versti gulsčiai');
+    const close = () => { if (hint.parentNode) hint.parentNode.removeChild(hint); };
+    hint.querySelector('.rh-go').onclick = () => { close(); toggleForceLandscape(); };
+    hint.querySelector('.rh-x').onclick = close;
+    document.body.appendChild(hint);
+    setTimeout(close, 8000);
+}
+
+async function toggleForceLandscape() {
+    if (typeof playClickSound === 'function') playClickSound();
+    const hint = document.getElementById('rotateHint');
+    if (hint && hint.parentNode) hint.parentNode.removeChild(hint);
+    if (forceLandPref()) {
+        setForceLandPref(false);
+        try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+        try { if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); } catch (e) {}
+    } else {
+        setForceLandPref(true);
+        // Android: visas ekranas + užrakinta gulsčia padėtis. iPhone: nepavyks – tada pasukam patį žaidimą.
+        try {
+            const el = document.documentElement;
+            if (el.requestFullscreen && !document.fullscreenElement) await el.requestFullscreen({ navigationUI: 'hide' });
+            if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+        } catch (e) { /* palaikymo nėra – lieka CSS pasukimas */ }
+    }
+    setTimeout(applyCompactLayout, 60);
+    setTimeout(applyCompactLayout, 400);
+}
+
+document.addEventListener('fullscreenchange', () => setTimeout(applyCompactLayout, 200));
+
+function isCompactScreen() {
+    const v = viewSize();
+    return v.w <= 1024 || v.h <= 560;
+}
+
+function applyCompactLayout() {
+    const body = document.body;
+    const board = document.getElementById('board');
+    if (!body || !board) return;
+
+    applyForceRotation();
+    const compact = isCompactScreen();
+    const wasCompact = body.classList.contains('cmp');
+    body.classList.toggle('cmp', compact);
+    const toggleBtn = document.getElementById('leftPanelToggle');
+    if (compact && !wasCompact && toggleBtn) {
+        body.classList.remove('lp-open');
+        toggleBtn.innerHTML = '▶';
+        toggleBtn.title = 'Parodyti panelę';
+    }
+    if (!compact) {
+        if (wasCompact && typeof loadLeftPanelState === 'function') loadLeftPanelState();
+        body.classList.remove('cmp-portrait', 'cmp-landscape', 'cmp-narrow', 'cmp-tiny', 'cmp-short', 'lp-open');
+        ['--corner-width', '--corner-height', '--left-col-width', '--right-col-width',
+         '--top-row-height', '--bottom-row-height', '--board-gap', '--cell-font-size',
+         '--corner-font-size', '--board-max-width', '--board-min-width', '--c-ic-edge',
+         '--c-ic-side', '--c-ic-corner', '--c-side-font', '--c-dot', '--c-num', '--c-cost', '--c-cfont',
+         '--c-title', '--c-dice', '--c-money', '--c-btn', '--c-zoom'].forEach(v => board.style.removeProperty(v));
+        return;
+    }
+
+    const vs = viewSize();
+    const portrait = vs.h > vs.w * 1.1;
+    body.classList.toggle('cmp-portrait', portrait);
+    body.classList.toggle('cmp-landscape', !portrait);
+
+    // Lentos vidinis plotas (be paddingo ir rėmelio)
+    const cs = getComputedStyle(board);
+    const W = Math.max(200, board.clientWidth - (parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)));
+    const H = Math.max(150, board.clientHeight - (parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)));
+
+    const gap = 1;
+    const cw = Math.round(W * (portrait ? 0.15 : 0.115));          // kampo / šoninės kolonos plotis
+    const rh = Math.round(Math.max(36, H * (portrait ? 0.10 : 0.13))); // viršutinės / apatinės eilės aukštis
+    const ew = (W - 2 * cw - 16 * gap) / 15;                         // viršaus / apačios langelio plotis
+    const sh = (H - 2 * rh - 10 * gap) / 9;                          // šoninio langelio aukštis
+    const narrow = ew < 46 && rh > ew * 1.6;
+    body.classList.toggle('cmp-narrow', narrow);
+    body.classList.toggle('cmp-tiny', ew < 30);
+
+    const s = board.style;
+    const px = v => Math.round(v * 10) / 10 + 'px';
+    s.setProperty('--corner-width', px(cw));
+    s.setProperty('--corner-height', px(rh));
+    s.setProperty('--left-col-width', px(cw));
+    s.setProperty('--right-col-width', px(cw));
+    s.setProperty('--top-row-height', px(rh));
+    s.setProperty('--bottom-row-height', px(rh));
+    s.setProperty('--board-gap', gap + 'px');
+    s.setProperty('--board-max-width', '100%');
+    s.setProperty('--board-min-width', '0px');
+
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const edgeMin = Math.min(ew, rh);
+    const sideMin = Math.min(cw, sh);
+    s.setProperty('--cell-font-size', px(clamp(narrow ? Math.min(ew * 0.42, rh * 0.095) : Math.min(ew * 0.2, rh * 0.17), 6, 12)));
+    s.setProperty('--c-side-font', px(clamp(Math.min(cw * 0.115, sh * 0.16), 6, 12)));
+    s.setProperty('--corner-font-size', px(clamp(Math.min(cw * 0.13, rh * 0.2), 6, 13)));
+    s.setProperty('--c-cost', px(clamp(Math.min(ew * 0.2, rh * 0.16, sh * 0.2), 6, 12)));
+    s.setProperty('--c-num', px(clamp(edgeMin * 0.22, 5, 10)));
+    s.setProperty('--c-ic-edge', px(clamp(edgeMin * 0.75, 10, 60)));
+    s.setProperty('--c-ic-side', px(clamp(sideMin * 0.6, 10, 50)));
+    s.setProperty('--c-ic-corner', px(clamp(Math.min(cw, rh) * 0.7, 14, 70)));
+    s.setProperty('--c-dot', px(clamp(Math.min(edgeMin, sideMin) * 0.42, 8, 22)));
+
+    // Vidurio langeliai: 3×2 gulsčiai, 2×3 stačiai
+    const centerW = W - 2 * cw - 2 * gap;
+    const centerH = H - 2 * rh - 2 * gap;
+    const cols = portrait ? 2 : 3, rows = portrait ? 3 : 2;
+    const pw = centerW / cols, ph = centerH / rows;
+    // 🔍 Vidurys sukuriamas „kompiuterio“ dydžiu ir proporcingai sumažinamas (zoom),
+    // todėl telefone atrodo lygiai taip pat kaip kompiuteryje, tik mažiau.
+    const designW = portrait ? 230 : 300;   // vieno vidurio langelio „kompiuterinis“ dydis
+    const designH = portrait ? 250 : 210;
+    const zoom = clamp(Math.min(pw / designW, ph / designH), 0.35, 1.1);
+    s.setProperty('--c-zoom', zoom.toFixed(3));
+    s.setProperty('--c-cfont', '13px');
+    s.setProperty('--c-title', '11px');
+    s.setProperty('--c-dice', '58px');
+    s.setProperty('--c-money', '28px');
+    s.setProperty('--c-btn', '12px');
+    body.classList.remove('cmp-short');
+
+    ['centerDice1', 'centerDice2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.dataset.d3) buildDice3D(el);
+    });
+    if (typeof fitPlayersList === 'function') fitPlayersList();
+}
+
+(function initCompactLayout() {
+    let raf = 0;
+    const schedule = () => {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(applyCompactLayout);
+    };
+    const start = () => {
+        applyCompactLayout();
+        window.addEventListener('resize', schedule);
+        window.addEventListener('orientationchange', () => setTimeout(applyCompactLayout, 250));
+        const board = document.getElementById('board');
+        if (board && window.ResizeObserver) new ResizeObserver(schedule).observe(board);
+        // Paspaudus ant lentos – atidaryta panelė užsidaro
+        if (board) board.addEventListener('pointerdown', () => {
+            if (document.body.classList.contains('lp-open')) toggleLeftPanel();
+        });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
 
 // ============================================
 // KAULIUKAI
 // ============================================
 
-function updateDiceDisplay(value1, value2) {
-    const dice1 = document.getElementById('centerDice1');
-    const dice2 = document.getElementById('centerDice2');
-    
-    if (dice1) dice1.classList.add('rolling');
-    if (dice2) dice2.classList.add('rolling');
-    
-    // 🆕 METIMO METU RODYTI ATSITIKTINIUS SKAIČIUS (intriga!)
-    const randomInterval = setInterval(() => {
-        const r1 = Math.floor(Math.random() * 6) + 1;
-        const r2 = Math.floor(Math.random() * 6) + 1;
-        updateSingleDice('centerDice1', r1);
-        updateSingleDice('centerDice2', r2);
-    }, 80);   // kas 80ms
-    
-    if (navigator.vibrate) {
-        navigator.vibrate([50, 30, 50, 30, 100]);
+// 🎲 3D kauliukai: tikri kubeliai su 6 sienelėmis, metami į 2 langelį (VALDYMAS)
+const DICE_FACE_PIPS = {
+    1: ['cc'],
+    2: ['tl', 'br'],
+    3: ['tl', 'cc', 'br'],
+    4: ['tl', 'tr', 'bl', 'br'],
+    5: ['tl', 'tr', 'cc', 'bl', 'br'],
+    6: ['tl', 'cl', 'bl', 'tr', 'cr', 'br']
+};
+// Kubo pasukimas [X, Y], kad į žiūrovą žiūrėtų reikiama sienelė
+const DICE_FACE_ROT = { 1: [0, 0], 2: [0, -90], 3: [-90, 0], 4: [90, 0], 5: [0, 90], 6: [0, 180] };
+const DICE_PIP_POS = ['tl', 'tc', 'tr', 'cl', 'cc', 'cr', 'bl', 'bc', 'br'];
+
+function buildDice3D(el) {
+    if (!el) return null;
+    if (!el.dataset.d3) {
+        el.dataset.d3 = '1';
+        el.classList.add('d3');
+        // Vidinės sienelės (be suapvalinimų) užpildo kubą – pro suapvalintus kampus nesimato tuštumos
+        el.innerHTML = '<div class="d3-stand"><div class="d3-cube">' +
+            [1, 2, 3, 4, 5, 6].map(v => `<div class="d3-in d3-f${v}"></div>`).join('') +
+            [1, 2, 3, 4, 5, 6].map(v =>
+            `<div class="d3-face d3-f${v}"><div class="dice-dots-container">` +
+            DICE_PIP_POS.map(pos => `<span class="dice-dot dot-${pos}${DICE_FACE_PIPS[v].includes(pos) ? ' visible' : ''}"></span>`).join('') +
+            '</div></div>').join('') + '</div></div>';
     }
-    
-    // 🆕 PO 800ms SUSTABDYTI ir parodyti TIKRĄ rezultatą
-    setTimeout(() => {
-        clearInterval(randomInterval);   // ← 🆕 sustabdyti atsitiktinius
-        updateSingleDice('centerDice1', value1);   // ← TIKRAS
-        updateSingleDice('centerDice2', value2);   // ← TIKRAS
-        
-        if (dice1) {
-            dice1.classList.remove('rolling');
-            dice1.classList.add('settle');
-            setTimeout(() => dice1.classList.remove('settle'), 300);
-        }
-        if (dice2) {
-            dice2.classList.remove('rolling');
-            dice2.classList.add('settle');
-            setTimeout(() => dice2.classList.remove('settle'), 300);
-        }
-    }, 800);
+    // Kubo pusė pagal tikrą dydį (keičiasi skirtinguose ekranuose)
+    const half = (el.offsetWidth || 60) / 2;
+    el.style.setProperty('--d3-half', half + 'px');
+    return el.querySelector('.d3-cube');
+}
+
+// Vienodas abiejų kauliukų žiūrėjimo kampas: matosi priekis, viršus ir šonas – atrodo kaip tikras kubas
+const DICE_VIEW = 'rotateX(-11deg) rotateY(-13deg)';
+function diceTransform(value, spinX, spinY, tiltZ) {
+    const [x, y] = DICE_FACE_ROT[value] || [0, 0];
+    return `${DICE_VIEW} rotateZ(${tiltZ}deg) rotateX(${x + 360 * spinX}deg) rotateY(${y + 360 * spinY}deg)`;
+}
+
+// 🎲 Šešėlis ant stalo po kauliuku (matomas 3D / 3D+ režimuose)
+function getDiceShadow(el) {
+    if (!el || !el.parentElement) return null;
+    const box = el.parentElement;
+    let sh = box.querySelector(`.dice-shadow[data-for="${el.id}"]`);
+    if (!sh) {
+        sh = document.createElement('div');
+        sh.className = 'dice-shadow';
+        sh.dataset.for = el.id;
+        box.insertBefore(sh, box.firstChild);   // už kauliuko
+    }
+    // Padėtis – po kauliuko apačia, per visą jo plotį
+    if (!box.__shObs && window.ResizeObserver) {
+        box.__shObs = new ResizeObserver(() => placeDiceShadows());
+        box.__shObs.observe(box);
+    }
+    if (!el.offsetWidth) { sh.style.visibility = 'hidden'; return sh; }
+    sh.style.visibility = '';
+    const w = el.offsetWidth, h = el.offsetHeight || w;
+    // Kauliukas stovi ant savo apatinio krašto – šešėlis ant stalo aplink tą liniją
+    sh.style.left = (el.offsetLeft - w * 0.2 + w * 0.06) + 'px';
+    sh.style.top = (el.offsetTop + h - w * 0.2) + 'px';
+    sh.style.width = (w * 1.4) + 'px';
+    sh.style.height = (w * 0.5) + 'px';
+    return sh;
+}
+function placeDiceShadows() {
+    ['centerDice1', 'centerDice2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.dataset.d3) getDiceShadow(el);
+    });
 }
 
 function updateSingleDice(diceId, value) {
-    const dice = document.getElementById(diceId);
-    if (!dice) return;
-    
-    const container = dice.querySelector('.dice-dots-container');
-    if (!container) return;
-    
-    const allDots = container.querySelectorAll('.dice-dot');
-    allDots.forEach(dot => dot.classList.remove('visible'));
-    
-    const patterns = {
-        1: ['cc'],
-        2: ['tl', 'br'],
-        3: ['tl', 'cc', 'br'],
-        4: ['tl', 'tr', 'bl', 'br'],
-        5: ['tl', 'tr', 'cc', 'bl', 'br'],
-        6: ['tl', 'cl', 'bl', 'tr', 'cr', 'br']
-    };
-    
-    const positions = patterns[value];
-    if (positions) {
-        positions.forEach(pos => {
-            const dot = container.querySelector(`.dot-${pos}`);
-            if (dot) dot.classList.add('visible');
-        });
-    }
+    const el = document.getElementById(diceId);
+    const cube = buildDice3D(el);
+    if (!cube) return;
+    if (cube.getAnimations) cube.getAnimations().forEach(a => a.cancel());
+    if (el.getAnimations) el.getAnimations().forEach(a => a.cancel());
+    cube.style.transform = diceTransform(value, 0, 0, 0);
+    el.dataset.value = value;
+    const sh = getDiceShadow(el);
+    if (sh && sh.getAnimations) sh.getAnimations().forEach(a => a.cancel());
 }
+
+function throwSingleDice(diceId, value, opts) {
+    const el = document.getElementById(diceId);
+    const cube = buildDice3D(el);
+    if (!cube || !cube.animate) {
+        updateSingleDice(diceId, value);
+        return Promise.resolve();
+    }
+    if (cube.getAnimations) cube.getAnimations().forEach(a => a.cancel());
+    if (el.getAnimations) el.getAnimations().forEach(a => a.cancel());
+
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const tilt = 0;   // abu kauliukai nusileidžia tuo pačiu kampu
+    const finalT = diceTransform(value, opts.spinX, opts.spinY, tilt);
+    const startT = `${DICE_VIEW} rotateZ(${rnd(-90, 90)}deg) rotateX(${rnd(-180, 180)}deg) rotateY(${rnd(-180, 180)}deg)`;
+    const dur = opts.duration;
+
+    // Kubelio sukimasis ore
+    const spin = cube.animate([
+        { transform: startT },
+        { transform: finalT }
+    ], { duration: dur, delay: opts.delay, easing: 'cubic-bezier(0.15, 0.6, 0.25, 1)', fill: 'both' });
+
+    // Skrydis į langelį su atšokimu.
+    // 2D – aukštis rodomas judesiu į viršų; 3D / 3D+ – tikru pakilimu virš stalo (Z ašimi)
+    const fx = opts.fromX, fy = opts.fromY;
+    const in3d = false;   // centras plokščias – aukštis visada rodomas judesiu į viršų
+    const pos = (x, lift, sc) => in3d
+        ? `translate3d(${x}px, 0px, ${lift * 1.3}px) scale(${sc})`
+        : `translate(${x}px, ${-lift}px) scale(${sc})`;
+    el.animate([
+        { transform: pos(fx, -fy, 1.25), offset: 0 },
+        { transform: pos(fx * 0.45, -(fy * 0.6 - 30), 1.18), offset: 0.32 },
+        { transform: pos(0, 0, 1), offset: 0.6 },
+        { transform: pos(-fx * 0.04, 14, 1.04), offset: 0.74 },
+        { transform: pos(0, 0, 1), offset: 0.86 },
+        { transform: pos(-fx * 0.01, 4, 1.01), offset: 0.93 },
+        { transform: pos(0, 0, 1), offset: 1 }
+    ], { duration: dur, delay: opts.delay, easing: 'ease-out', fill: 'none' });
+
+    // Šešėlis lieka ant stalo: juda kartu horizontaliai, aukštai – mažas ir blankus
+    const sh = getDiceShadow(el);
+    if (sh && sh.animate) {
+        sh.getAnimations().forEach(a => a.cancel());
+        const shK = (x, lift, off) => {
+            const k = Math.min(1, Math.max(0, lift / 160));
+            return { translate: `${x}px 0px`, scale: String(1 - k * 0.55), opacity: String(1 - k * 0.75), offset: off };
+        };
+        sh.animate([
+            shK(fx, -fy + 40, 0),
+            shK(fx * 0.45, -(fy * 0.6 - 30) + 20, 0.32),
+            shK(0, 0, 0.6),
+            shK(-fx * 0.04, 14, 0.74),
+            shK(0, 0, 0.86),
+            shK(-fx * 0.01, 4, 0.93),
+            shK(0, 0, 1)
+        ], { duration: dur, delay: opts.delay, easing: 'ease-out', fill: 'both' }).finished.then(a => {}).catch(() => {});
+    }
+
+    return spin.finished.then(() => {
+        cube.style.transform = finalT;
+        spin.cancel();
+        el.dataset.value = value;
+    }).catch(() => {});
+}
+
+// Grąžina Promise, kuris išsipildo, kai kauliukai nusileidžia
+function updateDiceDisplay(value1, value2) {
+    if (navigator.vibrate) {
+        try { navigator.vibrate([50, 30, 50, 30, 100]); } catch (e) {}
+    }
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+        updateSingleDice('centerDice1', value1);
+        updateSingleDice('centerDice2', value2);
+        return Promise.resolve();
+    }
+    const container = document.querySelector('#center-2 .dice-container');
+    const panel = document.getElementById('center-2');
+    const w = container ? container.offsetWidth : 200;
+    // Metama iš toliau – iš už langelio dešinės pusės, iš aukščiau
+    const fromX = Math.max(200, w * 1.25);
+    const pick = () => (Math.random() < 0.5 ? 1 : 2);
+    if (panel) panel.classList.add('dice-flying');
+    return Promise.all([
+        throwSingleDice('centerDice1', value1, { fromX: fromX, fromY: -70, delay: 0, duration: 1150, spinX: pick() + 1, spinY: pick() + 1 }),
+        throwSingleDice('centerDice2', value2, { fromX: fromX + 60, fromY: -100, delay: 80, duration: 1150, spinX: pick() + 1, spinY: pick() + 1 })
+    ]).then(() => { if (panel) panel.classList.remove('dice-flying'); });
+}
+
+window.addEventListener('resize', () => {
+    ['centerDice1', 'centerDice2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.dataset.d3) buildDice3D(el);
+    });
+    placeDiceShadows();
+});
 
 // ============================================
 // ŽAIDĖJO JUDĖJIMO ANIMACIJA
 // ============================================
-async function animateMovement(playerId, fromPos, toPos) {
-    if (fromPos === toPos) return;
+// 🏗️ Statybų langas: 15 s statyboms po sustojimo
+const buildWin = { open: false, deadline: 0, timer: null };
+function openBuildWindowPanel(ms) {
+    buildWin.deadline = Date.now() + (ms || 15000);
+    let p = document.getElementById('buildWindowPanel');
+    if (!p) {
+        p = document.createElement('div');
+        p.id = 'buildWindowPanel';
+        p.innerHTML = `
+            <div class="bw-icon">🏗️</div>
+            <div class="bw-body">
+                <div class="bw-title"></div>
+                <div class="bw-bar"><span></span></div>
+                <div class="bw-btns">
+                    <button type="button" class="bw-build"></button>
+                    <button type="button" class="bw-end"></button>
+                    <span class="bw-left"></span>
+                </div>
+            </div>`;
+        document.body.appendChild(p);
+        p.querySelector('.bw-build').onclick = () => buildHouse();
+        p.querySelector('.bw-end').onclick = () => {
+            p.querySelectorAll('button').forEach(b => b.disabled = true);
+            playClickSound();
+            socket.emit('finishBuild');
+        };
+    }
+    p.querySelectorAll('button').forEach(b => b.disabled = false);
+    p.querySelector('.bw-title').textContent = tt('build.windowTitle', 'Gali statyti!');
+    p.querySelector('.bw-build').textContent = tt('game.buildHouseBtn', '🏠 Statyti namą');
+    p.querySelector('.bw-end').textContent = tt('build.endTurn', '✅ Baigti ėjimą');
+    p.style.display = 'flex';
+    const bar = p.querySelector('.bw-bar span');
+    const total = ms || 15000;
+    bar.style.transition = 'none';
+    bar.style.width = Math.max(0, Math.min(100, (buildWin.deadline - Date.now()) / 15000 * 100)) + '%';
+    void bar.offsetWidth;
+    bar.style.transition = `width ${Math.max(0, buildWin.deadline - Date.now())}ms linear`;
+    bar.style.width = '0%';
+    buildWin.open = true;
+    clearInterval(buildWin.timer);
+    const tick = () => {
+        const left = Math.max(0, Math.ceil((buildWin.deadline - Date.now()) / 1000));
+        const el = p.querySelector('.bw-left');
+        if (el) el.textContent = '⏱️ ' + left + ' s';
+        if (left <= 0) clearInterval(buildWin.timer);
+    };
+    tick();
+    buildWin.timer = setInterval(tick, 250);
+    void total;
+}
+function closeBuildWindowPanel() {
+    buildWin.open = false;
+    clearInterval(buildWin.timer);
+    const p = document.getElementById('buildWindowPanel');
+    if (p) p.style.display = 'none';
+    const picker = document.getElementById('buildPicker');
+    if (picker) picker.style.display = 'none';
+}
+
+// 🚕 Taksi signalas „pyp pyp“ (sugeneruojamas, failo nereikia)
+let taxiAudioCtx = null;
+function taxiBeep() {
+    try {
+        if (typeof audioManager !== 'undefined' && audioManager.isSoundEnabled && !audioManager.isSoundEnabled()) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        taxiAudioCtx = taxiAudioCtx || new AC();
+        const ctx = taxiAudioCtx, t0 = ctx.currentTime + 0.02;
+        [0, 0.18].forEach(dt => {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = 'square'; o.frequency.value = 520;
+            g.gain.setValueAtTime(0.0001, t0 + dt);
+            g.gain.exponentialRampToValueAtTime(0.08, t0 + dt + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.13);
+            o.connect(g); g.connect(ctx.destination);
+            o.start(t0 + dt); o.stop(t0 + dt + 0.15);
+        });
+    } catch (e) {}
+}
+
+// 🧪 Laikinas „Taksi testas“ mygtukas (rodomas tik testavimo režimu)
+function updateTaxiTestButton() {
+    const holder = document.querySelector('#center-2 .control-buttons');
+    if (!holder) return;
+    let btn = document.getElementById('taxiTestBtn');
+    const show = gameState && gameState.testMode && gameState.gameStarted;
+    if (!show) { if (btn) btn.style.display = 'none'; return; }
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'taxiTestBtn';
+        btn.type = 'button';
+        btn.textContent = '🧪 Taksi testas';
+        btn.title = 'Laikinas mygtukas: perkelia tave ant TAKSI langelio';
+        btn.onclick = () => { playClickSound(); socket.emit('debugTaxi'); };
+        holder.appendChild(btn);
+    }
+    btn.style.display = '';
+    btn.disabled = !(gameState && gameState.currentTurn === playerId && !gameState.isRolling && !gameState.waitingForBuy &&
+        !gameState.pendingFieldPlayerId && !gameState.taxiOffer && !gameState.buildWindow);
+}
+
+// 🚕 TAKSI: langelio pasirinkimas lentoje
+const taxiUi = { open: false, target: null, cost: 100, forbidden: [16, 26, 42], timer: null, deadline: 0 };
+function openTaxiPicker(cost, durationMs, forbidden) {
+    if (typeof cell5DismissMyTurn === 'function') cell5DismissMyTurn();   // „Tavo eilė – mesk“ čia netinka
+    taxiUi.cost = cost || 100;
+    taxiUi.forbidden = Array.isArray(forbidden) ? forbidden : [16, 26, 42];
+    taxiUi.target = null;
+    taxiUi.deadline = Date.now() + (durationMs || 30000);
+    let panel = document.getElementById('taxiPanel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'taxiPanel';
+        panel.innerHTML = `
+            <div class="tx-car">🚕</div>
+            <div class="tx-body">
+                <div class="tx-title"></div>
+                <div class="tx-text"></div>
+                <div class="tx-extra"></div>
+                <div class="tx-num">
+                    <label class="tx-num-lbl"></label>
+                    <input type="number" class="tx-num-input" min="0" max="51" inputmode="numeric">
+                </div>
+                <div class="tx-btns">
+                    <button type="button" class="tx-go"></button>
+                    <button type="button" class="tx-stay"></button>
+                    <span class="tx-left"></span>
+                </div>
+            </div>`;
+        document.body.appendChild(panel);
+        panel.querySelector('.tx-go').onclick = () => {
+            if (taxiUi.target === null) return;
+            panel.querySelectorAll('button').forEach(b => b.disabled = true);
+            playClickSound();
+            socket.emit('taxiRide', { target: taxiUi.target });
+        };
+        const numInput = panel.querySelector('.tx-num-input');
+        const pickByNumber = () => {
+            const v = parseInt(numInput.value, 10);
+            if (!Number.isInteger(v)) return;
+            if (v < 0 || v > 51 || taxiUi.forbidden.includes(v)) {
+                numInput.classList.add('bad');
+                if (typeof playErrorSound === 'function') playErrorSound();
+                return;
+            }
+            numInput.classList.remove('bad');
+            selectTaxiTarget(v);
+        };
+        numInput.addEventListener('input', pickByNumber);
+        numInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { pickByNumber(); if (taxiUi.target !== null) panel.querySelector('.tx-go').click(); }
+        });
+        panel.querySelector('.tx-stay').onclick = () => {
+            panel.querySelectorAll('button').forEach(b => b.disabled = true);
+            playClickSound();
+            socket.emit('taxiDecline');
+        };
+    }
+    panel.querySelectorAll('button').forEach(b => b.disabled = false);
+    panel.querySelector('.tx-title').textContent = tt('taxi.title', '🚕 TAKSI') + ' – €' + taxiUi.cost;
+    panel.querySelector('.tx-stay').textContent = tt('taxi.stay', 'Likti čia');
+    panel.querySelector('.tx-go').textContent = tt('taxi.go', '🚕 Važiuoti');
+    panel.querySelector('.tx-num-lbl').textContent = tt('taxi.orNumber', 'arba įvesk langelio numerį:');
+    const ni = panel.querySelector('.tx-num-input');
+    ni.value = ''; ni.classList.remove('bad');
+    renderTaxiChoice();
+    panel.style.display = 'flex';
+    document.body.classList.add('taxi-pick');
+    document.querySelectorAll('#board .cell').forEach(c => {
+        const id = parseInt(c.dataset.id, 10);
+        c.classList.toggle('taxi-target', !taxiUi.forbidden.includes(id));
+        c.classList.toggle('taxi-forbidden', taxiUi.forbidden.includes(id));
+        c.classList.remove('taxi-selected');
+    });
+    taxiUi.open = true;
+    clearInterval(taxiUi.timer);
+    const tick = () => {
+        const left = Math.max(0, Math.ceil((taxiUi.deadline - Date.now()) / 1000));
+        const el = panel.querySelector('.tx-left');
+        if (el) el.textContent = '⏱️ ' + tt('taxi.left', 'Liko {s} s').replace('{s}', left);
+        if (left <= 0) clearInterval(taxiUi.timer);
+    };
+    tick();
+    taxiUi.timer = setInterval(tick, 500);
+    if (typeof playNotificationSound === 'function') playNotificationSound();
+}
+function renderTaxiChoice() {
+    const panel = document.getElementById('taxiPanel');
+    if (!panel) return;
+    const text = panel.querySelector('.tx-text');
+    const extra = panel.querySelector('.tx-extra');
+    const go = panel.querySelector('.tx-go');
+    if (taxiUi.target === null) {
+        text.textContent = tt('taxi.pick', 'Paspausk šviečiantį langelį lentoje – ten ir nuvažiuosi (tik pirmyn)');
+        extra.textContent = '';
+        go.disabled = true;
+        return;
+    }
+    const f = gameState && gameState.board ? gameState.board[taxiUi.target] : null;
+    const nameKey = `cell.${taxiUi.target}.name`;
+    const tr = t(nameKey);
+    const name = (tr && tr !== nameKey) ? tr : (f ? f.name : taxiUi.target);
+    text.textContent = tt('taxi.to', 'Važiuoti į {field} už €{cost}?').replace('{field}', name).replace('{cost}', taxiUi.cost);
+    const from = myPlayer ? myPlayer.position : 26;
+    if (taxiUi.target === 0) extra.textContent = '🏁 ' + tt('taxi.landStart', 'Sustosi ant START: +€300');
+    else if (taxiUi.target < from) extra.textContent = '🏁 ' + tt('taxi.passStart', 'Pravažiuosi START: +€200');
+    else extra.textContent = '';
+    go.disabled = false;
+}
+function closeTaxiPicker() {
+    taxiUi.open = false;
+    taxiUi.target = null;
+    clearInterval(taxiUi.timer);
+    const panel = document.getElementById('taxiPanel');
+    if (panel) panel.style.display = 'none';
+    document.body.classList.remove('taxi-pick');
+    document.querySelectorAll('#board .cell.taxi-target, #board .cell.taxi-forbidden, #board .cell.taxi-selected')
+        .forEach(c => c.classList.remove('taxi-target', 'taxi-forbidden', 'taxi-selected'));
+}
+// Paspaudimas ant langelio taksi pasirinkimo metu
+document.addEventListener('click', (e) => {
+    if (!taxiUi.open) return;
+    const cell = e.target.closest && e.target.closest('#board .cell');
+    if (!cell) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const id = parseInt(cell.dataset.id, 10);
+    if (taxiUi.forbidden.includes(id)) { if (typeof playErrorSound === 'function') playErrorSound(); return; }
+    selectTaxiTarget(id);
+    const ni = document.querySelector('#taxiPanel .tx-num-input');
+    if (ni) { ni.value = id; ni.classList.remove('bad'); }
+    playClickSound();
+}, true);
+
+function selectTaxiTarget(id) {
+    taxiUi.target = id;
+    document.querySelectorAll('#board .cell.taxi-selected').forEach(c => c.classList.remove('taxi-selected'));
+    const cell = document.getElementById(`cell-${id}`);
+    if (cell) cell.classList.add('taxi-selected');
+    if (typeof hideCellInfo === 'function') hideCellInfo();
+    renderTaxiChoice();
+}
+
+// 🎥 KAMERA: judant figūrėlei – priartėja ir seka ją, sustojus – nutolsta
+const CAMERA_KEY = 'bancrupt_camera';
+// Režimai: 'all' – sekti visus, 'mine' – tik mano ėjimą (numatyta), 'off' – nesekti
+function getCameraMode() {
+    let v = null;
+    try { v = localStorage.getItem(CAMERA_KEY); } catch (e) {}
+    return (v === 'all' || v === 'off') ? v : 'mine';
+}
+function cameraEnabled() { return getCameraMode() !== 'off'; }
+function setCameraMode(mode) {
+    try { localStorage.setItem(CAMERA_KEY, mode); } catch (e) {}
+    if (typeof playClickSound === 'function') playClickSound();
+    if (mode === 'off') cameraEnd();
+    renderCameraButton();
+}
+const CAMERA_MODES = {
+    all:  ['🎥', 'camera.all',  'Sekti visų ėjimus'],
+    mine: ['👤', 'camera.mine', 'Sekti tik mano ėjimą'],
+    off:  ['🚫', 'camera.off',  'Nesekti ėjimų']
+};
+function renderCameraButton() {
+    const header = document.getElementById('gameHeader');
+    if (!header) return;
+    let wrap = document.getElementById('cameraSwitch');
+    if (!wrap) {
+        wrap = document.createElement('span');
+        wrap.id = 'cameraSwitch';
+        wrap.innerHTML = '<button type="button" class="cam-btn"></button><div class="cam-menu"></div>';
+        const anchor = document.getElementById('boardViewSwitch');
+        if (anchor && anchor.nextSibling) header.insertBefore(wrap, anchor.nextSibling);
+        else header.appendChild(wrap);
+        const btn = wrap.querySelector('.cam-btn');
+        btn.onclick = (e) => { e.stopPropagation(); wrap.classList.toggle('open'); playClickSound(); };
+        document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) wrap.classList.remove('open'); });
+    }
+    const mode = getCameraMode();
+    const [icon, key, fb] = CAMERA_MODES[mode];
+    const shortKey = { all: ['camera.shortAll', 'Visi'], mine: ['camera.shortMine', 'Mano'], off: ['camera.shortOff', 'Išj.'] }[mode];
+    const btn = wrap.querySelector('.cam-btn');
+    btn.innerHTML = '';
+    btn.append(document.createTextNode(icon + ' '));
+    const lbl = document.createElement('span');
+    lbl.className = 'cam-lbl';
+    lbl.textContent = tt('camera.label', 'Kamera') + ': ' + tt(shortKey[0], shortKey[1]);
+    btn.appendChild(lbl);
+    btn.title = tt(key, fb);
+    const menu = wrap.querySelector('.cam-menu');
+    menu.innerHTML = '';
+    Object.keys(CAMERA_MODES).forEach(m => {
+        const [ic, k, f] = CAMERA_MODES[m];
+        const it = document.createElement('button');
+        it.type = 'button';
+        it.className = 'cam-item' + (m === mode ? ' active' : '');
+        it.textContent = ic + ' ' + tt(k, f);
+        it.onclick = (e) => { e.stopPropagation(); wrap.classList.remove('open'); setCameraMode(m); };
+        menu.appendChild(it);
+    });
+}
+function getBoardCam() {
+    const board = document.getElementById('board');
+    if (!board) return null;
+    let cam = document.getElementById('boardCam');
+    if (!cam) {
+        // Išorinis apvalkalas kerpa vaizdą, vidinis – priartėja / pasislenka
+        const clip = document.createElement('div');
+        clip.id = 'boardCamClip';
+        cam = document.createElement('div');
+        cam.id = 'boardCam';
+        board.parentNode.insertBefore(clip, board);
+        clip.appendChild(cam);
+        cam.appendChild(board);
+    }
+    return cam;
+}
+const camState = { on: false, base: null, k: 1, tx: 0, ty: 0 };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', getBoardCam);
+else getBoardCam();
+
+function cameraCanRun(forPlayerId) {
+    const mode = getCameraMode();
+    if (mode === 'off') return false;
+    if (mode === 'mine' && forPlayerId !== undefined && forPlayerId != playerId) return false;
+    if (document.body.classList.contains('force-rot')) return false;   // pasuktame telefono vaizde – be kameros
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    return true;
+}
+function cameraApply(ms) {
+    const cam = getBoardCam();
+    if (!cam) return;
+    cam.style.transition = `transform ${ms}ms cubic-bezier(0.25, 0.8, 0.3, 1)`;
+    cam.style.transform = `translate(${camState.tx.toFixed(1)}px, ${camState.ty.toFixed(1)}px) scale(${camState.k.toFixed(3)})`;
+}
+function cameraFollow(el, ms) {
+    if (!camState.on || !el) return;
+    const cam = getBoardCam();
+    const b = camState.base;
+    const r = el.getBoundingClientRect();
+    // Taško vieta „nepriartintoje“ kameroje
+    const vx = r.left + r.width / 2, vy = r.top + r.height / 2;
+    const lx = (vx - b.left - camState.curTx) / camState.curK;
+    const ly = (vy - b.top - camState.curTy) / camState.curK;
+    let tx = b.width / 2 - camState.k * lx;
+    let ty = b.height / 2 - camState.k * ly;
+    // Neišvažiuoti už lentos kraštų
+    tx = Math.min(0, Math.max(b.width - b.width * camState.k, tx));
+    ty = Math.min(0, Math.max(b.height - b.height * camState.k, ty));
+    camState.tx = tx; camState.ty = ty;
+    camState.curTx = tx; camState.curTy = ty; camState.curK = camState.k;
+    cameraApply(ms);
+}
+function cameraStart(cellEl, forPlayerId) {
+    if (!cameraCanRun(forPlayerId) || !cellEl) return false;
+    const cam = getBoardCam();
+    if (!cam) return false;
+    cam.style.transition = 'none';
+    cam.style.transform = 'none';
+    const b = cam.getBoundingClientRect();
+    if (b.width < 50 || b.height < 50) return false;
+    const cr = cellEl.getBoundingClientRect();
+    const cellSize = Math.max(20, Math.min(cr.width, cr.height));
+    camState.base = { left: b.left, top: b.top, width: b.width, height: b.height };
+    camState.k = Math.max(1.5, Math.min(2.3, (Math.min(b.width, b.height) * 0.3) / cellSize));
+    camState.curK = 1; camState.curTx = 0; camState.curTy = 0;
+    camState.on = true;
+    cam.classList.add('cam-active');
+    cameraFollow(cellEl, 650);   // priartėjimas
+    return true;
+}
+function cameraEnd() {
+    if (!camState.on) return;
+    camState.on = false;
+    camState.k = 1; camState.tx = 0; camState.ty = 0;
+    cameraApply(700);              // nutolimas
+    const cam = document.getElementById('boardCam');
+    setTimeout(() => { if (!camState.on && cam) { cam.style.transform = ''; cam.style.transition = ''; cam.classList.remove('cam-active'); } }, 720);
+}
+
+// 🚶 Figūrėlė eina per langelius kartu su švytėjimu ir niekada nedingsta
+function makeWalker(playerId, taxi) {
+    const p = gameState && gameState.players ? gameState.players.find(x => x.id == playerId) : null;
+    if (taxi) {
+        // 🚕 Figūrėlė „įsėda“ į taksi: važiuoja automobilis su žaidėjo spalvos ženklu ant stogo
+        const car = document.createElement('span');
+        car.className = 'taxi-car';
+        car.innerHTML = '<span class="taxi-car-body">🚕</span><span class="taxi-car-roof"></span>';
+        car.querySelector('.taxi-car-roof').style.background = safeColor(p ? p.color : '#888');
+        const holder = document.createElement('div');
+        holder.className = 'walker-holder is-taxi';
+        holder.appendChild(car);
+        return holder;
+    }
+    const dot = document.createElement('span');
+    dot.className = 'player-dot walker-dot has-piece';
+    dot.style.background = safeColor(p ? p.color : '#888');
+    dot.innerHTML = pieceSolid((p && p.piece) || 'pawn', p ? p.color : '#888');
+    if (p && p.emoji) {
+        const e = document.createElement('span');
+        e.className = 'player-emoji';
+        e.textContent = p.emoji;
+        dot.appendChild(e);
+    }
+    const holder = document.createElement('div');
+    holder.className = 'walker-holder';
+    holder.appendChild(dot);
+    return holder;
+}
+
+// Langelio centro vieta lentos viduje (nepriklauso nuo 3D pasukimo / kameros)
+function cellCenterInBoard(cell) {
+    const board = document.getElementById('board');
+    let x = cell.offsetWidth / 2, y = cell.offsetHeight / 2, el = cell;
+    while (el && el !== board) { x += el.offsetLeft; y += el.offsetTop; el = el.offsetParent; }
+    return { x, y };
+}
+function taxiDirection(pos) {
+    if (pos < 16) return 'right';
+    if (pos < 26) return 'down';
+    if (pos < 42) return 'left';
+    return 'up';
+}
+
+function placeWalker(holder, pos, hopMs) {
+    const cell = document.getElementById(`cell-${pos}`);
+    if (!cell || !holder) return;
+    const isCar = holder.classList.contains('is-taxi');
+    const prevCell = holder.parentNode;
+    const from = (isCar && hopMs && prevCell && prevCell !== cell && prevCell.classList && prevCell.classList.contains('cell'))
+        ? cellCenterInBoard(prevCell) : null;
+    if (holder.parentNode !== cell) {
+        // Langelis su figūrėle iškeliamas virš kaimynų (kad važiuojantis taksi nepalįstų po kitais)
+        if (prevCell && prevCell.classList) prevCell.classList.remove('has-walker');
+        cell.appendChild(holder);
+    }
+    cell.classList.add('has-walker');
+    const dot = holder.firstChild;
+    const size = Math.max(isCar ? 16 : 14, Math.min(isCar ? 48 : 76, Math.min(cell.clientWidth, cell.clientHeight) * (isCar ? 0.75 : 0.92)));
+    if (isCar) {
+        dot.style.fontSize = size + 'px';
+        dot.dataset.dir = taxiDirection(pos);
+        // Sklandus važiavimas: pradedam nuo ankstesnio langelio vietos ir „privažiuojam“
+        if (from) {
+            const to = cellCenterInBoard(cell);
+            holder.style.transition = 'none';
+            holder.style.transform = `translate(${from.x - to.x}px, ${from.y - to.y}px)`;
+            void holder.offsetWidth;
+            holder.style.transition = `transform ${hopMs}ms linear`;
+            holder.style.transform = 'translate(0, 0)';
+        }
+        return;
+    }
+    dot.style.width = dot.style.height = size + 'px';
+    dot.style.setProperty('--ps', size + 'px');
+    if (hopMs) {
+        dot.classList.remove('hop'); void dot.offsetWidth;
+        dot.style.animationDuration = hopMs + 'ms';
+        dot.classList.add('hop');
+    }
+}
+
+async function animateMovement(playerId, fromPos, toPos, waitBefore, opts = {}) {
+    if (fromPos === toPos) { if (waitBefore) await waitBefore; return; }
     
     const boardSize = 52;
     const totalSteps = (toPos - fromPos + boardSize) % boardSize;
-    if (totalSteps === 0) return;
+    if (totalSteps === 0) { if (waitBefore) await waitBefore; return; }
     
-    console.log(`🎬 Animacija: player ${playerId} nuo ${fromPos} iki ${toPos}`);
+    const stepDuration = opts.stepMs || (totalSteps > 8 ? 170 : 260);
     
-    const stepDuration = totalSteps > 8 ? 150 : 250;
-    
+    // Tikra figūrėlė paslepiama, o vietoj jos – „einanti“ figūrėlė, kuri visą laiką matoma
     hidePlayerDot(playerId);
+    const walker = makeWalker(playerId, !!opts.taxi);
+    let walkerPos = fromPos;
+    placeWalker(walker, walkerPos, 0);
+    // Lenta gali persipiešti (atėjus naujai būsenai) – figūrėlę grąžinam į vietą
+    const keepWalker = setInterval(() => {
+        if (!walker.isConnected) placeWalker(walker, walkerPos, 0);
+    }, 50);
+
+    // Kol skrenda kauliukai – figūrėlė stovi savo vietoje
+    if (waitBefore) await waitBefore;
+
+    // 🎥 Kamera priartėja prie figūrėlės
+    const camOn = cameraStart(walker.firstChild, playerId);
+    if (camOn) await new Promise(r => setTimeout(r, 450));
+    if (opts.taxi) taxiBeep();
     
+    let lastCell = null;
     for (let i = 1; i <= totalSteps; i++) {
         const currentPos = (fromPos + i) % boardSize;
         const cell = document.getElementById(`cell-${currentPos}`);
-        
         if (!cell) continue;
-        
+        if (lastCell && i <= totalSteps) lastCell.classList.remove('highlight-yellow');
         cell.classList.add('highlight-yellow');
+        walkerPos = currentPos;
+        placeWalker(walker, currentPos, stepDuration);
+        lastCell = cell;
+        if (camOn) cameraFollow(walker.firstChild, stepDuration + 60);
         
-        if (typeof playClickSound === 'function') {
+        if (typeof playClickSound === 'function' && (!opts.taxi || i % 3 === 0 || i === totalSteps)) {
             playClickSound();
         }
         
         await new Promise(resolve => setTimeout(resolve, stepDuration));
-        
-        if (i < totalSteps) {
-            cell.classList.remove('highlight-yellow');
-        }
     }
     
     const finalCell = document.getElementById(`cell-${toPos}`);
     if (finalCell) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        placeWalker(walker, toPos, 0);   // jei lenta persipiešė – grąžinam
+        await new Promise(resolve => setTimeout(resolve, 380));
         finalCell.classList.remove('highlight-yellow');
     }
     
+    clearInterval(keepWalker);
+    const clearLift = () => document.querySelectorAll('#board .cell.has-walker').forEach(c => c.classList.remove('has-walker'));
+    if (opts.taxi) {
+        setTimeout(clearLift, 700);
+        // Figūrėlė išlipa, taksi pasignalizuoja ir nuvažiuoja
+        showPlayerDot(playerId, toPos);
+        taxiBeep();
+        walker.classList.add('drive-off');
+        setTimeout(() => { if (walker.parentNode) walker.parentNode.removeChild(walker); }, 650);
+    } else if (walker.parentNode) {
+        walker.parentNode.removeChild(walker);
+        clearLift();
+    }
     showPlayerDot(playerId, toPos);
+    if (camOn) setTimeout(cameraEnd, 250);   // 🎥 nutolsta, kai figūrėlė sustojo
     
     if (finalCell) {
         const playerDots = finalCell.querySelectorAll('.player-dot');
@@ -3523,6 +4885,8 @@ function cancelBuy() {
 let localRolling = false;  // 🆕 Apsauga nuo pakartotinio metimo
 
 function rollDice() {
+    if (typeof cell5DismissMyTurn === 'function') cell5DismissMyTurn();
+    window.__rolledThisTurn = true;   // „Tavo eilė – mesk“ nebereikalingas
     // 🆕 APSAUGA NUO PAKARTOTINIO METIMO
     if (localRolling) {
         console.log('⚠️ Jau metama, palauk...');
@@ -4415,46 +5779,114 @@ function confirmDemolish(fieldId) {
 // STATYBA
 // ============================================
 
+// 🏗️ Kur galima statyti pagal stalo statybų taisyklę (galutinai tikrina serveris)
+function getBuildableFields() {
+    if (!gameState || !myPlayer || !gameState.board) return [];
+    const rule = gameState.buildRule || 2;
+    const built = gameState.builtThisTurn || {};
+    const houses = myPlayer.houses || {};
+    const props = myPlayer.properties || [];
+    const board = gameState.board;
+    const isFullGroup = (color) => {
+        const g = getGroupByColor(color);
+        return g && g.length > 0 && g.every(id => props.includes(id));
+    };
+    let candidates = [];
+    const stand = board[myPlayer.position];
+    if (rule === 1) {
+        candidates = props.map(id => board[id]).filter(f => f && f.type === 'property' && f.color && isFullGroup(f.color));
+    } else if (rule === 2) {
+        if (stand && stand.type === 'property' && stand.color && props.includes(stand.id) && isFullGroup(stand.color)) {
+            candidates = getGroupByColor(stand.color).map(id => board[id]).filter(f => f && !(built[f.id] >= 1));
+        }
+    } else {
+        if (stand && stand.type === 'property' && stand.color && isFullGroup(stand.color) && !(built[stand.id] >= 1)) {
+            candidates = [stand];
+        }
+    }
+    const out = [];
+    candidates.forEach(f => {
+        const g = getGroupByColor(f.color);
+        const hs = g.map(id => houses[id] || 0);
+        const min = Math.min(...hs), max = Math.max(...hs);
+        const cur = houses[f.id] || 0;
+        if (cur >= 5) return;
+        const allHave4 = hs.every(h => h >= 4);
+        if (allHave4) { out.push({ field: f, houses: cur, isHotel: true }); return; }
+        if (max - min <= 1 && cur === min && cur < 4) out.push({ field: f, houses: cur, isHotel: false });
+    });
+    return out;
+}
+
 function buildHouse() {
     if (!isMyTurn) {
         alert('⏳ Ne tavo eilė!');
         playErrorSound();
         return;
     }
-    
     if (myPlayer && myPlayer.isDebtor) {
         alert('⚠️ Tu skolingas! Pirmiausia atsiskaityk!');
         playErrorSound();
         return;
     }
-    
     if (!gameState || !myPlayer) {
         alert('❌ Nėra žaidimo būsenos!');
         playErrorSound();
         return;
     }
-    
-    const currentField = gameState.board[myPlayer.position];
-    if (!currentField) {
-        alert('❌ Nerastas dabartinis sklypas!');
+    const opts = getBuildableFields();
+    if (opts.length === 0) {
+        alert('❌ ' + tt('game.buildNothing', 'Pagal statybų taisyklę dabar statyti negalima'));
         playErrorSound();
         return;
     }
-    
-    if (currentField.type !== 'property' && currentField.type !== 'service2') {
-        alert('❌ Čia negalima statyti namo!');
-        playErrorSound();
-        return;
-    }
-    
-    if (!currentField.color) {
-        alert('❌ Šis sklypas neturi spalvos!');
-        playErrorSound();
-        return;
-    }
-    
     playClickSound();
-    socket.emit('canBuildHouse', { fieldId: currentField.id });
+    if (opts.length === 1) {
+        socket.emit('canBuildHouse', { fieldId: opts[0].field.id });
+        return;
+    }
+    openBuildPicker(opts);
+}
+
+// Pasirinkimas, ant kurio sklypo statyti (kai galima ant kelių)
+function openBuildPicker(opts) {
+    let ov = document.getElementById('buildPicker');
+    if (!ov) {
+        ov = document.createElement('div');
+        ov.id = 'buildPicker';
+        ov.innerHTML = '<div class="bp-box"><div class="bp-title"></div><div class="bp-rule"></div><div class="bp-list"></div><button type="button" class="bp-close"></button></div>';
+        document.body.appendChild(ov);
+        ov.addEventListener('click', (e) => { if (e.target === ov) ov.style.display = 'none'; });
+        ov.querySelector('.bp-close').onclick = () => { ov.style.display = 'none'; playClickSound(); };
+    }
+    const rule = (gameState && gameState.buildRule) || 2;
+    ov.querySelector('.bp-title').textContent = tt('game.buildPickTitle', '🏗️ Kur statyti?');
+    ov.querySelector('.bp-rule').textContent = `${tt('game.buildRuleIs', 'Statybų taisyklė')}: ${rule}. ${buildRuleLabel(rule)}`;
+    ov.querySelector('.bp-close').textContent = tt('game.close', '✕ Uždaryti');
+    const list = ov.querySelector('.bp-list');
+    list.innerHTML = '';
+    opts.forEach(o => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'bp-item';
+        const sw = document.createElement('span');
+        sw.className = 'bp-swatch';
+        sw.style.background = safeColor(o.field.color);
+        const name = document.createElement('span');
+        name.className = 'bp-name';
+        name.textContent = o.field.name;
+        const info = document.createElement('span');
+        info.className = 'bp-info';
+        info.textContent = o.isHotel ? '🏠×4 → 🏨' : ('🏠'.repeat(o.houses) || '–') + ' → ' + '🏠'.repeat(o.houses + 1);
+        btn.append(sw, name, info);
+        btn.onclick = () => {
+            ov.style.display = 'none';
+            playClickSound();
+            socket.emit('canBuildHouse', { fieldId: o.field.id });
+        };
+        list.appendChild(btn);
+    });
+    ov.style.display = 'flex';
 }
 
 function payJailFine() {
@@ -4483,17 +5915,49 @@ function payJailFine() {
     }
 }
 
+// 💀 Bankrotuoti galima bet kada žaidimo metu (tai ir vienintelis būdas pasitraukti).
+// Langas laukia sprendimo 60 s – po to savaime atšaukiamas (ėjimo laikas tuo metu tiksi).
+const BANKRUPT_CONFIRM_SECONDS = 60;
+let bankruptCountdownTimer = null;
+
 function bankrupt() {
-    if (!isMyTurn && !(myPlayer && myPlayer.isDebtor)) {
-        alert('⏳ Ne tavo eilė!');
-        playErrorSound();
+    if (!myPlayer || myPlayer.bankrupt || myPlayer.left || myPlayer.kicked || !gameState || !gameState.gameStarted) {
         return;
     }
-    document.getElementById('bankruptModal').style.display = 'flex';
+    const modal = document.getElementById('bankruptModal');
+    modal.style.display = 'flex';
     playClickSound();
+    startBankruptCountdown();
+}
+
+function startBankruptCountdown() {
+    stopBankruptCountdown();
+    const el = document.getElementById('bankruptCountdown');
+    const endAt = Date.now() + BANKRUPT_CONFIRM_SECONDS * 1000;
+    const tick = () => {
+        const left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+        if (el) {
+            el.textContent = tt('game.bankruptModal.countdown', '⏱️ Liko {s} s apsispręsti').replace('{s}', left);
+            el.style.color = left <= 10 ? '#dc3545' : '#6c757d';
+        }
+        if (left <= 0) {
+            stopBankruptCountdown();
+            document.getElementById('bankruptModal').style.display = 'none';
+        }
+    };
+    tick();
+    bankruptCountdownTimer = setInterval(tick, 250);
+}
+
+function stopBankruptCountdown() {
+    if (bankruptCountdownTimer) {
+        clearInterval(bankruptCountdownTimer);
+        bankruptCountdownTimer = null;
+    }
 }
 
 function confirmBankrupt() {
+    stopBankruptCountdown();
     document.getElementById('bankruptModal').style.display = 'none';
     playClickSound();
     
@@ -4507,6 +5971,7 @@ function confirmBankrupt() {
 }
 
 function cancelBankrupt() {
+    stopBankruptCountdown();
     document.getElementById('bankruptModal').style.display = 'none';
     playClickSound();
 }
@@ -4571,11 +6036,33 @@ function toggleMode() {
 
 function updateUI(state) {
     if (!state) return;
+    updateTaxiTestButton();
+    // 🏗️ Statybų langas (sinchronizuojam laiką su serveriu)
+    if (state.buildWindow && state.buildWindow.playerId === playerId) {
+        const dl = Date.now() + state.buildWindow.msLeft;
+        if (!buildWin.open || Math.abs(dl - buildWin.deadline) > 1200) openBuildWindowPanel(state.buildWindow.msLeft);
+    } else if (buildWin.open) {
+        closeBuildWindowPanel();
+    }
+    // 🚕 Taksi pasirinkimas (pvz., po persikrovimo)
+    if (state.taxiOffer && state.taxiOffer.playerId === playerId) {
+        if (!taxiUi.open) openTaxiPicker(state.taxiOffer.cost, state.taxiOffer.msLeft, null);
+    } else if (taxiUi.open) {
+        closeTaxiPicker();
+    }
+    const rcb = document.getElementById('rulesCurrentBuildRule');
+    if (rcb && state.buildRule) rcb.textContent = `👉 ${tt('game.buildRuleThisTable', 'Šiame stale')}: ${state.buildRule}. ${buildRuleLabel(state.buildRule)}`;
     
     document.getElementById('playerCount').textContent = `👥 ${state.players.filter(p => p.isActive && !p.left && !p.kicked).length}/${state.maxPlayers}`;
     
     const currentPlayer = state.players.find(p => p.id === state.currentTurn);
-    document.getElementById('turnDisplay').textContent = `🎯 ${t('game.turnDisplay')}: ${currentPlayer ? currentPlayer.name : '---'}`;
+    // ✅ Keičiam tik vardą – laikmatis šalia lieka
+    const turnNameEl = document.getElementById('turnDisplayName');
+    if (turnNameEl) {
+        turnNameEl.textContent = currentPlayer ? currentPlayer.name : '---';
+    } else {
+        document.getElementById('turnDisplay').textContent = `🎯 ${t('game.turnDisplay')}: ${currentPlayer ? currentPlayer.name : '---'}`;
+    }
 
     const turnIndicatorName = document.getElementById('turnIndicatorName');
     const turnIndicatorNext = document.getElementById('turnIndicatorNext');
@@ -4585,6 +6072,8 @@ function updateUI(state) {
         if (turnIndicatorName) {
             turnIndicatorName.textContent = currentPlayer.name;
             turnIndicatorName.style.color = currentPlayer.color || '#1a6b3c';
+            turnIndicatorName.classList.toggle('cell5-light', cell5IsLight(currentPlayer.color));
+            turnIndicatorName.classList.toggle('cell5-dark', cell5IsDark(currentPlayer.color));
         }
         
         if (indicator && currentPlayer.color) {
@@ -4604,6 +6093,8 @@ function updateUI(state) {
             if (nextPlayer && nextPlayer.id !== currentPlayer.id) {
                 turnIndicatorNext.textContent = nextPlayer.name;
                 turnIndicatorNext.style.color = nextPlayer.color || '#3d2b1f';
+                turnIndicatorNext.classList.toggle('cell5-light', cell5IsLight(nextPlayer.color));
+                turnIndicatorNext.classList.toggle('cell5-dark', cell5IsDark(nextPlayer.color));
             } else {
                 turnIndicatorNext.textContent = '---';
             }
@@ -4683,10 +6174,14 @@ function updateUI(state) {
         const oldMoney = oldMoneyEl ? parseInt(oldMoneyEl.textContent.replace(/[^0-9-]/g, '')) : me.money;
         const newMoney = me.money;
         
+        // „Griauti“ mygtukas gyvena vardo eilutėje – prieš perpiešimą jį išsaugom
+        const demolishEl = document.getElementById('demolishBtn');
+        if (demolishEl && demolishEl.parentNode) demolishEl.parentNode.removeChild(demolishEl);
         document.getElementById('myInfo').innerHTML = `
-    <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
+    <div class="myinfo-name-row" style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
         <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
         <div class="player-name">${me.name}</div>
+        <span class="myinfo-demolish-slot"></span>
     </div>
 
     <div class="player-money ${me.money < 0 ? 'negative' : ''}" data-target="${newMoney}">💰 €${newMoney}</div>
@@ -4697,7 +6192,10 @@ function updateUI(state) {
     ${me.left ? '<div style="color:#6c757d; font-weight:700;">😭 PASITRAUKEI</div>' : ''}
     ${me.kicked ? '<div style="color:#dc3545; font-weight:700;">🚫 PAŠALINTAS</div>' : ''}
     ${me.isDebtor ? '<div style="color:#dc3545; font-weight:700; animation: blink 1s infinite;">⚠️ SKOLINGAS €' + Math.abs(me.money) + '!</div>' : ''}
+    ${me.isDebtor ? '<div class="debtor-hint">' + escapeHtml(tt('game.debtorHint', 'Parduok turtą arba griauk namus. „💀 Bankrotuoju“ rasi kairiajame meniu po stalo ID ◀')) + '</div>' : ''}
 `;
+        const slot = document.querySelector('#myInfo .myinfo-demolish-slot');
+        if (slot && demolishEl) slot.appendChild(demolishEl);
 
         const center1 = document.getElementById('center-1');
         let miniCardsContainer = center1.querySelector('.mini-cards-container');
@@ -4738,21 +6236,17 @@ playersList.innerHTML = state.players.map(p => {
     
     const playerEmoji = p.emoji || '';
     return `
-        <div class="player-item ${p.id === playerId ? 'me' : ''} ${p.isActive ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isKicked ? 'left' : ''}">
-            <span class="dot" style="background:${p.color}; position:relative; display:inline-flex; align-items:center; justify-content:center;">
+        <div class="player-item ${p.id === playerId ? 'me' : ''} ${state.currentTurn === p.id && !p.bankrupt && !isKicked ? 'active' : ''} ${p.bankrupt ? 'bankrupt' : ''} ${isKicked ? 'left' : ''}">
+            <span class="dot has-piece" style="position:relative; display:inline-flex; align-items:center; justify-content:center;">${pieceSvg(p.piece || 'pawn', p.color)}
                 ${playerEmoji ? `<span class="player-emoji-list">${playerEmoji}</span>` : ''}
             </span>
-            <span class="pname">${p.isBot ? '🤖 ' : ''}${p.name} ${p.id === playerId ? '👤' : ''}</span>
+            <span class="pname">${p.isBot ? '<span class="pbot">🤖 </span>' : ''}${p.name} ${p.id === playerId ? '👤' : ''}${p.disconnected ? ' <span title="Atsijungęs">📴</span>' : ((p.afkAutoMoves || 0) > 0 && !p.bankrupt ? ' <span title="AFK">💤</span>' : '')}</span>
             <span class="pmoney" style="color:${p.money < 0 ? '#dc3545' : '#000000'};">€${p.money}</span>
-            ${pHouses > 0 ? `🏠${pHouses}` : ''}
-            ${p.inJail ? '⛓️' : ''}
-            ${p.bankrupt ? '💀' : ''}
-            ${isKicked ? '🚫' : ''}
-            ${isDebtor && !p.bankrupt ? '⚠️' : ''}
-            ${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}
+            <span class="picons">${pHouses > 0 ? `🏠${pHouses}` : ''}${p.inJail ? '⛓️' : ''}${p.bankrupt ? '💀' : ''}${isKicked ? '🚫' : ''}${isDebtor && !p.bankrupt ? '⚠️' : ''}${state.currentTurn === p.id && p.isActive && !p.left && !p.kicked ? '🎯' : ''}</span>
         </div>
     `;
 }).filter(html => html !== '').join('');
+fitPlayersList();
 
 const isBankrupt = myPlayer && myPlayer.bankrupt;
 const isLeft = myPlayer && myPlayer.left;
@@ -4789,71 +6283,33 @@ if (jailBtn) {
     }
 }
 
+    // 🏚️ „Griauti“ – tik kai turi bent vieną namą; spausti galima savo eilėje arba būnant skolingam
     const demolishBtn = document.getElementById('demolishBtn');
     if (demolishBtn) {
-        if ((isMyTurn || isDebtor) && !isBankrupt && !isLeft && !isKicked && myPlayer) {
-            const hasHouses = myPlayer.houses && Object.keys(myPlayer.houses).length > 0;
-            if (hasHouses) {
-                demolishBtn.style.display = 'block';
-                demolishBtn.disabled = false;
-            } else {
-                demolishBtn.style.display = 'block';
-                demolishBtn.disabled = true;
-            }
+        const hasHouses = !!(myPlayer && myPlayer.houses && Object.values(myPlayer.houses).some(v => v > 0));
+        if (hasHouses && !isBankrupt && !isLeft && !isKicked) {
+            demolishBtn.style.display = '';
+            demolishBtn.disabled = !(isMyTurn || isDebtor);
         } else {
-            demolishBtn.style.display = 'block';
+            demolishBtn.style.display = 'none';
             demolishBtn.disabled = true;
         }
     }
 
     const buildBtn = document.getElementById('buildBtn');
     if (buildBtn) {
-        if (isMyTurn && !isBankrupt && !isLeft && !isKicked && !isDebtor && myPlayer && gameState) {
-            const currentField = gameState.board[myPlayer.position];
-            if (currentField && (currentField.type === 'property' || currentField.type === 'service2') && currentField.color) {
-                const groupFields = getGroupByColor(currentField.color);
-                if (groupFields && groupFields.length > 0) {
-                    const hasAll = groupFields.every(id => myPlayer.properties.includes(id));
-                    if (hasAll) {
-                        const houses = groupFields.map(id => myPlayer.houses && myPlayer.houses[id] || 0);
-                        const minHouses = Math.min(...houses);
-                        const maxHouses = Math.max(...houses);
-                        const isBalanced = (maxHouses - minHouses) <= 1;
-                        
-                        const currentHouses = myPlayer.houses && myPlayer.houses[currentField.id] || 0;
-                        const canBuildOnThis = currentHouses === minHouses;
-                        
-                        if (isBalanced && canBuildOnThis && currentHouses < 4) {
-                            buildBtn.textContent = '🏠 Statyti namą';
-                            buildBtn.style.display = 'block';
-                            buildBtn.disabled = false;
-                        } else if (isBalanced && currentHouses === 4) {
-                            const allHave4 = groupFields.every(id => (myPlayer.houses && myPlayer.houses[id] || 0) >= 4);
-                            const alreadyHasHotel = currentHouses >= 5;
-                            if (allHave4 && !alreadyHasHotel) {
-                                buildBtn.textContent = '🏨 Statyti viežbutį';
-                                buildBtn.style.display = 'block';
-                                buildBtn.disabled = false;
-                            } else {
-                                buildBtn.style.display = 'none';
-                                buildBtn.disabled = true;
-                            }
-                        } else {
-                            buildBtn.style.display = 'none';
-                            buildBtn.disabled = true;
-                        }
-                    } else {
-                        buildBtn.style.display = 'none';
-                        buildBtn.disabled = true;
-                    }
-                } else {
-                    buildBtn.style.display = 'none';
-                    buildBtn.disabled = true;
-                }
-            } else {
-                buildBtn.style.display = 'none';
-                buildBtn.disabled = true;
-            }
+        // Kol figūrėlė eina / laukiama langelio apdorojimo – mygtuko nerodom
+        const moving = (typeof isAnimating !== 'undefined' && isAnimating) ||
+            (window.animatingPlayers && window.animatingPlayers.includes(playerId)) ||
+            (gameState && (gameState.isRolling || gameState.pendingFieldPlayerId === playerId || gameState.taxiOffer));
+        const opts = (!moving && isMyTurn && !isBankrupt && !isLeft && !isKicked && !isDebtor && myPlayer && gameState)
+            ? getBuildableFields() : [];
+        if (opts.length > 0) {
+            const onlyHotel = opts.every(o => o.isHotel);
+            buildBtn.textContent = (onlyHotel ? tt('game.buildHotelBtn', '🏨 Statyti viešbutį') : tt('game.buildHouseBtn', '🏠 Statyti namą')) +
+                (opts.length > 1 ? ` (${opts.length})` : '');
+            buildBtn.style.display = 'block';
+            buildBtn.disabled = false;
         } else {
             buildBtn.style.display = 'none';
             buildBtn.disabled = true;
@@ -5120,7 +6576,10 @@ function updateBoard(state) {
         
          // 🆕 PERPIEŠTI TIK JEI PASIKĖITĖ
         if (oldHTML !== html) {
+            // 🚶 Einanti figūrėlė neturi dingti, kai langelis persipiešia
+            const walkerHolder = cell.querySelector(':scope > .walker-holder');
             cell.innerHTML = html;
+            if (walkerHolder) cell.appendChild(walkerHolder);
         }
         
         // 🆕 FIGŪRĖLIŲ ATNAUJINIMAS (ATSKIRAI nuo langelio turinio)
@@ -5131,6 +6590,7 @@ function updateBoard(state) {
             (field.type === 'start' ? ' start corner' : '') +
             (field.type === 'jail' ? ' jail corner' : '') +
             (field.type === 'parking' ? ' parking corner' : '') +
+            (field.type === 'taxi' ? ' taxi corner' : '') +
             (field.type === 'go-to-jail' ? ' go-to-jail corner' : '') +
             (field.type === 'property' ? ' property' : '') +
             (field.type === 'service1' ? ' service1' : '') +
@@ -5138,8 +6598,14 @@ function updateBoard(state) {
             (field.type === 'service3' ? ' service3' : '') +
             (field.id !== 0 && field.id !== 16 && field.id !== 26 && field.id !== 42 ? ' edge' : '');
         
-        if (cell.className !== newClassName) {
-            cell.className = newClassName;
+        // Laikinos klasės (figūrėlės, švytėjimas, taksi pasirinkimas) neturi dingti
+        const keepCls = ['has-pieces', 'has-walker', 'highlight-yellow', 'taxi-target', 'taxi-forbidden', 'taxi-selected']
+            .filter(c => cell.classList.contains(c));
+        if (playersHere.length > 0 && !keepCls.includes('has-pieces')) keepCls.push('has-pieces');
+        if (playersHere.length === 0) { const i = keepCls.indexOf('has-pieces'); if (i >= 0) keepCls.splice(i, 1); }
+        const fullCls = keepCls.length ? newClassName + ' ' + keepCls.join(' ') : newClassName;
+        if (cell.className !== fullCls) {
+            cell.className = fullCls;
         }
         
         // 🆕 VISIEMS langeliams su color — nustatyti data-group ir --group-color
@@ -5210,12 +6676,41 @@ function updateBoard(state) {
 }         // ← 🆕 IR ŠITĄ (funkcijos pabaiga)
 
 // 🆕 Figūrėlių atnaujinimas ATSKIRAI nuo langelio turinio
+function sizePiecesOnCell(cell, div, n) {
+    const w = cell.clientWidth || 40, h = cell.clientHeight || 40;
+    const topRow = !!cell.closest('.row-top');
+    const availW = w * 0.94;
+    const availH = h * (topRow ? 0.70 : 0.84);   // virš spalvotos juostos / nuo apačios
+    let size, cols = 1, rows = 1;
+    if (n <= 1) {
+        const m = Math.min(w, h);
+        // Viena figūrėlė siaurame (telefono) langelyje gali kiek išlįsti, kad nebūtų mažytė
+        size = m < 30 ? Math.min(Math.max(w, h) * 0.5, m * 2.2) : Math.min(availW, availH);
+    } else {
+        // Kelios figūrėlės – visos turi tilpti langelyje: renkamės eilučių skaičių, kuris duoda didžiausias figūrėles
+        size = 0;
+        for (let r = 1; r <= Math.min(3, n); r++) {
+            const c = Math.ceil(n / r);
+            const sW = availW / (1 + 0.64 * (c - 1));   // greta stovinčios šiek tiek persidengia
+            const sH = availH / (1 + 0.62 * (r - 1));   // galinė eilė – šiek tiek aukščiau
+            const sz = Math.min(sW, sH);
+            if (sz > size + 0.5) { size = sz; cols = c; rows = r; }
+        }
+    }
+    size = Math.max(9, Math.min(76, size));
+    div.style.setProperty('--ps', size.toFixed(1) + 'px');
+    div.style.setProperty('--pw', (cols * size * 0.64 + 1).toFixed(1) + 'px');
+    div.classList.toggle('multi', n > 1);
+    cell.classList.toggle('has-pieces', n > 0);
+}
+
 function updatePlayersOnCell(cell, playersHere) {
     let playersDiv = cell.querySelector('.players-on-cell');
     
     // 🆕 Jei nėra figūrėlių — pašalinti players-on-cell
     if (playersHere.length === 0) {
         if (playersDiv) playersDiv.remove();
+        cell.classList.remove('has-pieces');
         return;
     }
     
@@ -5226,6 +6721,9 @@ function updatePlayersOnCell(cell, playersHere) {
         cell.appendChild(playersDiv);
     }
     
+    // 🎲 Figūrėlės stovi ANT langelio: dydis pagal langelį ir figūrėlių skaičių
+    sizePiecesOnCell(cell, playersDiv, playersHere.length);
+
     // 🆕 Atnaujinti data-count
     const currentCount = playersDiv.getAttribute('data-count');
     if (currentCount !== String(playersHere.length)) {
@@ -5271,10 +6769,12 @@ function createPlayerDot(p) {
     const emojiClass = emoji ? 'dancing' : '';
     
     const dot = document.createElement('span');
-    dot.className = 'player-dot';
+    dot.className = 'player-dot has-piece';
     dot.style.background = p.color;
     if (isAnimating) dot.style.display = 'none';
     dot.dataset.playerId = p.id;
+    // 🎲 Figūrėlė žaidėjo spalva (pėstininkas, puodelis, obuolys…)
+    dot.innerHTML = pieceSolid(p.piece || 'pawn', p.color);
     
     if (emoji) {
         const emojiSpan = document.createElement('span');
@@ -5286,7 +6786,194 @@ function createPlayerDot(p) {
     return dot;
 }
 
+// ============================================
+// 🎲 FIGŪRĖLĖS (SVG, žaidėjo spalva)
+// ============================================
+const PIECE_TYPES = ['pawn', 'cup', 'lamp', 'cat', 'knight', 'piggy', 'basketball', 'tractor'];
+const PIECE_NAMES = {
+    pawn: ['piece.pawn', 'Pėstininkas'], cup: ['piece.cup', 'Kavos puodelis'], lamp: ['piece.lamp', 'Stalinė lempa'],
+    cat: ['piece.cat', 'Katinas'], knight: ['piece.knight', 'Žirgas'], piggy: ['piece.piggy', 'Taupyklė'],
+    basketball: ['piece.basketball', 'Krepšinio kamuolys'], tractor: ['piece.tractor', 'Traktorius']
+};
+function pieceShade(hex, amt) {
+    // amt < 0 – tamsiau, > 0 – šviesiau
+    let h = String(hex || '#888').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    if (!/^[0-9a-f]{6}$/i.test(h)) h = '888888';
+    const n = parseInt(h, 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const t = amt < 0 ? 0 : 255, p = Math.abs(amt);
+    r = Math.round(r + (t - r) * p); g = Math.round(g + (t - g) * p); b = Math.round(b + (t - b) * p);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+function pieceSvg(type, color) {
+    const c = /^#[0-9a-f]{3,8}$/i.test(String(color || '')) ? color : '#888888';
+    const d = pieceShade(c, -0.38), dd = pieceShade(c, -0.6), l = pieceShade(c, 0.45);
+    // Šviesumas – kad akys / raštai matytųsi ir ant labai tamsios ar labai šviesios spalvos
+    const hx = c.replace('#', '').padEnd(6, '0').slice(0, 6);
+    const lum = (0.299 * parseInt(hx.slice(0, 2), 16) + 0.587 * parseInt(hx.slice(2, 4), 16) + 0.114 * parseInt(hx.slice(4, 6), 16)) / 255;
+    const eye = lum < 0.25 ? '#ffd23f' : '#111';
+    const patch = lum > 0.85 ? '#555' : c;
+    const seam = lum < 0.25 ? '#9a9a9a' : dd;
+    const shadow = '<ellipse cx="50" cy="93" rx="30" ry="6" fill="rgba(0,0,0,0.28)"/>';
+    const shine = (x, y, rx, ry) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" opacity="0.45"/>`;
+    let body = '';
+    switch (type) {
+        case 'cup':
+            body = `${shadow}
+                <ellipse cx="50" cy="86" rx="38" ry="8" fill="${d}"/><ellipse cx="50" cy="84" rx="36" ry="7" fill="${l}"/>
+                <path d="M68 42 q18 0 18 16 q0 16 -20 18" fill="none" stroke="${d}" stroke-width="7" stroke-linecap="round"/>
+                <path d="M22 34 h50 l-5 44 q-1 6 -7 6 h-26 q-6 0 -7 -6 z" fill="${c}"/>
+                <path d="M22 34 h50 l-1 8 h-48 z" fill="${d}" opacity="0.5"/>
+                <ellipse cx="47" cy="34" rx="25" ry="6" fill="${dd}"/><ellipse cx="47" cy="34" rx="21" ry="4" fill="#5b3a1e"/>
+                ${shine(33, 55, 4, 14)}
+                <path d="M38 24 q-5 -6 0 -12 M50 24 q-5 -7 0 -14 M62 24 q-5 -6 0 -12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>`;
+            break;
+        case 'lamp':
+            body = `${shadow}
+                <path d="M54 62 L84 92 L20 92 z" fill="rgba(255,230,120,0.28)"/>
+                <ellipse cx="34" cy="88" rx="22" ry="6" fill="${dd}"/>
+                <path d="M14 88 q0 -7 8 -8 h24 q8 1 8 8 z" fill="${d}"/>
+                <path d="M34 80 L26 48 L56 26" fill="none" stroke="#9aa0a6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M34 80 L26 48 L56 26" fill="none" stroke="#e8eaed" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+                <circle cx="26" cy="48" r="4" fill="#5f6368"/><circle cx="56" cy="26" r="4" fill="#5f6368"/>
+                <path d="M50 16 L80 38 L66 58 L40 30 z" fill="${c}"/>
+                <path d="M50 16 L80 38 L76 44 L46 21 z" fill="${l}" opacity="0.55"/>
+                <ellipse cx="62" cy="50" rx="12" ry="5" transform="rotate(38 62 50)" fill="#fff6c4"/>
+                <ellipse cx="62" cy="50" rx="7" ry="3" transform="rotate(38 62 50)" fill="#ffe066"/>`;
+            break;
+        case 'cat':
+            // Sėdi / stovi – kas kelias sekundes keičia pozą
+            body = `${shadow}
+                <g class="tok-cat-sit">
+                    <path d="M70 80 q22 -2 16 -22 q-4 -10 -10 -4 q6 4 2 12 q-4 8 -14 8 z" fill="${d}"/>
+                    <path d="M28 88 q-6 -30 10 -46 h24 q16 16 10 46 z" fill="${c}"/>
+                    <path d="M40 88 v-14 M60 88 v-14" stroke="${d}" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="50" cy="34" r="17" fill="${c}"/>
+                    <path d="M35 26 l-2 -18 l14 10 z M65 26 l2 -18 l-14 10 z" fill="${c}"/>
+                    <path d="M37 23 l-1 -9 l7 5 z M63 23 l1 -9 l-7 5 z" fill="${l}"/>
+                    <ellipse cx="44" cy="33" rx="2.6" ry="3.6" fill="${eye}"/><ellipse cx="56" cy="33" rx="2.6" ry="3.6" fill="${eye}"/>
+                    <path d="M47 40 l3 3 l3 -3 z" fill="#e88"/>
+                    <path d="M36 40 h-10 M36 43 l-9 3 M64 40 h10 M64 43 l9 3" stroke="#fff" stroke-width="1.4" opacity="0.8"/>
+                    ${shine(40, 60, 4, 10)}
+                </g>
+                <g class="tok-cat-stand">
+                    <path d="M76 56 q14 -6 10 -26 q-1 -6 -6 -4 q4 8 0 16 q-4 8 -10 8 z" fill="${d}"/>
+                    <rect x="22" y="48" width="56" height="24" rx="12" fill="${c}"/>
+                    <path d="M28 70 v18 M40 70 v18 M62 70 v18 M72 70 v18" stroke="${c}" stroke-width="7" stroke-linecap="round"/>
+                    <circle cx="26" cy="44" r="14" fill="${c}"/>
+                    <path d="M15 37 l-2 -15 l11 8 z M34 35 l3 -14 l-12 7 z" fill="${c}"/>
+                    <ellipse cx="21" cy="43" rx="2.2" ry="3.2" fill="${eye}"/><ellipse cx="31" cy="43" rx="2.2" ry="3.2" fill="${eye}"/>
+                    <path d="M24 49 l2 2 l2 -2 z" fill="#e88"/>
+                    ${shine(46, 54, 12, 3)}
+                </g>`;
+            break;
+        case 'knight':
+            body = `${shadow}
+                <ellipse cx="50" cy="86" rx="32" ry="7" fill="${d}"/>
+                <path d="M20 86 q0 -8 6 -10 h48 q6 2 6 10 z" fill="${c}"/>
+                <path d="M30 76 q-2 -18 8 -28 q-14 2 -18 -6 q-2 -8 6 -14 q8 -8 18 -14 l4 -8 l4 8 q20 4 22 30 q2 18 -6 32 z" fill="${c}"/>
+                <path d="M62 22 q18 8 14 36 q-2 10 -6 18 h-6 q8 -14 6 -30 q-2 -16 -12 -22 z" fill="${d}" opacity="0.55"/>
+                <circle cx="42" cy="30" r="3" fill="${eye}"/>
+                <path d="M22 38 q-3 -3 0 -6" stroke="${dd}" stroke-width="2" fill="none"/>
+                <path d="M50 14 q10 2 16 10" stroke="${d}" stroke-width="3" fill="none"/>
+                ${shine(40, 54, 4, 12)}`;
+            break;
+        case 'piggy':
+            // Atidaryta, jau tuščia taupyklė
+            body = `${shadow}
+                <path d="M28 82 v8 M40 84 v8 M60 84 v8 M72 82 v8" stroke="${d}" stroke-width="8" stroke-linecap="round"/>
+                <ellipse cx="50" cy="60" rx="38" ry="28" fill="${c}"/>
+                <path d="M84 52 q10 -6 6 6 q-2 6 6 6" fill="none" stroke="${d}" stroke-width="3" stroke-linecap="round"/>
+                <ellipse cx="16" cy="60" rx="8" ry="10" fill="${l}"/><circle cx="14" cy="57" r="1.8" fill="${dd}"/><circle cx="14" cy="63" r="1.8" fill="${dd}"/>
+                <path d="M30 34 l4 -14 l10 12 z" fill="${d}"/>
+                <circle cx="30" cy="50" r="3" fill="${eye}"/>
+                <path d="M40 46 a24 18 0 0 1 36 4 l-2 14 a22 16 0 0 0 -32 -4 z" fill="${dd}"/>
+                <path d="M42 46 q16 -26 36 -4" fill="${l}" stroke="${d}" stroke-width="2"/>
+                <rect x="52" y="30" width="16" height="3" rx="1.5" fill="${dd}" transform="rotate(-18 60 31)"/>
+                ${shine(40, 72, 10, 4)}`;
+            break;
+        case 'basketball':
+            body = `${shadow}
+                <circle cx="50" cy="50" r="38" fill="${c}"/>
+                <path d="M50 12 v76 M12 50 h76 M24 22 q18 28 0 56 M76 22 q-18 28 0 56" fill="none" stroke="${seam}" stroke-width="3.2"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="${seam}" stroke-width="2"/>
+                ${shine(36, 32, 10, 6)}`;
+            break;
+        case 'tractor':
+            body = `${shadow}<g transform="translate(-12 -17) scale(1.2)">
+                <rect x="58" y="44" width="5" height="16" rx="2" fill="#555"/>
+                <path d="M57 44 q3 -6 8 -4" fill="none" stroke="#777" stroke-width="2"/>
+                <path d="M30 34 h22 v26 h-26 z" fill="${d}"/>
+                <rect x="33" y="37" width="16" height="15" rx="2" fill="#bfe3ff"/>
+                <path d="M33 37 h16 v4 h-16 z" fill="#fff" opacity="0.5"/>
+                <path d="M22 60 h56 q8 0 8 8 v6 h-66 v-8 q0 -6 2 -6 z" fill="${c}"/>
+                <path d="M52 52 h22 q6 0 6 8 h-28 z" fill="${c}"/>
+                <rect x="26" y="30" width="30" height="5" rx="2" fill="${dd}"/>
+                ${shine(64, 56, 8, 2)}
+                <circle cx="32" cy="74" r="17" fill="#2b2b2b"/>
+                <circle cx="32" cy="74" r="12" fill="#3a3a3a" stroke="#1d1d1d" stroke-width="2" stroke-dasharray="3 3"/>
+                <circle cx="32" cy="74" r="6" fill="${l}"/>
+                <circle cx="74" cy="80" r="10" fill="#2b2b2b"/>
+                <circle cx="74" cy="80" r="4" fill="${l}"/></g>`;
+            break;
+        default: // pawn
+            body = `${shadow}
+                <ellipse cx="50" cy="86" rx="30" ry="7" fill="${d}"/>
+                <path d="M22 86 q0 -9 8 -11 h40 q8 2 8 11 z" fill="${c}"/>
+                <path d="M34 75 q4 -18 8 -30 h16 q4 12 8 30 z" fill="${c}"/>
+                <ellipse cx="50" cy="45" rx="16" ry="5" fill="${d}"/>
+                <circle cx="50" cy="28" r="15" fill="${c}"/>
+                <path d="M58 46 q4 14 7 29 h-6 q-2 -14 -6 -29 z" fill="${d}" opacity="0.45"/>
+                ${shine(44, 22, 5, 7)}${shine(42, 62, 3, 9)}`;
+    }
+    return `<svg class="tok tok-${type}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+}
+
+// 🧱 Tūrinė figūrėlė ant lentos: priekis + storio sluoksniai + nugarėlė.
+// 2D režime matosi tik priekis; 3D / 3D+ – figūrėlė su tikru storiu ir šešėliu ant langelio.
+const PIECE_LAYERS = 9;
+function pieceSolid(type, color) {
+    const c = /^#[0-9a-f]{3,8}$/i.test(String(color || '')) ? color : '#888888';
+    const front = pieceSvg(type, c);
+    const noShadow = front.replace(/<ellipse cx="50" cy="93" rx="30" ry="6" fill="rgba\(0,0,0,0.28\)"\/>/, '');
+    // Storio sluoksnis – tas pats siluetas viena tamsesne spalva (be blizgesių ir permatomų detalių)
+    const edge = pieceShade(c, -0.45);
+    const sil = noShadow
+        .replace(/<(path|ellipse|circle|rect|polygon)\b[^>]*\bopacity="[^"]*"[^>]*\/>/g, '')
+        .replace(/fill="rgba\([^"]*\)"/g, 'fill="none"')
+        .replace(/fill="(?!none)[^"]*"/g, `fill="${edge}"`)
+        .replace(/stroke="(?!none)[^"]*"/g, `stroke="${edge}"`)
+        .replace('<svg class="tok ', '<svg class="tok tok-layer ');
+    const half = (PIECE_LAYERS + 1) / 2;
+    let layers = '';
+    for (let i = 1; i <= PIECE_LAYERS; i++) layers += sil.replace('<svg ', `<svg style="--k:${(half - i).toFixed(2)}" `);
+    const back = '';   // nugarėlės su piešiniu nebėra – atrodė kaip dviguba figūrėlė
+    const frontFace = noShadow.replace('<svg class="tok ', `<svg style="--k:${half.toFixed(2)}" class="tok tok-front `);
+    return `<span class="tok-floor"></span><span class="tok3d"><span class="tok3d-in">${back}${layers}${frontFace}</span><span class="tok-flat">${front}</span></span>`;
+}
+
+// 🛡️ Saugus teksto ir spalvos įdėjimas į HTML
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+}
+
+function safeColor(value, fallback = '#888888') {
+    return /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(String(value || '')) ? value : fallback;
+}
+
 function addChatMessage(data) {
+    data = Object.assign({}, data, {
+        player: escapeHtml(data && data.player),
+        message: escapeHtml(data && data.message),
+        color: safeColor(data && data.color)
+    });
     const time = new Date(data.timestamp).toLocaleTimeString();
     
     const container = document.getElementById('chatMessages');
@@ -5471,90 +7158,307 @@ function getCountSuffix(count) {
 
 let cellActionTimeout = null;
 
-function showCellAction(message, type = 'info') {
+// ============================================
+// 📢 5 LANGELIO IŠŠOKANTYS PRANEŠIMAI (EILĖ)
+// Pranešimai rodomi vienas po kito, kiekvienas ~3 s,
+// po jų vėl matosi „Dabar eina / Kitas“.
+// ============================================
+const CELL5_DEFAULT_DURATION = 3000;
+const cell5Queue = [];
+let cell5Current = null;
+let cell5Recent = [];
+let cell5WaitTimer = null;
+let lastTurnPopupId = null;
+
+function tt(key, fallback) {
+    const v = (typeof t === 'function') ? t(key) : key;
+    return (!v || v === key) ? fallback : v;
+}
+
+function cell5IsLight(hex) {
+    let h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+    if ([r, g, b].some(isNaN)) return false;
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 160;
+}
+
+function cell5IsDark(hex) {
+    let h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+    if ([r, g, b].some(isNaN)) return false;
+    return (0.299 * r + 0.587 * g + 0.114 * b) < 70;
+}
+
+function cell5PlayerChip(player, fallbackName) {
+    const name = escapeHtml(player ? player.name : (fallbackName || '?'));
+    const color = safeColor(player && player.color, '#6c757d');
+    const light = cell5IsLight(color);
+    return `<span class="cell5-chip" style="background:${color};${light ? 'color:#1a1a1a;text-shadow:none;' : ''}">${name}</span>`;
+}
+
+function cell5FindPlayer(idOrName) {
+    if (!gameState || !gameState.players) return null;
+    return gameState.players.find(p => p.id === idOrName) ||
+           gameState.players.find(p => p.name === idOrName) || null;
+}
+
+function isBuyCardVisible() {
+    const card = document.getElementById('buyCard');
+    return !!(card && card.style.display !== 'none' && card.style.display !== '');
+}
+
+// item: { type, header, html, text, duration, blockRoll, tag, dedupeKey }
+function cell5Enqueue(item) {
+    if (!item) return;
+    const key = item.dedupeKey || item.text || item.html;
+    const now = Date.now();
+    cell5Recent = cell5Recent.filter(r => now - r.t < 5000);
+    if (key && cell5Recent.some(r => r.key === key)) return;
+    if (key) cell5Recent.push({ key, t: now });
+
+    // Naujas eilės pranešimas pakeičia dar neparodytą seną
+    if (item.tag) {
+        for (let i = cell5Queue.length - 1; i >= 0; i--) {
+            if (cell5Queue[i].tag === item.tag) cell5Queue.splice(i, 1);
+        }
+    }
+    if (item.priority || item.tag === 'turn') {
+        // 🎯 Eilės pranešimas – rodom kuo greičiau: į eilės priekį
+        cell5Queue.unshift(item);
+        // Mano eilė: pirkimo rezultato kortelė (ne laukimas) gali užleisti vietą
+        const card = document.getElementById('buyCard');
+        if (item.priority && card && isBuyCardVisible() && !card.classList.contains('pending')) hideBuyCard();
+        // Dabartinį pranešimą trumpinam (bet leidžiam jį matyti bent ~1,2 s)
+        if (cell5Current && cell5Current.tag !== 'turn') {
+            const left = Math.max(0, 1200 - (Date.now() - (cell5Current.shownAt || 0)));
+            if (cellActionTimeout) clearTimeout(cellActionTimeout);
+            cellActionTimeout = setTimeout(() => { cellActionTimeout = null; cell5Finish(); }, left);
+        }
+    } else {
+        cell5Queue.push(item);
+    }
+    cell5Next();
+}
+
+// Kai metu kauliukus – „TAVO EILĖ“ nebereikalingas
+function cell5DismissMyTurn() {
+    for (let i = cell5Queue.length - 1; i >= 0; i--) {
+        if (cell5Queue[i].type === 'turn-mine') cell5Queue.splice(i, 1);
+    }
+    if (cell5Current && cell5Current.type === 'turn-mine') hideCellAction();
+}
+
+function cell5Next() {
+    if (cell5Current || cell5Queue.length === 0) return;
+
+    // Kol rodoma pirkimo kortelė – laukiam
+    if (isBuyCardVisible()) {
+        if (!cell5WaitTimer) {
+            cell5WaitTimer = setTimeout(() => { cell5WaitTimer = null; cell5Next(); }, 300);
+        }
+        return;
+    }
+
+    const item = cell5Queue.shift();
+    item.shownAt = Date.now();
+    cell5Current = item;
+    cell5Render(item);
+
+    let duration = item.duration || CELL5_DEFAULT_DURATION;
+    // Jei susikaupė daug pranešimų – rodom trumpiau, kad nevėluotų
+    if (cell5Queue.length >= 3) duration = Math.min(duration, 1500);
+
+    cellActionTimeout = setTimeout(() => {
+        cellActionTimeout = null;
+        cell5Finish();
+    }, duration);
+}
+
+function cell5Render(item) {
     const box = document.getElementById('cellActionInfo');
-    if (!box) return;
-    
     const header = document.getElementById('cellActionHeader');
     const body = document.getElementById('cellActionBody');
-    
-    if (!header || !body) return;
-    
-    if (cellActionTimeout) {
-        clearTimeout(cellActionTimeout);
-        cellActionTimeout = null;
-    }
-    
-    box.style.display = 'none';
-    box.classList.remove('show');
-    
-    let headerText = t('game.cellActionInfo');
-    let headerColor = '#1a6b3c';
-    let borderColor = '#c9a84c';
-    
-    if (type === 'rent') {
-        headerText = t('game.cellActionRent');
-        headerColor = '#28a745';
-        borderColor = '#28a745';
-    } else if (type === 'tax') {
-        headerText = t('game.cellActionTax');
-        headerColor = '#dc3545';
-        borderColor = '#dc3545';
-    } else if (type === 'visit') {
-        headerText = t('game.cellActionVisit');
-        headerColor = '#17a2b8';
-        borderColor = '#17a2b8';
-    } else if (type === 'chance') {
-        headerText = t('game.cellActionChance');
-        headerColor = '#ffc107';
-        borderColor = '#ffc107';
-    }
-    
+    if (!box || !header || !body) return;
+
+    const styles = {
+        info:   { header: tt('game.cellActionInfo', '📢 PRANEŠIMAS'), color: '#1a6b3c' },
+        rent:   { header: tt('game.cellActionRent', '💰 NUOMA'), color: '#28a745' },
+        tax:    { header: tt('game.cellActionTax', '💸 MOKESČIAI'), color: '#dc3545' },
+        visit:  { header: tt('game.cellActionVisit', '🏠 ATVYKIMAS'), color: '#17a2b8' },
+        chance: { header: tt('game.cellActionChance', '🎲 ŠANSAS'), color: '#e0a800' },
+        start:  { header: tt('game.popup.start', '🏁 START'), color: '#28a745' },
+        jail:   { header: tt('game.popup.jail', '⛓️ KALĖJIMAS'), color: '#6c757d' },
+        bankrupt: { header: tt('game.popup.bankrupt', '💀 BANKROTAS'), color: '#dc3545' },
+        trade:  { header: tt('game.popup.trade', '🤝 PREKYBA'), color: '#17a2b8' },
+        auction: { header: tt('game.popup.auction', '🔨 AUKCIONAS'), color: '#e0a800' },
+        double: { header: tt('game.popup.double', '🎲 DUBLIS'), color: '#e0a800' },
+        small:  { header: '', color: '#3d2b1f' },
+        turn:   { header: '', color: '#1a6b3c' },
+        'turn-mine': { header: '', color: '#ffffff' }
+    };
+    const st = styles[item.type] || styles.info;
+
+    box.classList.remove('cell5-turn', 'cell5-turn-mine', 'cell5-small', 'cell5-rent');
+    if (item.type === 'turn') box.classList.add('cell5-turn');
+    if (item.type === 'turn-mine') box.classList.add('cell5-turn-mine');
+    if (item.type === 'small') box.classList.add('cell5-small');
+    if (item.type === 'rent' && item.html) box.classList.add('cell5-rent');
+
+    const headerText = item.header !== undefined ? item.header : st.header;
     header.textContent = headerText;
-    header.style.color = headerColor;
-    header.style.borderBottomColor = borderColor;
-    
-    body.innerHTML = `<p>${message}</p>`;
-    
+    header.style.display = headerText ? '' : 'none';
+    header.style.color = st.color;
+    header.style.borderBottomColor = st.color;
+
+    if (item.html) {
+        body.innerHTML = item.html;
+    } else {
+        body.innerHTML = `<p>${item.text || ''}</p>`;
+    }
+
     const rollBtn = document.getElementById('rollBtn');
-    if (rollBtn) {
+    if (rollBtn && item.blockRoll) {
         rollBtn.disabled = true;
         rollBtn.dataset.blockedByAction = 'true';
     }
-    
-    requestAnimationFrame(() => {
-        box.style.display = 'flex';
-        box.classList.add('show');
-        
-        box.style.animation = 'none';
-        void box.offsetHeight;
-        box.style.animation = 'choiceFadeIn 0.25s ease';
-    });
-    
-    cellActionTimeout = setTimeout(() => {
-        hideCellAction();
-        cellActionTimeout = null;
-    }, 3000);
+
+    box.style.display = 'flex';
+    box.classList.add('show');
+    box.style.animation = 'none';
+    void box.offsetHeight;
+    box.style.animation = 'choiceFadeIn 0.25s ease';
+}
+
+function cell5Finish() {
+    const box = document.getElementById('cellActionInfo');
+    if (box) {
+        box.style.display = 'none';
+        box.classList.remove('show', 'cell5-turn', 'cell5-turn-mine', 'cell5-small', 'cell5-rent');
+    }
+    cell5Current = null;
+
+    const rollBtn = document.getElementById('rollBtn');
+    if (rollBtn && rollBtn.dataset.blockedByAction === 'true') {
+        delete rollBtn.dataset.blockedByAction;
+        if (gameState) updateUI(gameState);
+    }
+    cell5Next();
+}
+
+// Senas pavadinimas – visi esami kvietimai eina per eilę.
+// blockRoll: užrakinti „Mesti“ tik kai pranešimas apie MANO veiksmą.
+function showCellAction(message, type = 'info', blockRoll = false) {
+    if (!message) return;
+    cell5Enqueue({ type: type, text: message, blockRoll: !!blockRoll });
 }
 
 function hideCellAction() {
-    const box = document.getElementById('cellActionInfo');
-    if (!box) return;
-    box.style.display = 'none';
-    box.classList.remove('show');
-    
     if (cellActionTimeout) {
         clearTimeout(cellActionTimeout);
         cellActionTimeout = null;
     }
-    
-    const rollBtn = document.getElementById('rollBtn');
-    if (rollBtn && rollBtn.dataset.blockedByAction === 'true') {
-        delete rollBtn.dataset.blockedByAction;
-        if (gameState) {
-            updateUI(gameState);
-        }
+    cell5Finish();
+}
+
+function clearCell5Queue() {
+    cell5Queue.length = 0;
+    cell5Recent = [];
+    lastTurnPopupId = null;
+    if (cell5Current) hideCellAction();
+}
+
+// 💰 Didelis nuomos pranešimas: Tomas ➜ Petras €13
+function showRentPopup(payerIdOrName, ownerIdOrName, amount, fieldName) {
+    const payer = cell5FindPlayer(payerIdOrName);
+    const owner = cell5FindPlayer(ownerIdOrName);
+    const isMine = payer && payer.id === playerId;
+    const html = `
+        <div class="cell5-rent-field">${escapeHtml(fieldName || '')}</div>
+        <div class="cell5-rent-row">${cell5PlayerChip(payer, payerIdOrName)} <span class="cell5-arrow">➜</span> ${cell5PlayerChip(owner, ownerIdOrName)}</div>
+        <div class="cell5-rent-amount">€${Number(amount) || 0}</div>`;
+    cell5Enqueue({
+        type: 'rent',
+        html: html,
+        blockRoll: isMine,
+        dedupeKey: `rent:${payer ? payer.id : payerIdOrName}:${owner ? owner.id : ownerIdOrName}:${amount}`
+    });
+}
+
+// 🎯 Eilės pasikeitimo pranešimas
+function handleTurnPopup(state) {
+    if (!state || !state.gameStarted || state.currentTurn === undefined || state.currentTurn === null) {
+        if (state && !state.gameStarted) lastTurnPopupId = null;
+        return;
     }
+    if (state.currentTurn === lastTurnPopupId) return;
+    lastTurnPopupId = state.currentTurn;
+    window.__rolledThisTurn = false;
+
+    const enqueueTurn = () => {
+        const p = cell5FindPlayer(state.currentTurn);
+        if (!p) return;
+        // Kol laukėm animacijos, eilė galėjo pasikeisti arba jau mesta
+        if (gameState && gameState.currentTurn !== p.id) return;
+        if (p.id === playerId && (window.__rolledThisTurn || (gameState && (gameState.taxiOffer || gameState.buildWindow || gameState.isRolling || gameState.pendingFieldPlayerId === playerId)))) return;
+        if (p.id === playerId) {
+            cell5Enqueue({
+                type: 'turn-mine',
+                tag: 'turn',
+                priority: true,
+                dedupeKey: 'turn:' + p.id + ':' + Date.now(),
+                html: `<div class="cell5-turn-title">${tt('game.popup.yourTurn', '🎲 TAVO EILĖ!')}</div>
+                       <div class="cell5-turn-sub">${tt('game.popup.rollDice', 'Mesk kauliukus!')}</div>`
+            });
+        } else {
+            cell5Enqueue({
+                type: 'turn',
+                tag: 'turn',
+                dedupeKey: 'turn:' + p.id + ':' + Date.now(),
+                html: `<div class="cell5-turn-label">${tt('game.popup.nowPlaying', '🎯 Dabar eina')}</div>
+                       <div class="cell5-turn-name${cell5IsLight(p.color) ? ' cell5-light' : ''}${cell5IsDark(p.color) ? ' cell5-dark' : ''}" style="color:${safeColor(p.color, '#1a6b3c')};">${escapeHtml(p.name)}</div>`
+            });
+        }
+    };
+
+    if (typeof isAnimating !== 'undefined' && isAnimating) {
+        const wait = setInterval(() => {
+            if (!isAnimating) { clearInterval(wait); enqueueTurn(); }
+        }, 100);
+    } else {
+        enqueueTurn();
+    }
+}
+
+// Mažas pranešimas (garsas įjungtas, stalas viešas ir pan.)
+function showSmallNotice(msg) {
+    if (!msg) return;
+    cell5Enqueue({ type: 'small', text: escapeHtml(msg), duration: 2000 });
+}
+
+// Svarbūs žurnalo įvykiai, kuriuos verta parodyti 5 langelyje
+const CELL5_KEY_TYPES = {
+    'game.passedStart': 'start',
+    'game.goToJail': 'jail',
+    'game.wentToJail': 'jail',
+    'game.threeDoubles': 'jail',
+    'game.leftJail': 'jail',
+    'game.paidJailFine': 'jail',
+    'game.bankrupt': 'bankrupt',
+    'game.debtor': 'tax',
+    'game.doubleRollAgain': 'double'
+};
+
+function showKeyPopup(key, data, text) {
+    const type = CELL5_KEY_TYPES[key];
+    if (!type || !text) return;
+    const d = data || {};
+    let dedupeKey = text;
+    if (key === 'game.bankrupt') dedupeKey = 'bankrupt-event';
+    if (key === 'game.goToJail' || key === 'game.wentToJail' || key === 'game.threeDoubles') dedupeKey = 'jail-in:' + d.player;
+    if (key === 'game.leftJail' || key === 'game.paidJailFine') dedupeKey = 'jail-out:' + d.player;
+    cell5Enqueue({ type: type, text: escapeHtml(text), dedupeKey: dedupeKey });
 }
 
 // ============================================
@@ -5687,6 +7591,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         cell.addEventListener('touchstart', (e) => {
+            if (typeof taxiUi !== 'undefined' && taxiUi.open) return;   // 🚕 renkamasi taksi kryptis – paspaudimas skirtas pasirinkimui
             if (infoMode) {
                 e.preventDefault();
                 showCellInfo(fieldId);
@@ -5723,7 +7628,7 @@ function fixCornerClasses() {
     const corners = {
         'cell-0':  'cell corner start',
         'cell-16': 'cell corner jail',
-        'cell-26': 'cell corner parking',
+        'cell-26': 'cell corner taxi',
         'cell-42': 'cell corner go-to-jail'
     };
     
@@ -5901,6 +7806,7 @@ function showBuyCard(field, player, type) {
     if (!card || !field || !player) return;
     
     card.classList.remove('pending', 'success', 'cancel');
+    delete card.dataset.buyEnd;
     
     const header = document.getElementById('buyCardHeader');
     
@@ -5957,11 +7863,50 @@ function showBuyCard(field, player, type) {
     
     card.style.display = 'flex';
     
+    // ⏳ Laukiant sprendimo – mažėjanti laiko juosta
+    let timerBar = document.getElementById('buyCardTimer');
+    if (!timerBar) {
+        timerBar = document.createElement('div');
+        timerBar.id = 'buyCardTimer';
+        timerBar.innerHTML = '<div id="buyCardTimerFill"></div>';
+        const box = document.getElementById('buyCardBox');
+        if (box) box.appendChild(timerBar);
+    }
+    const timerFill = document.getElementById('buyCardTimerFill');
+    if (type === 'pending' && timerFill) {
+        timerBar.style.display = 'block';
+        timerFill.style.transition = 'none';
+        timerFill.style.width = '100%';
+        void timerFill.offsetWidth;
+        timerFill.style.transition = 'width 30s linear';
+        timerFill.style.width = '0%';
+    } else if (timerBar) {
+        timerBar.style.display = 'none';
+    }
+    
     if (buyCardTimeout) clearTimeout(buyCardTimeout);
     const duration = type === 'pending' ? 30000 : 3000;
     buyCardTimeout = setTimeout(() => {
         hideBuyCard();
     }, duration);
+}
+
+// Pirkimo laikas gali būti trumpesnis (AFK) – juostą derinam su serverio laiku
+function syncPendingBuyTimer(state) {
+    const card = document.getElementById('buyCard');
+    const fill = document.getElementById('buyCardTimerFill');
+    if (!card || !fill || !card.classList.contains('pending') || !isBuyCardVisible()) return;
+    if (!state || !state.buyTimeoutActive || !state.buyTimeoutEndTime) return;
+    if (card.dataset.buyEnd === String(state.buyTimeoutEndTime)) return;
+    card.dataset.buyEnd = String(state.buyTimeoutEndTime);
+    const leftMs = Math.max(0, state.buyTimeoutEndTime - Date.now());
+    fill.style.transition = 'none';
+    fill.style.width = '100%';
+    void fill.offsetWidth;
+    fill.style.transition = `width ${leftMs}ms linear`;
+    fill.style.width = '0%';
+    if (buyCardTimeout) clearTimeout(buyCardTimeout);
+    buyCardTimeout = setTimeout(() => hideBuyCard(), leftMs + 300);
 }
 
 function hideBuyCard() {
@@ -6005,7 +7950,7 @@ function initPlayerStats(playerId, playerName, playerColor) {
 }
 
 function openStats() {
-    const modal = document.getElementById('statsModal');
+    const modal = document.getElementById('gameStatsModal');
     if (!modal) return;
     
     updateStatsDisplay();
@@ -6014,14 +7959,14 @@ function openStats() {
 }
 
 function closeStats() {
-    const modal = document.getElementById('statsModal');
+    const modal = document.getElementById('gameStatsModal');
     if (!modal) return;
     modal.style.display = 'none';
     playClickSound();
 }
 
 function updateStatsDisplay() {
-    const content = document.getElementById('statsContent');
+    const content = document.getElementById('gameStatsContent');
     if (!content) return;
     
     let html = '';
@@ -6042,11 +7987,11 @@ function updateStatsDisplay() {
         <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:15px;">
             <div style="color:#ffd700; font-size:14px; font-weight:700; margin-bottom:8px;">🎯 BENDRI SKAIČIAI</div>
             <div style="display:flex; justify-content:space-between; color:#fff; font-size:13px; margin-bottom:4px;">
-                <span>🎲 Viso metimų:</span>
+                <span>🎲 Iš viso metimų:</span>
                 <strong>${window.gameStats.totalRolls}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; color:#fff; font-size:13px;">
-                <span>🎲 Viso dublių:</span>
+                <span>🎲 Iš viso dublių:</span>
                 <strong>${window.gameStats.totalDoubles}</strong>
             </div>
         </div>
@@ -6072,8 +8017,8 @@ function updateStatsDisplay() {
                         <div>⛓️ Kalėjimai: <strong style="color:#fff;">${p.patekoIKalejima}</strong></div>
                         <div>🏠 Nusipirko: <strong style="color:#fff;">${p.nusipirko}</strong></div>
                         <div>🏠 Pastatė: <strong style="color:#fff;">${p.pastate}</strong></div>
-                        <div>💰 Nuoma gavo: <strong style="color:#28a745;">€${p.nuomaGavo}</strong></div>
-                        <div>💸 Nuoma sumokėjo: <strong style="color:#dc3545;">€${p.nuomaSumokejo}</strong></div>
+                        <div>💰 Gauta nuomos: <strong style="color:#28a745;">€${p.nuomaGavo}</strong></div>
+                        <div>💸 Sumokėta nuomos: <strong style="color:#dc3545;">€${p.nuomaSumokejo}</strong></div>
                         <div>💀 Bankrotai: <strong style="color:#fff;">${p.bankrotai}</strong></div>
                     </div>
                 </div>
@@ -6661,9 +8606,13 @@ async function submitFeedback() {
     console.log('📤 Siunčiam feedback:', { type, message, email, page, username, userId });
     
     try {
+        const fbToken = localStorage.getItem('bancrupt_token');
         const response = await fetch('/api/feedback', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            // 🛡️ Serveris vardą nustato pagal prisijungimą
+            headers: fbToken
+                ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + fbToken }
+                : { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 type,
                 message,
@@ -6697,6 +8646,24 @@ setInterval(() => {
     const turnTimerEl = document.getElementById('turnTimer');
     const turnTimerPlayer = document.getElementById('turnTimerPlayer');
     const turnTimerLabel = document.getElementById('turnTimerLabel');
+    
+    // ✅ Viršutinės juostos laikmatis (atskiras elementas)
+    const headerTimer = document.getElementById('headerTurnTimer');
+    if (headerTimer) {
+        let txt = '', color = '#ffd700';
+        if (gameState?.buyTimeoutActive && gameState?.buyTimeoutEndTime && gameState.buyTimeoutEndTime > Date.now()) {
+            const left = Math.max(0, Math.floor((gameState.buyTimeoutEndTime - Date.now()) / 1000));
+            txt = `🛒 ${left}s`;
+            color = left <= 5 ? '#ff4d4d' : (left <= 10 ? '#ff8c00' : '#7CFC00');
+        } else if (gameState?.turnTimerActive && gameState?.turnTimerEndTime && gameState.turnTimerEndTime > Date.now()) {
+            const left = Math.max(0, Math.floor((gameState.turnTimerEndTime - Date.now()) / 1000));
+            txt = `⏱️ ${left}s`;
+            color = left <= 10 ? '#ff4d4d' : (left <= 30 ? '#ff8c00' : '#ffd700');
+        }
+        headerTimer.textContent = txt;
+        headerTimer.style.color = color;
+        headerTimer.style.display = txt ? '' : 'none';
+    }
     
     if (!turnTimerBox || !turnTimerEl) return;
     
@@ -6749,4 +8716,3 @@ setInterval(() => {
 }, 500);
 
 console.log('✅ Feedback funkcijos užkrautos!');
-

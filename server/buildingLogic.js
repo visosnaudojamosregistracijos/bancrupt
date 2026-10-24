@@ -85,14 +85,38 @@ class BuildingLogic {
         if (this.game.currentTurn !== playerId) {
             return { can: false, reason: 'Ne tavo eilė' };
         }
-        if (player.position !== fieldId) {
-            return { can: false, reason: 'Stovi ant kito sklypo' };
+        if (!player.isBot && (this.game.isRolling || this.game.pendingFieldPlayerId === playerId)) {
+            return { can: false, reason: 'Palauk, kol figūrėlė sustos' };
         }
 
         const field = this.getField(fieldId);
         if (!field) {
             return { can: false, reason: 'Sklypas nerastas' };
         }
+
+        // 🏗️ STATYBŲ TAISYKLĖ (pasirenka stalo kūrėjas)
+        const rule = this.game.buildRule || 2;
+        const built = this.game.builtThisTurn || {};
+        const standField = this.getField(player.position);
+        if (rule === 3) {
+            // 3 – tik sklype, ant kurio stovi, po vieną namą kartą
+            if (player.position !== fieldId) {
+                return { can: false, reason: 'Pagal taisyklę statyti galima tik sklype, ant kurio stovi' };
+            }
+            if ((built[fieldId] || 0) >= 1) {
+                return { can: false, reason: 'Šiame sklype šį kartą jau statei' };
+            }
+        } else if (rule === 2) {
+            // 2 – atsistojus ant savo gatvės sklypo: po vieną namą ant kiekvieno tos gatvės sklypo
+            if (!standField || standField.type !== 'property' || !standField.color ||
+                standField.color !== field.color || !player.properties.includes(standField.id)) {
+                return { can: false, reason: 'Pagal taisyklę statyti galima tik atsistojus ant savo šios gatvės sklypo' };
+            }
+            if ((built[fieldId] || 0) >= 1) {
+                return { can: false, reason: 'Šiame sklype šį kartą jau statei (po vieną namą kiekviename)' };
+            }
+        }
+        // 1 – bet kada ir bet kur (savo ėjimo metu, turint pilną gatvę)
         if (!field.color) {
             return { can: false, reason: 'Čia negalima statyti' };
         }
@@ -180,6 +204,8 @@ class BuildingLogic {
         player.money -= cost;
 
         if (!player.houses) player.houses = {};
+        if (!this.game.builtThisTurn) this.game.builtThisTurn = {};
+        this.game.builtThisTurn[fieldId] = (this.game.builtThisTurn[fieldId] || 0) + 1;
 
         if (isHotel) {
             player.houses[fieldId] = 5;
@@ -337,7 +363,7 @@ class BuildingLogic {
     //   2 namai → × 20
     //   3 namai → × 30
     //   4 namai → × 40
-    //   Viežbutis → × 50
+    //   Viešbutis → × 50
     // ============================================
     getRentWithHouses(playerId, fieldId) {
         const player = this.getPlayer(playerId);

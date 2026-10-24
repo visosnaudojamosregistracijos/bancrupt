@@ -12,7 +12,19 @@ const Game = require('./gameLogic');
 const db = require('./db');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
 const { v4: uuidv4 } = require('uuid');           // 🆕 PRIDĖTA
-const cookieParser = require('cookie-parser'); 
+const cookieParser = require('cookie-parser');
+
+// 🛡️ Teksto valymas (vardai, chat) – apsauga nuo kodo įterpimo
+const MAX_NAME_LENGTH = 20;
+const MAX_CHAT_LENGTH = 300;
+function cleanText(value, maxLength) {
+    if (typeof value !== 'string') return '';
+    return value
+        .replace(/[\u0000-\u001F\u007F]/g, '')
+        .replace(/[<>&"'`]/g, '')
+        .trim()
+        .slice(0, maxLength);
+}
 
 // ============================================
 // 🆕 LEIDŽIAMI DOMENAI
@@ -153,9 +165,35 @@ console.log('🔍 adminRoutes tipas:', typeof adminRoutes);   // ← NAUJA (nepr
 // 🆕 FEEDBACK (PRANEŠTI / PASIŪLYTI)
 // ============================================
 app.post('/api/feedback', async (req, res) => {
-    const { type, message, email, page, username, userId } = req.body;   // ← PRIDĖTA userId
+    const body = req.body || {};
+    const type = body.type;
+    const message = typeof body.message === 'string' ? body.message.trim() : '';
+
+    // 🛡️ Vardas ir ID imami TIK iš prisijungimo (JWT), ne iš to, ką atsiunčia naršyklė
+    let userId = null;
+    let username = null;
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+        const decoded = authLogic.verifyToken(authHeader.slice(7));
+        if (decoded && decoded.userId) {
+            userId = decoded.userId;
+            try {
+                const u = await db.findUserById(decoded.userId);
+                if (u) username = u.username;
+            } catch (e) { /* nieko */ }
+        }
+    }
+
+    // 🛡️ El. paštas – tik tikras el. pašto adresas (arba nieko)
+    let email = typeof body.email === 'string' ? body.email.trim().slice(0, 100) : '';
+    if (email && !/^[^\s@<>"'`]+@[^\s@<>"'`]+\.[^\s@<>"'`]{2,}$/.test(email)) {
+        return res.status(400).json({ error: 'Neteisingas el. pašto adresas' });
+    }
+    if (!email) email = null;
+
+    const page = cleanText(typeof body.page === 'string' ? body.page : '', 30) || 'unknown';
     
-    console.log('📬 Gautas feedback:', { type, message: message?.substring(0, 50), page, username, userId });
+    console.log('📬 Gautas feedback:', { type, message: message.substring(0, 50), page, username, userId });
     
     // Validacija
     if (!message || message.length < 5) {
@@ -240,6 +278,13 @@ adminRoutes.setIO(io);                                          // ← NAUJA
 // ============================================
 // 🆕 SOCKET.IO RATE LIMITING
 // ============================================
+// 🛡️ Stalo kodo spėliojimas: daugiausiai 20 nesėkmingų bandymų per minutę, tada 5 min. pertrauka
+const joinFailLimiter = new RateLimiterMemory({
+    points: 20,
+    duration: 60,
+    blockDuration: 300
+});
+
 const socketRateLimiter = new RateLimiterMemory({
     points: 30,         // 30 event'ų
     duration: 1,        // per 1 sekundę
@@ -268,13 +313,29 @@ app.set('games', games);
 // ============================================
 // GAUTI KLIENTO IP
 // ============================================
+// 🛡️ Pirmą X-Forwarded-For reikšmę gali įrašyti pats žaidėjas (F12 / įrankiai),
+// todėl imam X-Real-IP (nustato nginx) arba PASKUTINĘ reikšmę (ją prideda nginx).
 function getClientIp(socket) {
-    const forwarded = socket.handshake.headers['x-forwarded-for'];
+    const headers = socket.handshake.headers || {};
+    const realIp = headers['x-real-ip'];
+    if (realIp) return String(realIp).trim();
+    const forwarded = headers['x-forwarded-for'];
     if (forwarded) {
-        return forwarded.split(',')[0].trim();
+        const parts = String(forwarded).split(',').map(x => x.trim()).filter(Boolean);
+        if (parts.length) return parts[parts.length - 1];
     }
     return socket.handshake.address;
 }
+
+// ============================================
+// 🛡️ ĖJIMO LAIKMAČIO APSAUGA (žaidimas neturi užstrigti)
+// ============================================
+setInterval(() => {
+    for (const [, game] of games) {
+        try { if (typeof game.ensureTurnTimer === 'function') game.ensureTurnTimer(); }
+        catch (e) { console.error('❌ ensureTurnTimer klaida:', e.message); }
+    }
+}, 4000);
 
 // ============================================
 // AUTO-VALYMAS
@@ -433,6 +494,11 @@ function startBotLoop(gameId) {
         }
         
         if (currentGame.botTurnInProgress) {
+            return;
+        }
+
+        // 🚕 Laukiama taksi sprendimo / 🏗️ vyksta statybų laikas – botas nemeta
+        if (currentGame.waitingForTaxi || currentGame.waitingForBuild) {
             return;
         }
 
@@ -647,6 +713,51 @@ io.on('connection', (socket) => {
     
     socket.clientIp = getClientIp(socket);
 
+    // 🛡️ Visi įvykiai apsaugoti: blogi duomenys (F12) nebegali „nuversti“ serverio,
+    // o stalo kodas visada paverčiamas trumpu tekstu
+    const originalOn = socket.on.bind(socket);
+    socket.on = (eventName, handler) => originalOn(eventName, (...args) => {
+        try {
+            const payload = args[0];
+            if (payload && typeof payload === 'object' && !Array.isArray(payload) &&
+                Object.prototype.hasOwnProperty.call(payload, 'gameId') && payload.gameId !== null && payload.gameId !== undefined) {
+                payload.gameId = String(payload.gameId).slice(0, 12);
+            }
+            if (eventName !== 'disconnect' && payload === undefined && handler.length > 0) {
+                args[0] = {};
+            }
+            const result = handler(...args);
+            if (result && typeof result.catch === 'function') {
+                result.catch(err => console.error(`❌ Įvykio „${eventName}“ klaida:`, err));
+            }
+            return result;
+        } catch (err) {
+            console.error(`❌ Įvykio „${eventName}“ klaida:`, err);
+        }
+    });
+
+    // ============================================
+    // 🆕 AFK: bet koks paties žaidėjo veiksmas reiškia, kad jis prie stalo
+    // ============================================
+    const AFK_RESET_EVENTS = new Set([
+        'rollDice', 'buyProperty', 'cancelBuy', 'payJailFine', 'canBuildHouse', 'buildHouse',
+        'demolishHouse', 'sellToBank', 'startAuction', 'bidAuction', 'proposeTrade',
+        'respondToTrade', 'counterTrade', 'chatMessage', 'startVoteKick', 'voteKick', 'imBack',
+        'taxiRide', 'taxiDecline', 'finishBuild'
+    ]);
+    socket.onAny((eventName) => {
+        if (!AFK_RESET_EVENTS.has(eventName)) return;
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const g = games.get(socket.gameId);
+        if (!g) return;
+        const wasAfk = g.markPlayerActive(socket.playerId);
+        if (wasAfk) {
+            const p = g.getPlayerById(socket.playerId);
+            io.to(socket.gameId).emit('message', `👋 ${p ? p.name : 'Žaidėjas'} grįžo prie stalo`);
+            io.to(socket.gameId).emit('gameState', g.getGameState());
+        }
+    });
+
     // ============================================
     // SUKURTI ŽAIDIMĄ
     // ============================================
@@ -655,10 +766,11 @@ io.on('connection', (socket) => {
 
         console.log('📥 Gauta createGame užklausa:', data);
         
-        const playerName = data.name || data;
-        const playerColor = data.color || null;
+        let playerName = cleanText(data && typeof data === 'object' ? data.name : data, MAX_NAME_LENGTH);
+        const playerColor = (data && data.color) || null;
         const isPublic = data.isPublic === true;
-        const userId = data.userId || null;
+        // 🛡️ Paskyra – tik iš prisijungimo (JWT), ne iš naršyklės atsiųstų duomenų
+        const userId = socket.userId || null;
         
         if (!playerName || playerName.trim() === '') {
             socket.emit('error', 'Įvesk vardą!');
@@ -693,9 +805,11 @@ io.on('connection', (socket) => {
         let emoji = null;
         if (userId) {
             try {
-                const userResult = await db.pool.query('SELECT emoji FROM users WHERE id = $1', [userId]);
+                const userResult = await db.pool.query('SELECT emoji, username FROM users WHERE id = $1', [userId]);
                 if (userResult.rows.length > 0) {
                     emoji = userResult.rows[0].emoji;
+                    // 🛡️ Prisijungęs žaidėjas visada žaidžia savo paskyros vardu
+                    if (userResult.rows[0].username) playerName = cleanText(userResult.rows[0].username, MAX_NAME_LENGTH) || playerName;
                     console.log('🎨 Gautas emoji iš DB:', emoji);
                 }
             } catch (err) {
@@ -723,7 +837,7 @@ io.on('connection', (socket) => {
         socket.emit('gameCreated', { 
             gameId, 
             playerId: player.id,
-            player: player
+            player: Object.assign({}, player, { token: player.token })   // 🛡️ raktą gauna tik pats žaidėjas
         });
 
         io.to(gameId).emit('gameState', game.getGameState());
@@ -773,7 +887,11 @@ io.on('connection', (socket) => {
     // ============================================
     // PRISIJUNGTI PRIE ŽAIDIMO
     // ============================================
-    socket.on('joinGame', async ({ gameId, playerName, color, userId }) => {
+    socket.on('joinGame', async (joinData) => {
+        let { gameId, playerName, color } = joinData || {};
+        // 🛡️ Paskyra – tik iš prisijungimo (JWT), ne iš naršyklės atsiųstų duomenų
+        const userId = socket.userId || null;
+        playerName = cleanText(playerName, MAX_NAME_LENGTH);
         console.log('📥 Gauta joinGame užklausa:', { gameId, playerName, color, userId });
         
         if (!gameId || !playerName) {
@@ -781,8 +899,19 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // 🛡️ Jei jau užblokuotas dėl spėliojimo – net netikrinam
+        const joinKey = 'join:' + (socket.clientIp || socket.handshake.address);
+        try {
+            const st = await joinFailLimiter.get(joinKey);
+            if (st && st.consumedPoints >= 20) {
+                socket.emit('error', '⏳ Per daug neteisingų kodų. Pabandyk po kelių minučių.');
+                return;
+            }
+        } catch (e) { /* nieko */ }
+
         const game = games.get(gameId);
         if (!game) {
+            joinFailLimiter.consume(joinKey).catch(() => {});
             socket.emit('error', 'Žaidimas nerastas!');
             return;
         }
@@ -796,9 +925,11 @@ io.on('connection', (socket) => {
         let emoji = null;
         if (userId) {
             try {
-                const userResult = await db.pool.query('SELECT emoji FROM users WHERE id = $1', [userId]);
+                const userResult = await db.pool.query('SELECT emoji, username FROM users WHERE id = $1', [userId]);
                 if (userResult.rows.length > 0) {
                     emoji = userResult.rows[0].emoji;
+                    // 🛡️ Prisijungęs žaidėjas visada žaidžia savo paskyros vardu
+                    if (userResult.rows[0].username) playerName = cleanText(userResult.rows[0].username, MAX_NAME_LENGTH) || playerName;
                     console.log('🎨 Gautas emoji iš DB (joinGame):', emoji);
                 }
             } catch (err) {
@@ -823,7 +954,7 @@ io.on('connection', (socket) => {
 
         socket.emit('joinedGame', { 
             playerId: player.id,
-            player: player
+            player: Object.assign({}, player, { token: player.token })   // 🛡️ raktą gauna tik pats žaidėjas
         });
 
         io.to(gameId.toUpperCase()).emit('gameState', game.getGameState());
@@ -917,6 +1048,7 @@ io.on('connection', (socket) => {
         player.socketId = socket.id;
         player.isActive = true;
         player.ip = socket.clientIp;
+        game.playerReconnected(player.id);   // 🆕 atšaukti 5 min. bankroto laikmatį
         
         console.log('✅ Žaidėjas sėkmingai prijungtas atgal:', player.name);
 
@@ -929,7 +1061,7 @@ io.on('connection', (socket) => {
         socket.emit('reconnected', {
             gameId: gameId.toUpperCase(),
             playerId: player.id,
-            player: player
+            player: Object.assign({}, player, { token: player.token })   // 🛡️ raktą gauna tik pats žaidėjas
         });
 
         io.to(gameId.toUpperCase()).emit('gameState', game.getGameState());
@@ -1211,6 +1343,13 @@ socket.on('movementFinished', () => {
             return;
         }
 
+        // 🛡️ Baigti ėjimą gali tik tas, kurio eilė, ir tik kai nieko nelaukiama
+        if (game.currentTurn !== socket.playerId || game.isRolling || game.waitingForBuy ||
+            game.pendingFieldPlayerId !== null && game.pendingFieldPlayerId !== undefined) {
+            socket.emit('error', 'Dabar negali baigti ėjimo');
+            return;
+        }
+
         const result = game.endTurn();
         if (result.error) {
             socket.emit('error', result.error);
@@ -1233,11 +1372,14 @@ socket.on('movementFinished', () => {
         
         const player = game.players.find(p => p.id === socket.playerId);
         if (!player) return;
+
+        const cleanMessage = cleanText(message, MAX_CHAT_LENGTH);
+        if (!cleanMessage) return;
         
         io.to(socket.gameId).emit('chatMessage', {
             player: player.name,
             color: player.color,
-            message: message,
+            message: cleanMessage,
             timestamp: new Date().toISOString()
         });
     });
@@ -1378,16 +1520,6 @@ socket.on('movementFinished', () => {
             io.to(socket.gameId).emit('gameState', game.getGameState());
             io.to(socket.gameId).emit('message', `🔨 ${game.players.find(p => p.id === socket.playerId).name} paskelbė aukcioną!`);
         }
-        
-        // 🆕 Informuoti botus apie aukcioną
-        const bots = game.getBots();
-        bots.forEach(bot => {
-            if (bot.id !== socket.playerId) {
-                setTimeout(() => {
-                    io.to(socket.gameId).emit('botBidAuction', { botId: bot.id, auctionId: result.auctionId });
-                }, 2000 + Math.random() * 3000);
-            }
-        });
     });
 
     socket.on('bidAuction', ({ auctionId, bidAmount }) => {
@@ -1418,21 +1550,6 @@ socket.on('movementFinished', () => {
         }
     });
 
-    // ============================================
-    // 🤖 BOTŲ BID AUKCIONE
-    // ============================================
-    socket.on('botBidAuction', async ({ botId, auctionId }) => {
-        if (!socket.gameId) return;
-        
-        const game = games.get(socket.gameId);
-        if (!game) return;
-        
-        const bot = game.getPlayerById(botId);
-        if (!bot || !bot.isBot) return;
-        
-        await game.tradingLogic.botBidAuction(botId, auctionId);
-    });
-
     socket.on('endAuction', ({ auctionId }) => {
         if (!socket.gameId) {
             socket.emit('error', 'Neprisijungei prie žaidimo!');
@@ -1444,6 +1561,10 @@ socket.on('movementFinished', () => {
             socket.emit('error', 'Žaidimas nerastas!');
             return;
         }
+
+        // 🛡️ Aukcioną galima užbaigti tik pasibaigus jo laikui (kitaip jį užbaigia serveris pats)
+        const auctionToEnd = game.tradingLogic.auctions.get(auctionId);
+        if (!auctionToEnd || Date.now() < auctionToEnd.endTime - 500) return;
 
         const result = game.endAuction(auctionId);
         
@@ -1502,87 +1623,6 @@ socket.on('movementFinished', () => {
                     console.error('🤖 Boto prekybos klaida:', err);
                 }
             }, 1500);
-        }
-    });
-
-    // ============================================
-    // 🤖 BOTŲ PREKYBOS SIŪLYMAS
-    // ============================================
-    socket.on('botProposeTrade', async ({ botId }) => {
-        if (!socket.gameId) return;
-        
-        const game = games.get(socket.gameId);
-        if (!game) return;
-        
-        const bot = game.getPlayerById(botId);
-        if (!bot || !bot.isBot) return;
-        
-        if (game.tradingLogic.trades.size > 0) return;
-        
-        const result = await game.processBotProposeTrade(botId);
-        
-        if (result && result.result && result.result.success) {
-            io.to(socket.gameId).emit('tradeProposed', result.result);
-            io.to(socket.gameId).emit('gameState', game.getGameState());
-            
-            const chatMsg = game.sendBotChat(botId, 'trade_offer');
-            if (chatMsg) {
-                io.to(socket.gameId).emit('chatMessage', chatMsg);
-            }
-        }
-    });
-
-    // ============================================
-    // 🤖 BOTŲ VOTE-KICK BALSAS
-    // ============================================
-    socket.on('botVoteKick', async ({ botId }) => {
-        if (!socket.gameId) return;
-        
-        const game = games.get(socket.gameId);
-        if (!game) return;
-        
-        const bot = game.getPlayerById(botId);
-        if (!bot || !bot.isBot) return;
-        
-        if (!game.activeVoteKick) return;
-        
-        const result = await game.processBotVoteKick(botId);
-        
-        if (result && result.result) {
-            if (result.result.finished) {
-                io.to(socket.gameId).emit('gameState', game.getGameState());
-            } else {
-                const vkState = result.result.voteKick;
-                if (vkState) {
-                    io.to(socket.gameId).emit('voteKickUpdate', {
-                        votes: vkState.votes,
-                        requiredVotes: vkState.requiredVotes,
-                        timeLeft: vkState.timeLeft,
-                        targetName: vkState.targetName,
-                        targetId: vkState.targetId
-                    });
-                }
-                io.to(socket.gameId).emit('gameState', game.getGameState());
-            }
-        }
-    });
-
-    // ============================================
-    // 🤖 BOTŲ CHAT
-    // ============================================
-    socket.on('botChat', ({ botId, event, data }) => {
-        if (!socket.gameId) return;
-        
-        const game = games.get(socket.gameId);
-        if (!game) return;
-        
-        const bot = game.getPlayerById(botId);
-        if (!bot || !bot.isBot) return;
-        
-        const chatMsg = game.sendBotChat(botId, event, data);
-        
-        if (chatMsg) {
-            io.to(socket.gameId).emit('chatMessage', chatMsg);
         }
     });
 
@@ -1734,15 +1774,6 @@ socket.on('movementFinished', () => {
 
         io.to(socket.gameId).emit('gameState', game.getGameState());
         
-        // 🆕 Informuoti botus apie balsavimą
-        const bots = game.getBots();
-        bots.forEach(bot => {
-            if (bot.id !== socket.playerId && bot.id !== targetId) {
-                setTimeout(() => {
-                    io.to(socket.gameId).emit('botVoteKick', { botId: bot.id });
-                }, 2000 + Math.random() * 3000);
-            }
-        });
     });
 
     socket.on('voteKick', ({ vote }) => {
@@ -1945,9 +1976,11 @@ socket.on('movementFinished', () => {
         
         const game = games.get(gameId.toUpperCase());
         if (!game) {
+            joinFailLimiter.consume('join:' + (socket.clientIp || socket.handshake.address)).catch(() => {});
             socket.emit('reserveColorResult', { error: 'Žaidimas nerastas' });
             return;
         }
+        socket.join('colors:' + gameId.toUpperCase());
         
         const result = game.reserveColor(color, socket.id);
         socket.emit('reserveColorResult', result);
@@ -1956,7 +1989,7 @@ socket.on('movementFinished', () => {
             const used = game.getUsedColors();
             const available = game.getAvailableColors();
             
-            io.emit('gameColorsUpdated', {
+            io.to('colors:' + gameId.toUpperCase()).emit('gameColorsUpdated', {
                 gameId: gameId.toUpperCase(),
                 available: available,
                 used: used
@@ -1976,7 +2009,7 @@ socket.on('movementFinished', () => {
             const used = game.getUsedColors();
             const available = game.getAvailableColors();
             
-            io.emit('gameColorsUpdated', {
+            io.to('colors:' + gameId.toUpperCase()).emit('gameColorsUpdated', {
                 gameId: gameId.toUpperCase(),
                 available: available,
                 used: used
@@ -1987,7 +2020,7 @@ socket.on('movementFinished', () => {
     // ============================================
     // SPALVŲ GAVIMAS
     // ============================================
-    socket.on('getGameColors', ({ gameId }) => {
+    socket.on('getGameColors', async ({ gameId }) => {
         console.log('🎨 Gauta getGameColors užklausa:', gameId);
         
         if (!gameId) {
@@ -1995,9 +2028,20 @@ socket.on('movementFinished', () => {
             return;
         }
         
+        // 🛡️ Kodų spėliojimas per spalvų užklausą irgi ribojamas
+        const colorsKey = 'join:' + (socket.clientIp || socket.handshake.address);
+        try {
+            const st = await joinFailLimiter.get(colorsKey);
+            if (st && st.consumedPoints >= 20) {
+                socket.emit('gameColors', { error: '⏳ Per daug neteisingų kodų. Pabandyk po kelių minučių.', available: [], used: [] });
+                return;
+            }
+        } catch (e) { /* nieko */ }
+
         const game = games.get(gameId.toUpperCase());
         
         if (!game) {
+            joinFailLimiter.consume(colorsKey).catch(() => {});
             socket.emit('gameColors', { 
                 error: 'Žaidimas nerastas', 
                 available: [], 
@@ -2005,6 +2049,7 @@ socket.on('movementFinished', () => {
             });
             return;
         }
+        socket.join('colors:' + gameId.toUpperCase());
         
         const used = game.getUsedColors();
         const available = game.getAvailableColors();
@@ -2101,6 +2146,72 @@ socket.on('movementFinished', () => {
     });
 
     // ============================================
+    // 🚕 TAKSI
+    // ============================================
+    socket.on('taxiRide', ({ target }) => {
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        const result = game.taxiRide(socket.playerId, target);
+        if (result.error) socket.emit('error', result.error);
+    });
+
+    // 🧪 Taksi testas (tik su BANCRUPT_TEST=1)
+    socket.on('debugTaxi', () => {
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        const result = game.debugToTaxi(socket.playerId);
+        if (result.error) socket.emit('error', result.error);
+        else io.to(socket.gameId).emit('gameState', game.getGameState());
+    });
+
+    // 🏗️ „Baigti ėjimą“ statybų lange
+    socket.on('finishBuild', () => {
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        const result = game.finishBuildWindow(socket.playerId, 'manual');
+        if (result.error) socket.emit('error', result.error);
+    });
+
+    socket.on('taxiDecline', () => {
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        const result = game.taxiDecline(socket.playerId, false);
+        if (result.error) socket.emit('error', result.error);
+    });
+
+    // 🎲 Figūrėlės pasirinkimas laukimo kambaryje
+    socket.on('setPiece', ({ piece }) => {
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        const result = game.setPiece(socket.playerId, String(piece || ''));
+        if (result.error) { socket.emit('error', result.error); return; }
+        io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
+    });
+
+    // ============================================
+    // 🏗️ STATYBŲ TAISYKLĖ (keičia tik stalo kūrėjas, iki starto)
+    // ============================================
+    socket.on('setBuildRule', ({ rule }) => {
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        const hostPlayer = game.players.find(p => p.isHost === true);
+        const hostId = hostPlayer ? hostPlayer.id : 0;
+        if (socket.playerId !== hostId) {
+            socket.emit('error', 'Statybų taisyklę gali keisti tik stalo kūrėjas');
+            return;
+        }
+        const result = game.setBuildRule(rule);
+        if (result.error) { socket.emit('error', result.error); return; }
+        io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
+    });
+
+    // ============================================
     // PASITRAUKIMAS
     // ============================================
     socket.on('leaveGame', () => {
@@ -2118,6 +2229,26 @@ socket.on('movementFinished', () => {
         }
 
         const gameIdCopy = socket.gameId;
+
+        // 🆕 Žaidimo metu pasitraukti galima tik bankrotuojant.
+        // Jau iškritęs (bankrutavęs / išmestas) žaidėjas tiesiog išeina į meniu.
+        const leavingPlayer = game.getPlayerById(socket.playerId);
+        if (game.gameStarted && leavingPlayer) {
+            if (!leavingPlayer.bankrupt && !leavingPlayer.left && !leavingPlayer.kicked) {
+                const bres = game.bankruptPlayer(socket.playerId);
+                if (bres.error) {
+                    socket.emit('error', bres.error);
+                    return;
+                }
+                game.announceBankrupt(socket.playerId, bres, null);
+            }
+            leavingPlayer.socketId = null;
+            socket.leave(gameIdCopy);
+            socket.gameId = null;
+            socket.playerId = undefined;
+            socket.emit('leftGame', { playerName: leavingPlayer.name, gameId: gameIdCopy, spectatorExit: true });
+            return;
+        }
         
         const result = game.leaveGame(socket.playerId);
         if (result.error) {
@@ -2179,11 +2310,20 @@ socket.on('movementFinished', () => {
         const game = games.get(socket.gameId);
         if (game) {
             const player = game.players.find(p => p.id === socket.playerId);
-            if (player) {
-                player.isActive = false;
-                io.to(socket.gameId).emit('gameState', game.getGameState());
-                io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
-                io.to(socket.gameId).emit('message', `👋 ${player.name} paliko žaidimą`);
+            // 🆕 Tik jei atsijungė būtent šis jungimas (ne senas, jau pakeistas nauju)
+            if (player && player.socketId === socket.id) {
+                if (game.gameStarted && !player.bankrupt && !player.left && !player.kicked) {
+                    // 🆕 Žaidimas vyksta: žaidėjas lieka žaidime, jo ėjimai daromi automatiškai,
+                    // o jei per 5 min. negrįžta – bankrotuoja
+                    game.playerDisconnected(player.id);
+                    io.to(socket.gameId).emit('gameState', game.getGameState());
+                    io.to(socket.gameId).emit('message', `📴 ${player.name} atsijungė – turi 5 min. grįžti, kitaip bankrotuos`);
+                } else if (!game.gameStarted) {
+                    player.isActive = false;
+                    io.to(socket.gameId).emit('gameState', game.getGameState());
+                    io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
+                    io.to(socket.gameId).emit('message', `👋 ${player.name} paliko žaidimą`);
+                }
             }
             
             const activePlayers = game.getActivePlayers();
@@ -2202,6 +2342,16 @@ socket.on('movementFinished', () => {
 // ============================================
 // SERVERIO PALEIDIMAS
 // ============================================
+// 🛡️ Netikėta klaida neturi išjungti viso serverio (visi stalai dingtų)
+if (typeof process.on === 'function') {
+    process.on('uncaughtException', (err) => {
+        console.error('❌ Nepagauta klaida:', err);
+    });
+    process.on('unhandledRejection', (err) => {
+        console.error('❌ Nepagautas pažadas (Promise):', err);
+    });
+}
+
 const PORT = process.env.PORT || 3000;
 
 db.initDatabase().then(async () => {                    // ← Pridėta "async"

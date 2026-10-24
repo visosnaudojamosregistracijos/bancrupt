@@ -1,3 +1,14 @@
+// 🛡️ Vartotojų įvestas tekstas į puslapį dedamas tik kaip paprastas tekstas
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+}
+
 // ============================================
 // ADMIN PANELĖ — Vartotojai + Lenta
 // ============================================
@@ -104,9 +115,9 @@ function renderUsers(users) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${u.id}</td>
-            <td>${u.username} ${u.is_admin ? '👑' : ''}</td>
-            <td class="emoji-cell">${u.emoji || '—'}</td>
-            <td><input type="text" id="emoji-${u.id}" value="${u.emoji || ''}" maxlength="4" style="width:60px;text-align:center;"></td>
+            <td>${escapeHtml(u.username)} ${u.is_admin ? '👑' : ''}</td>
+            <td class="emoji-cell">${escapeHtml(u.emoji || '—')}</td>
+            <td><input type="text" id="emoji-${Number(u.id)}" value="${escapeHtml(u.emoji || '')}" maxlength="4" style="width:60px;text-align:center;"></td>
             <td><button onclick="saveEmoji(${u.id})">💾 Išsaugoti</button></td>
         `;
         tbody.appendChild(tr);
@@ -967,21 +978,21 @@ function renderFeedback(items) {
             hour: '2-digit', minute: '2-digit'
         });
         
-        const message = (item.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const message = escapeHtml(item.message || '');
         const escapedMessage = message.replace(/'/g, "\\'").replace(/\n/g, '\\n');
         
         const statusColor = statusColors[item.status] || '#888';
         
         tr.innerHTML = `
-            <td><strong>${item.id}</strong></td>
-            <td>${typeIcons[item.type] || item.type}</td>
+            <td><strong>${Number(item.id)}</strong></td>
+            <td>${typeIcons[item.type] || escapeHtml(item.type)}</td>
             <td style="max-width:400px; word-wrap:break-word; white-space:pre-wrap; font-size:12px;">${message}</td>
-            <td style="font-size:11px;">${item.email || '—'}</td>
-            <td><code style="font-size:11px;">${item.page || '—'}</code></td>
-            <td style="font-size:12px;">${item.username || '—'}</td>
+            <td style="font-size:11px;">${escapeHtml(item.email || '—')}</td>
+            <td><code style="font-size:11px;">${escapeHtml(item.page || '—')}</code></td>
+            <td style="font-size:12px;">${escapeHtml(item.username || '—')}</td>
             <td>
                 <span style="background:${statusColor}; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700;">
-                    ${statusIcons[item.status] || item.status}
+                    ${statusIcons[item.status] || escapeHtml(item.status)}
                 </span>
             </td>
             <td style="font-size:11px;">${date}</td>
@@ -989,7 +1000,7 @@ function renderFeedback(items) {
                 <div style="display:flex; gap:3px; flex-wrap:wrap;">
                     <button onclick="openFeedbackModal(${item.id})" style="padding:3px 8px; font-size:11px; background:#ffd700; color:#000; font-weight:700;">👁️</button>
                     ${item.status !== 'in_progress' ? `<button onclick="setFeedbackStatus(${item.id}, 'in_progress')" style="padding:3px 6px; font-size:11px; background:#17a2b8;">🔄</button>` : ''}
-                   ${item.status !== 'resolved' ? `<button onclick="setFeedbackStatus(${item.id}, 'resolved')" ...>✅</button>` : ''}
+                   ${item.status !== 'resolved' ? `<button onclick="setFeedbackStatus(${item.id}, 'resolved')" style="padding:3px 6px; font-size:11px; background:#28a745;">✅</button>` : ''}
                     ${item.status !== 'rejected' ? `<button onclick="setFeedbackStatus(${item.id}, 'rejected')" style="padding:3px 6px; font-size:11px; background:#6c757d;">❌</button>` : ''}
                     ${item.status !== 'new' ? `<button onclick="setFeedbackStatus(${item.id}, 'new')" style="padding:3px 6px; font-size:11px; background:#ffc107; color:#000;">🆕</button>` : ''}
                     <button onclick="deleteFeedback(${item.id})" style="padding:3px 6px; font-size:11px; background:#dc3545;" class="danger">🗑️</button>
