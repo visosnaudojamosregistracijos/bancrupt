@@ -40,6 +40,13 @@ async function loadBoardCache() {
         globalBoardCache = boardData.map(cell => {
             const ov = overrideMap.get(cell.id);
             if (!ov) return { ...cell };
+            // 🚕 TAKSI langelis: senas „Parkingo“ įrašas DB neturi pakeisti jo tipo, pavadinimo ir paveikslėlio
+            if (cell.id === C.TAXI_FIELD_ID) {
+                if (ov.type || ov.icon || ov.name) {
+                    console.log(`🚕 Langelis ${cell.id}: DB pakeitimas (${ov.name || ''} ${ov.type || ''}) ignoruojamas – tai TAKSI`);
+                }
+                return { ...cell, font_size: ov.font_size ?? 14, font_color: ov.font_color ?? null };
+            }
             return {
                 ...cell,
                 name: ov.name ?? cell.name,
@@ -283,7 +290,7 @@ class Game {
             money: C.START_MONEY,
             color: finalColor,
             emoji: emoji,
-            piece: 'pawn',   // 🎲 figūrėlės forma (ne prisijungimo „token“!)
+            piece: null,     // 🎲 figūrėlės forma (ne prisijungimo „token“!) – žaidėjas pasirenka pats
             properties: [],
             houses: {},
             inJail: false,
@@ -345,12 +352,7 @@ class Game {
             position: 0,
             money: C.START_MONEY,
             color: availableColor,
-            piece: (() => {   // botas – atsitiktinė, dar nenaudojama forma
-                const used = this.players.map(p => p.piece);
-                const free = C.PIECES.filter(t => !used.includes(t));
-                const pool = free.length ? free : C.PIECES;
-                return pool[Math.floor(Math.random() * pool.length)];
-            })(),
+            piece: this.randomFreePiece(),   // botas – atsitiktinė, dar nenaudojama forma
             properties: [],
             houses: {},
             inJail: false,
@@ -1593,6 +1595,9 @@ if (currentPlayer.money < 0) {
         player.ready = ready === true;
         this.lastActivity = Date.now();
 
+        // 🎲 Pasiruošė nepasirinkęs figūrėlės – parenkam atsitiktinę laisvą
+        const autoPiece = player.ready ? this.ensurePiece(player) : null;
+
         this.addMessageKey(
             player.ready ? 'game.playerReady' : 'game.playerUnready',
             { player: player.name }
@@ -1602,7 +1607,8 @@ if (currentPlayer.money < 0) {
             success: true,
             playerId: playerId,
             playerName: player.name,
-            ready: player.ready
+            ready: player.ready,
+            autoPiece: autoPiece
         };
     }
 
@@ -1639,6 +1645,13 @@ if (currentPlayer.money < 0) {
         }
 
         const activePlayers = this.getActivePlayers();
+
+        // 🎲 Kas dar neturi figūrėlės – parenkam atsitiktinę laisvą
+        const autoPieces = [];
+        activePlayers.forEach(p => {
+            const got = this.ensurePiece(p);
+            if (got) autoPieces.push({ playerId: p.id, piece: got });
+        });
 
         const shuffled = [...activePlayers];
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -1729,7 +1742,7 @@ if (currentPlayer.money < 0) {
                 color: p.color,
                 ready: p.ready === true,
                 isHost: p.id === hostId,
-                piece: p.piece || 'pawn',
+                piece: p.piece || null,
                 isActive: p.isActive,
                 isBot: p.isBot === true
             })),
@@ -1743,11 +1756,33 @@ if (currentPlayer.money < 0) {
         };
     }
 
+    // 🎲 Figūrėlės unikalios – kaip spalvos
+    piecesInUse(exceptId) {
+        return this.players
+            .filter(p => p.id !== exceptId && !p.left && !p.kicked && p.piece)
+            .map(p => p.piece);
+    }
+    randomFreePiece(exceptId) {
+        const used = this.piecesInUse(exceptId);
+        const free = C.PIECES.filter(t => !used.includes(t));
+        const pool = free.length ? free : C.PIECES;
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+    // Nepasirinkusiam – parenkama atsitiktinė laisva. Grąžina parinktą arba null
+    ensurePiece(player) {
+        if (!player || player.piece) return null;
+        player.piece = this.randomFreePiece(player.id);
+        return player.piece;
+    }
+
     setPiece(playerId, piece) {
         if (this.gameStarted) return { error: 'Žaidimas jau prasidėjo' };
         if (!C.PIECES.includes(piece)) return { error: 'Tokios figūrėlės nėra' };
         const p = this.getPlayerById(playerId);
         if (!p) return { error: 'Žaidėjas nerastas' };
+        if (p.piece !== piece && this.piecesInUse(playerId).includes(piece)) {
+            return { error: 'Ši figūrėlė jau užimta!' };
+        }
         p.piece = piece;
         this.lastActivity = Date.now();
         return { success: true, piece };

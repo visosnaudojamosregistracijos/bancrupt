@@ -1836,6 +1836,8 @@ socket.on('movementFinished', () => {
             socket.emit('error', result.error);
             return;
         }
+        // 🎲 Nepasirinko figūrėlės – pranešam, kokia parinkta
+        if (result.autoPiece) socket.emit('pieceAutoAssigned', { piece: result.autoPiece });
 
         io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
         io.to(socket.gameId).emit('gameState', game.getGameState());

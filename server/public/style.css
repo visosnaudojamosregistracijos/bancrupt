@@ -6137,3 +6137,70 @@ body.board-3d #board .player-dot > .tok-floor, body.board-3dp #board .player-dot
 /* 📋 Stalo ID viršutinėje juostoje kompiuteryje nerodomas – jis jau yra kairiajame stulpelyje.
    Telefone / planšetėje (kai kairysis stulpelis paslėptas) – paliekamas. */
 body:not(.cmp) #gameHeader #gameIdDisplay { display: none !important; }
+
+/* ============================================================
+   🎲 FIGŪRĖLĖS PASIRINKIMAS (po statybų taisykle)
+   Raudona – dar nepasirinkta, žalia – pasirinkta. Užimtos – papilkintos su savininko spalva.
+   ============================================================ */
+#piecePickerBox.piece-box {
+    margin: 0 0 12px;
+    padding: 12px 12px 10px;
+    border: 2px solid #c9a84c;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+#piecePickerBox .piece-title {
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 0.4px;
+    text-align: center;
+    padding: 6px 8px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    color: #fff;
+    transition: background 0.3s ease;
+}
+#piecePickerBox.need { border-color: #e74c3c; box-shadow: 0 0 14px rgba(231, 76, 60, 0.35); }
+#piecePickerBox.need .piece-title {
+    background: #c0392b;
+    animation: pieceNeedPulse 1.4s ease-in-out infinite;
+}
+@keyframes pieceNeedPulse {
+    0%, 100% { background: #c0392b; box-shadow: 0 0 14px rgba(231, 76, 60, 0.7); }
+    50%      { background: #8e1f14; box-shadow: 0 0 4px rgba(231, 76, 60, 0.3); }
+}
+#piecePickerBox.chosen { border-color: #2ecc71; box-shadow: 0 0 14px rgba(46, 204, 113, 0.35); }
+#piecePickerBox.chosen .piece-title { background: linear-gradient(145deg, #2ecc71, #1e9e50); }
+#piecePickerBox .piece-opt { position: relative; }
+#piecePickerBox .piece-opt.active {
+    border-color: #2ecc71;
+    background: rgba(46, 204, 113, 0.2);
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.45);
+}
+#piecePickerBox .piece-opt.taken {
+    cursor: not-allowed;
+    opacity: 0.4;
+    filter: grayscale(0.85);
+}
+#piecePickerBox .piece-opt.taken:hover { transform: none; border-color: rgba(255, 255, 255, 0.12); }
+#piecePickerBox .piece-owner {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid #fff;
+    filter: none;
+}
+#piecePickerBox .piece-note {
+    margin-top: 8px;
+    text-align: center;
+    font-size: 11px;
+    color: #d4b896;
+    min-height: 14px;
+}
+#piecePickerBox .piece-note.flash { color: #ffd700; font-weight: 800; font-size: 13px; }
+.wr-nopiece { display: inline-flex; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 18px; opacity: 0.8; }
+@media (max-width: 768px) { #piecePickerBox .piece-title { font-size: 12px; } }

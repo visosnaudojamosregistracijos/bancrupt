@@ -464,6 +464,10 @@ socket.on('soundFilesUpdated', (files) => {
         }
     });
 
+    socket.on('pieceAutoAssigned', (data) => {
+        if (data && data.piece) flashPieceNote(data.piece);
+    });
+
     socket.on('waitingRoomUpdate', (state) => {
     // console.log('⏳ Waiting room update:', state);
     updateWaitingRoom(state);
@@ -1752,25 +1756,68 @@ function renderPiecePicker(state) {
     if (!me) { box.style.display = 'none'; return; }
     box.style.display = '';
     const grid = box.querySelector('.piece-grid');
-    const cur = me.piece || 'pawn';
+    const cur = me.piece || null;
+    // Kitų žaidėjų užimtos figūrėlės (kaip spalvos – viena figūrėlė vienam žaidėjui)
+    const takenBy = {};
+    state.players.forEach(p => { if (p.id !== playerId && p.piece) takenBy[p.piece] = p; });
+    box.classList.toggle('need', !cur);
+    box.classList.toggle('chosen', !!cur);
     const title = box.querySelector('.piece-title');
-    if (title) title.textContent = tt('piece.title', '🎲 Tavo figūrėlė');
+    if (title) {
+        if (cur) {
+            const nm = PIECE_NAMES[cur] || ['', cur];
+            title.textContent = tt('piece.chosen', '✅ TAVO FIGŪRĖLĖ:') + ' ' + tt(nm[0], nm[1]).toUpperCase();
+        } else {
+            title.textContent = tt('piece.choose', '🎲 PASIRINK FIGŪRĖLĘ');
+        }
+    }
+    const note = box.querySelector('.piece-note');
+    if (note && !note.dataset.flash) {
+        note.textContent = cur ? tt('piece.canChange', 'Gali pakeisti, kol žaidimas neprasidėjo')
+                               : tt('piece.autoHint', 'Nepasirinkus – paspaudus „Pasiruošęs“ figūrėlė bus parinkta atsitiktinai');
+    }
     grid.innerHTML = '';
     PIECE_TYPES.forEach(type => {
+        const owner = takenBy[type];
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'piece-opt' + (type === cur ? ' active' : '');
+        b.className = 'piece-opt' + (type === cur ? ' active' : '') + (owner ? ' taken' : '');
         const nm = PIECE_NAMES[type];
-        b.title = tt(nm[0], nm[1]);
-        b.innerHTML = pieceSvg(type, me.color) + `<span class="piece-name">${escapeHtml(tt(nm[0], nm[1]))}</span>`;
-        b.onclick = () => {
-            playClickSound();
-            grid.querySelectorAll('.piece-opt').forEach(x => x.classList.remove('active'));
-            b.classList.add('active');
-            socket.emit('setPiece', { piece: type });
-        };
+        const label = tt(nm[0], nm[1]);
+        b.title = owner ? label + ' – ' + (owner.name || '') : label;
+        b.innerHTML = pieceSvg(type, owner ? owner.color : me.color) +
+            `<span class="piece-name">${escapeHtml(owner ? (owner.name || label) : label)}</span>` +
+            (owner ? `<span class="piece-owner" style="background:${safeColor(owner.color)}"></span>` : '');
+        if (owner) {
+            b.disabled = true;
+        } else {
+            b.onclick = () => {
+                if (type === cur) return;
+                playClickSound();
+                grid.querySelectorAll('.piece-opt').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                socket.emit('setPiece', { piece: type });
+            };
+        }
         grid.appendChild(b);
     });
+}
+
+// 🎲 Serveris parinko figūrėlę (pasiruošta nepasirinkus)
+function flashPieceNote(piece) {
+    const box = document.getElementById('piecePickerBox');
+    const note = box && box.querySelector('.piece-note');
+    if (!note) return;
+    const nm = PIECE_NAMES[piece] || ['', piece];
+    note.dataset.flash = '1';
+    note.textContent = tt('piece.autoAssigned', '🎲 Tau parinkta figūrėlė:') + ' ' + tt(nm[0], nm[1]);
+    note.classList.add('flash');
+    clearTimeout(flashPieceNote._t);
+    flashPieceNote._t = setTimeout(() => {
+        delete note.dataset.flash;
+        note.classList.remove('flash');
+        if (waitingRoomState) renderPiecePicker(waitingRoomState);
+    }, 4500);
 }
 
 function chooseBuildRule(rule) {
@@ -1805,7 +1852,7 @@ function updateWaitingRoom(state) {
                 
                 return `
                     <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'} ${isBot ? 'border-left-color:#8b5cf6;' : ''}">
-                        <span class="wr-piece">${pieceSvg(p.piece || 'pawn', p.color)}</span>
+                        <span class="wr-piece">${p.piece ? pieceSvg(p.piece, p.color) : '<span class="wr-nopiece">❔</span>'}</span>
                         <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${botIcon}${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' ' + t('game.waiting.you') : ''}</span>
                         ${botBadge}
                         <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅' : '⏳'}</span>

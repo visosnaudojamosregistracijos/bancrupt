@@ -38,7 +38,7 @@ const boardData = [
     { id: 25, name: 'Kalvarija', type: 'property', color: '#e74c3c', cost: 270, icon: '' },
     
     // KAMPAS 3: PARKINGAS
-    { id: 26, name: 'PARKINGAS', type: 'parking', color: '#007bff', cost: 0, icon: '🅿️' },
+    { id: 26, name: 'TAKSI', type: 'taxi', color: '#f4b400', cost: 0, icon: '🚕' },
     
     // APAČIA
     { id: 27, name: 'Alytus', type: 'property', color: '#8B6914', cost: 280, icon: '' },
