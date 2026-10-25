@@ -1332,6 +1332,13 @@ class Game {
     if (!currentPlayer || currentPlayer.isBot) return;
     if (!currentPlayer.isActive || currentPlayer.bankrupt || currentPlayer.left || currentPlayer.kicked) return;
     if (this.isRolling) return;
+    // 🛡️ Dar laukiama pirkimo / taksi / statybų sprendimo arba langelis neapdorotas – metimas ne dabar
+    // (tas langas pats tęs žaidimą; AFK ėjimas neskaičiuojamas)
+    if (this.waitingForBuy || this.waitingForTaxi || this.waitingForBuild ||
+        this.pendingFieldPlayerId === currentPlayer.id) {
+        console.log(`⏭️ Auto-roll praleistas (${currentPlayer.name}): laukiama sprendimo / langelio apdorojimo`);
+        return;
+    }
 
     // 🆕 AFK: per daug automatinių ėjimų iš eilės – priverstinis bankrotas
     // (taikoma tik kai naršyklė atidaryta; uždarytai naršyklei – 5 min. taisyklė)
@@ -1469,7 +1476,9 @@ if (currentPlayer.money < 0) {
             console.warn(`⚠️ isRolling užstrigo po auto-roll (${rolledPlayerName}) – atblokuojam`);
             this.isRolling = false;
 
-            if (!this.waitingForBuy) {
+            // Laikmatį paleidžiam tik jei nieko nelaukiama – kitaip jį paleis langelio apdorojimas / pirkimo langas
+            if (!this.waitingForBuy && !this.waitingForTaxi && !this.waitingForBuild &&
+                this.pendingFieldPlayerId !== rolledPlayerId) {
                 this.startTurnTimer();
             }
 
@@ -1852,6 +1861,8 @@ if (currentPlayer.money < 0) {
 
         if (this.isRolling) return { error: 'Palaukite, kauliukai metami...' };
         if (this.waitingForBuy) return { error: 'Pirmiausia nusipirk sklypą!' };
+        if (this.waitingForTaxi) return { error: 'Pirmiausia nuspręsk dėl taksi!' };
+        if (this.waitingForBuild) return { error: 'Pirmiausia baik statybas!' };
 
         const player = this.getPlayerById(playerId);
         if (!player || !player.isActive || player.bankrupt || player.left || player.kicked) {
@@ -2548,6 +2559,8 @@ this.addMessageKey('game.paidJailFine', {
 }
 
     startBuyTimeout(playerId) {
+        // ⏸️ Kol laukiama pirkimo sprendimo – ėjimo laikmatis nereikalingas (kitaip AFK bandytų mesti)
+        this.clearTurnTimer();
         if (this.buyTimeoutTimer) {
             clearTimeout(this.buyTimeoutTimer);
             this.buyTimeoutTimer = null;

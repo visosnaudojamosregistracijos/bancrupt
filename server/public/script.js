@@ -6305,10 +6305,12 @@ const rollBtn = document.getElementById('rollBtn');
 if (rollBtn) {
     const blockedByAction = rollBtn.dataset.blockedByAction === 'true';
     
+    // Kol laukiama pirkimo / taksi / statybų sprendimo – mesti negalima
+    const waitingDecision = !!(state.waitingForBuy || state.taxiOffer || state.buildWindow);
     if (blockedByAction) {
         rollBtn.disabled = true;
     } else {
-        rollBtn.disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor;
+        rollBtn.disabled = !isMyTurn || isBankrupt || isLeft || isKicked || isDebtor || waitingDecision;
     }
 }
 
