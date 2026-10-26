@@ -7229,3 +7229,7 @@ body.cmp #uiTip { font-size: 12px; max-width: 220px; }
     body:not(.cmp) .lp-settings-toggle span[data-i18n]::before { content: '⚙️'; font-size: 14px; }
     body:not(.cmp) #helpTourBtn { padding: 3px 7px; }
 }
+
+/* ⏱️ Laikmatis – apačioje virš „Bankrotuoju“, kad neslankiotų mygtukų */
+#leftPanel .lp-bottom { margin-top: auto; display: flex; flex-direction: column; gap: 8px; width: 100%; flex: 0 0 auto; }
+#leftPanel .lp-bottom .lp-danger { margin-top: 0; }

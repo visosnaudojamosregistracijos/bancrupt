@@ -17,3 +17,5 @@ node_modules/
 # Backup failai
 *.backup
 *.backup2
+_backup_*/
+screenshots/

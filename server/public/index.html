@@ -377,12 +377,7 @@
 <div id="leftTurnDisplay" data-tip="tip.turn">
     <span data-i18n="game.leftPanel.turn">🎯</span> <span id="turnDisplayLeft">---</span>
 </div>
-<!-- 🆕 TURN TIMER -->
-<div id="turnTimerBox" data-tip="tip.timer" style="background: rgba(0,0,0,0.3); border: 2px solid #ffd700; border-radius: 8px; padding: 8px 6px; text-align: center; display: none;">
-    <div id="turnTimerLabel" style="color: #ffd700; font-size: 10px; font-weight: 700; margin-bottom: 2px;">⏱️ LIKO LAIKO</div>
-    <div id="turnTimer" style="color: #fff; font-size: 20px; font-weight: 900; text-shadow: 0 0 10px rgba(255,215,0,0.5);">---</div>
-    <div id="turnTimerPlayer" style="color: #d4b896; font-size: 9px; margin-top: 2px;">---</div>
-</div>
+
 <button onclick="openStats()" id="statsBtn" data-tip="tip.stats" class="left-btn" style="background: linear-gradient(145deg, #6f42c1, #5a32a3); color: #fff; border-color: #8b5cf6;" data-i18n="game.leftPanel.stats">
     📈 Statistika
 </button>
@@ -454,8 +449,16 @@
 </div>
 
 <!-- 💀 Bankrotas – atskirai apačioje -->
+<div class="lp-bottom">
+<!-- 🆕 TURN TIMER -->
+<div id="turnTimerBox" data-tip="tip.timer" style="background: rgba(0,0,0,0.3); border: 2px solid #ffd700; border-radius: 8px; padding: 8px 6px; text-align: center; display: none;">
+    <div id="turnTimerLabel" style="color: #ffd700; font-size: 10px; font-weight: 700; margin-bottom: 2px;">⏱️ LIKO LAIKO</div>
+    <div id="turnTimer" style="color: #fff; font-size: 20px; font-weight: 900; text-shadow: 0 0 10px rgba(255,215,0,0.5);">---</div>
+    <div id="turnTimerPlayer" style="color: #d4b896; font-size: 9px; margin-top: 2px;">---</div>
+</div>
 <div class="left-bankrupt-wrap lp-danger">
     <button onclick="bankrupt()" id="bankruptBtn" class="left-btn btn-bankrupt left-bankrupt" data-i18n="game.bankruptButton" data-tip="tip.bankrupt">💀 Bankrotuoju</button>
+</div>
 </div>
                 </aside>
 
