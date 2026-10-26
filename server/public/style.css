@@ -5432,6 +5432,7 @@ body.orbit-dragging, body.orbit-dragging * { user-select: none !important; }
    🏗️ STATYBŲ TAISYKLĖ – laukimo kambarys
    ============================================================ */
 .build-rule-box {
+    position: relative;
     margin-top: 6px;
     padding: 12px 12px 10px;
     border: 2px solid #c9a84c;
@@ -5462,7 +5463,69 @@ body.orbit-dragging, body.orbit-dragging * { user-select: none !important; }
     0%, 40% { box-shadow: 0 0 0 3px #ffd700, 0 0 24px rgba(255, 215, 0, 0.7); }
     100% { box-shadow: none; }
 }
-.build-rule-options { display: flex; flex-direction: column; gap: 7px; }
+/* Pasirinktos taisyklės eilutė (suskleista būsena) */
+.build-rule-current {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 2px solid rgba(201, 168, 76, 0.55);
+    background: rgba(255, 255, 255, 0.92);
+    color: #3d2b1f;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.25;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.build-rule-current .brc-num { font-weight: 900; flex-shrink: 0; color: #1e9e50; }
+.build-rule-current .brc-text { flex: 1; min-width: 0; }
+.build-rule-current .brc-caret {
+    flex-shrink: 0;
+    font-size: 11px;
+    opacity: 0.65;
+    transition: transform 0.2s ease;
+}
+.build-rule-box.open .build-rule-current .brc-caret { transform: rotate(180deg); }
+.build-rule-current:hover { border-color: #c9a84c; }
+.build-rule-current:focus-visible { outline: 2px solid #ffd700; outline-offset: 2px; }
+.build-rule-box:not(.is-host) .build-rule-current { cursor: pointer; }
+
+/* Sąrašas atsidaro kaip perklotas (overlay) – neliečia išdėstymo */
+.build-rule-options {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 8px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(201, 168, 76, 0.65);
+    background: linear-gradient(180deg, #17512f, #10341f);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.7);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition: max-height 0.24s ease, opacity 0.16s ease, transform 0.16s ease;
+}
+.build-rule-box.open { z-index: 61; }
+.build-rule-box.open .build-rule-options {
+    max-height: 460px;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
 .build-rule-opt {
     display: flex;
     align-items: center;
@@ -5946,6 +6009,257 @@ body.board-3d .fx-layer, body.board-3dp .fx-layer { transform-style: flat; }
 .pv-piece-in { position: absolute; left: 0; top: 0; translate: -50% -70%; line-height: 0; }
 .pv-piece-in > * { width: 100% !important; height: 100% !important; }
 
+/* ✨ FX2 – išpūdingi efektai */
+.fx2-canvas { position: absolute; pointer-events: none; z-index: 2; }
+.fx2-warn { z-index: 4; }
+.fx2-warn span { position: absolute; left: 0; top: 0; translate: -50% -50%; font-size: var(--fs, 24px); color: #ffd600; filter: drop-shadow(0 0 6px rgba(255,214,0,.8)) drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+.fx2-valve .vx-img { filter: drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
+.fx2-flash { position: absolute; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; z-index: 3;
+  background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(150,210,255,.7) 18%, rgba(60,110,255,.35) 40%, rgba(40,60,255,0) 70%); }
+/* VMI kortelė (glassmorphism) */
+.fx2-card { position: absolute; z-index: 2; box-sizing: border-box; padding: 6% 7%; border-radius: 14px; color: #fff; font-size: var(--fs, 18px);
+  display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
+  background: linear-gradient(135deg, rgba(30,60,120,.88), rgba(10,25,60,.92) 60%, rgba(60,20,90,.9));
+  border: 1px solid rgba(255,255,255,.35); box-shadow: 0 18px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.4);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transform-origin: 50% 100%; }
+.fx2-card::before { content: ''; position: absolute; inset: -50%; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.28) 50%, transparent 60%);
+  animation: fx2Shine 2.2s ease-in-out infinite; }
+@keyframes fx2Shine { from { transform: translateX(-40%); } to { transform: translateX(40%); } }
+.fx2-card-top { display: flex; justify-content: space-between; align-items: center; position: relative; }
+.fx2-logo { font-weight: 900; letter-spacing: .12em; font-size: .9em; background: linear-gradient(90deg,#ffe082,#ffb300); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fx2-chip { width: 1.6em; height: 1.2em; border-radius: .25em; background: linear-gradient(135deg,#fff3c4,#d4a017 50%,#8d6400); box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+.fx2-card-lbl { position: relative; font-size: .55em; opacity: .8; text-transform: uppercase; letter-spacing: .1em; }
+.fx2-card-amt { position: relative; font-weight: 900; font-size: 1.7em; line-height: 1; font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg,#ffffff,#ffcdd2); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 18px rgba(255,90,90,.35); }
+.fx2-card-bar { position: relative; height: .28em; border-radius: 1em; background: rgba(255,255,255,.18); overflow: hidden; }
+.fx2-card-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg,#69f0ae,#00e5ff); box-shadow: 0 0 10px #00e5ff; }
+.fx2-money { z-index: 3; }
+.fx2-money .vx-img { filter: drop-shadow(0 3px 3px rgba(0,0,0,.35)); }
+.fx2-flip { animation: fx2Flip .9s linear infinite; }
+.fx2-spin { animation: fx2Spin .6s linear infinite; }
+@keyframes fx2Flip { 0% { transform: perspective(200px) rotateY(0) rotateX(15deg); } 100% { transform: perspective(200px) rotateY(360deg) rotateX(15deg); } }
+@keyframes fx2Spin { 0% { transform: scaleX(1); } 50% { transform: scaleX(.12); } 100% { transform: scaleX(1); } }
+.fx2-receipt { position: absolute; z-index: 1; box-sizing: border-box; padding: .6em .7em 1em; font-size: var(--fs, 11px); color: #333;
+  font-family: 'Courier New', monospace; display: flex; flex-direction: column; gap: .3em; background: #fffdf7;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+  -webkit-mask: radial-gradient(circle at 50% 100%, transparent .35em, #000 .37em) bottom/0.9em 0.5em repeat-x, linear-gradient(#000,#000) top/100% calc(100% - .45em) no-repeat;
+          mask: radial-gradient(circle at 50% 100%, transparent .35em, #000 .37em) bottom/0.9em 0.5em repeat-x, linear-gradient(#000,#000) top/100% calc(100% - .45em) no-repeat; }
+.fx2-receipt b { text-align: center; letter-spacing: .08em; }
+.fx2-receipt span { opacity: .8; }
+.fx2-r-line { display: flex; justify-content: space-between; border-top: 1px dashed #999; padding-top: .3em; opacity: 1 !important; font-weight: 700; }
+.fx2-r-line i { font-style: normal; }
+.fx2-r-bar { height: 1.4em; background: repeating-linear-gradient(90deg,#222 0 2px,transparent 2px 3px,#222 3px 4px,transparent 4px 7px); opacity: .85 !important; }
+.fx2-stamp { z-index: 4; }
+/* Oro uostas */
+.fx2-runway { position: absolute; left: 0; top: 0; transform-origin: 0 0; border-radius: 6px; z-index: 0;
+  background: linear-gradient(180deg,#3a3f45,#24282c 50%,#3a3f45); box-shadow: 0 0 0 2px rgba(255,255,255,.55), 0 6px 14px rgba(0,0,0,.4); }
+.fx2-rw-center { position: absolute; left: 4%; right: 4%; top: 50%; height: 3px; margin-top: -1.5px;
+  background: repeating-linear-gradient(90deg,#fff 0 14px,transparent 14px 26px); opacity: .9; }
+.fx2-rw-lights { position: absolute; inset: 3px 2px; background:
+  repeating-linear-gradient(90deg, #ffe082 0 4px, transparent 4px 18px) top/100% 3px no-repeat,
+  repeating-linear-gradient(90deg, #ffe082 0 4px, transparent 4px 18px) bottom/100% 3px no-repeat;
+  filter: drop-shadow(0 0 3px #ffca28); animation: fx2Chase .5s linear infinite; }
+@keyframes fx2Chase { from { background-position: 0 0, 0 100%; } to { background-position: 18px 0, 18px 100%; } }
+.fx2-plane { z-index: 6; }
+.fx2-plane .vx-img { filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+.fx2-plane-shadow { z-index: 1; }
+.fx2-plane-shadow .vx-img { filter: brightness(0) blur(3px); opacity: .55; }
+/* SPA */
+.fx2-pool { position: absolute; border-radius: 50%; z-index: 0; overflow: hidden;
+  background: radial-gradient(circle at 40% 35%, #b2f5ff 0%, #4fd1e8 30%, #1a9bc4 65%, #0b6a93 100%);
+  box-shadow: 0 0 0 5px rgba(255,255,255,.75), 0 0 0 9px rgba(214,196,170,.9), 0 14px 30px rgba(0,0,0,.35), inset 0 0 30px rgba(0,40,80,.45); }
+.fx2-pool::before, .fx2-pool::after { content: ''; position: absolute; inset: -30%; opacity: .55; mix-blend-mode: screen;
+  background: radial-gradient(ellipse 12% 7% at 30% 40%, rgba(255,255,255,.9), transparent 70%),
+              radial-gradient(ellipse 10% 6% at 65% 30%, rgba(255,255,255,.8), transparent 70%),
+              radial-gradient(ellipse 14% 6% at 55% 70%, rgba(255,255,255,.8), transparent 70%),
+              radial-gradient(ellipse 9% 5% at 25% 75%, rgba(255,255,255,.7), transparent 70%);
+  animation: fx2Caustic 3.4s ease-in-out infinite alternate; }
+.fx2-pool::after { animation-duration: 4.6s; animation-direction: alternate-reverse; transform: rotate(60deg); }
+@keyframes fx2Caustic { from { transform: translate(-6%, -3%) scale(1); } to { transform: translate(6%, 4%) scale(1.15); } }
+.fx2-lotus { z-index: 3; }
+.fx2-lotus .vx-img { filter: drop-shadow(0 8px 8px rgba(0,40,60,.35)); }
+.fx2-petal { transform-box: view-box; transform-origin: 100px 112px; }
+.fx2-candle { z-index: 3; }
+.fx2-candle .fx2-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: fx2Flicker .18s ease-in-out infinite alternate; }
+.fx2-candle .fx2-halo { animation: fx2Halo 1.1s ease-in-out infinite alternate; }
+@keyframes fx2Flicker { from { transform: scale(1, 1) skewX(-3deg); } to { transform: scale(.92, 1.1) skewX(3deg); } }
+@keyframes fx2Halo { from { opacity: .55; } to { opacity: 1; } }
+/* Šiukšlės */
+.fx2-truck { z-index: 3; }
+.fx2-truck .vx-img { translate: -50% -60%; filter: drop-shadow(0 5px 5px rgba(0,0,0,.4)); }
+.fx2-truck .tr-beacon { animation: fx2Beacon .5s steps(2) infinite; }
+@keyframes fx2Beacon { 50% { fill: #fff3c4; } }
+.fx2-bin { z-index: 2; }
+.fx2-bin .vx-img { translate: -50% -85%; transform-origin: 50% 100%; }
+.fx2-bin .bin-lid { transform-box: fill-box; transform-origin: 0% 100%; }
+.fx2-beacon { z-index: 5; }
+.fx2-beacon::before { content: ''; position: absolute; left: -45px; top: -45px; width: 90px; height: 90px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,193,7,.75), rgba(255,160,0,0) 65%); mix-blend-mode: screen; animation: fx2Pulse .5s ease-in-out infinite alternate; }
+@keyframes fx2Pulse { from { opacity: .25; transform: scale(.7); } to { opacity: 1; transform: scale(1.1); } }
+/* Greitoji */
+.amb-fx .fx2-amb-glow { position: absolute; left: -70px; top: -95px; width: 140px; height: 110px; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(ellipse at 40% 60%, rgba(41,121,255,.75), transparent 60%); animation: fx2AmbGlow .36s steps(1) infinite; }
+@keyframes fx2AmbGlow { 0% { background: radial-gradient(ellipse at 38% 65%, rgba(41,121,255,.8), transparent 60%); }
+  50% { background: radial-gradient(ellipse at 62% 65%, rgba(255,23,68,.8), transparent 60%); } }
+.fx2-ecg { z-index: 960; }
+.fx2-ecg svg { position: absolute; overflow: visible; filter: drop-shadow(0 0 6px rgba(43,255,154,.6)) drop-shadow(0 6px 10px rgba(0,0,0,.45)); }
+/* ✨ FX3 – išpūdingi efektai II */
+.fx3-card { position: absolute; z-index: 2; border-radius: 18px; overflow: hidden; box-sizing: border-box;
+  border: 2px solid rgba(255,255,255,.55); box-shadow: 0 20px 44px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.5); }
+.fx3-stage { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.fx3-stage .fx2-canvas { z-index: 5; }
+/* Baras */
+.fx3-bar { background: radial-gradient(ellipse at 50% 20%, #4a2a52 0%, #24132b 55%, #120914 100%); }
+.fx3-bar::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 2px, transparent 2px 22px); }
+.fx3-neon { position: absolute; left: 0; translate: -50% 0; font: 900 1em/1 'Arial Black', Arial, sans-serif; letter-spacing: .25em; color: #ffe6fb;
+  text-shadow: 0 0 4px #fff, 0 0 10px #ff4fd8, 0 0 22px #ff4fd8, 0 0 40px #ff1fb8; animation: fx3NeonFlick 2.4s infinite; white-space: nowrap; }
+@keyframes fx3NeonFlick { 0%, 18%, 22%, 62%, 64%, 100% { opacity: 1; } 20%, 63% { opacity: .35; } }
+.fx3-bar-counter { position: absolute; background: linear-gradient(180deg, #a86a32, #6b3d16 40%, #3e220b); box-shadow: inset 0 3px 0 rgba(255,220,170,.45); }
+.fx3-tap { position: absolute; width: 0; height: 0; }
+.fx3-tap i { position: absolute; left: 0; top: 0; width: 34px; height: 12px; translate: -50% 0; border-radius: 6px;
+  background: linear-gradient(180deg, #fafafa, #9e9e9e 60%, #616161); }
+.fx3-tap b { position: absolute; left: 0; top: 10px; width: 8px; height: 16px; translate: -50% 0; border-radius: 0 0 4px 4px; background: linear-gradient(90deg, #757575, #eeeeee, #616161); }
+.fx3-mug .vx-img { filter: drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
+/* Baseinas */
+.fx3-pool { background: repeating-linear-gradient(0deg, #e9eef2 0 9px, #cfd8dc 9px 10px), #e9eef2; }
+.fx3-pool::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 9px, rgba(120,140,150,.35) 9px 10px); pointer-events: none; }
+.fx3-water { position: absolute; border-radius: 10px; overflow: hidden;
+  background: linear-gradient(180deg, #5fe0f2 0%, #1fb4d8 45%, #0a84b8 100%); box-shadow: inset 0 0 18px rgba(0,40,80,.45), inset 0 0 0 3px rgba(255,255,255,.5); }
+.fx3-water::before, .fx3-water::after { content: ''; position: absolute; inset: -40%; opacity: .5; mix-blend-mode: screen;
+  background: radial-gradient(ellipse 8% 4% at 30% 40%, #fff, transparent 70%), radial-gradient(ellipse 7% 4% at 62% 30%, #fff, transparent 70%),
+              radial-gradient(ellipse 9% 4% at 52% 68%, #fff, transparent 70%), radial-gradient(ellipse 6% 3% at 22% 72%, #fff, transparent 70%),
+              radial-gradient(ellipse 7% 3% at 80% 55%, #fff, transparent 70%);
+  animation: fx2Caustic 3s ease-in-out infinite alternate; }
+.fx3-water::after { animation-duration: 4.2s; animation-direction: alternate-reverse; transform: rotate(40deg); }
+.fx3-lane { position: absolute; left: 0; right: 0; height: 5px; margin-top: -2.5px; z-index: 1;
+  background: repeating-linear-gradient(90deg, #e53935 0 10px, #fff 10px 20px, #1e88e5 20px 30px, #fff 30px 40px); box-shadow: 0 2px 2px rgba(0,0,0,.25); }
+.fx3-duck .vx-img, .fx3-ball .vx-img { filter: drop-shadow(0 4px 3px rgba(0,30,60,.4)); }
+.fx3-ring i { position: absolute; left: 0; top: 0; width: var(--d); height: var(--d); translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(circle, transparent 34%, rgba(255,255,255,.5) 36%, transparent 48%),
+              repeating-conic-gradient(#ff5252 0 45deg, #fff 45deg 90deg);
+  -webkit-mask: radial-gradient(circle, transparent 33%, #000 34%, #000 69%, transparent 70%); mask: radial-gradient(circle, transparent 33%, #000 34%, #000 69%, transparent 70%);
+  filter: drop-shadow(0 4px 3px rgba(0,30,60,.35)); }
+.fx3-bshadow::before { content: ''; position: absolute; left: 0; top: 0; width: var(--d); height: calc(var(--d) * .4); translate: -50% -50%; border-radius: 50%; background: rgba(0,40,70,.5); filter: blur(3px); }
+/* Elektra */
+.fx3-night { background: radial-gradient(ellipse at 50% 0%, #22305e 0%, #0e1430 55%, #05070f 100%); transition: background .4s; }
+.fx3-night::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(1px 1px at 20% 20%, #fff, transparent), radial-gradient(1px 1px at 70% 12%, #fff, transparent),
+  radial-gradient(1.2px 1.2px at 45% 30%, #cfe, transparent), radial-gradient(1px 1px at 85% 40%, #fff, transparent), radial-gradient(1px 1px at 10% 45%, #fff, transparent); opacity: .7; }
+.fx3-night::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 22%; background: linear-gradient(180deg, #1b2a1b, #0c140c); }
+.fx3-night.flash { animation: fx3Flash .22s ease-out; }
+@keyframes fx3Flash { 0% { box-shadow: inset 0 0 0 999px rgba(190,215,255,.55), 0 20px 44px rgba(0,0,0,.5); } 100% { box-shadow: inset 0 0 0 999px rgba(190,215,255,0), 0 20px 44px rgba(0,0,0,.5); } }
+.fx3-night.lit { background: radial-gradient(ellipse at 75% 35%, #5a5230 0%, #26284a 40%, #0a0d1c 100%); }
+.fx3-pole, .fx3-bulb { z-index: 2; }
+.fx3-pole .vx-img { translate: -50% -50%; filter: drop-shadow(0 6px 6px rgba(0,0,0,.6)); }
+.fx3-bulb .vx-img { translate: -50% -50%; filter: brightness(.55) saturate(.6); transition: filter .25s; }
+.fx3-night.lit .fx3-bulb .vx-img { filter: brightness(1.15) drop-shadow(0 0 12px rgba(255,230,120,.95)); }
+.fx3-bulb .fx3-bulb-glow { opacity: 0; transition: opacity .3s; }
+.fx3-night.lit .fx3-bulb .fx3-bulb-glow { opacity: 1; animation: fx3Hum .12s steps(2) infinite; }
+@keyframes fx3Hum { 50% { opacity: .8; } }
+.fx3-wire { position: absolute; height: 0; border-top: 2px solid #1b1b1b; border-radius: 0 0 50% 50%; z-index: 1; height: 14px; border-bottom: 2px solid #222; border-top: none; }
+/* Pirtis */
+.fx3-wood { background: repeating-linear-gradient(0deg, #c8915a 0 22px, #a6703f 22px 24px), #c8915a; }
+.fx3-wood::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 80%, rgba(255,120,30,.35), transparent 60%), linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.35)); }
+.fx3-stove, .fx3-bucket, .fx3-thermo { z-index: 2; }
+.fx3-bucket svg, .fx3-faucet svg, .fx3-umb svg { overflow: visible; }
+.fx3-stove .vx-img, .fx3-bucket .vx-img { translate: -50% -50%; filter: drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
+.fx3-stove .fx3-fire { animation: fx3Fire .25s ease-in-out infinite alternate; }
+.fx3-stove .fx3-stones-glow { animation: fx3Fire .6s ease-in-out infinite alternate; }
+@keyframes fx3Fire { from { opacity: .55; } to { opacity: 1; } }
+.fx3-thermo .vx-img { translate: -50% -50%; filter: drop-shadow(0 3px 3px rgba(0,0,0,.4)); }
+.fx3-deg { position: absolute; left: 0; top: 0; translate: -50% -50%; margin-top: 64%; white-space: nowrap; font: 900 13px/1 Arial, sans-serif; color: #fff;
+  background: #c62828; padding: 3px 6px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,.4); transform: translateY(var(--ty, 46px)); }
+/* Vanduo */
+.fx3-tiles { background-color: #f4f8fb; background-image: linear-gradient(180deg, rgba(255,255,255,0), rgba(0,40,80,.15)), repeating-linear-gradient(0deg, transparent 0 26px, #cfdbe5 26px 28px), repeating-linear-gradient(90deg, transparent 0 26px, #cfdbe5 26px 28px); }
+.fx3-tiles::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 18%; background: linear-gradient(180deg, #b0bec5, #78909c); }
+.fx3-faucet { z-index: 3; }
+.fx3-faucet .vx-img { translate: -50% -50%; filter: drop-shadow(0 6px 6px rgba(0,0,0,.35)); }
+.fx3-puddle { position: absolute; translate: -50% -50%; border-radius: 50%; z-index: 2;
+  background: radial-gradient(ellipse at 45% 40%, rgba(255,255,255,.8), rgba(120,200,255,.75) 30%, rgba(30,136,229,.7) 70%, rgba(30,136,229,0) 100%); }
+.fx3-drop { z-index: 4; }
+.fx3-drop i { position: absolute; left: 0; top: 0; width: var(--d); height: calc(var(--d) * 1.3); translate: -50% -50%; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 35% 60%, #ffffff 0%, #8fd8ff 22%, #1e88e5 70%, #0d47a1 100%); clip-path: polygon(50% 0, 85% 40%, 100% 62%, 92% 85%, 70% 100%, 30% 100%, 8% 85%, 0 62%, 15% 40%);
+  filter: drop-shadow(0 4px 4px rgba(0,40,80,.4)); }
+/* Paplūdimys */
+.fx3-beach { background: linear-gradient(180deg, #4fb3ff 0%, #9be0ff 40%, #d9f4ff 52%); }
+.fx3-sea { position: absolute; overflow: hidden; background: linear-gradient(180deg, #1e88e5 0%, #26c6da 60%, #80deea 100%); }
+.fx3-sea i { position: absolute; left: -10%; width: 120%; height: 14px; border-radius: 50%;
+  background: repeating-radial-gradient(ellipse at 50% 100%, transparent 0 8px, rgba(255,255,255,.75) 9px 11px, transparent 12px); background-size: 40px 14px;
+  animation: fx3Wave 2.4s linear infinite; opacity: .8; }
+.fx3-sea .w1 { top: 25%; } .fx3-sea .w2 { top: 52%; animation-duration: 3.1s; animation-direction: reverse; } .fx3-sea .w3 { bottom: -2px; height: 20px; background: linear-gradient(180deg, transparent, rgba(255,255,255,.85)); animation: fx3Surf 2.2s ease-in-out infinite alternate; }
+@keyframes fx3Wave { from { background-position: 0 0; } to { background-position: 40px 0; } }
+@keyframes fx3Surf { from { transform: translateY(4px); } to { transform: translateY(-4px); } }
+.fx3-sand { position: absolute; background: radial-gradient(circle at 20% 30%, rgba(0,0,0,.06) 1px, transparent 2px) 0 0/9px 9px, linear-gradient(180deg, #ffe0a3, #f2c27a); }
+.fx3-sun { z-index: 1; }
+.fx3-sun .vx-img { translate: -50% -50%; filter: drop-shadow(0 0 16px rgba(255,200,60,.9)); }
+.fx3-sun .fx3-rays { animation: fx3Spin 9s linear infinite; }
+@keyframes fx3Spin { to { transform: rotate(360deg); } }
+.fx3-umb { z-index: 3; }
+.fx3-umb .vx-img { translate: -50% -70%; filter: drop-shadow(0 6px 5px rgba(0,0,0,.3)); }
+.fx3-gull { z-index: 4; }
+.fx3-gull .fx3-wing { animation: fx3Flap .45s ease-in-out infinite alternate; }
+@keyframes fx3Flap { from { transform: scaleY(1); } to { transform: scaleY(-.55); } }
+/* Gimtadienis */
+.fx3-cake { z-index: 3; }
+.fx3-cake .vx-img { translate: -50% -60%; filter: drop-shadow(0 10px 10px rgba(0,0,0,.45)); }
+.fx3-cake .fx3-cflame { animation: fx2Flicker .16s ease-in-out infinite alternate; transform-box: fill-box; }
+.fx3-balloon { z-index: 2; }
+.fx3-balloon .vx-img { translate: -50% -30%; filter: drop-shadow(0 6px 6px rgba(0,0,0,.3)); }
+/* Taksi */
+.fx3-taxi { z-index: 3; }
+.fx3-taxi .vx-img { filter: drop-shadow(0 5px 4px rgba(0,0,0,.4)); }
+.taxi-car-body svg { display: block; width: 1.6em; height: auto; }
+/* Startas */
+.fx3-rays { position: absolute; z-index: 0; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(rgba(255,236,150,.55) 0 10deg, transparent 10deg 24deg);
+  -webkit-mask: radial-gradient(circle, #000 10%, rgba(0,0,0,.6) 40%, transparent 70%); mask: radial-gradient(circle, #000 10%, rgba(0,0,0,.6) 40%, transparent 70%); }
+.fx3-flag { z-index: 3; }
+.fx3-flag-in { position: absolute; left: 0; top: 0; translate: 0 -100%; filter: drop-shadow(0 6px 6px rgba(0,0,0,.4)); }
+.fx3-flag-in i { position: absolute; top: 0; height: 100%;
+  background-image: conic-gradient(#111 0 25%, #fff 0 50%, #111 0 75%, #fff 0); animation: fx3FlagWave 1s ease-in-out infinite alternate; }
+.fx3-flag-in i:nth-child(odd) { filter: brightness(.88); }
+@keyframes fx3FlagWave { from { transform: translateY(-6%) scaleY(1.02); } to { transform: translateY(6%) scaleY(.98); } }
+.fx3-flagpole { position: absolute; left: -3px; top: 0; width: 6px; translate: 0 -55%; border-radius: 3px; background: linear-gradient(90deg, #8d6e63, #ffe0b2, #6d4c41); }
+.fx3-bonus { z-index: 4; }
+.fx3-bonus span { position: absolute; left: 0; top: 0; translate: -50% -50%; white-space: nowrap; font: 900 var(--fs, 30px)/1 'Arial Black', Arial, sans-serif;
+  background: linear-gradient(180deg, #fffbe0 0%, #ffd54f 45%, #ff9800 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 1.5px #7a4a00; filter: drop-shadow(0 4px 4px rgba(0,0,0,.45)) drop-shadow(0 0 10px rgba(255,210,80,.8)); }
+/* Kalėjimas */
+.fx3-bars { position: absolute; z-index: 3; pointer-events: none; display: flex; justify-content: space-evenly; overflow: visible; }
+.fx3-bars i { display: block; width: 9%; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #4b5560, #f2f5f8 45%, #3b4450); box-shadow: 2px 0 4px rgba(0,0,0,.45); }
+.fx3-bars b { position: absolute; left: -2%; right: -2%; top: 30%; height: 7%; border-radius: 6px; background: linear-gradient(180deg, #f2f5f8, #5f6b78); box-shadow: 0 3px 4px rgba(0,0,0,.45); }
+.fx3-bars b::after { content: ''; position: absolute; left: -2%; right: -2%; top: 560%; height: 100%; border-radius: 6px; background: inherit; box-shadow: inherit; }
+.fx3-lock { z-index: 4; }
+.fx3-lock .vx-img { translate: -50% -50%; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+/* Stotys */
+.fx3-ground { position: absolute; left: 0; top: 0; transform-origin: 0 0; z-index: 0; border-radius: 6px; }
+.fx3-rails { background: linear-gradient(180deg, transparent 18%, #9ea7b0 18% 26%, transparent 26% 74%, #9ea7b0 74% 82%, transparent 82%),
+  repeating-linear-gradient(90deg, #6d4c41 0 7px, transparent 7px 16px), linear-gradient(180deg, #8d8270, #6f6656); box-shadow: 0 4px 8px rgba(0,0,0,.35); }
+.fx3-road { background: repeating-linear-gradient(90deg, #fff 0 16px, transparent 16px 32px) center/100% 3px no-repeat, linear-gradient(180deg, #4a5056, #2a2e33); box-shadow: 0 0 0 2px rgba(255,255,255,.45), 0 4px 8px rgba(0,0,0,.35); }
+.fx3-sea.fx3-ground, .fx3-ground.fx3-sea { border-radius: 40px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 22px, rgba(255,255,255,.25) 22px 26px, rgba(255,255,255,0) 26px 48px) 0 35%/100% 3px no-repeat, repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 30px, rgba(255,255,255,.2) 30px 34px, rgba(255,255,255,0) 34px 60px) 0 65%/100% 3px no-repeat, linear-gradient(180deg, rgba(30,136,229,0), rgba(30,136,229,.6) 25%, rgba(2,119,189,.65) 75%, rgba(2,119,189,0));
+  -webkit-mask: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.fx3-ground.fx3-sea i { display: none; }
+.fx3-veh { z-index: 2; }
+.fx3-veh .vx-img { translate: -50% -55%; filter: drop-shadow(0 6px 6px rgba(0,0,0,.4)); }
+.fx3-bob { position: absolute; left: 0; top: 0; }
+.fx3-bus .fx3-bob { animation: vxBounce .5s ease-in-out infinite; }
+.fx3-ship .fx3-bob { animation: fx3Rock 1.6s ease-in-out infinite alternate; }
+@keyframes fx3Rock { from { transform: rotate(-2deg) translateY(1px); } to { transform: rotate(2deg) translateY(-2px); } }
+.fx3-signal { z-index: 1; }
+.fx3-signal.train::before { content: ''; position: absolute; left: 0; top: 0; width: 4px; height: calc(var(--sz) * 3); translate: -50% 0; background: #555; }
+.fx3-signal i { position: absolute; left: 0; width: var(--sz); height: var(--sz); translate: -50% 0; border-radius: 50%; border: 2px solid #222; background: #333; }
+.fx3-signal i.r { top: calc(var(--sz) * -1.2); background: #ff1744; box-shadow: 0 0 10px #ff1744; }
+.fx3-signal i.g { top: 0; }
+.fx3-signal.go i.r { background: #4a1010; box-shadow: none; }
+.fx3-signal.go i.g { background: #00e676; box-shadow: 0 0 12px #00e676; }
+.fx3-signal.bus b { position: absolute; left: 0; top: 0; translate: -50% -80%; font-size: calc(var(--sz) * 2.2); filter: drop-shadow(0 3px 3px rgba(0,0,0,.4)); }
+/* Langelių SVG ikonėlės */
+.cell-bg-icon.has-svg { line-height: 0; }
+.cell-bg-icon .fx3-cell-svg { width: 1em; height: 1em; display: block; filter: drop-shadow(0 3px 3px rgba(0,0,0,.35)); }
+.fx3-cell-svg .fx3-gl1 { animation: fx3Gl 1.2s ease-in-out infinite alternate; }
+.fx3-cell-svg .fx3-gl2 { animation: fx3Gl 1.2s ease-in-out infinite alternate-reverse; }
+@keyframes fx3Gl { from { opacity: .15; } to { opacity: .9; } }
+/* Policijos švyturėlių šviesa */
+.pv-fx:not(.amb-fx) .fx2-amb-glow { position: absolute; left: -70px; top: -95px; width: 140px; height: 110px; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; animation: fx2AmbGlow .36s steps(1) infinite; }
 /* 💨 Dujų efektas */
 .cell.gas-host { animation: gasGlow 1.8s ease-out; }
 @keyframes gasGlow {
@@ -6577,3 +6891,341 @@ body.cmp #buildWindowPanel .bw-timer { margin: 3px 0 4px; gap: 5px; }
 body.cmp #buildWindowPanel .bw-timer .bw-left { font-size: 11px; min-width: 36px; }
 #buildWindowPanel.in-cell5 .bw-body { max-width: 340px; }
 #buildWindowPanel .bw-btns button { white-space: nowrap; }
+
+
+/* ============================================================
+   PRADINIS PUSLAPIS v2 – vienas pagrindinis veiksmas
+   ============================================================ */
+.landing-buttons-v2 { gap: 14px; margin-top: 24px; }
+.landing-play-btn {
+    width: 100%;
+    padding: 22px 30px;
+    border: none;
+    border-radius: 16px;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #1a3b1a;
+    background: linear-gradient(145deg, var(--gold), #f0c000);
+    box-shadow: 0 8px 22px rgba(255,215,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -3px 8px rgba(0,0,0,0.18);
+}
+.landing-play-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 30px rgba(255,215,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6); }
+.landing-play-btn:focus-visible, .landing-btn-ghost:focus-visible, .landing-links button:focus-visible, .menu-link-back:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.landing-hint { margin: -4px 0 8px !important; font-size: 13px !important; color: var(--tan); opacity: .85; }
+.landing-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.landing-btn-ghost {
+    padding: 13px 14px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(255,215,0,0.55);
+    background: rgba(0,0,0,0.18);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+}
+.landing-btn-ghost:hover { background: rgba(255,215,0,0.15); border-color: var(--gold); transform: translateY(-1px); }
+.landing-links {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 4px;
+    margin-top: 10px; padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+}
+.landing-links button {
+    background: none; border: none; padding: 6px 10px; border-radius: 8px;
+    color: var(--tan); font-size: 14px; font-weight: 600;
+}
+.landing-links button:hover { color: var(--gold); background: rgba(255,255,255,0.06); }
+
+.menu-btn-primary {
+    background: linear-gradient(145deg, var(--gold), #f0c000);
+    color: #1a3b1a;
+    border-color: var(--gold);
+    font-size: 18px;
+    padding: 18px 24px;
+}
+.menu-link-back {
+    background: none; border: none; margin-top: 6px; padding: 8px;
+    color: var(--tan); font-size: 15px; font-weight: 600;
+}
+.menu-link-back:hover { color: var(--gold); }
+@media (max-width: 420px) {
+    .landing-row { grid-template-columns: 1fr; }
+    .landing-play-btn { font-size: 21px; padding: 19px 20px; }
+}
+
+/* ============================================================
+   LAUKIMO KAMBARYS v2 – aiški hierarchija, vienas pagrindinis veiksmas
+   ============================================================ */
+.wr-card {
+    width: 100%; max-width: 1000px;
+    background: rgba(0,0,0,0.35);
+    border: 2px solid #c9a84c; border-radius: 20px;
+    padding: 24px 26px 0;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.wr-head { text-align: center; margin-bottom: 18px; }
+.wr-head h2 { color: #ffd700; font-size: 1.9em; margin: 0 0 4px; }
+.wr-head p { color: #d4b896; margin: 0; }
+.wr-grid {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 18px;
+    grid-template-rows: auto auto auto;
+}
+/* Subgrid: abu stulpeliai dalinasi tomis pačiomis eilėmis, todėl
+   „Žaidėjai“ ir „Pakviesk draugus“ visada vienodo aukščio */
+.wr-col {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: 1 / span 2;
+    gap: 16px;
+    min-width: 0;
+    align-content: start;
+}
+/* Chatas – per visą plotį po abiem stulpeliais */
+.wr-chat { grid-column: 1 / -1; grid-row: 3; }
+.wr-section {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 14px; padding: 14px;
+}
+.wr-section-head {
+    display: flex; justify-content: space-between; align-items: center;
+    color: #ffd700; font-weight: 800; font-size: 14px; letter-spacing: .3px;
+    margin-bottom: 12px;
+}
+.wr-count { color: #d4b896; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* Žaidėjų vietos */
+.wr-seats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.wr-seat {
+    display: flex; align-items: center; gap: 8px; min-width: 0;
+    padding: 4px 10px; min-height: 34px; border-radius: 10px;
+    background: rgba(255,255,255,0.08);
+    border-left: 4px solid var(--pc, #6c757d);
+    color: #fff; font-size: 13.5px; font-weight: 600;
+}
+.wr-seat.me { background: rgba(255,215,0,0.12); }
+.wr-seat-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wr-seat-name em { font-style: normal; color: #d4b896; font-weight: 500; font-size: 12px; }
+.wr-badge { flex-shrink: 0; font-size: 10.5px; font-weight: 800; padding: 3px 7px; border-radius: 20px; white-space: nowrap; }
+.wr-badge.host { background: rgba(255,215,0,0.18); color: #ffd700; }
+.wr-badge.bot  { background: rgba(139,92,246,0.22); color: #c4b5fd; }
+.wr-badge.ok   { background: rgba(46,204,113,0.2); color: #6ee7a0; }
+.wr-badge.wait { background: rgba(255,255,255,0.1); color: #d4b896; }
+.wr-kick {
+    flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25); background: transparent;
+    color: #d4b896; font-size: 12px; line-height: 1; padding: 0;
+}
+.wr-kick:hover { background: #dc3545; border-color: #dc3545; color: #fff; }
+.wr-seat.empty {
+    justify-content: center; border-left: none;
+    background: transparent; border: 1.5px dashed rgba(255,255,255,0.18);
+    color: rgba(212,184,150,0.6); font-size: 12.5px; font-weight: 600;
+}
+.wr-seat.empty.add {
+    cursor: pointer; color: #ffd700; border-color: rgba(255,215,0,0.55);
+    background: rgba(255,215,0,0.06); font-size: 13.5px; font-weight: 800; font-family: inherit;
+}
+.wr-seat.empty.add:hover { background: rgba(255,215,0,0.16); border-style: solid; }
+
+/* Figūrėlė – be raudono „klaidos“ įspėjimo */
+#piecePickerBox.piece-box { margin: 0; border: 1px solid rgba(201,168,76,0.35); border-radius: 14px; background: rgba(255,255,255,0.05); }
+#piecePickerBox.need, #piecePickerBox.chosen { border-color: rgba(201,168,76,0.35); box-shadow: none; }
+#piecePickerBox .piece-title,
+#piecePickerBox.need .piece-title,
+#piecePickerBox.chosen .piece-title {
+    background: none; animation: none; box-shadow: none;
+    color: #ffd700; text-align: left; padding: 0; margin-bottom: 12px;
+    font-size: 14px; font-weight: 800; letter-spacing: .3px; text-transform: none;
+}
+#piecePickerBox .piece-opt.active { border-color: #ffd700; background: rgba(255,215,0,0.16); box-shadow: 0 0 10px rgba(255,215,0,0.35); }
+
+/* Kvietimas */
+.wr-invite { text-align: center; }
+.wr-code-label { color: #d4b896; font-size: 12px; font-weight: 600; }
+.wr-code {
+    color: #fff; font-size: 34px; font-weight: 900; letter-spacing: 8px;
+    text-shadow: 0 0 20px rgba(255,215,0,0.45); margin: 2px 0 12px;
+    font-variant-numeric: tabular-nums;
+}
+.wr-btn-invite {
+    width: 100%; padding: 12px 14px; border-radius: 12px;
+    border: 1.5px solid #ffd700; background: rgba(255,215,0,0.12);
+    color: #ffd700; font-weight: 800; font-size: 15px; font-family: inherit;
+}
+.wr-btn-invite:hover, .wr-btn-invite.copied { background: #ffd700; color: #1a3b1a; }
+.wr-invite-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
+.wr-section { min-width: 0; }
+.wr-invite-foot > * { min-width: 0; }
+.wr-textbtn { flex-shrink: 0; white-space: nowrap; }
+.wr-link { color: #9bd9e8; font-size: 11px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wr-textbtn { background: none; border: none; padding: 4px 2px; color: #d4b896; font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; flex-shrink: 0; font-family: inherit; }
+.wr-textbtn:hover, .wr-textbtn.copied { color: #ffd700; }
+
+/* Nustatymai */
+.wr-settings .build-rule-box { margin: 0; padding: 0; border: none; background: none; box-shadow: none; }
+.wr-settings .build-rule-title { text-align: left; background: none; padding: 0; margin: 0 0 8px; font-size: 12.5px; font-weight: 700; color: #d4b896; letter-spacing: 0; }
+.wr-settings .build-rule-current {
+    border-radius: 10px; padding: 8px 10px; font-size: 12.5px;
+    background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.14); color: #f0e6d6;
+}
+.wr-settings .build-rule-current .brc-num { color: #ffd700; }
+.wr-settings .build-rule-current:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,215,0,0.5); }
+.wr-settings .build-rule-options { gap: 6px; }
+.wr-settings .build-rule-opt {
+    border-radius: 10px; padding: 8px 10px; font-size: 12.5px;
+    background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.14); color: #f0e6d6;
+}
+.wr-settings .build-rule-box.is-host .build-rule-opt:not(.active):hover { background: rgba(255,255,255,0.12); transform: none; }
+.wr-settings .build-rule-opt.active { background: rgba(255,215,0,0.16); border-color: #ffd700; color: #fff; box-shadow: none; }
+.wr-settings .build-rule-opt.active::after { color: #ffd700; }
+.wr-settings .build-rule-box:not(.is-host) .build-rule-opt:not(.active) { opacity: .5; }
+.wr-settings .build-rule-note { text-align: left; margin-top: 6px; }
+.wr-toggle {
+    display: flex; align-items: center; gap: 12px; margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+}
+.wr-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.wr-toggle-track { position: relative; flex-shrink: 0; width: 42px; height: 24px; border-radius: 12px; background: rgba(255,255,255,0.18); transition: background .2s; }
+.wr-toggle-dot { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.wr-toggle input:checked + .wr-toggle-track { background: #2ecc71; }
+.wr-toggle input:checked + .wr-toggle-track .wr-toggle-dot { transform: translateX(18px); }
+.wr-toggle input:focus-visible + .wr-toggle-track { outline: 2px solid #fff; outline-offset: 2px; }
+.wr-toggle input:disabled ~ * { opacity: .55; cursor: default; }
+.wr-toggle-text { display: flex; flex-direction: column; gap: 2px; }
+.wr-toggle-text strong { color: #fff; font-size: 13.5px; }
+.wr-toggle-text small { color: #d4b896; font-size: 11.5px; }
+
+/* Chat */
+.wr-chat-msgs { height: 86px; overflow-y: auto; font-size: 12px; color: #d4b896; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+.wr-chat-row { display: flex; gap: 6px; }
+.wr-chat-row input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid rgba(201,168,76,0.6); border-radius: 8px; background: rgba(255,255,255,0.08); color: #fff; font-size: 13px; outline: none; }
+.wr-chat-row input:focus { border-color: #ffd700; }
+.wr-chat-row button { padding: 8px 14px; background: rgba(255,215,0,0.15); color: #ffd700; border: 1px solid rgba(255,215,0,0.5); border-radius: 8px; }
+
+/* Veiksmų juosta – visada matoma apačioje */
+.wr-actions {
+    position: sticky; bottom: 0; z-index: 2;
+    margin: 20px -26px 0; padding: 14px 26px 16px;
+    display: grid; grid-template-columns: 1fr minmax(240px, 320px); grid-template-areas: "status btn" "status leave";
+    align-items: center; gap: 6px 18px;
+    background: linear-gradient(180deg, rgba(15,60,35,0.97), rgba(10,45,26,0.99));
+    border-top: 1px solid rgba(201,168,76,0.45);
+    border-radius: 0 0 18px 18px;
+}
+.wr-status { grid-area: status; color: #d4b896; font-size: 14px; line-height: 1.4; }
+.wr-status.good { color: #6ee7a0; }
+.wr-primary {
+    grid-area: btn; width: 100%; padding: 15px 20px; border: none; border-radius: 12px;
+    font-size: 17px; font-weight: 800; font-family: inherit; cursor: pointer;
+    background: linear-gradient(145deg, #ffd700, #f0c000); color: #1a3b1a;
+    box-shadow: 0 6px 18px rgba(255,215,0,0.3);
+}
+.wr-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(255,215,0,0.45); }
+.wr-primary:disabled { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.45); box-shadow: none; cursor: not-allowed; opacity: 1; }
+#readyBtn.wr-primary.is-ready { background: linear-gradient(145deg, #2ecc71, #1e9e50); color: #fff; box-shadow: none; }
+.wr-leave { grid-area: leave; justify-self: center; background: none; border: none; padding: 4px; color: #d4b896; font-size: 12.5px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; font-family: inherit; }
+.wr-leave:hover { color: #ff8a8a; }
+
+@media (max-width: 760px) {
+    .wr-card { padding: 18px 14px 0; }
+    /* Vienas stulpelis: subgrid nebereikalingas, kortelės stackinasi */
+    .wr-grid { grid-template-columns: 1fr; grid-template-rows: none; }
+    .wr-col { grid-row: auto; grid-template-rows: none; display: flex; flex-direction: column; gap: 16px; }
+    .wr-chat { grid-row: auto; }
+    .wr-actions { margin: 16px -14px 0; padding: 12px 14px 14px; grid-template-columns: 1fr; grid-template-areas: "status" "btn" "leave"; text-align: center; }
+}
+@media (max-width: 420px) { .wr-seats { grid-template-columns: 1fr; } .wr-code { font-size: 28px; letter-spacing: 6px; } }
+/* v2.1: ženkliukai – siauresnėse vietose tik ikona */
+.wr-badge { display: inline-flex; align-items: center; gap: 4px; }
+.wr-badge-ic { font-size: 11px; }
+.wr-seat:has(.wr-kick) .wr-badge-tx { display: none; }
+.wr-seat:has(.wr-kick) .wr-badge { padding: 3px 5px; }
+@media (max-width: 1000px) { .wr-badge-tx { display: none; } .wr-badge { padding: 3px 5px; } }
+/* Telefone nerodom visų tuščių vietų – užtenka „Pridėti botą“ ir skaitiklio */
+@media (max-width: 760px) { .wr-seat.empty:not(.add) { display: none; } }
+
+/* ============================================================
+   🧭 KAIRĖ PANELĖ: grupės (Žaidimas / ⚙️ Nustatymai / Bankrotas)
+   ============================================================ */
+#leftPanel .lp-group { display: flex; flex-direction: column; gap: 6px; width: 100%; flex: 0 0 auto; }
+#leftPanel .lp-game { gap: 6px; }
+#leftPanel .lp-settings { padding-top: 8px; border-top: 1px solid rgba(255,215,0,0.25); }
+.lp-settings-toggle {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    padding: 7px 8px; border-radius: 8px; cursor: pointer;
+    background: rgba(0,0,0,0.25); border: 1px solid rgba(255,215,0,0.45); color: var(--gold);
+    font: inherit; font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden;
+    transition: background .2s, border-color .2s;
+}
+.lp-settings-toggle:hover { background: rgba(255,215,0,0.14); border-color: var(--gold); }
+.lp-settings-toggle .lp-caret { transition: transform .25s ease; flex-shrink: 0; }
+.lp-settings.open .lp-settings-toggle .lp-caret { transform: rotate(180deg); }
+.lp-settings-body { display: none; flex-direction: column; gap: 6px; }
+.lp-settings.open .lp-settings-body { display: flex; animation: lpOpen .22s ease; }
+.lp-settings-body > div[style*="margin-top"] { margin-top: 0 !important; }
+@keyframes lpOpen { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+#leftPanel .lp-danger { margin-top: auto; padding-top: 10px; padding-bottom: 2px; border-top: 2px dashed rgba(255,107,107,0.45); border-bottom: none; }
+#leftPanel #infoBtn { padding: 7px 6px; font-size: 11px; }
+#leftPanel #modeBtn { background: linear-gradient(145deg, #17a2b8, #138496); color: #fff; border-color: #4dd0e1; }
+#leftPanel #modeBtn:hover { background: linear-gradient(145deg, #20c2db, #17a2b8); }
+body.cmp #leftPanel .lp-settings-toggle { font-size: 11px; padding: 6px 6px; }
+
+/* ❓ Pagalbos (gido) mygtukas antraštėje */
+#helpTourBtn {
+    padding: 3px 8px; border: 2px solid var(--gold); border-radius: 6px;
+    background: var(--green-deep); color: var(--gold); font-size: 12px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35); transition: all .2s; flex-shrink: 0;
+}
+#helpTourBtn:hover { background: var(--gold); color: var(--green-deep); transform: translateY(-1px) scale(1.05); }
+body.cmp #helpTourBtn { padding: 2px 6px !important; font-size: 11px !important; }
+#headerHelpWrap { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+body.cmp.cmp-portrait #headerHelpWrap { order: 9; }
+
+/* 💬 Patarimas */
+#uiTip {
+    position: fixed; z-index: 100001; left: 0; top: 0; max-width: 250px; pointer-events: none;
+    padding: 8px 11px; border-radius: 10px; font: 600 12.5px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: #fff7dc; background: linear-gradient(160deg, rgba(24,42,30,0.97), rgba(10,22,15,0.97));
+    border: 1px solid rgba(255,215,0,0.7); box-shadow: 0 10px 28px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3);
+    opacity: 0; transform: translateY(3px) scale(.98); transition: opacity .15s ease, transform .15s ease; white-space: normal;
+}
+#uiTip.show { opacity: 1; transform: none; }
+#uiTip::after { content: ''; position: absolute; width: 10px; height: 10px; background: inherit; border: inherit; border-radius: 2px; }
+#uiTip.side-top::after { left: var(--ax, 50%); bottom: -6px; margin-left: -5px; transform: rotate(45deg); border-top: none; border-left: none; }
+#uiTip.side-bottom::after { left: var(--ax, 50%); top: -6px; margin-left: -5px; transform: rotate(45deg); border-bottom: none; border-right: none; }
+#uiTip.side-right::after { top: var(--ay, 50%); left: -6px; margin-top: -5px; transform: rotate(45deg); border-top: none; border-right: none; }
+body.cmp #uiTip { font-size: 12px; max-width: 220px; }
+
+/* 🧭 Gidas */
+#uiTourHole {
+    position: fixed; z-index: 100002; pointer-events: none; border-radius: 12px; display: none;
+    box-shadow: 0 0 0 4px rgba(255,215,0,0.95), 0 0 0 9999px rgba(0,0,0,0.55), 0 0 30px 6px rgba(255,215,0,0.6);
+    transition: left .3s ease, top .3s ease, width .3s ease, height .3s ease;
+}
+#uiTourHole.show { display: block; animation: tourPulse 1.6s ease-in-out infinite; }
+@keyframes tourPulse { 50% { box-shadow: 0 0 0 6px rgba(255,215,0,0.7), 0 0 0 9999px rgba(0,0,0,0.55), 0 0 40px 10px rgba(255,215,0,0.45); } }
+#uiTourBubble {
+    position: fixed; z-index: 100003; display: none; width: 270px; max-width: calc(100vw - 16px); box-sizing: border-box;
+    padding: 14px 16px 12px; border-radius: 14px; color: #fff; font: 600 13.5px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(160deg, #1f6b3f, #0f3d24); border: 2px solid #ffd700; box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+}
+#uiTourBubble.show { display: block; animation: tourIn .25s ease; }
+@keyframes tourIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+#uiTourBubble::after { content: ''; position: absolute; width: 14px; height: 14px; background: #175a34; border: 2px solid #ffd700; border-radius: 3px; }
+#uiTourBubble.side-bottom::after { left: var(--ax, 50%); top: -9px; margin-left: -7px; transform: rotate(45deg); border-bottom: none; border-right: none; }
+#uiTourBubble.side-top::after { left: var(--ax, 50%); bottom: -9px; margin-left: -7px; transform: rotate(45deg); border-top: none; border-left: none; background: #10402a; }
+#uiTourBubble.side-right::after { top: var(--ay, 50%); left: -9px; margin-top: -7px; transform: rotate(45deg); border-top: none; border-right: none; }
+#uiTourBubble .tour-step { font-size: 11px; font-weight: 800; color: #ffd700; letter-spacing: .08em; margin-bottom: 4px; }
+#uiTourBubble .tour-text { margin-bottom: 12px; }
+#uiTourBubble .tour-btns { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+#uiTourBubble .tour-skip { background: none; border: none; color: #cfe8d6; font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 4px 2px; }
+#uiTourBubble .tour-next { background: linear-gradient(180deg, #ffe066, #f2b705); color: #1a1a1a; border: none; border-radius: 9px; padding: 7px 16px;
+    font: inherit; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #a07800, 0 6px 14px rgba(0,0,0,0.35); }
+#uiTourBubble .tour-next:hover { filter: brightness(1.06); transform: translateY(-1px); }
+/* Siaura kairė panelė (planšetė / telefonas be kompaktiško režimo) – nustatymuose tik ⚙️ */
+@media (max-width: 992px) {
+    body:not(.cmp) .lp-settings-toggle { justify-content: center; padding: 6px 2px; }
+    body:not(.cmp) .lp-settings-toggle span[data-i18n] { font-size: 0; }
+    body:not(.cmp) .lp-settings-toggle span[data-i18n]::before { content: '⚙️'; font-size: 14px; }
+    body:not(.cmp) #helpTourBtn { padding: 3px 7px; }
+}

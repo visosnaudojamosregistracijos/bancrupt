@@ -406,8 +406,9 @@ function canCreateGame(socket, isPublic) {
         }
     }
     
+    // Skaičiuojam tik stalus, kuriuose žaidėjas dar tikrai yra (neišėjęs, neišmestas)
     const playerGames = [...games.values()].filter(g => 
-        g.players.some(p => p.socketId === socket.id)
+        g.players.some(p => p.socketId === socket.id && !p.left && !p.kicked)
     ).length;
     if (playerGames >= LIMITS.MAX_GAMES_PER_PLAYER) {
         return { can: false, reason: L('srv.server.tu_jau_turi_aktyvius_stalus', { MAX_GAMES_PER_PLAYER: LIMITS.MAX_GAMES_PER_PLAYER }) };
@@ -415,7 +416,7 @@ function canCreateGame(socket, isPublic) {
     
     const ip = getClientIp(socket);
     const ipGames = [...games.values()].filter(g => 
-        g.players.some(p => p.ip === ip)
+        g.players.some(p => p.ip === ip && !p.left && !p.kicked)
     ).length;
     if (ipGames >= LIMITS.MAX_GAMES_PER_IP) {
         return { can: false, reason: L('srv.server.per_daug_stalu_is_tavo', { MAX_GAMES_PER_IP: LIMITS.MAX_GAMES_PER_IP }) };

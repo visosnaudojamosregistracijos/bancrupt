@@ -1,0 +1,19 @@
+{
+  "watch": ["."],
+  "ignore": [
+    "node_modules/",
+    "data/",
+    "public/*.js",
+    "public/*.css",
+    "public/*.html",
+    "public/css/",
+    "public/js/",
+    "public/images/",
+    "public/sounds/",
+    "public/assets/",
+    "public/bancrupt/"
+  ],
+  "ext": "js,json",
+  "delay": 300,
+  "verbose": false
+}

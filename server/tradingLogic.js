@@ -664,9 +664,13 @@ class TradingLogic {
         
         this.game.addMessage(L('srv.trade.pasiule', { player: player.name, target: target.name, offerNames, offerMoneyMsg, requestNames, requestMoneyMsg }));
 
-        if (target.isBot === true) {
+        // 🤖 Jei pasiūlymą siunčia BOTAS kitam botui – atsakymą apdorojam čia.
+        // Žmogaus → boto atvejį apdoroja server.js (jis ir išsiunčia tradeResponded).
+        // Anksčiau abu keliai suveikdavo dvigubai ir antrasis kvietimas grąžindavo
+        // klaidingą „Pasiūlymas nerastas“ jau įvykusio sandorio atveju.
+        if (target.isBot === true && player.isBot === true) {
             console.log(`🤖 ${target.name} yra botas – apdorojamas prekybos pasiūlymas`);
-            
+
             setTimeout(() => {
                 this.game.processBotTradeResponse(targetPlayerId, tradeId);
             }, 100);

@@ -265,3 +265,4 @@ class DemolishLogic {
 }
 
 module.exports = DemolishLogic;
+ 

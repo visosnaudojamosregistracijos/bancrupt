@@ -920,6 +920,11 @@ function applyBoardSettings(s) {
         const text = getTranslatedMessage(msg.key, msg.data || {});
         addJournal(text);
         showKeyPopup(msg.key, msg.data, text);
+        try {
+            if (msg.key === 'game.passedStart' || msg.key === 'game.landedOnStart') fxStart3(0, msg.data && msg.data.bonus);
+            else if (msg.key === 'game.leftJail' || msg.key === 'game.paidJailFine') fxJail3(16, 'out');
+            else if (msg.key === 'game.threeDoubles') fxJail3(16, 'in');
+        } catch (e) { console.warn('Efekto klaida', e); }
         return;
     }
         
@@ -1139,15 +1144,15 @@ socket.on('buyConfirmed', (data) => {
     const result = data.result || {};
         
         // 🆕 Garsai pagal lauką
-        if (fieldId === 2) { playSoundForPlayer('dujos', data.playerId); playGasEffect(2); }
+        if (fieldId === 2) { playSoundForPlayer('dujos', data.playerId); fxGas2(2); }
         else if (fieldId === 5) playSoundForPlayer('tax', data.playerId);    // VMI – garsas pagal langelį (veikia visomis kalbomis)
         else if (fieldId === 14) playSoundForPlayer('siuksles', data.playerId);
         else if (fieldId === 28) playSoundForPlayer('elektra', data.playerId);
         else if (fieldId === 44) playSoundForPlayer('vanduo', data.playerId);
-        else if (fieldId === 8) { playSoundForPlayer('air-port', data.playerId); playAirportEffect(8); }
-        else if (fieldId === 19) { playSoundForPlayer('train', data.playerId); playVehicleEffect(19); }
-        else if (fieldId === 37) { playSoundForPlayer('port', data.playerId); playVehicleEffect(37); }
-        else if (fieldId === 46) { playSoundForPlayer('bus', data.playerId); playVehicleEffect(46); }
+        else if (fieldId === 8) { playSoundForPlayer('air-port', data.playerId); fxAir2(8); }
+        else if (fieldId === 19) { playSoundForPlayer('train', data.playerId); fxVehicle3(19); }
+        else if (fieldId === 37) { playSoundForPlayer('port', data.playerId); fxVehicle3(37); }
+        else if (fieldId === 46) { playSoundForPlayer('bus', data.playerId); fxVehicle3(46); }
         else if (fieldId === 13) playSoundForPlayer('hospital', data.playerId);
         else if (fieldId === 21) playSoundForPlayer('latras', data.playerId, true);
         else if (fieldId === 32) playSoundForPlayer('pirtis', data.playerId);
@@ -1160,6 +1165,10 @@ socket.on('buyConfirmed', (data) => {
             if (result.action === 'go_to_jail' || data.inJail) playPoliceVanEffect(data.playerId);
         }
         else if (fieldId === 16) playSoundForPlayer('jail', data.playerId);
+        if (fieldId === 0 && typeof fxStart3 === 'function') {   // 🏁 sustojo ant START
+            const md = result.messageData || (result.result && result.result.messageData) || {};
+            try { fxStart3(0, md.bonus || 300); } catch (e) {}
+        }
         if (typeof playCellEffect === 'function') playCellEffect(fieldId);   // 🎬 langelio efektas (jei yra)
         
         // 🆕 NUOMOS GARSAI (mokėjimas arba gavimas)
@@ -1718,6 +1727,7 @@ function checkGameColors() {
 function showWaitingRoom() {
     const overlay = document.getElementById('waitingRoomOverlay');
     if (overlay) overlay.style.display = 'flex';
+    toggleBuildRuleList(false);      // naujas kambarys – taisyklių sąrašas suskleistas
     
     const codeEl = document.getElementById('waitingGameCode');
     if (codeEl && gameId) codeEl.textContent = gameId;
@@ -1731,6 +1741,7 @@ function showWaitingRoom() {
 function hideWaitingRoom() {
     const overlay = document.getElementById('waitingRoomOverlay');
     if (overlay) overlay.style.display = 'none';
+    toggleBuildRuleList(false);
     // Žaidimo ekranas atsidengė – pritaikyti telefono vaizdą / pasukimą / užuominą
     if (typeof applyCompactLayout === 'function') setTimeout(applyCompactLayout, 60);
 }
@@ -1745,6 +1756,44 @@ const BUILD_RULE_TEXT = {
 };
 let buildRuleTouched = {};      // gameId -> kūrėjas jau paspaudė taisyklę (mirksėjimas sustoja)
 let lastBuildRuleSeen = null;
+let buildRuleOpen = false;      // ar išskleistas 1/2/3 sąrašas (pagal nutylėjimą – suskleistas)
+
+// Išskleidžia / suskleidžia taisyklių sąrašą (1 ir 3 paslėptos, kol nepaprašai)
+function toggleBuildRuleList(force) {
+    buildRuleOpen = (typeof force === 'boolean') ? force : !buildRuleOpen;
+    const box = document.getElementById('buildRuleBox');
+    const btn = document.getElementById('buildRuleCurrent');
+    const list = document.getElementById('buildRuleOptions');
+    if (box) box.classList.toggle('open', buildRuleOpen);
+    if (btn) btn.setAttribute('aria-expanded', buildRuleOpen ? 'true' : 'false');
+    if (list) list.setAttribute('aria-hidden', buildRuleOpen ? 'false' : 'true');
+    if (buildRuleOpen && typeof playClickSound === 'function') playClickSound();
+}
+
+let buildRuleLeaveTimer = null;
+
+// Uždarymas: paspaudus šalia, paspaudus Escape, arba nukėlus pelę (desktop)
+function initBuildRulePopover() {
+    const box = document.getElementById('buildRuleBox');
+    if (!box || box.dataset.popoverReady === '1') return;
+    box.dataset.popoverReady = '1';
+    box.addEventListener('mouseenter', () => clearTimeout(buildRuleLeaveTimer));
+    box.addEventListener('mouseleave', () => {
+        if (!buildRuleOpen) return;
+        if (!window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
+        clearTimeout(buildRuleLeaveTimer);
+        buildRuleLeaveTimer = setTimeout(() => toggleBuildRuleList(false), 280);
+    });
+    document.addEventListener('click', (e) => {
+        if (!buildRuleOpen) return;
+        if (!box.contains(e.target)) toggleBuildRuleList(false);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (buildRuleOpen && (e.key === 'Escape' || e.key === 'Esc')) toggleBuildRuleList(false);
+    });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initBuildRulePopover);
+else initBuildRulePopover();
 
 function renderBuildRuleBox(state) {
     const box = document.getElementById('buildRuleBox');
@@ -1752,13 +1801,21 @@ function renderBuildRuleBox(state) {
     const rule = state.buildRule || 2;
     const isHost = state.hostId === playerId;
     const title = document.getElementById('buildRuleTitle');
-    const gid = state.gameId || gameId;
     box.classList.toggle('is-host', isHost);
-    box.classList.toggle('blink', isHost && !buildRuleTouched[gid]);
+    box.classList.remove('blink');
     if (title) {
-        title.textContent = isHost
-            ? tt('waiting.buildRuleTitleHost', '🏗️ STATYBŲ TAISYKLĖ – GALITE PAKEISTI')
-            : tt('waiting.buildRuleTitle', '🏗️ STATYBŲ TAISYKLĖ');
+        title.textContent = tt('waiting.buildRuleShort', '🏗️ Statybų taisyklė');
+    }
+    // Suskleista eilutė rodo, kuri taisyklė galioja
+    const curNum = document.getElementById('buildRuleCurrentNum');
+    const curText = document.getElementById('buildRuleCurrentText');
+    const curBtn = document.getElementById('buildRuleCurrent');
+    if (curNum) curNum.textContent = rule + '.';
+    if (curText) curText.textContent = buildRuleLabel(rule);
+    if (curBtn) {
+        const changeLabel = tt('waiting.buildRuleChange', 'Keisti taisyklę');
+        curBtn.title = changeLabel;
+        curBtn.setAttribute('aria-label', changeLabel + ': ' + buildRuleLabel(rule));
     }
     box.querySelectorAll('.build-rule-opt').forEach(btn => {
         const r = parseInt(btn.dataset.rule, 10);
@@ -1768,7 +1825,7 @@ function renderBuildRuleBox(state) {
     const note = document.getElementById('buildRuleNote');
     if (note) {
         note.textContent = isHost
-            ? tt('waiting.buildRuleNoteHost', 'Pasirinkta: {n}. Visiems žaidėjams galios ši taisyklė.').replace('{n}', rule)
+            ? tt('waiting.buildRuleNoteHost2', 'Galios visiems žaidėjams')
             : tt('waiting.buildRuleNoteGuest', 'Taisyklę pasirenka stalo kūrėjas 👑');
     }
     // Kitiems žaidėjams – trumpas mirktelėjimas, kai kūrėjas pakeičia taisyklę
@@ -1856,6 +1913,7 @@ function chooseBuildRule(rule) {
     if (typeof playClickSound === 'function') playClickSound();
     // Iš karto parodom pasirinkimą, serveris patvirtins
     renderBuildRuleBox(Object.assign({}, waitingRoomState, { buildRule: rule }));
+    toggleBuildRuleList(false);      // pasirinkus taisyklę – vėl suskleidžiam
     if (socket) socket.emit('setBuildRule', { rule });
 }
 
@@ -1871,81 +1929,70 @@ function updateWaitingRoom(state) {
     if (countEl) countEl.textContent = `${state.totalPlayers}/8`;
     
     const listEl = document.getElementById('waitingPlayersList');
+    const amHost = playerId === state.hostId;
     if (listEl) {
-        if (state.players.length === 0) {
-    listEl.innerHTML = `<p style="color:#d4b896; text-align:center;">${t('game.waiting.noPlayers')}</p>`;
-} else {
-            listEl.innerHTML = state.players.map(p => {
-                const isBot = p.isBot === true;
-                const botIcon = isBot ? '🤖 ' : '';
-                const botBadge = isBot ? `<span style="font-size:11px; color:#8b5cf6; font-weight:700; background:rgba(111,66,193,0.2); padding:2px 6px; border-radius:4px;">${t('game.waiting.bot')}</span>` : '';
-                
-                return `
-                    <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.08); border-radius:8px; ${p.ready ? 'border-left:3px solid #28a745;' : 'border-left:3px solid #6c757d;'} ${isBot ? 'border-left-color:#8b5cf6;' : ''}">
+        const MAX_SEATS = 8;
+        let html = state.players.map(p => {
+            const isBot = p.isBot === true;
+            const isMe = p.id === playerId;
+            let badge;
+            const mkBadge = (cls, icon, label) => `<span class="wr-badge ${cls}" title="${escapeHtml(label)}"><span class="wr-badge-ic">${icon}</span><span class="wr-badge-tx">${escapeHtml(label.replace(/^\S+\s/, ''))}</span></span>`;
+            if (p.isHost) badge = mkBadge('host', '👑', tt('waiting.hostBadge', '👑 Kūrėjas'));
+            else if (isBot) badge = mkBadge('bot', '🤖', t('game.waiting.bot'));
+            else if (p.ready) badge = mkBadge('ok', '✅', tt('waiting.readyBadge', '✅ Pasiruošęs'));
+            else badge = mkBadge('wait', '⏳', tt('waiting.notReadyBadge', '⏳ Ruošiasi'));
+            const kick = (amHost && !isMe && !p.isHost)
+                ? `<button type="button" class="wr-kick" title="${escapeHtml(tt('waiting.kick', 'Pašalinti'))}" onclick="kickPlayer(${p.id})">✕</button>` : '';
+            return `<div class="wr-seat${isMe ? ' me' : ''}" style="--pc:${safeColor(p.color)}">
                         <span class="wr-piece">${p.piece ? pieceSvg(p.piece, p.color) : '<span class="wr-nopiece">❔</span>'}</span>
-                        <span style="flex:1; color:#fff; font-weight:600; font-size:14px;">${botIcon}${p.name}${p.isHost ? ' 👑' : ''}${p.id === playerId ? ' ' + t('game.waiting.you') : ''}</span>
-                        ${botBadge}
-                        <span style="font-size:12px; font-weight:700; ${p.ready ? 'color:#28a745;' : 'color:#d4b896;'}">${p.ready ? '✅' : '⏳'}</span>
-                        ${!isBot && state.hostId === playerId && p.id !== playerId && !p.ready ? `
-                            <button onclick="kickPlayer(${p.id})" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">❌</button>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
+                        <span class="wr-seat-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}${isMe ? ' <em>' + escapeHtml(t('game.waiting.you')) + '</em>' : ''}</span>
+                        ${badge}${kick}
+                    </div>`;
+        }).join('');
+        const free = MAX_SEATS - state.players.length;
+        for (let i = 0; i < free; i++) {
+            if (amHost && i === 0 && !state.gameStarted) {
+                html += `<button type="button" class="wr-seat empty add" onclick="addBot()">${escapeHtml(tt('waiting.addBotSeat', '➕ Pridėti botą'))}</button>`;
+            } else {
+                html += `<div class="wr-seat empty">${escapeHtml(tt('waiting.emptySeat', 'Laisva vieta'))}</div>`;
+            }
         }
+        listEl.innerHTML = html;
     }
-    
+
+    // Kiek ne-kūrėjų dar nepasiruošę (kūrėjas pasiruošęs automatiškai)
+    const guestsNotReady = state.players.filter(p => !p.isHost && !p.ready).length;
     const statusEl = document.getElementById('waitingStatusText');
-if (statusEl) {
-    if (state.canStart) {
-        statusEl.innerHTML = t('game.waiting.allReady');
-    } else if (state.totalPlayers < 2) {
-        statusEl.innerHTML = t('game.waiting.needPlayers').replace('{count}', state.totalPlayers);
-    } else {
-        const notReady = state.totalPlayers - state.readyCount;
-        statusEl.innerHTML = t('game.waiting.notReady').replace('{count}', notReady);
+    if (statusEl) {
+        if (state.totalPlayers < 2) {
+            statusEl.innerHTML = amHost
+                ? tt('waiting.needPlayersHost', 'Pakviesk draugą arba pridėk botą – reikia bent 2 žaidėjų')
+                : t('game.waiting.needPlayers').replace('{count}', state.totalPlayers);
+        } else if (guestsNotReady > 0) {
+            statusEl.innerHTML = t('game.waiting.notReady').replace('{count}', guestsNotReady);
+        } else {
+            statusEl.innerHTML = amHost
+                ? tt('waiting.readyToStart', '🎉 Visi pasiruošę – galima pradėti!')
+                : tt('waiting.waitHost', '⏳ Laukiama, kol 👑 kūrėjas pradės žaidimą');
+        }
+        statusEl.classList.toggle('good', state.canStart === true);
     }
-}
-    
+
     const readyBtn = document.getElementById('readyBtn');
     const startBtn = document.getElementById('startGameBtn');
-    
     if (readyBtn) {
-    const me = state.players.find(p => p.id === playerId);
-    if (me && me.ready) {
-        readyBtn.innerHTML = t('game.waiting.readyBtnActive');
-        readyBtn.style.background = 'linear-gradient(145deg, #6c757d, #495057)';
-    } else {
-        readyBtn.innerHTML = t('game.waiting.readyBtn');
-        readyBtn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';
+        const me = state.players.find(p => p.id === playerId);
+        readyBtn.style.display = amHost ? 'none' : '';
+        const isReady = !!(me && me.ready);
+        readyBtn.classList.toggle('is-ready', isReady);
+        readyBtn.innerHTML = isReady ? t('game.waiting.readyBtnActive') : t('game.waiting.readyBtn');
     }
-}
-    
     if (startBtn) {
-    if (playerId === state.hostId) {
-        startBtn.style.display = 'block';
-        if (state.canStart) {
-            // 🆕 VISI PASIRUOŠĘ – ŽALIAS
-            startBtn.disabled = false;
-            startBtn.style.opacity = '1';
-            startBtn.style.background = 'linear-gradient(145deg, #28a745, #1e7e34)';   // 🆕 ŽALIA
-            startBtn.style.borderColor = '#4ade80';                                     // 🆕 ŽALIA
-            startBtn.style.boxShadow = '0 0 20px rgba(40, 167, 69, 0.5)';              // 🆕 ŠVYTĖJIMAS
-            startBtn.innerHTML = t('game.waiting.startBtn');
-        } else {
-            // 🆕 NE VISI PASIRUOŠĘ – RAUDONAS
-            startBtn.disabled = true;
-            startBtn.style.opacity = '0.7';
-            startBtn.style.background = 'linear-gradient(145deg, #dc3545, #a71d2a)';   // 🆕 RAUDONA
-            startBtn.style.borderColor = '#ff6b6b';                                     // 🆕 RAUDONA
-            startBtn.style.boxShadow = 'none';                                          // 🆕 Be švytėjimo
-            startBtn.innerHTML = t('game.waiting.startBtnDisabled');
-        }
-    } else {
-        startBtn.style.display = 'none';
+        startBtn.style.display = amHost ? '' : 'none';
+        startBtn.disabled = !state.canStart;
+        startBtn.innerHTML = tt('waiting.startPlain', '▶ Pradėti žaidimą');
     }
-}
-    
+
     renderBuildRuleBox(state);
     renderPiecePicker(state);
 
@@ -2046,27 +2093,93 @@ function kickPlayer(targetId) {
     socket.emit('kickPlayer', { targetId: targetId });
 }
 
+function flashCopied(btnId) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    if (!btn.dataset.label) btn.dataset.label = btn.innerHTML;
+    btn.innerHTML = tt('waiting.copied', '✅ Nukopijuota!');
+    btn.classList.add('copied');
+    clearTimeout(btn._t);
+    btn._t = setTimeout(() => { btn.innerHTML = btn.dataset.label; delete btn.dataset.label; btn.classList.remove('copied'); }, 1800);
+}
+
+// Patikimas kopijavimas: modernus API → atsarginis execCommand → rankinis prompt
+async function copyTextToClipboard(text) {
+    const value = String(text == null ? '' : text);
+    if (!value) return false;
+
+    // 1) Modernus Clipboard API (reikia fokusuoto dokumento ir leidimo)
+    try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            await navigator.clipboard.writeText(value);
+            console.log('📋 Nukopijuota (clipboard API):', value);
+            return true;
+        }
+    } catch (e) {
+        console.warn('⚠️ clipboard.writeText nepavyko:', e && e.message);
+    }
+
+    // 2) Atsarginis būdas – paslėptas textarea + execCommand('copy')
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = value;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        ta.style.left = '-1000px';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        const prevFocus = document.activeElement;
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, value.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (prevFocus && typeof prevFocus.focus === 'function') { try { prevFocus.focus(); } catch (e) {} }
+        if (ok) {
+            console.log('📋 Nukopijuota (execCommand):', value);
+            return true;
+        }
+        console.warn('⚠️ execCommand("copy") grąžino false');
+    } catch (e) {
+        console.warn('⚠️ execCommand("copy") nepavyko:', e && e.message);
+    }
+    return false;
+}
+
+// Paskutinė išeitis – parodyti tekstą, kad žaidėjas nusikopijuotų pats
+function manualCopyPrompt(labelKey, fallbackText, value) {
+    setTimeout(() => {
+        try {
+            const w = window.prompt(tf(labelKey, fallbackText), value);
+            if (w !== null) return;
+        } catch (e) {}
+        console.log('📋 Kopijuojamas tekstas:', value);
+    }, 30);
+}
+
 function copyGameCode() {
     if (!gameId) return;
-    
-    navigator.clipboard.writeText(gameId).then(() => {
-        playNotificationSound();
-        alert(tf('cli.kodas_nukopijuotas', { gameId }));
-    }).catch(() => {
-        prompt(tf('cli.nukopijuok_koda'), gameId);
+    copyTextToClipboard(gameId).then((ok) => {
+        if (ok) {
+            playNotificationSound();
+            flashCopied('copyCodeBtn');
+        } else {
+            manualCopyPrompt('cli.nukopijuok_koda', 'Nukopijuok kodą (Ctrl+C):', String(gameId));
+        }
     });
 }
 
 function copyGameLink() {
     if (!gameId) return;
-    
     const link = window.location.origin + '/?game=' + gameId;
-    
-    navigator.clipboard.writeText(link).then(() => {
-        playNotificationSound();
-        alert(tf('cli.nuoroda_nukopijuota'));
-    }).catch(() => {
-        prompt(tf('cli.nukopijuok_nuoroda'), link);
+    copyTextToClipboard(link).then((ok) => {
+        if (ok) {
+            playNotificationSound();
+            flashCopied('copyInviteBtn');
+        } else {
+            manualCopyPrompt('cli.nukopijuok_nuoroda', 'Nukopijuok nuorodą (Ctrl+C):', link);
+        }
     });
 }
 
@@ -3962,8 +4075,8 @@ function updateRotateUi() {
         btn.id = 'rotateBtn';
         btn.type = 'button';
         btn.onclick = toggleForceLandscape;
-        const fb = document.getElementById('feedbackBtn');
-        header.insertBefore(btn, fb || null);
+        const fb = document.getElementById('headerHelpWrap') || document.getElementById('feedbackBtn');
+        header.insertBefore(btn, (fb && fb.parentNode === header) ? fb : null);
     }
     const on = forceLandPref();
     // Rodom tik kai telefonas stačiai (arba pasukimas įjungtas – kad būtų kaip grąžinti)
@@ -4725,7 +4838,7 @@ function playVehicleEffect(fieldId) {
 // 🎬 LANGELIŲ EFEKTAI: ŠIUKŠLĖS, BASEINAS, ELEKTRA, PIRTIS, VANDUO, PAPLŪDIMYS, GIMTADIENIS
 // Visi piešiami sluoksnyje virš lentos (.fx-layer), todėl veikia 2D / 3D / 3D+.
 // ============================================================
-const CELL_FX = { 5: fxTax, 11: fxSpa, 14: fxGarbage, 24: fxPool, 28: fxElectric, 32: fxSauna, 44: fxWater, 48: fxBeach, 50: fxBirthday };
+const CELL_FX = { 5: fxTax2, 11: fxSpa2, 14: fxGarbage2, 16: (id) => fxJail3(id, 'visit'), 21: fxBar3, 24: fxPool3, 26: fxTaxi3, 28: fxElectric3, 32: fxSauna3, 44: fxWater3, 48: fxBeach3, 50: fxBirthday3 };
 function playCellEffect(fieldId) {
     const fn = CELL_FX[fieldId];
     if (fn) { try { fn(fieldId); } catch (e) { console.warn('Efekto klaida', fieldId, e); } }
@@ -5341,7 +5454,7 @@ function playPoliceVanEffect(pid) {
     board.appendChild(wrap);
     const van = document.createElement('div');
     van.className = 'fx-obj pv-van';
-    van.innerHTML = `<div class="pv-bob"><div class="vx-img" style="width:${vw}px;">${FX_SVG.police}</div></div>`;
+    van.innerHTML = `<div class="pv-bob"><div class="vx-img" style="width:${vw}px;">${FX3_SVG.police}</div></div><div class="fx2-amb-glow"></div>`;
     wrap.appendChild(van);
 
     // Figūrėlės kopija ant langelio 42 (tikroji paslepiama, kol veža)
@@ -5404,6 +5517,7 @@ function playPoliceVanEffect(pid) {
 
     // Švyturėliai mirksi važiuojant
     van.classList.add('siren');
+    setTimeout(() => { try { fxJail3(16, 'in'); } catch (e) {} }, tArrive + tLoad + tDrive - 200);
     setTimeout(() => {
         wrap.remove();
         window.animatingPlayers = (window.animatingPlayers || []).filter(id => id !== pid);
@@ -5455,7 +5569,7 @@ function playAmbulanceRide(pid, fromPos, toPos) {
         board.appendChild(wrap);
         const van = document.createElement('div');
         van.className = 'fx-obj pv-van siren';
-        van.innerHTML = `<div class="pv-bob"><div class="vx-img" style="width:${vw}px;">${FX_SVG.ambulance}</div></div>`;
+        van.innerHTML = `<div class="pv-bob"><div class="vx-img" style="width:${vw}px;">${FX2_SVG.ambulance}</div></div><div class="fx2-amb-glow"></div>`;
         wrap.appendChild(van);
         const pieceSize = Math.max(22, cellS * 0.42);
         const clone = document.createElement('div');
@@ -5522,10 +5636,12 @@ function playAmbulanceRide(pid, fromPos, toPos) {
                 const c = document.getElementById(`cell-${(fromPos + i) % total}`);
                 if (!c) return;
                 c.classList.add('highlight-yellow');
+                if ((fromPos + i) % total === 0 && i < steps && typeof fxStart3 === 'function') { try { fxStart3(0, 200); } catch (e) {} }
                 setTimeout(() => c.classList.remove('highlight-yellow'), i === steps ? 900 : stepMs + 60);
             }, tArrive + tLoad + (tDrive * i / steps) - stepMs * 0.5);
         }
         // Figūrėlė išlipo – žaidimas tęsiasi, greitoji dar nuvažiuoja
+        setTimeout(() => { try { fx2EcgAt(toPos); } catch (e) {} }, tArrive + tLoad + tDrive);
         setTimeout(() => resolve(), tArrive + tLoad + tDrive + tUnload);
         setTimeout(() => {
             wrap.remove();
@@ -5534,6 +5650,1903 @@ function playAmbulanceRide(pid, fromPos, toPos) {
         }, T + 60);
     });
 }
+
+// ============================================================
+// ✨ FX2 – IŠPŪDINGI LANGELIŲ EFEKTAI (canvas dalelės + detalūs SVG)
+// DUJOS #2 • VMI #5 • ORO UOSTAS #8 • SPA #11 • LIGONINĖ #13 • ŠIUKŠLĖS #14
+// ============================================================
+const FX2 = {
+    sprites: {},
+    // Minkštas apskritas „spraitas“ (radialinis gradientas) – dūmams, dujoms, garams, švytėjimui
+    sprite(key, stops, size = 96) {
+        if (this.sprites[key]) return this.sprites[key];
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = size;
+        const g = cv.getContext('2d');
+        const gr = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+        stops.forEach(([o, c]) => gr.addColorStop(o, c));
+        g.fillStyle = gr;
+        g.fillRect(0, 0, size, size);
+        this.sprites[key] = cv;
+        return cv;
+    },
+    // Debesėlis su netaisyklingais kraštais (keli persidengiantys burbulai) – tikroviškesni dūmai
+    cloud(key, rgb, size = 128) {
+        if (this.sprites[key]) return this.sprites[key];
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = size;
+        const g = cv.getContext('2d');
+        let seed = key.length * 97;
+        const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+        for (let i = 0; i < 9; i++) {
+            const x = size * (0.3 + rnd() * 0.4), y = size * (0.3 + rnd() * 0.4), r = size * (0.18 + rnd() * 0.2);
+            const gr = g.createRadialGradient(x, y, 0, x, y, r);
+            gr.addColorStop(0, `rgba(${rgb},0.55)`);
+            gr.addColorStop(0.6, `rgba(${rgb},0.25)`);
+            gr.addColorStop(1, `rgba(${rgb},0)`);
+            g.fillStyle = gr;
+            g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+        }
+        this.sprites[key] = cv;
+        return cv;
+    }
+};
+
+// Canvas sluoksnis aplink langelį: (0,0) – langelio centras. R – spindulys pikseliais.
+function fx2Canvas(c, R, z) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const cv = document.createElement('canvas');
+    cv.className = 'fx2-canvas';
+    cv.width = Math.round(2 * R * dpr);
+    cv.height = Math.round(2 * R * dpr);
+    cv.style.width = cv.style.height = (2 * R) + 'px';
+    cv.style.left = cv.style.top = (-R) + 'px';
+    if (z) cv.style.zIndex = z;
+    c.wrap.appendChild(cv);
+    const g = cv.getContext('2d');
+    const sys = {
+        cv, g, R, ps: [], time: 0, shakeAmp: 0,
+        add(p) {
+            p.age = 0;
+            p.vx = p.vx || 0; p.vy = p.vy || 0;
+            p.size = p.size || 20; p.grow = p.grow || 0;
+            p.rot = p.rot || 0; p.vr = p.vr || 0;
+            p.a0 = p.a0 === undefined ? 1 : p.a0;
+            p.fi = p.fi === undefined ? 0.15 : p.fi;
+            p.drag = p.drag === undefined ? 0 : p.drag;
+            this.ps.push(p);
+            return p;
+        },
+        run(T, onFrame, onEnd) {
+            let last = performance.now(); const t0 = last;
+            const step = (now) => {
+                if (!cv.isConnected) return;
+                const dt = Math.min(0.05, (now - last) / 1000); last = now;
+                const el = now - t0; this.time = el / 1000;
+                if (onFrame) onFrame(el, dt);
+                g.setTransform(1, 0, 0, 1, 0, 0);
+                g.clearRect(0, 0, cv.width, cv.height);
+                g.setTransform(dpr, 0, 0, dpr, R * dpr, R * dpr);
+                const keep = [];
+                for (const p of this.ps) {
+                    p.age += dt * 1000;
+                    if (p.age >= p.life) continue;
+                    const k = Math.pow(1 - p.drag, dt * 60);
+                    p.vx = p.vx * k + (p.gx || 0) * dt;
+                    p.vy = p.vy * k + (p.gy || 0) * dt;
+                    if (p.turb) {
+                        p.vx += Math.sin(p.y * 0.045 + this.time * 2.3 + (p.ph || 0)) * p.turb * dt;
+                        p.vy += Math.cos(p.x * 0.045 + this.time * 1.9 + (p.ph || 0)) * p.turb * dt;
+                    }
+                    p.x += p.vx * dt; p.y += p.vy * dt;
+                    p.size = Math.max(0.5, p.size + p.grow * dt);
+                    p.rot += p.vr * dt;
+                    const t = p.age / p.life;
+                    let a = t < p.fi ? t / p.fi : 1 - (t - p.fi) / (1 - p.fi);
+                    a = Math.max(0, a) * p.a0;
+                    if (a <= 0.003) { keep.push(p); continue; }
+                    g.globalAlpha = Math.min(1, a);
+                    g.globalCompositeOperation = p.blend || 'source-over';
+                    if (p.draw) { p.draw(g, p, t); }
+                    else if (p.rect) {
+                        g.save(); g.translate(p.x, p.y); g.rotate(p.rot);
+                        g.fillStyle = p.color; g.fillRect(-p.size / 2, -p.size * (p.ar || 0.6) / 2, p.size, p.size * (p.ar || 0.6));
+                        g.restore();
+                    } else if (p.line) {
+                        g.strokeStyle = p.color; g.lineWidth = p.lw || 1.5; g.lineCap = 'round';
+                        g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * (p.trail || 0.04), p.y - p.vy * (p.trail || 0.04)); g.stroke();
+                    } else {
+                        const s = p.size;
+                        if (p.rot) { g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.drawImage(p.sprite, -s / 2, -s / 2, s, s); g.restore(); }
+                        else g.drawImage(p.sprite, p.x - s / 2, p.y - s / 2, s, s);
+                    }
+                    keep.push(p);
+                }
+                g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+                this.ps = keep;
+                if (el < T || this.ps.length) requestAnimationFrame(step);
+                else { cv.remove(); if (onEnd) onEnd(); }
+            };
+            requestAnimationFrame(step);
+        }
+    };
+    return sys;
+}
+const fx2R = (a, b) => a + Math.random() * (b - a);
+function fx2Shake(el, amp = 6, ms = 380) {
+    if (!el || !el.animate) return;
+    const k = [];
+    for (let i = 0; i <= 8; i++) {
+        const f = 1 - i / 8;
+        k.push({ translate: `${(Math.random() - 0.5) * 2 * amp * f}px ${(Math.random() - 0.5) * 2 * amp * f}px` });
+    }
+    el.animate(k, { duration: ms });
+}
+
+// ---------- Detalūs SVG piešiniai ----------
+const FX2_SVG = {
+    // Pramoninis dujų vožtuvas su raudonu ratu ir manometru (žiūri į dešinę)
+    valve: `<svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="f2pipeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9edf1"/><stop offset=".35" stop-color="#a9b3bd"/><stop offset=".7" stop-color="#6d7884"/><stop offset="1" stop-color="#3e4750"/></linearGradient>
+        <linearGradient id="f2bodyG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe066"/><stop offset=".5" stop-color="#f2b705"/><stop offset="1" stop-color="#9c6b00"/></linearGradient>
+        <radialGradient id="f2wheelG" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ff8a80"/><stop offset=".5" stop-color="#e53935"/><stop offset="1" stop-color="#7f0000"/></radialGradient>
+        <radialGradient id="f2gaugeG" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd8dc"/></radialGradient>
+      </defs>
+      <rect x="0" y="66" width="160" height="26" rx="6" fill="url(#f2pipeG)"/>
+      <rect x="10" y="62" width="12" height="34" rx="3" fill="#59636d"/><rect x="138" y="62" width="12" height="34" rx="3" fill="#59636d"/>
+      <path d="M52 56 h56 l8 22 -8 22 h-56 l-8 -22z" fill="url(#f2bodyG)" stroke="#7a5300" stroke-width="2"/>
+      <rect x="74" y="34" width="12" height="24" fill="url(#f2pipeG)"/>
+      <g class="fx2-wheel" style="transform-origin:80px 30px">
+        <circle cx="80" cy="30" r="24" fill="none" stroke="url(#f2wheelG)" stroke-width="7"/>
+        <g stroke="#c62828" stroke-width="5" stroke-linecap="round"><line x1="80" y1="8" x2="80" y2="52"/><line x1="58" y1="30" x2="102" y2="30"/><line x1="64" y1="14" x2="96" y2="46"/><line x1="96" y1="14" x2="64" y2="46"/></g>
+        <circle cx="80" cy="30" r="7" fill="#b71c1c" stroke="#ffcdd2" stroke-width="1.5"/>
+      </g>
+      <g transform="translate(118 30)">
+        <circle r="17" fill="#455a64"/><circle r="14" fill="url(#f2gaugeG)"/>
+        <path d="M-10 6 A12 12 0 1 1 10 6" fill="none" stroke="#e53935" stroke-width="2.5" stroke-dasharray="6 3"/>
+        <g class="fx2-needle"><line x1="0" y1="0" x2="0" y2="-11" stroke="#212121" stroke-width="2" stroke-linecap="round"/></g>
+        <circle r="2.2" fill="#212121"/>
+      </g>
+      <rect x="114" y="46" width="8" height="22" fill="url(#f2pipeG)"/>
+      <text x="80" y="84" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="15" fill="#5c3d00">GAS</text>
+    </svg>`,
+
+    // Banknotas (bendras „euro“ stilius, ne tikras dizainas) su holograma
+    note: (c1, c2) => `<svg viewBox="0 0 120 64" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="f2nb${c1.slice(1)}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>
+        <pattern id="f2ng" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 L6 0" stroke="rgba(255,255,255,.18)" stroke-width="1"/></pattern>
+        <linearGradient id="f2holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd1ff"/><stop offset=".33" stop-color="#b3f5ff"/><stop offset=".66" stop-color="#fff3b0"/><stop offset="1" stop-color="#c8ffd4"/></linearGradient>
+      </defs>
+      <rect x="1" y="1" width="118" height="62" rx="5" fill="url(#f2nb${c1.slice(1)})" stroke="rgba(0,0,0,.35)"/>
+      <rect x="1" y="1" width="118" height="62" rx="5" fill="url(#f2ng)"/>
+      <rect x="6" y="6" width="108" height="52" rx="3" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1" stroke-dasharray="2 2"/>
+      <rect x="78" y="1" width="10" height="62" fill="url(#f2holo)" opacity=".85"/>
+      <circle cx="42" cy="32" r="15" fill="rgba(255,255,255,.22)" stroke="rgba(255,255,255,.6)"/>
+      <text x="42" y="39" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="20" fill="#fff">€</text>
+      <text x="10" y="18" font-family="Arial Black,Arial" font-weight="900" font-size="11" fill="#fff">100</text>
+      <text x="110" y="57" text-anchor="end" font-family="Arial Black,Arial" font-weight="900" font-size="13" fill="#fff">100</text>
+    </svg>`,
+
+    coin: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="f2cg" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#fff8d6"/><stop offset=".35" stop-color="#ffd54f"/><stop offset=".8" stop-color="#c79100"/><stop offset="1" stop-color="#8d6400"/></radialGradient></defs>
+      <circle cx="30" cy="30" r="28" fill="url(#f2cg)" stroke="#7a5600" stroke-width="2"/>
+      <circle cx="30" cy="30" r="21" fill="none" stroke="rgba(122,86,0,.55)" stroke-width="2"/>
+      <text x="30" y="39" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#8d6400">€</text>
+      <ellipse cx="22" cy="18" rx="9" ry="4" fill="rgba(255,255,255,.55)" transform="rotate(-30 22 18)"/>
+    </svg>`,
+
+    // Lėktuvas iš viršaus (nosis į viršų)
+    plane: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="f2fus" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b9c3cc"/><stop offset=".3" stop-color="#ffffff"/><stop offset=".7" stop-color="#f4f7fa"/><stop offset="1" stop-color="#9aa6b1"/></linearGradient>
+        <linearGradient id="f2wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f6f9"/><stop offset="1" stop-color="#aeb9c3"/></linearGradient>
+        <linearGradient id="f2eng" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6b7784"/><stop offset=".5" stop-color="#cfd6dd"/><stop offset="1" stop-color="#5a6570"/></linearGradient>
+      </defs>
+      <path d="M100 52 L190 108 L190 118 L104 100 Z" fill="url(#f2wing)" stroke="#8f9ba6" stroke-width="1"/>
+      <path d="M100 52 L10 108 L10 118 L96 100 Z" fill="url(#f2wing)" stroke="#8f9ba6" stroke-width="1"/>
+      <rect x="132" y="80" width="10" height="26" rx="4" fill="url(#f2eng)"/><rect x="58" y="80" width="10" height="26" rx="4" fill="url(#f2eng)"/>
+      <rect x="160" y="94" width="8" height="20" rx="3" fill="url(#f2eng)"/><rect x="32" y="94" width="8" height="20" rx="3" fill="url(#f2eng)"/>
+      <path d="M100 160 L140 182 L140 188 L102 178 Z" fill="url(#f2wing)" stroke="#8f9ba6"/>
+      <path d="M100 160 L60 182 L60 188 L98 178 Z" fill="url(#f2wing)" stroke="#8f9ba6"/>
+      <path d="M100 6 C110 14 112 30 112 50 L112 168 C112 182 106 194 100 198 C94 194 88 182 88 168 L88 50 C88 30 90 14 100 6 Z" fill="url(#f2fus)" stroke="#8f9ba6" stroke-width="1.2"/>
+      <path d="M93 22 Q100 14 107 22 L106 28 Q100 24 94 28 Z" fill="#2b3a4a"/>
+      <rect x="98.5" y="40" width="3" height="120" fill="#ffd23f"/><rect x="96" y="160" width="8" height="30" rx="3" fill="#1f7a46"/>
+      <g fill="#5f7f9c">${Array.from({ length: 14 }, (_, i) => `<rect x="90.5" y="${42 + i * 8}" width="2" height="3" rx="1"/><rect x="107.5" y="${42 + i * 8}" width="2" height="3" rx="1"/>`).join('')}</g>
+      <circle cx="10" cy="113" r="2.5" fill="#ff1744"/><circle cx="190" cy="113" r="2.5" fill="#00e676"/>
+    </svg>`,
+
+    lotus: `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="f2pet" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff6fa8"/><stop offset=".55" stop-color="#ffb3cf"/><stop offset="1" stop-color="#fff1f6"/></linearGradient>
+        <linearGradient id="f2pet2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e94f8b"/><stop offset="1" stop-color="#ffd3e4"/></linearGradient>
+        <radialGradient id="f2leaf" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#7ed957"/><stop offset=".7" stop-color="#2e9e4b"/><stop offset="1" stop-color="#1b6b33"/></radialGradient>
+        <radialGradient id="f2core" cx=".5" cy=".4" r=".6"><stop offset="0" stop-color="#fff7b0"/><stop offset="1" stop-color="#ffb300"/></radialGradient>
+      </defs>
+      <ellipse cx="100" cy="118" rx="84" ry="20" fill="url(#f2leaf)"/><path d="M100 118 L170 108" stroke="#1b6b33" stroke-width="2"/>
+      <g class="fx2-petals">
+        ${[-70, -48, -26, 26, 48, 70].map((a, i) => `<path class="fx2-petal p${i}" style="--a:${a}deg" d="M100 112 C80 86 86 52 100 34 C114 52 120 86 100 112 Z" fill="url(#f2pet2)" stroke="#d63c7a" stroke-width="1"/>`).join('')}
+        ${[-22, 0, 22].map((a, i) => `<path class="fx2-petal q${i}" style="--a:${a}deg" d="M100 112 C82 84 88 46 100 26 C112 46 118 84 100 112 Z" fill="url(#f2pet)" stroke="#e05790" stroke-width="1"/>`).join('')}
+      </g>
+      <ellipse cx="100" cy="98" rx="12" ry="7" fill="url(#f2core)"/>
+    </svg>`,
+
+    candle: `<svg viewBox="0 0 40 90" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="f2wax" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e9dccb"/><stop offset=".4" stop-color="#fffaf2"/><stop offset="1" stop-color="#d8c7b1"/></linearGradient>
+        <radialGradient id="f2flm" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#fff59d"/><stop offset=".75" stop-color="#ffa000"/><stop offset="1" stop-color="rgba(255,111,0,0)"/></radialGradient>
+      </defs>
+      <ellipse cx="20" cy="40" rx="18" ry="18" fill="rgba(255,200,90,.35)" class="fx2-halo"/>
+      <rect x="10" y="40" width="20" height="46" rx="4" fill="url(#f2wax)"/>
+      <ellipse cx="20" cy="40" rx="10" ry="3" fill="#f3e7d6"/>
+      <line x1="20" y1="40" x2="20" y2="33" stroke="#3e2723" stroke-width="1.6"/>
+      <path class="fx2-flame" d="M20 14 C26 24 26 30 20 35 C14 30 14 24 20 14 Z" fill="url(#f2flm)"/>
+    </svg>`,
+
+    ambulance: '<svg viewBox="0 0 120 64" xmlns="http://www.w3.org/2000/svg">' +
+        '<defs><linearGradient id="f2abody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#eef2f6"/><stop offset="1" stop-color="#c7d0d9"/></linearGradient>' +
+        '<linearGradient id="f2aglass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cfeeff"/><stop offset=".45" stop-color="#6fa8d6"/><stop offset="1" stop-color="#1e3d5c"/></linearGradient>' +
+        '<radialGradient id="f2awheel" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e0e0e0"/><stop offset=".35" stop-color="#9e9e9e"/><stop offset=".45" stop-color="#212121"/><stop offset="1" stop-color="#111"/></radialGradient></defs>' +
+        '<ellipse cx="60" cy="58" rx="54" ry="4" fill="rgba(0,0,0,.25)"/>' +
+        '<path d="M4 14 Q4 8 10 8 H76 V50 H4 Z" fill="url(#f2abody)" stroke="#aab4be"/>' +
+        '<path d="M76 16 H94 Q102 16 108 28 L114 36 Q116 40 116 44 V50 H76 Z" fill="url(#f2abody)" stroke="#aab4be"/>' +
+        '<path d="M80 20 H93 Q99 20 104 30 L106 34 H80 Z" fill="url(#f2aglass)"/><path d="M82 22 L90 22 L84 32 Z" fill="rgba(255,255,255,.55)"/>' +
+        '<rect x="4" y="34" width="112" height="6" fill="#ff5a1f"/><rect x="4" y="41" width="112" height="2.5" fill="#1565c0"/>' +
+        '<rect x="12" y="15" width="22" height="14" rx="2" fill="url(#f2aglass)"/>' +
+        '<g fill="#e53935"><rect x="48" y="12" width="8" height="22" rx="1.5"/><rect x="41" y="19" width="22" height="8" rx="1.5"/></g>' +
+        '<text x="40" y="48.5" font-family="Arial Black,Arial" font-size="5.6" font-weight="900" fill="#e53935" text-anchor="middle">GREITOJI</text>' +
+        '<rect class="pv-l1" x="14" y="2" width="12" height="6" rx="2" fill="#2979ff"/><rect class="pv-l2" x="28" y="2" width="12" height="6" rx="2" fill="#ff1744"/>' +
+        '<rect x="12" y="7" width="30" height="2" fill="#37474f"/>' +
+        '<circle cx="114" cy="40" r="2.4" fill="#fff59d"/><rect x="1" y="44" width="5" height="4" rx="1" fill="#c62828"/>' +
+        '<circle cx="24" cy="51" r="9" fill="url(#f2awheel)"/><circle cx="94" cy="51" r="9" fill="url(#f2awheel)"/>' +
+        '<circle cx="24" cy="51" r="2" fill="#bdbdbd"/><circle cx="94" cy="51" r="2" fill="#bdbdbd"/></svg>',
+
+    // Šiukšliavežė su hidrauline ranka (žiūri į dešinę)
+    truck: `<svg viewBox="0 0 170 90" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="f2tbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fd38d"/><stop offset=".55" stop-color="#2e9e5b"/><stop offset="1" stop-color="#1b6b3c"/></linearGradient>
+        <linearGradient id="f2tcab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd8dc"/></linearGradient>
+        <linearGradient id="f2tglass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9f2ff"/><stop offset=".5" stop-color="#6aa5d4"/><stop offset="1" stop-color="#1d3b58"/></linearGradient>
+        <radialGradient id="f2twheel" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e0e0e0"/><stop offset=".3" stop-color="#9e9e9e"/><stop offset=".42" stop-color="#262626"/><stop offset="1" stop-color="#0d0d0d"/></radialGradient>
+      </defs>
+      <ellipse cx="85" cy="84" rx="80" ry="5" fill="rgba(0,0,0,.25)"/>
+      <path d="M6 18 Q6 10 14 10 H112 V66 H6 Z" fill="url(#f2tbody)" stroke="#145a32" stroke-width="1.5"/>
+      <g stroke="rgba(0,0,0,.18)" stroke-width="3">${[22, 38, 54, 70, 86, 102].map(x => `<line x1="${x}" y1="14" x2="${x}" y2="62"/>`).join('')}</g>
+      <path d="M50 30 l7 -12 l7 12 z M44 40 h26" fill="none" stroke="#e8f5e9" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M112 22 H140 Q152 22 158 38 L164 48 V66 H112 Z" fill="url(#f2tcab)" stroke="#90a4ae" stroke-width="1.5"/>
+      <path d="M118 28 H139 Q148 28 152 40 H118 Z" fill="url(#f2tglass)"/><path d="M121 30 L130 30 L123 39 Z" fill="rgba(255,255,255,.5)"/>
+      <rect x="112" y="46" width="52" height="6" fill="#2e9e5b"/>
+      <rect class="tr-beacon" x="122" y="16" width="10" height="6" rx="2" fill="#ffb300"/>
+      <rect x="2" y="60" width="166" height="8" rx="3" fill="#37474f"/>
+      <circle cx="162" cy="56" r="2.4" fill="#fff59d"/>
+      <g><circle cx="30" cy="72" r="12" fill="url(#f2twheel)"/><circle cx="62" cy="72" r="12" fill="url(#f2twheel)"/><circle cx="138" cy="72" r="12" fill="url(#f2twheel)"/>
+         <circle cx="30" cy="72" r="3" fill="#bdbdbd"/><circle cx="62" cy="72" r="3" fill="#bdbdbd"/><circle cx="138" cy="72" r="3" fill="#bdbdbd"/></g>
+    </svg>`,
+
+    // Žalias konteineris su dangčiu (dangtis – atskiras elementas)
+    bin: `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="f2bing" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1f7a3f"/><stop offset=".45" stop-color="#43b86a"/><stop offset="1" stop-color="#155c2e"/></linearGradient></defs>
+      <path d="M8 18 H52 L48 74 H12 Z" fill="url(#f2bing)" stroke="#0f4421" stroke-width="1.5"/>
+      <g stroke="rgba(0,0,0,.18)" stroke-width="2.5"><line x1="20" y1="24" x2="21" y2="70"/><line x1="30" y1="24" x2="30" y2="70"/><line x1="40" y1="24" x2="39" y2="70"/></g>
+      <path d="M24 44 l6 -9 l6 9 z" fill="none" stroke="#e8f5e9" stroke-width="2"/>
+      <circle cx="14" cy="74" r="5" fill="#222"/><circle cx="46" cy="74" r="5" fill="#222"/>
+      <g class="bin-lid"><rect x="4" y="10" width="52" height="9" rx="3" fill="#2e9e5b" stroke="#0f4421" stroke-width="1.5"/><rect x="24" y="6" width="12" height="5" rx="2" fill="#155c2e"/></g>
+    </svg>`
+};
+
+// ============================================================
+// 💨 DUJOS #2 – vožtuvas atsisuka, šnypščia, iškyla dujų debesis, kibirkštis ir mėlyna liepsna
+// ============================================================
+function fxGas2(fieldId) {
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = 4600;
+    const vw = Math.max(110, c.L * 1.7);
+    const ox = c.ix * c.L * 0.95, oy = c.iy * c.L * 0.95;
+    const flip = c.ix < 0 || (c.ix === 0 && c.pc.x > c.board.offsetWidth / 2);
+    const valve = fxEl(c, 'fx-obj fx2-valve', `<div class="vx-img" style="width:${vw}px;${flip ? 'transform:scaleX(-1)' : ''}">${FX2_SVG.valve}</div>`);
+    valve.animate([
+        { transform: fxT(ox, oy + 18, 0, 0.3), opacity: 0 }, { transform: fxT(ox, oy, 0, 1.08), opacity: 1, offset: 0.07 },
+        { transform: fxT(ox, oy, 0, 1), offset: 0.11 }, { transform: fxT(ox, oy, 0, 1), opacity: 1, offset: 0.58 },
+        { transform: fxT(ox, oy - 6, flip ? 8 : -8, 1.04), offset: 0.61 }, { transform: fxT(ox, oy, 0, 1), opacity: 1, offset: 0.66 },
+        { transform: fxT(ox, oy, 0, 1), opacity: 1, offset: 0.86 }, { transform: fxT(ox, oy, 0, 0.8), opacity: 0 }
+    ], { duration: T, fill: 'forwards' });
+    const wheel = valve.querySelector('.fx2-wheel');
+    if (wheel) wheel.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(0deg)', offset: 0.09 }, { transform: 'rotate(-540deg)', offset: 0.3 }, { transform: 'rotate(-540deg)' }],
+        { duration: T, fill: 'forwards' });
+    const needle = valve.querySelector('.fx2-needle');
+    if (needle) needle.animate([{ transform: 'rotate(-120deg)' }, { transform: 'rotate(-120deg)', offset: 0.16 }, { transform: 'rotate(95deg)', offset: 0.4 },
+        { transform: 'rotate(70deg)', offset: 0.44 }, { transform: 'rotate(110deg)', offset: 0.5 }, { transform: 'rotate(85deg)', offset: 0.55 }, { transform: 'rotate(118deg)', offset: 0.6 }, { transform: 'rotate(-120deg)', offset: 0.75 }, { transform: 'rotate(-120deg)' }],
+        { duration: T, fill: 'forwards' });
+    // Įspėjimo ženklas
+    const warn = fxEl(c, 'fx-obj fx2-warn', '<span>⚠</span>');
+    warn.style.setProperty('--fs', Math.max(22, c.L * 0.42) + 'px');
+    const wx = ox + (flip ? 1 : -1) * vw * 0.38, wy = oy - vw * 0.42;
+    warn.animate([{ transform: fxT(wx, wy, 0, 0), opacity: 0 }, { transform: fxT(wx, wy, 0, 0), opacity: 0, offset: 0.2 }, { transform: fxT(wx, wy, -8, 1.2), opacity: 1, offset: 0.26 },
+        { transform: fxT(wx, wy, 8, 1), offset: 0.34 }, { transform: fxT(wx, wy, -6, 1.1), offset: 0.42 }, { transform: fxT(wx, wy, 6, 1), offset: 0.5 }, { transform: fxT(wx, wy, 0, 1), opacity: 1, offset: 0.58 }, { transform: fxT(wx, wy, 0, 0.5), opacity: 0, offset: 0.62 }, { opacity: 0 }],
+        { duration: T, fill: 'forwards' });
+
+    const R = Math.max(c.L * 3, 320);
+    const sys = fx2Canvas(c, R);
+    const nozX = ox + (flip ? -1 : 1) * vw * 0.5, nozY = oy + vw * 0.05;
+    let dirX = (flip ? -1 : 1) * 0.55 + c.ix * 0.8, dirY = c.iy * 0.9 + 0.15; const dl = Math.hypot(dirX, dirY) || 1; dirX /= dl; dirY /= dl;
+    const gasSpr = [FX2.cloud('gasA', '150,215,40'), FX2.cloud('gasB', '200,232,80'), FX2.cloud('gasC', '110,180,60')];
+    const smokeSpr = [FX2.cloud('smk', '55,58,55'), FX2.cloud('smk2', '95,95,90')];
+    const blue = FX2.sprite('blueFlame', [[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(160,230,255,.95)'], [0.55, 'rgba(40,120,255,.7)'], [1, 'rgba(20,40,255,0)']]);
+    const fire = FX2.sprite('fireBall', [[0, 'rgba(255,255,240,1)'], [0.2, 'rgba(255,230,120,.95)'], [0.5, 'rgba(255,120,20,.75)'], [0.8, 'rgba(200,30,0,.25)'], [1, 'rgba(120,0,0,0)']]);
+    const warmSpr = FX2.sprite('warmGlow', [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,220,120,.9)'], [1, 'rgba(255,120,0,0)']]);
+    let ignited = false;
+    const bx = nozX + dirX * c.L * 0.9, by = nozY + dirY * c.L * 0.9;   // debesies centras
+    sys.run(T, (el) => {
+        const t = el / T;
+        if (t > 0.16 && t < 0.6) {
+            for (let i = 0; i < 4; i++) sys.add({
+                x: nozX, y: nozY, vx: dirX * fx2R(420, 620) + fx2R(-50, 50), vy: dirY * fx2R(420, 620) + fx2R(-50, 50),
+                drag: 0.07, life: fx2R(260, 420), sprite: gasSpr[1], size: fx2R(8, 16), grow: 110, a0: 0.6, fi: 0.05
+            });
+            for (let i = 0; i < 3; i++) sys.add({
+                x: nozX + dirX * fx2R(20, 80), y: nozY + dirY * fx2R(20, 80), vx: dirX * fx2R(60, 190) + fx2R(-60, 60), vy: dirY * fx2R(60, 190) + fx2R(-80, 30),
+                drag: 0.025, turb: 160, ph: Math.random() * 6, life: fx2R(1600, 2600), sprite: gasSpr[i % 3], size: fx2R(40, 80), grow: fx2R(80, 140),
+                rot: Math.random() * 6, vr: fx2R(-0.7, 0.7), a0: fx2R(0.55, 0.85), fi: 0.15
+            });
+        }
+        if (!ignited && t > 0.58) {
+            ignited = true;
+            fx2Shake(c.board, 6, 450);
+            const flash = fxEl(c, 'fx2-flash'); flash.style.width = flash.style.height = (R * 1.5) + 'px';
+            flash.style.left = bx + 'px'; flash.style.top = by + 'px';
+            flash.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(.3)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.1 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.3)' }],
+                { duration: 1000, fill: 'forwards' });
+            // smūgio banga
+            sys.add({ x: bx, y: by, life: 650, a0: 0.9, fi: 0.02, size: 10, grow: R * 1.6,
+                draw: (g, p, tt) => { g.strokeStyle = 'rgba(255,240,200,.9)'; g.lineWidth = 6 * (1 - tt) + 1; g.beginPath(); g.arc(p.x, p.y, p.size, 0, Math.PI * 2); g.stroke(); } });
+            for (let i = 0; i < 110; i++) {
+                const a = Math.random() * Math.PI * 2, sp = fx2R(40, 330), isBlue = Math.random() < 0.35;
+                sys.add({ x: bx + fx2R(-c.L * 0.4, c.L * 0.4), y: by + fx2R(-c.L * 0.4, c.L * 0.4), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 50, gy: -180, drag: 0.06,
+                    life: fx2R(500, 1100), sprite: isBlue ? blue : fire, size: fx2R(30, 70), grow: 40, blend: 'lighter', a0: 0.85, fi: 0.06 });
+            }
+            for (let i = 0; i < 40; i++) {
+                const a = Math.random() * Math.PI * 2, sp = fx2R(200, 520);
+                sys.add({ x: bx, y: by, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80, gy: 520, drag: 0.02, life: fx2R(500, 1000),
+                    line: true, color: '#ffe9a8', lw: 2, trail: 0.05, blend: 'lighter', a0: 1, fi: 0.02 });
+            }
+            sys.add({ x: bx, y: by, life: 800, sprite: warmSpr, size: R * 0.8, grow: R * 0.6, blend: 'lighter', a0: 0.5, fi: 0.05 });
+            sys.ps.forEach(p => { if (p.sprite && gasSpr.includes(p.sprite)) { p.sprite = smokeSpr[Math.random() < 0.5 ? 0 : 1]; p.life = Math.min(p.life, p.age + fx2R(900, 1500)); p.a0 *= 0.55; p.gy = -40; } });
+        }
+        if (ignited && t > 0.62 && t < 0.88 && Math.random() < 0.6) {
+            sys.add({ x: bx + fx2R(-c.L * 0.5, c.L * 0.5), y: by + fx2R(-c.L * 0.3, c.L * 0.3), vx: fx2R(-15, 15), vy: fx2R(-70, -40), turb: 50, life: fx2R(1100, 1700),
+                sprite: smokeSpr[1], size: fx2R(40, 70), grow: 50, a0: 0.4, fi: 0.2 });
+        }
+        if (ignited && t < 0.82) {
+            sys.add({ x: nozX + fx2R(-4, 4), y: nozY, vx: dirX * fx2R(80, 140), vy: dirY * fx2R(80, 140) - 60, gy: -140, life: fx2R(260, 420),
+                sprite: blue, size: fx2R(18, 32), grow: -10, blend: 'lighter', a0: 0.95, fi: 0.1 });
+        }
+    });
+    fxEnd(c, T + 1700);
+}
+
+// ============================================================
+// 💰 VMI #5 – stiklinė mokėjimo kortelė, skaitiklis, banknotai/monetos į seifą, kvitas ir antspaudas
+// ============================================================
+function fxTax2(fieldId) {
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = 5200;
+    const field = gameState && gameState.board ? gameState.board[fieldId] : null;
+    const amount = fieldId === 5 ? 100 : ((field && field.cost) || 100);
+    const cw = Math.max(170, c.L * 1.35), ch = cw * 0.62;
+    const cx = c.ix * c.L * 0.75, cy = c.iy * c.L * 0.75;
+    const card = fxEl(c, 'fx2-card',
+        `<div class="fx2-card-top"><span class="fx2-logo">VMI</span><span class="fx2-chip"></span></div>` +
+        `<div class="fx2-card-lbl">${escapeHtml(tf('cli.vmi_tax_label'))}</div>` +
+        `<div class="fx2-card-amt">−€<span class="fx2-num">0</span></div>` +
+        `<div class="fx2-card-bar"><i></i></div>`);
+    card.style.width = cw + 'px'; card.style.height = ch + 'px';
+    card.style.left = (cx - cw / 2) + 'px'; card.style.top = (cy - ch / 2) + 'px';
+    card.style.setProperty('--fs', (cw / 9) + 'px');
+    card.animate([
+        { transform: 'perspective(600px) rotateX(55deg) scale(.4)', opacity: 0 }, { transform: 'perspective(600px) rotateX(-8deg) scale(1.04)', opacity: 1, offset: 0.1 },
+        { transform: 'perspective(600px) rotateX(0deg) scale(1)', offset: 0.14 }, { transform: 'perspective(600px) rotateX(0deg) scale(1)', opacity: 1, offset: 0.9 },
+        { transform: 'perspective(600px) rotateX(20deg) scale(.85)', opacity: 0 }
+    ], { duration: T, fill: 'forwards' });
+    const bar = card.querySelector('.fx2-card-bar i');
+    bar.animate([{ width: '0%' }, { width: '0%', offset: 0.15 }, { width: '100%', offset: 0.66 }, { width: '100%' }], { duration: T, fill: 'forwards' });
+    const num = card.querySelector('.fx2-num');
+    const t0 = performance.now();
+    const tick = () => {
+        if (!num.isConnected) return;
+        const k = Math.min(1, Math.max(0, ((performance.now() - t0) / T - 0.15) / 0.5));
+        num.textContent = Math.round(amount * (1 - Math.pow(1 - k, 3)));
+        if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+
+    // Banknotai ir monetos – spirale į kortelę
+    const nw = Math.max(46, c.s * 0.8);
+    const notes = [['#2aa198', '#11695f'], ['#3f7bd9', '#1d3f87'], ['#8e5bd6', '#4b2a86'], ['#2e9e5b', '#145a32']];
+    for (let i = 0; i < 12; i++) {
+        const isCoin = i % 3 === 2;
+        const [c1, c2] = notes[i % notes.length];
+        const el = fxEl(c, 'fx-obj fx2-money', isCoin
+            ? `<div class="vx-img fx2-spin" style="width:${nw * 0.42}px;animation-delay:${-i * 0.13}s">${FX2_SVG.coin}</div>`
+            : `<div class="vx-img fx2-flip" style="width:${nw}px;animation-delay:${-i * 0.17}s">${FX2_SVG.note(c1, c2)}</div>`);
+        const ang = fx2R(0, Math.PI * 2), rad = c.L * fx2R(0.9, 1.5);
+        const sx = cx + Math.cos(ang) * rad - c.ix * c.L * 0.6, sy = cy + Math.sin(ang) * rad * 0.7 - c.iy * c.L * 0.6;
+        const k = [];
+        for (let j = 0; j <= 10; j++) {
+            const f = j / 10, a = ang + f * 3.2, r = rad * (1 - f) * (1 - f * 0.1);
+            k.push({ transform: fxT(cx + Math.cos(a) * r * (1 - f) + (sx - cx) * (1 - f) * 0.2, cy + Math.sin(a) * r * 0.7 * (1 - f) + (sy - cy) * (1 - f) * 0.2, (1 - f) * 260, 1 - f * 0.75), opacity: j === 0 ? 0 : (j === 10 ? 0 : 1), offset: f });
+        }
+        el.animate(k, { duration: fx2R(1400, 1800), delay: 600 + i * 120, fill: 'both' });
+    }
+    // Kibirkštėlės (canvas)
+    const sys = fx2Canvas(c, Math.max(c.L * 2.2, 280), 3);
+    const sparkle = FX2.sprite('gold', [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,236,150,.9)'], [1, 'rgba(255,190,0,0)']], 48);
+    sys.run(T * 0.75, (el) => {
+        const t = el / T;
+        if (t > 0.16 && t < 0.62 && Math.random() < 0.7) {
+            const a = Math.random() * Math.PI * 2, r = fx2R(cw * 0.2, cw * 0.6);
+            sys.add({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.6, vx: -Math.cos(a) * 40, vy: -Math.sin(a) * 40, life: fx2R(500, 900), sprite: sparkle, size: fx2R(6, 16), grow: -6, blend: 'lighter', a0: 1, fi: 0.3 });
+        }
+    });
+    // Kvitas išlenda iš kortelės apačios
+    const rc = fxEl(c, 'fx2-receipt',
+        `<b>${escapeHtml(tf('cli.vmi_receipt'))}</b><span>VMI • ${new Date().toLocaleDateString()}</span>` +
+        `<span class="fx2-r-line">${escapeHtml(tf('cli.vmi_tax_label'))} <i>€${amount}.00</i></span>` +
+        `<span class="fx2-r-bar"></span>`);
+    const rw = cw * 0.72;
+    rc.style.width = rw + 'px'; rc.style.left = (cx - rw / 2) + 'px'; rc.style.top = (cy + ch / 2 - 6) + 'px';
+    rc.style.setProperty('--fs', (cw / 16) + 'px');
+    rc.animate([{ clipPath: 'inset(0 0 100% 0)', opacity: 1 }, { clipPath: 'inset(0 0 100% 0)', offset: 0.62 }, { clipPath: 'inset(0 0 0% 0)', offset: 0.76 }, { clipPath: 'inset(0 0 0% 0)', opacity: 1, offset: 0.9 }, { opacity: 0 }],
+        { duration: T, fill: 'forwards' });
+    // Antspaudas
+    const st = fxEl(c, 'fx-obj fx-stamp fx2-stamp', `<span>${escapeHtml(tf('cli.vmi_stamp'))}</span>`);
+    st.style.setProperty('--fs', Math.max(12, cw / 11) + 'px');
+    const sx2 = cx + cw * 0.18, sy2 = cy + ch * 0.12;
+    st.animate([
+        { transform: fxT(sx2, sy2, -16, 3), opacity: 0, offset: 0 }, { transform: fxT(sx2, sy2, -16, 3), opacity: 0, offset: 0.7 },
+        { transform: fxT(sx2, sy2, -16, 0.92), opacity: 1, offset: 0.76, easing: 'ease-in' }, { transform: fxT(sx2, sy2, -16, 1), opacity: 1, offset: 0.8 },
+        { transform: fxT(sx2, sy2, -16, 1), opacity: 1, offset: 0.92 }, { transform: fxT(sx2, sy2, -16, 1.05), opacity: 0 }
+    ], { duration: T, fill: 'forwards' });
+    setTimeout(() => {
+        fx2Shake(card, 5, 300);
+        const ink = FX2.sprite('ink', [[0, 'rgba(211,47,47,.9)'], [1, 'rgba(211,47,47,0)']], 32);
+        for (let i = 0; i < 14; i++) {
+            const a = Math.random() * Math.PI * 2, sp = fx2R(60, 180);
+            sys.add({ x: sx2, y: sy2, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 0.12, life: fx2R(300, 600), sprite: ink, size: fx2R(4, 9), a0: 0.9, fi: 0.05 });
+        }
+    }, T * 0.76);
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// ✈️ ORO UOSTAS #8 – kilimo takas su šviesomis, lėktuvas įsibėgėja, atsiplėšia, kyla pro debesis
+// ============================================================
+function fxAir2(fieldId) {
+    const cell = document.getElementById(`cell-${fieldId}`);
+    const board = document.getElementById('board');
+    if (!cell || !board || board.querySelector('.fx2-air')) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || typeof Element.prototype.animate !== 'function') { if (typeof playAirportEffect === 'function') playAirportEffect(fieldId); return; }
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    c.wrap.classList.add('fx2-air');
+    board.classList.add('ap-hide-' + fieldId);
+    const T = 5000;
+    const total = (gameState && gameState.board && gameState.board.length) || 52;
+    const nx = document.getElementById(`cell-${(fieldId + 1) % total}`) || cell;
+    const pc = c.pc, pn = fxBoardPoint(nx, board);
+    let rx = pn.x - pc.x, ry = pn.y - pc.y; const rl = Math.hypot(rx, ry) || 1; rx /= rl; ry /= rl;
+    let ux = rx * 0.5 + c.ix, uy = ry * 0.5 + c.iy; const ul = Math.hypot(ux, uy) || 1; ux /= ul; uy /= ul;
+    const deg = (x, y) => Math.atan2(y, x) * 180 / Math.PI + 90;   // lėktuvo nosis – į viršų
+    const aRun = deg(rx, ry), aFly = deg(ux, uy);
+    const pw = Math.max(95, c.L * 1.2);
+    const runLen = c.L * 1.6, flyLen = Math.max(board.offsetWidth, board.offsetHeight) * 0.62;
+    // Kilimo takas
+    const rw = fxEl(c, 'fx2-runway', '<i class="fx2-rw-lights"></i><i class="fx2-rw-center"></i>');
+    rw.style.width = (runLen + pw) + 'px'; rw.style.height = (pw * 0.62) + 'px';
+    rw.style.transform = `rotate(${Math.atan2(ry, rx) * 180 / Math.PI}deg) translate(${-pw * 0.5}px, -50%)`;
+    rw.animate([{ opacity: 0 }, { opacity: 1, offset: 0.08 }, { opacity: 1, offset: 0.55 }, { opacity: 0, offset: 0.75 }, { opacity: 0 }], { duration: T, fill: 'forwards' });
+    // Šešėlis ir lėktuvas
+    const shadow = fxEl(c, 'fx-obj fx2-plane-shadow', `<div class="vx-img" style="width:${pw}px">${FX2_SVG.plane}</div>`);
+    const plane = fxEl(c, 'fx-obj fx2-plane', `<div class="vx-img" style="width:${pw}px">${FX2_SVG.plane}</div>`);
+    const tx = rx * runLen, ty = ry * runLen;
+    const P = (f) => ({ x: tx + ux * flyLen * f, y: ty + uy * flyLen * f });
+    const tr = (x, y, a, s) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${a.toFixed(1)}deg) scale(${s.toFixed(3)})`;
+    const o1 = 0.12, o2 = 0.46;
+    plane.animate([
+        { transform: tr(0, 0, aRun, 0.95), opacity: 0, offset: 0 }, { transform: tr(0, 0, aRun, 0.95), opacity: 1, offset: 0.06 },
+        { transform: tr(tx * 0.08, ty * 0.08, aRun, 0.95), offset: o1, easing: 'ease-in' },
+        { transform: tr(tx, ty, aRun, 1.0), offset: o2, easing: 'ease-in' },
+        { transform: tr(P(0.25).x, P(0.25).y, aRun + (aFly - aRun) * 0.7, 1.35), offset: 0.62 },
+        { transform: tr(P(0.6).x, P(0.6).y, aFly, 1.9), opacity: 1, offset: 0.82 },
+        { transform: tr(P(1).x, P(1).y, aFly, 2.6), opacity: 0, offset: 1 }
+    ], { duration: T, fill: 'forwards' });
+    const so = (f) => c.s * 0.12 + f * c.s * 1.4;
+    shadow.animate([
+        { transform: tr(0, so(0), aRun, 0.95), opacity: 0, offset: 0 }, { transform: tr(0, so(0), aRun, 0.95), opacity: 0.45, offset: 0.06 },
+        { transform: tr(tx * 0.08, ty * 0.08 + so(0), aRun, 0.95), offset: o1, easing: 'ease-in' },
+        { transform: tr(tx, ty + so(0), aRun, 0.95), opacity: 0.45, offset: o2, easing: 'ease-in' },
+        { transform: tr(P(0.22).x, P(0.22).y + so(0.5), aRun + (aFly - aRun) * 0.7, 0.85), opacity: 0.25, offset: 0.62 },
+        { transform: tr(P(0.45).x, P(0.45).y + so(1), aFly, 0.7), opacity: 0, offset: 0.8 }, { opacity: 0, offset: 1 }
+    ], { duration: T, fill: 'forwards' });
+    // Dalelės: karštas oras, padangų dūmai, kondensacijos pėdsakai, debesys
+    const R = Math.max(board.offsetWidth, board.offsetHeight) * 0.75;
+    const sys = fx2Canvas(c, R, 5);
+    const haze = FX2.sprite('haze', [[0, 'rgba(255,240,220,.5)'], [1, 'rgba(255,240,220,0)']], 48);
+    const white = FX2.cloud('contrail', '255,255,255');
+    const tire = FX2.cloud('tire', '200,200,205');
+    let lifted = false;
+    sys.run(T, (el) => {
+        const t = el / T;
+        const m = new DOMMatrixReadOnly(getComputedStyle(plane).transform);
+        const px = m.e, py = m.f, sc = Math.hypot(m.a, m.b);
+        // variklių padėtys (lėktuvo koordinatėse: ±0.31 pločio, 0.0 aukščio nuo centro)
+        const ca = Math.atan2(m.b, m.a);
+        const ex = (side) => px + Math.cos(ca) * side * pw * 0.31 * sc - Math.sin(ca) * pw * 0.02 * sc;
+        const ey = (side) => py + Math.sin(ca) * side * pw * 0.31 * sc + Math.cos(ca) * pw * 0.02 * sc;
+        const back = { x: Math.sin(ca), y: -Math.cos(ca) };   // atgal nuo nosies
+        if (t > 0.08 && t < o2) {
+            for (const s of [-1, 1]) sys.add({ x: ex(s), y: ey(s), vx: -back.x * -160 + fx2R(-15, 15), vy: -back.y * -160 + fx2R(-15, 15), drag: 0.05,
+                life: fx2R(250, 400), sprite: haze, size: fx2R(10, 16), grow: 40, a0: 0.35, fi: 0.1 });
+        }
+        if (!lifted && t > o2 - 0.02) {
+            lifted = true;
+            for (let i = 0; i < 16; i++) sys.add({ x: px + fx2R(-10, 10), y: py + fx2R(-10, 10), vx: fx2R(-50, 50), vy: fx2R(-50, 50), drag: 0.04, turb: 40,
+                life: fx2R(700, 1200), sprite: tire, size: fx2R(18, 34), grow: 40, a0: 0.5 });
+        }
+        if (t > o2 && t < 0.92) {
+            for (const s of [-1, 1]) sys.add({ x: ex(s), y: ey(s), vx: back.x * 20, vy: back.y * 20, drag: 0.02, life: fx2R(900, 1400),
+                sprite: white, size: 6 * sc, grow: 22 * sc, a0: 0.55, fi: 0.05 });
+        }
+        if (t > 0.58 && t < 0.8 && Math.random() < 0.25) {
+            const along = fx2R(0.35, 0.8), side = fx2R(-1, 1) * c.L * 0.9;
+            const q = P(along);
+            sys.add({ x: q.x - uy * side, y: q.y + ux * side, vx: -ux * 30, vy: -uy * 30, life: fx2R(1400, 2000), sprite: white,
+                size: fx2R(60, 110), grow: 20, a0: 0.5, fi: 0.3, rot: Math.random() * 6, vr: 0.1 });
+        }
+    });
+    setTimeout(() => {
+        c.wrap.remove();
+        board.classList.remove('ap-hide-' + fieldId);
+        const ic = document.querySelector(`#cell-${fieldId} .cell-bg-icon`);
+        if (ic) { ic.classList.add('ap-return'); setTimeout(() => ic.classList.remove('ap-return'), 900); }
+    }, T + 1500);
+}
+
+// ============================================================
+// 🛀 SPA #11 – vandens ratilai, išsiskleidžiantis lotosas, žvakės, garai ir švelnūs blyksniai
+// ============================================================
+function fxSpa2(fieldId) {
+    const c = fxPrep(fieldId, true);
+    if (!c) return;
+    const T = 5600;
+    const cx = c.ix * c.L * 0.6, cy = c.iy * c.L * 0.6;
+    const pr = Math.max(80, c.L * 0.85);
+    const pool = fxEl(c, 'fx2-pool');
+    pool.style.width = pool.style.height = (pr * 2) + 'px';
+    pool.style.left = (cx - pr) + 'px'; pool.style.top = (cy - pr) + 'px';
+    pool.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.03)', opacity: 1, offset: 0.1 }, { transform: 'scale(1)', offset: 0.14 }, { transform: 'scale(1)', opacity: 1, offset: 0.88 }, { transform: 'scale(.9)', opacity: 0 }],
+        { duration: T, fill: 'forwards' });
+    const lw = pr * 1.75;
+    const lotus = fxEl(c, 'fx-obj fx2-lotus', `<div class="vx-img" style="width:${lw}px">${FX2_SVG.lotus}</div>`);
+    lotus.animate([{ transform: fxT(cx, cy + 20, 0, 0.3), opacity: 0 }, { transform: fxT(cx, cy + 20, 0, 0.3), opacity: 0, offset: 0.12 },
+        { transform: fxT(cx, cy - 4, 0, 1.02), opacity: 1, offset: 0.3 }, { transform: fxT(cx, cy, 0, 1), offset: 0.36 },
+        { transform: fxT(cx, cy - 3, 0, 1), opacity: 1, offset: 0.88 }, { transform: fxT(cx, cy, 0, 0.9), opacity: 0 }], { duration: T, fill: 'forwards' });
+    lotus.querySelectorAll('.fx2-petal').forEach((p, i) => {
+        const a = p.style.getPropertyValue('--a') || '0deg';
+        p.animate([{ transform: 'rotate(0deg) scaleY(.4)' }, { transform: 'rotate(0deg) scaleY(.4)', offset: 0.22 }, { transform: `rotate(${a}) scaleY(1)`, offset: 0.48 + i * 0.01 }, { transform: `rotate(${a}) scaleY(1)` }],
+            { duration: T, fill: 'forwards' });
+    });
+    const cs = Math.max(20, pr * 0.28);
+    [0, 1, 2].forEach(i => {
+        const a = -Math.PI / 2 + (i - 1) * 1.1 + Math.atan2(c.iy, c.ix) + Math.PI / 2;
+        const x = cx + Math.cos(a) * pr * 1.12, y = cy + Math.sin(a) * pr * 1.12;
+        const cd = fxEl(c, 'fx-obj fx2-candle', `<div class="vx-img" style="width:${cs}px">${FX2_SVG.candle}</div>`);
+        cd.animate([{ transform: fxT(x, y, 0, 0), opacity: 0 }, { transform: fxT(x, y, 0, 0), opacity: 0, offset: 0.1 + i * 0.05 }, { transform: fxT(x, y, 0, 1), opacity: 1, offset: 0.2 + i * 0.05 },
+            { transform: fxT(x, y, 0, 1), opacity: 1, offset: 0.88 }, { transform: fxT(x, y, 0, 0.8), opacity: 0 }], { duration: T, fill: 'forwards' });
+    });
+    const sys = fx2Canvas(c, Math.max(pr * 2.2, 260), 4);
+    const steam = FX2.cloud('steam', '255,255,255');
+    const bokeh = [FX2.sprite('bk1', [[0, 'rgba(255,255,255,.95)'], [0.4, 'rgba(255,200,230,.5)'], [1, 'rgba(255,170,210,0)']], 48),
+                   FX2.sprite('bk2', [[0, 'rgba(255,255,255,.95)'], [0.4, 'rgba(255,236,170,.5)'], [1, 'rgba(255,214,120,0)']], 48)];
+    let ripT = 0;
+    sys.run(T, (el, dt) => {
+        const t = el / T;
+        ripT += dt;
+        if (t > 0.1 && t < 0.85 && ripT > 0.55) {
+            ripT = 0;
+            sys.add({ x: cx + fx2R(-pr * 0.2, pr * 0.2), y: cy + fx2R(-pr * 0.2, pr * 0.2), life: 2000, a0: 0.8, fi: 0.05, size: 4, grow: pr * 0.7,
+                draw: (g, p) => { g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; g.beginPath(); g.ellipse(p.x, p.y, p.size, p.size * 0.92, 0, 0, Math.PI * 2); g.stroke(); } });
+        }
+        if (t > 0.2 && t < 0.85 && Math.random() < 0.5) {
+            sys.add({ x: cx + fx2R(-pr * 0.6, pr * 0.6), y: cy + fx2R(-pr * 0.3, pr * 0.4), vx: fx2R(-8, 8), vy: fx2R(-60, -35), turb: 50, ph: Math.random() * 6,
+                life: fx2R(1600, 2400), sprite: steam, size: fx2R(20, 38), grow: 28, a0: 0.32, fi: 0.3 });
+        }
+        if (t > 0.3 && t < 0.88 && Math.random() < 0.35) {
+            const a = Math.random() * Math.PI * 2, r = fx2R(pr * 0.4, pr * 1.3);
+            sys.add({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r, vy: fx2R(-25, -8), life: fx2R(900, 1500), sprite: bokeh[Math.random() < 0.5 ? 0 : 1],
+                size: fx2R(6, 18), blend: 'lighter', a0: 0.9, fi: 0.4 });
+        }
+    });
+    fxEnd(c, T + 400);
+}
+
+// ============================================================
+// 🗑️ ŠIUKŠLĖS #14 – musės, šiukšliavežė su švyturėliu, ranka pakelia konteinerį, šiukšlės ir dulkės
+// ============================================================
+function fxGarbage2(fieldId) {
+    const c = fxPrep(fieldId, true);
+    if (!c) return;
+    const T = 6200;
+    const ax = c.iy !== 0 ? 1 : 0, ay = c.ix !== 0 ? 1 : 0;
+    const vw = Math.max(110, Math.min(190, c.s * 2.1)), vh = vw * 90 / 170;
+    const bw = Math.max(34, c.s * 0.55), bh = bw * 80 / 60;
+    const binX = c.ix * c.L * 0.85, binY = c.iy * c.L * 0.85;
+    const far = c.L * 2.6;
+    const stopX = binX - ax * vw * 0.12, stopY = binY - ay * vw * 0.12;
+    const truck = fxEl(c, 'fx-obj fx2-truck', `<div class="vx-img" style="width:${vw}px;transform:${ay ? 'rotate(90deg) ' : ''}scaleX(-1)">${FX2_SVG.truck}</div>`);
+    const bin = fxEl(c, 'fx-obj fx2-bin', `<div class="vx-img" style="width:${bw}px">${FX2_SVG.bin}</div>`);
+    const lid = bin.querySelector('.bin-lid');
+    truck.animate([
+        { transform: fxT(stopX + ax * far, stopY + ay * far), opacity: 0, offset: 0 },
+        { transform: fxT(stopX + ax * far * 0.8, stopY + ay * far * 0.8), opacity: 1, offset: 0.12 },
+        { transform: fxT(stopX, stopY), offset: 0.34, easing: 'cubic-bezier(.2,.7,.3,1)' },
+        { transform: fxT(stopX, stopY), offset: 0.7 },
+        { transform: fxT(stopX - ax * far, stopY - ay * far), opacity: 1, offset: 0.95, easing: 'ease-in' },
+        { transform: fxT(stopX - ax * far * 1.1, stopY - ay * far * 1.1), opacity: 0, offset: 1 }
+    ], { duration: T, fill: 'forwards' });
+    // Konteineris: stovi → pakeliamas ant galo → apverčiamas (dangtis atsidaro) → grąžinamas
+    const backX = stopX + ax * vw * 0.36, backY = stopY + ay * vw * 0.36;
+    bin.animate([
+        { transform: fxT(binX, binY), offset: 0 }, { transform: fxT(binX, binY), offset: 0.36 },
+        { transform: fxT(backX * 0.5, backY * 0.5 - vh * 0.55, -25, 1), offset: 0.44, easing: 'ease-out' },
+        { transform: fxT(backX, backY - vh * 0.72, -165, 1), offset: 0.52 },
+        { transform: fxT(backX + 1.5, backY - vh * 0.72, -158, 1), offset: 0.55 }, { transform: fxT(backX - 1.5, backY - vh * 0.72, -168, 1), offset: 0.58 },
+        { transform: fxT(backX * 0.5, backY * 0.5 - vh * 0.5, -25, 1), offset: 0.64 },
+        { transform: fxT(binX, binY), offset: 0.7, easing: 'ease-in' }, { transform: fxT(binX, binY), offset: 1 }
+    ], { duration: T, fill: 'forwards' });
+    if (lid) lid.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(0deg)', offset: 0.46 }, { transform: 'rotate(-110deg)', offset: 0.52 }, { transform: 'rotate(-110deg)', offset: 0.6 }, { transform: 'rotate(0deg)', offset: 0.66 }, { transform: 'rotate(0deg)' }],
+        { duration: T, fill: 'forwards' });
+    // Švyturėlio šviesa
+    const beacon = fxEl(c, 'fx-obj fx2-beacon');
+    beacon.animate([{ transform: fxT(stopX + ax * far, stopY + ay * far - vh * 0.42) }, { transform: fxT(stopX, stopY - vh * 0.42), offset: 0.34 }, { transform: fxT(stopX, stopY - vh * 0.42), offset: 0.7 },
+        { transform: fxT(stopX - ax * far, stopY - ay * far - vh * 0.42), offset: 0.95 }], { duration: T, fill: 'forwards' });
+    const R = Math.max(c.L * 2.8, 320);
+    const sys = fx2Canvas(c, R, 4);
+    const dust = FX2.cloud('dust', '170,150,120');
+    const exhaust = FX2.cloud('exh', '60,60,60');
+    const trashCols = ['#e53935', '#fdd835', '#43a047', '#1e88e5', '#8d6e63', '#fafafa', '#ff7043', '#ab47bc'];
+    const flies = [0, 1, 2].map(i => ({ ph: i * 2.1, r: bw * (0.55 + i * 0.12) }));
+    let dumped = false;
+    sys.run(T, (el) => {
+        const t = el / T;
+        // musės aplink konteinerį
+        if (t < 0.4) {
+            flies.forEach(f => {
+                const a = sys.time * (5 + f.ph) + f.ph;
+                const x = binX + Math.cos(a) * f.r, y = binY - bh * 0.35 + Math.sin(a * 1.7) * f.r * 0.5;
+                sys.add({ x, y, life: 40, a0: 1, fi: 0.01, size: 3, draw: (g, p) => {
+                    g.fillStyle = '#111'; g.beginPath(); g.arc(p.x, p.y, 2.2, 0, Math.PI * 2); g.fill();
+                    g.fillStyle = 'rgba(200,220,255,.75)'; const w = Math.sin(sys.time * 80) * 2.5;
+                    g.beginPath(); g.ellipse(p.x - 2, p.y - 2, 2.6, 1.2 + Math.abs(w) * 0.3, -0.6, 0, Math.PI * 2); g.fill();
+                    g.beginPath(); g.ellipse(p.x + 2, p.y - 2, 2.6, 1.2 + Math.abs(w) * 0.3, 0.6, 0, Math.PI * 2); g.fill();
+                } });
+            });
+        }
+        // išmetamosios dujos
+        const m = new DOMMatrixReadOnly(getComputedStyle(truck).transform);
+        if (t > 0.1 && t < 0.97 && Math.random() < 0.55) {
+            sys.add({ x: m.e + ax * vw * 0.48, y: m.f + ay * vw * 0.48 + vh * 0.2, vx: ax * fx2R(20, 50), vy: fx2R(-50, -25), turb: 30, life: fx2R(700, 1100),
+                sprite: exhaust, size: fx2R(10, 18), grow: 26, a0: 0.45 });
+        }
+        // šiukšlės krenta į galą + dulkės
+        if (!dumped && t > 0.52) {
+            dumped = true;
+            for (let i = 0; i < 34; i++) sys.add({ x: backX + fx2R(-8, 8), y: backY - vh * 0.7, vx: fx2R(-60, 60), vy: fx2R(-60, 30), gy: 700, drag: 0.01, life: fx2R(450, 750),
+                rect: true, color: trashCols[i % trashCols.length], size: fx2R(4, 9), ar: fx2R(0.4, 1), rot: Math.random() * 6, vr: fx2R(-12, 12), a0: 1, fi: 0.02 });
+            for (let i = 0; i < 12; i++) sys.add({ x: backX + fx2R(-20, 20), y: backY - vh * 0.4, vx: fx2R(-50, 50), vy: fx2R(-40, 10), turb: 50, life: fx2R(900, 1400),
+                sprite: dust, size: fx2R(26, 44), grow: 40, a0: 0.5 });
+            fx2Shake(truck, 3, 300);
+        }
+    });
+    fxEnd(c, T + 1200);
+}
+
+// ============================================================
+// 🚑 Greitosios patobulinimai: švyturėlių šviesa ir EKG atvykus
+// ============================================================
+function fx2EcgAt(cellId) {
+    const board = document.getElementById('board');
+    const cell = document.getElementById(`cell-${cellId}`);
+    if (!board || !cell) return;
+    const p = fxBoardPoint(cell, board);
+    const w = Math.max(150, cell.offsetWidth * 2.2), h = w * 0.38;
+    const el = document.createElement('div');
+    el.className = 'fx-layer fx2-ecg';
+    el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
+    el.innerHTML = `<svg viewBox="0 0 200 76" style="width:${w}px;height:${h}px;left:${-w / 2}px;top:${-h / 2}px">
+        <rect x="1" y="1" width="198" height="74" rx="10" fill="rgba(5,20,12,.78)" stroke="rgba(0,255,140,.6)"/>
+        <g stroke="rgba(0,255,140,.12)">${Array.from({ length: 9 }, (_, i) => `<line x1="${i * 25}" y1="0" x2="${i * 25}" y2="76"/>`).join('')}${[19, 38, 57].map(y => `<line x1="0" y1="${y}" x2="200" y2="${y}"/>`).join('')}</g>
+        <path class="fx2-ecg-line" d="M8 40 H52 L58 34 L64 40 H74 L80 12 L88 66 L94 40 H112 L120 30 L128 40 H146 L152 14 L160 64 L166 40 H192" fill="none" stroke="#2bff9a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <text x="186" y="18" text-anchor="end" font-family="Arial Black,Arial" font-size="11" fill="#2bff9a">♥ 72</text></svg>`;
+    board.appendChild(el);
+    const line = el.querySelector('.fx2-ecg-line');
+    const L = line.getTotalLength ? line.getTotalLength() : 400;
+    line.style.strokeDasharray = L; line.style.strokeDashoffset = L;
+    line.animate([{ strokeDashoffset: L }, { strokeDashoffset: 0 }], { duration: 1100, fill: 'forwards' });
+    el.animate([{ opacity: 0, transform: 'translateZ(36px) scale(.6)' }, { opacity: 1, transform: 'translateZ(36px) scale(1)', offset: 0.12 }, { opacity: 1, transform: 'translateZ(36px) scale(1)', offset: 0.82 }, { opacity: 0, transform: 'translateZ(36px) scale(.95)' }],
+        { duration: 2200, fill: 'forwards' });
+    setTimeout(() => el.remove(), 2300);
+}
+
+
+// ============================================================
+// ✨ FX3 – IŠPŪDINGI EFEKTAI II: STOTYS, LATRŲ BARAS, BASEINAS, ELEKTRA, PIRTIS, VANDUO,
+// PAPLŪDIMYS, GIMTADIENIS, TAKSI, STARTAS, KALĖJIMAS
+// ============================================================
+
+// Scena kortelėje (apvalūs kampai, viskas viduje apkarpoma). stage – kortelės centras.
+function fx3Card(c, w, h, x, y, cls, T, z) {
+    const card = fxEl(c, 'fx3-card ' + (cls || ''));
+    card.style.width = w + 'px'; card.style.height = h + 'px';
+    card.style.left = (x - w / 2) + 'px'; card.style.top = (y - h / 2) + 'px';
+    if (z) card.style.zIndex = z;
+    const stage = document.createElement('div');
+    stage.className = 'fx3-stage';
+    card.appendChild(stage);
+    card.animate([
+        { transform: 'scale(.35) translateY(30px)', opacity: 0, filter: 'blur(6px)', easing: 'cubic-bezier(.2,.8,.2,1)' },
+        { transform: 'scale(1.04)', opacity: 1, filter: 'blur(0px)', offset: 0.07 },
+        { transform: 'scale(1)', offset: 0.1 },
+        { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)', offset: 0.9 },
+        { transform: 'scale(.9) translateY(-10px)', opacity: 0, filter: 'blur(4px)' }
+    ], { duration: T, fill: 'forwards' });
+    return { card, stage, w, h, wrap: stage };
+}
+function fx3El(parent, cls, html, css) {
+    const e = document.createElement('div');
+    e.className = cls;
+    if (html) e.innerHTML = html;
+    if (css) Object.keys(css).forEach(k => k.startsWith('--') ? e.style.setProperty(k, css[k]) : (e.style[k] = css[k]));
+    parent.appendChild(e);
+    return e;
+}
+// Kryptis į lentos centrą (tinka ir kampams)
+function fx3Inward(c) {
+    const dx = c.board.offsetWidth / 2 - c.pc.x, dy = c.board.offsetHeight / 2 - c.pc.y;
+    const l = Math.hypot(dx, dy) || 1;
+    return { x: dx / l, y: dy / l };
+}
+// Žaibas (vidurio taško poslinkis)
+function fx3Bolt(x1, y1, x2, y2, disp, out) {
+    out = out || [[x1, y1]];
+    if (disp < 3) { out.push([x2, y2]); return out; }
+    const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * disp, my = (y1 + y2) / 2 + (Math.random() - 0.5) * disp;
+    fx3Bolt(x1, y1, mx, my, disp / 2, out);
+    fx3Bolt(mx, my, x2, y2, disp / 2, out);
+    return out;
+}
+function fx3DrawBolt(g, pts, w, col) {
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    [[w * 6, 'rgba(120,170,255,.18)'], [w * 2.6, col || 'rgba(150,200,255,.7)'], [w, '#ffffff']].forEach(([lw, s]) => {
+        g.strokeStyle = s; g.lineWidth = lw; g.beginPath();
+        pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]));
+        g.stroke();
+    });
+}
+// Moneta (ovalas, sukasi)
+function fx3Coin(g, p) {
+    const w = Math.abs(Math.cos(p.rot)) * p.size, h = p.size;
+    const gr = g.createLinearGradient(p.x - w, p.y - h, p.x + w, p.y + h);
+    gr.addColorStop(0, '#fff6c8'); gr.addColorStop(0.4, '#ffd54f'); gr.addColorStop(1, '#b07d00');
+    g.fillStyle = gr;
+    g.beginPath(); g.ellipse(p.x, p.y, Math.max(0.8, w), h, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(120,80,0,.7)'; g.lineWidth = 1; g.stroke();
+}
+// Konfeti
+function fx3Confetti(sys, x, y, n, sp, cols) {
+    cols = cols || ['#ff4d6d', '#ffd23f', '#3ddc97', '#4cc9f0', '#b388ff', '#ff9f1c', '#ffffff'];
+    for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2, v = fx2R(sp * 0.3, sp);
+        sys.add({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - sp * 0.4, gy: 420, drag: 0.035, life: fx2R(1400, 2400),
+            rect: true, color: cols[i % cols.length], size: fx2R(5, 10), ar: fx2R(0.35, 0.7), rot: Math.random() * 6, vr: fx2R(-14, 14), a0: 1, fi: 0.02,
+            draw: (g, p) => {
+                g.save(); g.translate(p.x, p.y); g.rotate(p.rot);
+                g.scale(1, Math.abs(Math.cos(p.age / 90 + p.ph0)));
+                g.fillStyle = p.color; g.fillRect(-p.size / 2, -p.size * p.ar / 2, p.size, p.size * p.ar); g.restore();
+            }, ph0: Math.random() * 6 });
+    }
+}
+
+const FX3_SVG = {
+    train: `<svg viewBox="0 0 300 76" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3tb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e7ebf0"/><stop offset="1" stop-color="#aab4bf"/></linearGradient>
+      <linearGradient id="f3tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e3f5ff"/><stop offset=".45" stop-color="#5f93bd"/><stop offset="1" stop-color="#1b3047"/></linearGradient>
+      <radialGradient id="f3tw" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ddd"/><stop offset=".4" stop-color="#888"/><stop offset=".5" stop-color="#222"/><stop offset="1" stop-color="#111"/></radialGradient></defs>
+      <ellipse cx="150" cy="70" rx="148" ry="4" fill="rgba(0,0,0,.25)"/>
+      <path d="M232 12 L246 2 L262 12" stroke="#2d2d2d" stroke-width="2.2" fill="none"/><line x1="238" y1="2" x2="254" y2="2" stroke="#2d2d2d" stroke-width="2"/><rect x="238" y="11" width="22" height="3" fill="#555"/>
+      <rect x="2" y="14" width="94" height="46" rx="8" fill="url(#f3tb)" stroke="#8c96a0"/>
+      <rect x="100" y="14" width="94" height="46" rx="6" fill="url(#f3tb)" stroke="#8c96a0"/>
+      <path d="M198 14 H258 Q282 14 293 36 L298 51 Q298 60 289 60 H198 Z" fill="url(#f3tb)" stroke="#8c96a0"/>
+      <path d="M263 18 Q281 20 290 38 H260 Z" fill="url(#f3tg)"/><path d="M266 20 L275 21 L266 32 Z" fill="rgba(255,255,255,.6)"/>
+      <rect x="2" y="42" width="94" height="6" fill="#c8102e"/><rect x="100" y="42" width="94" height="6" fill="#c8102e"/><path d="M198 42 H297 L298 48 H198 Z" fill="#c8102e"/>
+      <rect x="2" y="48" width="94" height="2" fill="#ffcf33"/><rect x="100" y="48" width="94" height="2" fill="#ffcf33"/><rect x="198" y="48" width="99" height="2" fill="#ffcf33"/>
+      <g fill="url(#f3tg)">${[0, 1, 2].map(k => [0, 1, 2, 3, 4].map(i => (k === 2 && i > 2) ? '' : `<rect x="${k * 98 + 10 + i * 17}" y="22" width="12" height="13" rx="2"/>`).join('')).join('')}</g>
+      <g fill="rgba(255,255,255,.45)">${[0, 1, 2].map(k => [0, 1, 2, 3, 4].map(i => (k === 2 && i > 2) ? '' : `<path d="M${k * 98 + 11 + i * 17} 23 h5 l-5 6 z"/>`).join('')).join('')}</g>
+      <rect x="96" y="20" width="4" height="34" fill="#444"/><rect x="194" y="20" width="4" height="34" fill="#444"/>
+      <circle class="f3-head" cx="293" cy="52" r="3" fill="#fffbe0"/><rect x="2" y="52" width="4" height="4" rx="1" fill="#e53935"/>
+      <rect x="6" y="60" width="288" height="4" fill="#2f2f2f"/>
+      ${[16, 80, 114, 178, 212, 276].map(x => `<circle cx="${x}" cy="66" r="6.5" fill="url(#f3tw)"/>`).join('')}
+    </svg>`,
+
+    bus: `<svg viewBox="0 0 220 92" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3bb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fc3f7"/><stop offset=".5" stop-color="#0288d1"/><stop offset="1" stop-color="#01579b"/></linearGradient>
+      <linearGradient id="f3bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9f1ff"/><stop offset=".5" stop-color="#4a6f8c"/><stop offset="1" stop-color="#14212d"/></linearGradient>
+      <radialGradient id="f3bw" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e5e5e5"/><stop offset=".35" stop-color="#9e9e9e"/><stop offset=".45" stop-color="#222"/><stop offset="1" stop-color="#0d0d0d"/></radialGradient></defs>
+      <ellipse cx="110" cy="86" rx="104" ry="5" fill="rgba(0,0,0,.28)"/>
+      <path d="M6 16 Q6 6 16 6 H196 Q212 6 214 22 L216 70 Q216 76 210 76 H6 Z" fill="url(#f3bb)" stroke="#014a80"/>
+      <path d="M12 14 H188 V46 H12 Z" fill="url(#f3bg)"/>
+      <g stroke="#0277bd" stroke-width="3">${[46, 82, 118, 154].map(x => `<line x1="${x}" y1="14" x2="${x}" y2="46"/>`).join('')}</g>
+      <path d="M14 15 L40 15 L18 40 Z" fill="rgba(255,255,255,.35)"/><path d="M86 15 L110 15 L90 40 Z" fill="rgba(255,255,255,.25)"/>
+      <path d="M192 12 H204 Q210 12 211 22 L212 50 H192 Z" fill="url(#f3bg)"/>
+      <rect x="60" y="8" width="70" height="5" rx="1" fill="#111"/><text x="95" y="12.6" text-anchor="middle" font-family="Arial" font-weight="700" font-size="4.6" fill="#ffab00">BANCRUPT • CENTRAS</text>
+      <rect x="150" y="48" width="30" height="27" fill="#0277bd" stroke="#01579b"/><line x1="165" y1="48" x2="165" y2="75" stroke="#01579b" stroke-width="1.5"/>
+      <rect x="6" y="56" width="210" height="4" fill="#ffffff" opacity=".85"/>
+      <circle class="f3-head" cx="212" cy="64" r="3" fill="#fffde7"/><rect x="5" y="62" width="4" height="7" rx="1" fill="#e53935"/>
+      <rect x="4" y="74" width="214" height="6" rx="3" fill="#263238"/>
+      <circle cx="44" cy="78" r="11" fill="url(#f3bw)"/><circle cx="176" cy="78" r="11" fill="url(#f3bw)"/>
+      <circle cx="44" cy="78" r="3" fill="#ccc"/><circle cx="176" cy="78" r="3" fill="#ccc"/>
+    </svg>`,
+
+    ship: `<svg viewBox="0 0 240 110" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3sh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27466e"/><stop offset="1" stop-color="#0d1b2e"/></linearGradient>
+      <linearGradient id="f3ss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d3dbe3"/></linearGradient>
+      <linearGradient id="f3sf" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b71c1c"/><stop offset=".5" stop-color="#ef5350"/><stop offset="1" stop-color="#b71c1c"/></linearGradient></defs>
+      <line x1="128" y1="6" x2="128" y2="34" stroke="#555" stroke-width="2"/><rect x="120" y="10" width="16" height="3" fill="#555"/>
+      <path d="M80 18 H100 L104 44 H76 Z" fill="url(#f3sf)"/><rect x="77" y="18" width="26" height="6" fill="#212121"/><rect x="78" y="30" width="24" height="4" fill="#fff"/>
+      <path d="M40 40 H190 L184 30 H60 Z" fill="url(#f3ss)" stroke="#9aa6b1"/>
+      <rect x="146" y="22" width="34" height="10" rx="2" fill="url(#f3ss)" stroke="#9aa6b1"/><rect x="149" y="24" width="28" height="4" rx="1" fill="#1d3b58"/>
+      <path d="M28 66 H212 L206 50 H34 Z" fill="url(#f3ss)" stroke="#9aa6b1"/>
+      <g fill="#2f5d86">${Array.from({ length: 16 }, (_, i) => `<rect x="${42 + i * 10.4}" y="54" width="6" height="5" rx="1.5"/>`).join('')}${Array.from({ length: 11 }, (_, i) => `<rect x="${66 + i * 10.4}" y="33" width="6" height="4" rx="1.5"/>`).join('')}</g>
+      <g fill="#ff7a00"><rect x="58" y="44" width="18" height="6" rx="3"/><rect x="110" y="44" width="18" height="6" rx="3"/><rect x="162" y="44" width="18" height="6" rx="3"/></g>
+      <path d="M6 66 H234 L216 96 H26 Z" fill="url(#f3sh)"/>
+      <path d="M14 82 H226 L216 96 H26 Z" fill="#c62828"/><rect x="6" y="64" width="228" height="3" fill="#fff"/>
+      <text x="200" y="78" text-anchor="end" font-family="Arial Black,Arial" font-weight="900" font-size="8" fill="#fff" opacity=".85">KLAIPĖDA</text>
+    </svg>`,
+
+    police: '<svg viewBox="0 0 120 64" xmlns="http://www.w3.org/2000/svg">' +
+        '<defs><linearGradient id="f3pb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#e9eef4"/><stop offset="1" stop-color="#b9c4cf"/></linearGradient>' +
+        '<linearGradient id="f3pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cfe9ff"/><stop offset=".45" stop-color="#4f7da6"/><stop offset="1" stop-color="#14263a"/></linearGradient>' +
+        '<radialGradient id="f3pw" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e0e0e0"/><stop offset=".35" stop-color="#9e9e9e"/><stop offset=".45" stop-color="#212121"/><stop offset="1" stop-color="#111"/></radialGradient></defs>' +
+        '<ellipse cx="60" cy="58" rx="54" ry="4" fill="rgba(0,0,0,.25)"/>' +
+        '<path d="M4 14 Q4 8 10 8 H82 Q92 8 99 18 L112 32 Q116 36 116 42 V50 H4 Z" fill="url(#f3pb)" stroke="#9aa6b1"/>' +
+        '<path d="M84 13 H90 Q96 13 101 20 L108 30 H84 Z" fill="url(#f3pg)"/><path d="M86 15 L92 15 L87 24 Z" fill="rgba(255,255,255,.55)"/>' +
+        '<rect x="10" y="14" width="18" height="14" rx="2" fill="#1c2733"/><rect x="32" y="14" width="18" height="14" rx="2" fill="#1c2733"/><rect x="56" y="14" width="22" height="14" rx="2" fill="url(#f3pg)"/>' +
+        '<g stroke="#aab" stroke-width="1.4">' + [13.5, 18, 22.5, 35.5, 40, 44.5].map(x => `<line x1="${x}" y1="14" x2="${x}" y2="28"/>`).join('') + '</g>' +
+        '<rect x="4" y="31" width="112" height="8" fill="#1e4fd1"/><rect x="4" y="39" width="112" height="2.5" fill="#ffd600"/>' +
+        '<g fill="#fff">' + Array.from({ length: 14 }, (_, i) => `<rect x="${6 + i * 8}" y="${i % 2 ? 31 : 35}" width="4" height="4"/>`).join('') + '</g>' +
+        '<text x="40" y="48.6" font-family="Arial Black,Arial" font-size="6.4" font-weight="900" fill="#1e4fd1" text-anchor="middle">POLICIJA</text>' +
+        '<rect class="pv-l1" x="34" y="2" width="12" height="6" rx="2" fill="#2979ff"/><rect class="pv-l2" x="48" y="2" width="12" height="6" rx="2" fill="#ff1744"/><rect x="32" y="7" width="30" height="2" fill="#37474f"/>' +
+        '<circle cx="114" cy="44" r="2.4" fill="#fff59d"/><rect x="1" y="44" width="5" height="4" rx="1" fill="#c62828"/>' +
+        '<circle cx="24" cy="51" r="9" fill="url(#f3pw)"/><circle cx="94" cy="51" r="9" fill="url(#f3pw)"/><circle cx="24" cy="51" r="2" fill="#bdbdbd"/><circle cx="94" cy="51" r="2" fill="#bdbdbd"/></svg>',
+
+    // Taksi (žiūri į KAIRĘ – kaip emoji, kad tiktų esamos krypties taisyklės)
+    taxi: '<svg viewBox="0 0 110 60" xmlns="http://www.w3.org/2000/svg"><defs>' +
+        '<linearGradient id="f3xb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff176"/><stop offset=".5" stop-color="#fbc02d"/><stop offset="1" stop-color="#c49000"/></linearGradient>' +
+        '<linearGradient id="f3xg" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9f2ff"/><stop offset=".5" stop-color="#4f7da6"/><stop offset="1" stop-color="#14263a"/></linearGradient>' +
+        '<radialGradient id="f3xw" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ddd"/><stop offset=".35" stop-color="#999"/><stop offset=".45" stop-color="#222"/><stop offset="1" stop-color="#111"/></radialGradient></defs>' +
+        '<ellipse cx="55" cy="55" rx="50" ry="4" fill="rgba(0,0,0,.3)"/>' +
+        '<path d="M104 40 Q106 30 96 28 L80 26 L68 14 Q64 10 56 10 H36 Q28 10 24 16 L16 26 Q6 28 5 36 L4 44 Q4 48 9 48 H101 Q106 48 104 40 Z" fill="url(#f3xb)" stroke="#9c7000"/>' +
+        '<path d="M28 17 Q31 14 37 14 H46 V26 H20 Z" fill="url(#f3xg)"/><path d="M50 14 H58 Q63 14 66 18 L73 26 H50 Z" fill="url(#f3xg)"/>' +
+        '<g fill="#222">' + Array.from({ length: 12 }, (_, i) => `<rect x="${14 + i * 7}" y="${i % 2 ? 33 : 36}" width="3.5" height="3"/>`).join('') + '</g>' +
+        '<rect x="38" y="3" width="22" height="8" rx="2" fill="#fff59d" stroke="#212121"/><g fill="#212121">' + [0, 1, 2, 3, 4].map(i => `<rect x="${40 + i * 4}" y="${i % 2 ? 4.5 : 7}" width="2" height="2.5"/>`).join('') + '</g>' +
+        '<circle cx="7" cy="38" r="2.6" fill="#fffde7"/><rect x="101" y="36" width="4" height="4" rx="1" fill="#e53935"/>' +
+        '<circle cx="26" cy="48" r="8" fill="url(#f3xw)"/><circle cx="84" cy="48" r="8" fill="url(#f3xw)"/></svg>',
+
+    mug: (full) => `<svg viewBox="0 0 90 110" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3beer" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd54f"/><stop offset=".5" stop-color="#ffb300"/><stop offset="1" stop-color="#e07a00"/></linearGradient>
+      <linearGradient id="f3glass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgba(255,255,255,.55)"/><stop offset=".25" stop-color="rgba(255,255,255,.08)"/><stop offset=".8" stop-color="rgba(255,255,255,.05)"/><stop offset="1" stop-color="rgba(255,255,255,.45)"/></linearGradient>
+      <clipPath id="f3mc"><path d="M10 14 H64 L60 100 Q60 104 56 104 H18 Q14 104 14 100 Z"/></clipPath></defs>
+      <path d="M62 30 Q86 30 86 56 Q86 80 60 82" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="7"/>
+      <path d="M62 30 Q86 30 86 56 Q86 80 60 82" fill="none" stroke="rgba(160,200,220,.5)" stroke-width="3"/>
+      <g clip-path="url(#f3mc)"><g class="fx3-fill" style="transform:translateY(${full ? 0 : 92}px)">
+        <rect x="0" y="22" width="80" height="90" fill="url(#f3beer)"/>
+        <path d="M6 24 Q14 8 24 18 Q32 6 42 16 Q52 6 60 18 Q70 12 70 26 V30 H6 Z" fill="#fffdf4"/>
+        <g fill="rgba(255,255,255,.6)"><circle cx="24" cy="60" r="1.6"/><circle cx="40" cy="74" r="1.2"/><circle cx="50" cy="50" r="1.4"/><circle cx="30" cy="86" r="1.1"/></g>
+      </g></g>
+      <path d="M10 14 H64 L60 100 Q60 104 56 104 H18 Q14 104 14 100 Z" fill="url(#f3glass)" stroke="rgba(255,255,255,.85)" stroke-width="2.5"/>
+      <g stroke="rgba(255,255,255,.35)" stroke-width="2">${[24, 36, 48].map(x => `<line x1="${x}" y1="22" x2="${x - 1}" y2="96"/>`).join('')}</g>
+    </svg>`,
+
+    bulb: `<svg viewBox="0 0 60 90" xmlns="http://www.w3.org/2000/svg"><defs>
+      <radialGradient id="f3bl" cx=".5" cy=".4" r=".6"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="rgba(255,250,210,.85)"/><stop offset="1" stop-color="rgba(255,240,170,.55)"/></radialGradient>
+      <linearGradient id="f3bs" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d8d8d"/><stop offset=".5" stop-color="#e0e0e0"/><stop offset="1" stop-color="#757575"/></linearGradient></defs>
+      <circle class="fx3-bulb-glow" cx="30" cy="30" r="30" fill="rgba(255,235,120,.45)"/>
+      <path d="M30 4 C14 4 6 16 6 28 C6 40 16 46 19 56 H41 C44 46 54 40 54 28 C54 16 46 4 30 4 Z" class="fx3-bulb-glass" fill="url(#f3bl)" stroke="rgba(255,255,255,.9)" stroke-width="1.5"/>
+      <path d="M24 56 L24 40 Q30 30 36 40 L36 56" fill="none" stroke="#ff8f00" stroke-width="1.6"/>
+      <path d="M25 36 q2.5 -4 5 0 q2.5 4 5 0" fill="none" class="fx3-fil" stroke="#ffe082" stroke-width="2"/>
+      <rect x="18" y="56" width="24" height="18" rx="3" fill="url(#f3bs)"/><g stroke="#616161" stroke-width="1.2"><line x1="18" y1="61" x2="42" y2="63"/><line x1="18" y1="66" x2="42" y2="68"/></g>
+      <path d="M22 74 H38 L34 82 H26 Z" fill="#424242"/>
+    </svg>`,
+
+    pole: `<svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3pp" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6d4c41"/><stop offset=".5" stop-color="#a1887f"/><stop offset="1" stop-color="#4e342e"/></linearGradient>
+      <linearGradient id="f3tr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#607d8b"/><stop offset=".45" stop-color="#cfd8dc"/><stop offset="1" stop-color="#455a64"/></linearGradient></defs>
+      <rect x="64" y="10" width="12" height="130" fill="url(#f3pp)"/>
+      <rect x="20" y="20" width="100" height="8" rx="2" fill="#5d4037"/>
+      <g fill="#e0f7fa" stroke="#00838f" stroke-width="1">${[26, 66, 106].map(x => `<rect x="${x}" y="8" width="8" height="12" rx="3"/>`).join('')}</g>
+      <rect x="44" y="50" width="52" height="42" rx="6" fill="url(#f3tr)" stroke="#37474f"/>
+      <g fill="#90a4ae">${[0, 1, 2, 3].map(i => `<rect x="${48 + i * 12}" y="56" width="6" height="30" rx="2"/>`).join('')}</g>
+      <path d="M70 60 L62 74 H70 L66 86 L80 68 H72 L76 60 Z" fill="#ffd600" stroke="#5d4037" stroke-width="1"/>
+    </svg>`,
+
+    stove: `<svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3st" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#37474f"/><stop offset=".5" stop-color="#78909c"/><stop offset="1" stop-color="#263238"/></linearGradient>
+      <radialGradient id="f3rk" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#9e9e9e"/><stop offset=".7" stop-color="#4e4e4e"/><stop offset="1" stop-color="#2b2b2b"/></radialGradient>
+      <radialGradient id="f3hot" cx=".5" cy="1" r=".9"><stop offset="0" stop-color="rgba(255,110,0,.95)"/><stop offset=".6" stop-color="rgba(255,60,0,.35)"/><stop offset="1" stop-color="rgba(255,40,0,0)"/></radialGradient></defs>
+      <rect x="20" y="52" width="120" height="64" rx="6" fill="url(#f3st)"/>
+      <rect x="38" y="78" width="40" height="26" rx="3" fill="#1b1b1b"/><rect class="fx3-fire" x="40" y="80" width="36" height="22" rx="2" fill="url(#f3hot)"/>
+      <path d="M20 52 H140 L132 40 H28 Z" fill="#455a64"/>
+      <ellipse class="fx3-stones-glow" cx="80" cy="40" rx="58" ry="22" fill="url(#f3hot)" opacity=".5"/>
+      <g>${[[42, 34, 12], [62, 30, 14], [84, 32, 13], [104, 34, 12], [52, 22, 11], [74, 20, 12], [96, 22, 11], [64, 12, 10], [86, 12, 9]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.8}" fill="url(#f3rk)"/>`).join('')}</g>
+      <rect x="96" y="82" width="30" height="5" rx="2" fill="#90a4ae"/>
+    </svg>`,
+
+    bucket: `<svg viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3wd" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d5524"/><stop offset=".5" stop-color="#d9a066"/><stop offset="1" stop-color="#7a4a1d"/></linearGradient></defs>
+      <path d="M14 46 H76 L70 104 H20 Z" fill="url(#f3wd)" stroke="#5d3412" stroke-width="1.5"/>
+      <g stroke="rgba(80,40,10,.35)" stroke-width="1.5">${[26, 36, 46, 56, 66].map(x => `<line x1="${x}" y1="46" x2="${x - 2 + (x - 45) * 0.1}" y2="104"/>`).join('')}</g>
+      <rect x="15" y="56" width="60" height="5" fill="#9e9e9e"/><rect x="18" y="90" width="54" height="5" fill="#9e9e9e"/>
+      <ellipse cx="45" cy="46" rx="31" ry="6" fill="#4fc3f7"/><ellipse cx="45" cy="46" rx="31" ry="6" fill="none" stroke="#5d3412" stroke-width="1.5"/>
+      <g class="fx3-ladle" style="transform-origin:46px 44px">
+        <path d="M46 44 L104 8" stroke="url(#f3wd)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M30 40 Q30 54 44 54 Q56 54 56 42 Z" fill="url(#f3wd)" stroke="#5d3412"/>
+      </g>
+    </svg>`,
+
+    thermo: `<svg viewBox="0 0 30 110" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="2" width="26" height="106" rx="13" fill="#5d3a1a" stroke="#3e2410"/>
+      <rect x="11" y="10" width="8" height="74" rx="4" fill="#fff"/>
+      <rect class="fx3-merc" x="12.5" y="12" width="5" height="72" rx="2.5" fill="#e53935" style="transform-origin:15px 84px;transform:scaleY(.25)"/>
+      <circle cx="15" cy="92" r="9" fill="#e53935" stroke="#fff" stroke-width="2"/>
+      <g stroke="#f3e3d0" stroke-width="1">${[18, 30, 42, 54, 66, 78].map(y => `<line x1="20" y1="${y}" x2="25" y2="${y}"/>`).join('')}</g>
+    </svg>`,
+
+    faucet: `<svg viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset=".35" stop-color="#b0bec5"/><stop offset=".6" stop-color="#eceff1"/><stop offset="1" stop-color="#607d8b"/></linearGradient>
+      <linearGradient id="f3chv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#78909c"/><stop offset=".4" stop-color="#ffffff"/><stop offset=".7" stop-color="#b0bec5"/><stop offset="1" stop-color="#546e7a"/></linearGradient></defs>
+      <rect x="0" y="22" width="22" height="34" rx="4" fill="url(#f3chv)"/>
+      <path d="M18 30 H96 Q120 30 120 54 V70 H104 V56 Q104 46 94 46 H18 Z" fill="url(#f3ch)" stroke="#78909c"/>
+      <rect x="100" y="68" width="24" height="8" rx="3" fill="url(#f3chv)"/>
+      <g class="fx3-handle" style="transform-origin:56px 24px"><rect x="52" y="14" width="8" height="18" fill="url(#f3chv)"/><rect x="34" y="6" width="44" height="10" rx="5" fill="url(#f3ch)" stroke="#78909c"/><circle cx="56" cy="11" r="3" fill="#2196f3"/></g>
+    </svg>`,
+
+    sun: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs>
+      <radialGradient id="f3sun" cx=".45" cy=".4" r=".6"><stop offset="0" stop-color="#fffde7"/><stop offset=".5" stop-color="#ffd54f"/><stop offset="1" stop-color="#ff9800"/></radialGradient></defs>
+      <g class="fx3-rays" style="transform-origin:60px 60px">${Array.from({ length: 12 }, (_, i) => `<path d="M60 2 L66 22 L54 22 Z" fill="#ffca28" transform="rotate(${i * 30} 60 60)"/>`).join('')}</g>
+      <circle cx="60" cy="60" r="30" fill="url(#f3sun)"/>
+    </svg>`,
+
+    umbrella: `<svg viewBox="0 0 140 120" xmlns="http://www.w3.org/2000/svg">
+      <line x1="70" y1="30" x2="82" y2="118" stroke="#8d6e63" stroke-width="4" stroke-linecap="round"/>
+      <g class="fx3-canopy" style="transform-origin:70px 30px">
+        <path d="M6 50 Q70 -10 134 50 Z" fill="#ff5252"/>
+        ${[0, 2, 4].map(i => { const a = 6 + i * 25.6, b = a + 25.6; return `<path d="M70 30 L${a} 50 Q${(a + b) / 2} 40 ${b} 50 Z" fill="#fff"/>`; }).join('')}
+        <path d="M6 50 Q22 44 32 50 Q44 44 57 50 Q70 44 83 50 Q96 44 108 50 Q120 44 134 50" fill="none" stroke="#c62828" stroke-width="2"/>
+      </g>
+    </svg>`,
+
+    ball: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="f3bc"><circle cx="30" cy="30" r="27"/></clipPath>
+      <radialGradient id="f3bsh" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="rgba(255,255,255,.7)"/><stop offset=".5" stop-color="rgba(255,255,255,0)"/><stop offset="1" stop-color="rgba(0,0,0,.25)"/></radialGradient></defs>
+      <g clip-path="url(#f3bc)"><rect width="60" height="60" fill="#fff"/>
+      <path d="M30 30 L-10 -10 L30 -20 Z" fill="#f44336"/><path d="M30 30 L70 -10 L70 30 Z" fill="#2196f3"/><path d="M30 30 L70 50 L40 80 Z" fill="#ffeb3b"/><path d="M30 30 L0 80 L-20 40 Z" fill="#4caf50"/></g>
+      <circle cx="30" cy="30" r="27" fill="url(#f3bsh)" stroke="rgba(0,0,0,.2)"/><circle cx="30" cy="30" r="4" fill="#fff"/>
+    </svg>`,
+
+    gull: `<svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg"><g class="fx3-wing" style="transform-origin:30px 16px">
+      <path d="M2 10 Q16 2 30 16 Q44 2 58 10 Q44 8 30 20 Q16 8 2 10 Z" fill="#fafafa" stroke="#607d8b" stroke-width="1.2"/></g><circle cx="30" cy="18" r="2.6" fill="#eceff1"/></svg>`,
+
+    duck: `<svg viewBox="0 0 70 60" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="f3dk" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff59d"/><stop offset="1" stop-color="#fbc02d"/></radialGradient></defs>
+      <ellipse cx="36" cy="40" rx="28" ry="16" fill="url(#f3dk)"/><circle cx="24" cy="20" r="14" fill="url(#f3dk)"/>
+      <path d="M8 22 Q2 24 8 28 L14 26 Z" fill="#ff7043"/><circle cx="20" cy="17" r="2.6" fill="#212121"/><circle cx="19.2" cy="16.2" r=".9" fill="#fff"/>
+      <path d="M40 34 Q52 30 58 38 Q50 40 42 40 Z" fill="#f9a825"/></svg>`,
+
+    cake: `<svg viewBox="0 0 160 170" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3c1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f06292"/><stop offset=".5" stop-color="#f8bbd0"/><stop offset="1" stop-color="#ec407a"/></linearGradient>
+      <linearGradient id="f3c2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d6e63"/><stop offset=".5" stop-color="#bcaaa4"/><stop offset="1" stop-color="#6d4c41"/></linearGradient>
+      <linearGradient id="f3pl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b0bec5"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#90a4ae"/></linearGradient>
+      <radialGradient id="f3fl" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#fff59d"/><stop offset=".75" stop-color="#ffa000"/><stop offset="1" stop-color="rgba(255,111,0,0)"/></radialGradient></defs>
+      <ellipse cx="80" cy="160" rx="76" ry="9" fill="url(#f3pl)"/>
+      <rect x="14" y="104" width="132" height="54" rx="8" fill="url(#f3c2)"/>
+      <path d="M14 112 Q14 102 24 102 H136 Q146 102 146 112 V118 Q136 128 128 116 Q118 130 108 116 Q98 130 88 116 Q78 130 68 116 Q58 130 48 116 Q38 130 28 116 Q20 128 14 118 Z" fill="#fff8e1"/>
+      <rect x="34" y="62" width="92" height="46" rx="7" fill="url(#f3c1)"/>
+      <path d="M34 70 Q34 60 44 60 H116 Q126 60 126 70 V74 Q118 84 110 74 Q102 86 94 74 Q86 86 78 74 Q70 86 62 74 Q54 86 46 74 Q40 82 34 74 Z" fill="#fff"/>
+      <g fill="#ff4081">${[44, 60, 76, 92, 108].map((x, i) => `<circle cx="${x + 4}" cy="${92 + (i % 2) * 6}" r="3"/>`).join('')}</g>
+      <g fill="#ffd54f">${[26, 46, 66, 86, 106, 126].map((x, i) => `<circle cx="${x + 4}" cy="${136 + (i % 2) * 8}" r="3"/>`).join('')}</g>
+      ${[52, 70, 88, 106].map((x, i) => `<g><rect x="${x}" y="34" width="7" height="28" rx="2" fill="${['#4fc3f7', '#ffeb3b', '#81c784', '#ba68c8'][i]}"/>
+        <path d="M${x} 40 l7 -4 M${x} 48 l7 -4 M${x} 56 l7 -4" stroke="#fff" stroke-width="1.6"/>
+        <line x1="${x + 3.5}" y1="34" x2="${x + 3.5}" y2="29" stroke="#3e2723" stroke-width="1.4"/>
+        <ellipse class="fx3-cflame" cx="${x + 3.5}" cy="22" rx="5" ry="9" fill="url(#f3fl)" style="transform-origin:${x + 3.5}px 30px"/></g>`).join('')}
+    </svg>`,
+
+    balloon: (col) => `<svg viewBox="0 0 50 120" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="f3b${col.slice(1)}" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#ffffff" stop-opacity=".9"/><stop offset=".25" stop-color="${col}"/><stop offset="1" stop-color="${col}" stop-opacity=".85"/></radialGradient></defs>
+      <path d="M25 62 Q20 80 28 92 Q34 104 24 118" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.2"/>
+      <ellipse cx="25" cy="30" rx="22" ry="28" fill="url(#f3b${col.slice(1)})"/><path d="M21 58 L29 58 L25 64 Z" fill="${col}"/></svg>`,
+
+    lock: `<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3lk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".4" stop-color="#ffc107"/><stop offset="1" stop-color="#9c6b00"/></linearGradient>
+      <linearGradient id="f3sh2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9e9e9e"/><stop offset=".5" stop-color="#f5f5f5"/><stop offset="1" stop-color="#757575"/></linearGradient></defs>
+      <path class="fx3-shackle" d="M18 48 V30 Q18 8 40 8 Q62 8 62 30 V48" fill="none" stroke="url(#f3sh2)" stroke-width="9" stroke-linecap="round"/>
+      <rect x="6" y="44" width="68" height="52" rx="10" fill="url(#f3lk)" stroke="#7a5300" stroke-width="2"/>
+      <circle cx="40" cy="64" r="7" fill="#4e3400"/><rect x="37" y="66" width="6" height="16" rx="2" fill="#4e3400"/>
+      <path d="M12 50 h20" stroke="rgba(255,255,255,.6)" stroke-width="3" stroke-linecap="round"/>
+    </svg>`
+};
+
+// ---------- Ikonėlės langeliams: KALĖJIMAS (#16) ir KELIAUK Į KALĖJIMĄ (#42) ----------
+const FX3_CELL_ICONS = {
+    16: `<svg class="fx3-cell-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs>
+      <linearGradient id="f3jw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d99a6"/><stop offset="1" stop-color="#4b5662"/></linearGradient>
+      <radialGradient id="f3jin" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#3a4552"/><stop offset="1" stop-color="#0f141a"/></radialGradient>
+      <linearGradient id="f3jb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5f6b78"/><stop offset=".45" stop-color="#f2f5f8"/><stop offset="1" stop-color="#3b4450"/></linearGradient>
+      <linearGradient id="f3jl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#ffc107"/><stop offset="1" stop-color="#9c6b00"/></linearGradient></defs>
+      <rect x="4" y="4" width="112" height="112" rx="14" fill="url(#f3jw)"/>
+      <g stroke="rgba(0,0,0,.25)" stroke-width="1.5" fill="none">${[22, 40, 58, 76, 94].map((y, i) => `<line x1="4" y1="${y}" x2="116" y2="${y}"/>` + [0, 1, 2, 3].map(k => `<line x1="${(i % 2 ? 18 : 32) + k * 28}" y1="${y - 18}" x2="${(i % 2 ? 18 : 32) + k * 28}" y2="${y}"/>`).join('')).join('')}</g>
+      <rect x="16" y="16" width="88" height="88" rx="8" fill="url(#f3jin)"/>
+      <g><circle cx="60" cy="52" r="15" fill="#1e2630"/><path d="M34 104 Q36 72 60 70 Q84 72 86 104 Z" fill="#1e2630"/>
+        <g fill="#f5f5f5" opacity=".9"><rect x="40" y="78" width="40" height="6"/><rect x="37" y="90" width="46" height="6"/></g>
+        <circle cx="54" cy="51" r="2" fill="#fff"/><circle cx="66" cy="51" r="2" fill="#fff"/><path d="M54 60 Q60 56 66 60" stroke="#fff" stroke-width="2" fill="none"/></g>
+      <g>${[24, 40, 56, 72, 88].map(x => `<rect x="${x}" y="12" width="8" height="96" rx="4" fill="url(#f3jb)"/>`).join('')}</g>
+      <rect x="12" y="44" width="96" height="7" rx="3.5" fill="url(#f3jb)"/>
+      <g fill="#ffe0b2" stroke="#8d5524" stroke-width="1.2"><rect x="43" y="56" width="7" height="12" rx="3"/><rect x="70" y="56" width="7" height="12" rx="3"/></g>
+      <g transform="translate(78 70)"><path d="M6 12 V6 Q6 0 13 0 Q20 0 20 6 V12" fill="none" stroke="#cfd8dc" stroke-width="4"/><rect x="0" y="10" width="26" height="22" rx="4" fill="url(#f3jl)" stroke="#7a5300"/><circle cx="13" cy="19" r="3" fill="#4e3400"/><rect x="11.5" y="20" width="3" height="7" fill="#4e3400"/></g>
+    </svg>`,
+    42: `<svg class="fx3-cell-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs>
+      <radialGradient id="f3gb" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#3949ab"/><stop offset="1" stop-color="#0d1442"/></radialGradient>
+      <radialGradient id="f3gr" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#ffcdd2"/><stop offset=".4" stop-color="#ff1744"/><stop offset="1" stop-color="#8e0000"/></radialGradient>
+      <radialGradient id="f3gu" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#e3f2fd"/><stop offset=".4" stop-color="#2979ff"/><stop offset="1" stop-color="#0d2a7a"/></radialGradient>
+      <linearGradient id="f3gc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset=".4" stop-color="#b0bec5"/><stop offset=".7" stop-color="#eceff1"/><stop offset="1" stop-color="#546e7a"/></linearGradient></defs>
+      <rect x="4" y="4" width="112" height="112" rx="14" fill="url(#f3gb)"/>
+      <circle class="fx3-gl1" cx="34" cy="36" r="30" fill="rgba(255,23,68,.35)"/><circle class="fx3-gl2" cx="86" cy="36" r="30" fill="rgba(41,121,255,.35)"/>
+      <rect x="18" y="42" width="84" height="10" rx="4" fill="#263238"/>
+      <path d="M20 44 Q20 18 40 18 Q56 18 56 44 Z" fill="url(#f3gr)" stroke="#5d0000"/><path d="M64 44 Q64 18 80 18 Q100 18 100 44 Z" fill="url(#f3gu)" stroke="#0a1f5c"/>
+      <path d="M28 30 Q32 22 40 22" stroke="rgba(255,255,255,.7)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M72 30 Q76 22 84 22" stroke="rgba(255,255,255,.7)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <g fill="none" stroke="url(#f3gc)" stroke-width="7"><circle cx="40" cy="84" r="17"/><circle cx="80" cy="84" r="17"/></g>
+      <g fill="none" stroke="#37474f" stroke-width="1.5"><circle cx="40" cy="84" r="20.5"/><circle cx="80" cy="84" r="20.5"/><circle cx="40" cy="84" r="13.5"/><circle cx="80" cy="84" r="13.5"/></g>
+      <g stroke="url(#f3gc)" stroke-width="4"><line x1="55" y1="80" x2="65" y2="80"/></g><g fill="#90a4ae" stroke="#37474f"><rect x="52" y="76" width="6" height="8" rx="2"/><rect x="62" y="76" width="6" height="8" rx="2"/></g>
+      <rect x="30" y="64" width="12" height="7" rx="2" fill="#78909c"/><rect x="78" y="64" width="12" height="7" rx="2" fill="#78909c"/>
+    </svg>`
+};
+function fx3ApplyCellIcons() {
+    Object.keys(FX3_CELL_ICONS).forEach(id => {
+        const ic = document.querySelector(`#cell-${id} .cell-bg-icon`);
+        if (ic && !ic.querySelector('.fx3-cell-svg')) { ic.innerHTML = FX3_CELL_ICONS[id]; ic.classList.add('has-svg'); }
+    });
+}
+
+// ============================================================
+// 🚆 🚢 🚌 STOTYS – nauji detalūs traukinys, laivas ir autobusas su dalelėmis
+// ============================================================
+const FX3_VEH = {
+    19: { kind: 'train', T: 4600, w: 4.2, ground: 'rails' },
+    46: { kind: 'bus', T: 4000, w: 2.4, ground: 'road' },
+    37: { kind: 'ship', T: 5200, w: 2.6, ground: 'sea' }
+};
+function fxVehicle3(fieldId) {
+    const cfg = FX3_VEH[fieldId];
+    if (!cfg) return;
+    const c = fxPrep(fieldId, true);
+    if (!c) { return; }
+    const total = (gameState && gameState.board && gameState.board.length) || 52;
+    let dx, dy;
+    if (cfg.kind === 'ship') {
+        const nx = document.getElementById(`cell-${(fieldId + 1) % total}`);
+        const pn = nx ? fxBoardPoint(nx, c.board) : { x: c.pc.x - 1, y: c.pc.y };
+        dx = pn.x - c.pc.x; dy = pn.y - c.pc.y; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+    } else { dx = c.board.offsetWidth / 2 - c.pc.x >= 0 ? 1 : -1; dy = 0; }
+    const vw = Math.max(110, c.s * cfg.w);
+    const VB = { train: [300, 76], bus: [220, 92], ship: [240, 110] }[cfg.kind];
+    const vh = vw * VB[1] / VB[0];
+    const horiz = Math.abs(dx) >= Math.abs(dy);
+    const flip = horiz && dx < 0;
+    const ang = horiz ? 0 : Math.atan2(dy, dx) * 180 / Math.PI;
+    const ar = ang * Math.PI / 180;
+    const ux = Math.sin(ar), uy = -Math.cos(ar);           // „aukštyn“ transporto atžvilgiu
+    const fx = horiz ? dx : Math.cos(ar), fy = horiz ? 0 : Math.sin(ar);   // „pirmyn“
+    const ox = cfg.kind === 'ship' ? c.ix * c.L * 0.55 : 0, oy = cfg.kind === 'ship' ? c.iy * c.L * 0.55 : 0;
+    const dist = horiz ? c.board.offsetWidth * 0.46 : c.board.offsetHeight * 0.5;
+    const T = cfg.T;
+    // Žemė
+    const gr = fxEl(c, 'fx3-ground fx3-' + cfg.ground);
+    gr.style.width = (dist + vw * 1.4) + 'px';
+    gr.style.height = (cfg.kind === 'ship' ? vh * 1.5 : vh * 0.38) + 'px';
+    gr.style.left = ox + 'px'; gr.style.top = oy + 'px';
+    gr.style.transform = `rotate(${Math.atan2(fy, fx) * 180 / Math.PI}deg) translate(${-vw * 0.7}px, ${cfg.kind === 'ship' ? '-40%' : (vh * 0.32) + 'px'})`;
+    gr.animate([{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.78 }, { opacity: 0 }], { duration: T, fill: 'forwards' });
+    // Signalas (traukiniui) / stotelė (autobusui)
+    if (cfg.kind === 'train' || cfg.kind === 'bus') {
+        const sg = fxEl(c, 'fx-obj fx3-signal ' + cfg.kind, cfg.kind === 'train'
+            ? '<i class="r"></i><i class="g"></i>' : '<b>🚏</b>');
+        sg.style.setProperty('--sz', Math.max(12, vh * 0.28) + 'px');
+        const sx = ox - fx * vw * 0.55 - ux * vh * 0.62, sy = oy - fy * vw * 0.55 - uy * vh * 0.62;
+        sg.animate([{ transform: fxT(sx, sy, 0, 0), opacity: 0 }, { transform: fxT(sx, sy, 0, 1), opacity: 1, offset: 0.08 }, { transform: fxT(sx, sy, 0, 1), opacity: 1, offset: 0.6 }, { transform: fxT(sx, sy, 0, 1), opacity: 0, offset: 0.75 }, { opacity: 0 }], { duration: T, fill: 'forwards' });
+        setTimeout(() => sg.classList.add('go'), T * 0.2);
+    }
+    const veh = fxEl(c, 'fx-obj fx3-veh fx3-' + cfg.kind, `<div class="fx3-bob"><div class="vx-img" style="width:${vw}px;${flip ? 'transform:scaleX(-1);' : ''}">${FX3_SVG[cfg.kind]}</div></div>`);
+    const P = (p, s = 1) => `translate(${(ox + fx * dist * p).toFixed(1)}px, ${(oy + fy * dist * p).toFixed(1)}px) rotate(${ang}deg) scale(${s})`;
+    veh.animate([
+        { transform: P(-0.12, 0.85), opacity: 0, offset: 0 },
+        { transform: P(0, 1), opacity: 1, offset: 0.1, easing: 'ease-out' },
+        { transform: P(0, 1), offset: 0.26, easing: 'cubic-bezier(.55,0,.8,.4)' },
+        { transform: P(0.45, 1), opacity: 1, offset: 0.72 },
+        { transform: P(1, 1), opacity: 0, offset: 1 }
+    ], { duration: T, fill: 'forwards' });
+    const R = Math.max(c.board.offsetWidth, c.board.offsetHeight) * 0.6;
+    const sys = fx2Canvas(c, R, 1);
+    const smoke = FX2.cloud('vsmk', '120,120,120'), white = FX2.cloud('vwht', '255,255,255'), dust = FX2.cloud('vdust', '160,140,110');
+    const spark = FX2.sprite('vspark', [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(180,220,255,.9)'], [1, 'rgba(80,140,255,0)']], 32);
+    const head = FX2.sprite('vhead', [[0, 'rgba(255,255,230,.9)'], [1, 'rgba(255,255,200,0)']], 64);
+    let horn = false;
+    sys.run(T, (el) => {
+        const t = el / T;
+        const m = new DOMMatrixReadOnly(getComputedStyle(veh).transform);
+        const op = parseFloat(getComputedStyle(veh).opacity) || 0;
+        if (op < 0.15) return;
+        const at = (al, up) => ({ x: m.e + fx * vw * al + ux * vh * up, y: m.f + fy * vw * al + uy * vh * up });
+        // priekinis žibintas
+        const hp = at(0.5, -0.1);
+        sys.add({ x: hp.x + fx * 10, y: hp.y + fy * 10, life: 40, sprite: head, size: vh * 0.9, blend: 'lighter', a0: 0.55 * op, fi: 0.01 });
+        const moving = t > 0.26;
+        if (cfg.kind === 'train') {
+            if (moving && Math.random() < 0.5) {
+                const p = at(0.3, 0.5);
+                for (let i = 0; i < 3; i++) sys.add({ x: p.x, y: p.y, vx: -fx * fx2R(40, 140) + fx2R(-60, 60), vy: fx2R(-120, -20), gy: 400, life: fx2R(200, 450), line: true, color: '#e3f2ff', lw: 1.4, trail: 0.06, blend: 'lighter', a0: 1, fi: 0.02 });
+                sys.add({ x: p.x, y: p.y, life: 90, sprite: spark, size: fx2R(14, 26), blend: 'lighter', a0: 0.9, fi: 0.02 });
+            }
+            if (moving && Math.random() < 0.6) { const p = at(-0.5, -0.42); sys.add({ x: p.x, y: p.y, vx: -fx * 30 + fx2R(-20, 20), vy: fx2R(-20, 5), turb: 40, life: fx2R(600, 1000), sprite: dust, size: fx2R(14, 26), grow: 30, a0: 0.35 }); }
+        } else if (cfg.kind === 'bus') {
+            if (Math.random() < (moving ? 0.8 : 0.35)) { const p = at(-0.5, -0.38); sys.add({ x: p.x, y: p.y, vx: -fx * fx2R(30, 70), vy: fx2R(-30, -5), turb: 30, life: fx2R(600, 1100), sprite: smoke, size: fx2R(8, 16), grow: 26, a0: moving ? 0.5 : 0.3 }); }
+        } else {
+            if (!horn && t > 0.14) {
+                horn = true;
+                const p = at(-0.08, 0.42);
+                for (let i = 0; i < 10; i++) sys.add({ x: p.x, y: p.y, vx: fx2R(-25, 25) + ux * 60, vy: uy * fx2R(60, 120), turb: 40, life: fx2R(900, 1400), sprite: white, size: fx2R(16, 30), grow: 40, a0: 0.75 });
+            }
+            if (Math.random() < 0.55) { const p = at(-0.08, 0.42); sys.add({ x: p.x, y: p.y, vx: -fx * 20 + ux * 40, vy: -fy * 20 + uy * 40, turb: 30, life: fx2R(900, 1500), sprite: smoke, size: fx2R(12, 22), grow: 26, a0: 0.45 }); }
+            if (moving) for (const sgn of [-1, 1]) {
+                const p = at(-0.48, -0.34);
+                sys.add({ x: p.x, y: p.y, vx: -fx * fx2R(10, 30) + ux * sgn * fx2R(20, 50), vy: -fy * fx2R(10, 30) + uy * sgn * fx2R(20, 50), drag: 0.02, life: fx2R(1200, 1900), sprite: white, size: fx2R(6, 12), grow: 18, a0: 0.75, fi: 0.05 });
+            }
+            const bp = at(0.48, -0.36);
+            if (moving && Math.random() < 0.7) sys.add({ x: bp.x, y: bp.y, vx: ux * fx2R(-40, 40), vy: uy * fx2R(-40, 40), life: fx2R(400, 700), sprite: white, size: fx2R(6, 12), grow: 20, a0: 0.8 });
+        }
+    });
+    if (cfg.kind === 'ship') {
+        for (let i = 0; i < 3; i++) {
+            const g = fxEl(c, 'fx-obj fx3-gull', `<div class="vx-img" style="width:${vh * 0.32}px">${FX3_SVG.gull}</div>`);
+            const sx = ox + ux * vh * (0.9 + i * 0.25) - fx * vw * 0.4, sy = oy + uy * vh * (0.9 + i * 0.25) - fy * vw * 0.4;
+            g.animate([{ transform: fxT(sx, sy, 0, 0.6), opacity: 0 }, { transform: fxT(sx + fx * 20, sy + fy * 20, 0, 1), opacity: 1, offset: 0.15 },
+                { transform: fxT(sx + fx * dist * 0.6 + ux * 30, sy + fy * dist * 0.6 + uy * 30, 0, 1.1), opacity: 1, offset: 0.85 }, { transform: fxT(sx + fx * dist * 0.8, sy + fy * dist * 0.8, 0, 1.1), opacity: 0 }],
+                { duration: T, delay: i * 180, fill: 'both' });
+        }
+    }
+    fxEnd(c, T + 1300);
+}
+
+// ============================================================
+// 🍺 LATRŲ BARAS #21 – neonas, alaus bokalas prisipildo, putos bėga, susidaužia bokalai
+// ============================================================
+function fxBar3(fieldId) {
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = 5400;
+    const w = Math.max(190, c.L * 2.1), h = w * 0.78;
+    const x = c.ix * (c.L * 0.6 + w * 0.5), y = c.iy * (c.L * 0.6 + h * 0.5);
+    const S = fx3Card(c, w, h, x, y, 'fx3-bar', T);
+    fx3El(S.stage, 'fx3-neon', 'BAR', { fontSize: (h * 0.2) + 'px', top: (-h * 0.4) + 'px', left: (w * 0.14) + 'px' });
+    fx3El(S.stage, 'fx3-bar-counter', '', { width: w + 'px', height: (h * 0.22) + 'px', left: (-w / 2) + 'px', top: (h * 0.28) + 'px' });
+    const mw = h * 0.42;
+    const tap = fx3El(S.stage, 'fx3-tap', '<i></i><b></b>', { left: (-mw * 0.45) + 'px', top: (-h * 0.42) + 'px', '--s': (mw / 60) });
+    const mug1 = fx3El(S.stage, 'fx-obj fx3-mug', `<div class="vx-img" style="width:${mw}px">${FX3_SVG.mug(false)}</div>`);
+    const mug2 = fx3El(S.stage, 'fx-obj fx3-mug', `<div class="vx-img" style="width:${mw}px;transform:scaleX(-1)">${FX3_SVG.mug(true)}</div>`);
+    const my = h * 0.12;
+    mug1.animate([{ transform: fxT(-mw * 0.3, my) }, { transform: fxT(-mw * 0.3, my), offset: 0.55 }, { transform: fxT(-mw * 0.05, my - 8, 14), offset: 0.66, easing: 'ease-in' },
+        { transform: fxT(-mw * 0.18, my - 4, -4), offset: 0.7 }, { transform: fxT(-mw * 0.3, my), offset: 0.8 }, { transform: fxT(-mw * 0.3, my) }], { duration: T, fill: 'forwards' });
+    mug2.animate([{ transform: fxT(w * 0.7, my), opacity: 0 }, { transform: fxT(w * 0.7, my), opacity: 0, offset: 0.46 }, { transform: fxT(mw * 0.75, my), opacity: 1, offset: 0.56, easing: 'ease-out' },
+        { transform: fxT(mw * 0.5, my - 8, -14), offset: 0.66, easing: 'ease-in' }, { transform: fxT(mw * 0.62, my - 4, 4), offset: 0.7 }, { transform: fxT(mw * 0.75, my), offset: 0.8 }, { transform: fxT(mw * 0.75, my) }], { duration: T, fill: 'forwards' });
+    const fill = mug1.querySelector('.fx3-fill');
+    if (fill) fill.animate([{ transform: 'translateY(92px)' }, { transform: 'translateY(92px)', offset: 0.1 }, { transform: 'translateY(0px)', offset: 0.42 }, { transform: 'translateY(-4px)', offset: 0.5 }, { transform: 'translateY(0px)' }], { duration: T, fill: 'forwards' });
+    const sys = fx2Canvas(S, Math.max(w, h) * 0.75, 5);
+    const foam = FX2.cloud('foam', '255,252,240'), amber = '#ffb300';
+    const glow = FX2.sprite('neonPink', [[0, 'rgba(255,80,200,.5)'], [1, 'rgba(255,80,200,0)']], 64);
+    let clinked = false;
+    const mx = -mw * 0.3, mTop = my - mw * 1.22 * 0.5 + mw * 0.15;
+    sys.run(T, (el) => {
+        const t = el / T;
+        if (t > 0.08 && t < 0.42) {
+            for (let i = 0; i < 3; i++) sys.add({ x: -mw * 0.45 + mw * 0.1 + fx2R(-1.5, 1.5), y: -h * 0.34, vx: 0, vy: fx2R(200, 260), gy: 300, life: fx2R(260, 340), line: true, color: amber, lw: fx2R(2.5, 4), trail: 0.05, a0: 0.9, fi: 0.02 });
+        }
+        if (t > 0.12 && t < 0.9 && Math.random() < 0.5) {
+            sys.add({ x: mx + fx2R(-mw * 0.22, mw * 0.18), y: my + mw * 0.45, vy: fx2R(-50, -30), life: fx2R(600, 900), a0: 0.7, fi: 0.1, size: fx2R(1, 2.2),
+                draw: (g, p) => { g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 0.8; g.beginPath(); g.arc(p.x + Math.sin(p.age / 80) * 1.2, p.y, p.size, 0, Math.PI * 2); g.stroke(); } });
+        }
+        if (t > 0.42 && t < 0.56 && Math.random() < 0.6) {
+            const side = Math.random() < 0.5 ? -1 : 1;
+            sys.add({ x: mx + side * mw * 0.3, y: mTop, vx: side * fx2R(4, 12), vy: fx2R(8, 20), gy: 35, life: fx2R(900, 1400), sprite: foam, size: fx2R(10, 18), grow: 4, a0: 0.95, fi: 0.05 });
+        }
+        if (!clinked && t > 0.66) {
+            clinked = true;
+            fx2Shake(S.card, 4, 260);
+            const cx0 = mw * 0.22, cy0 = my - mw * 0.45;
+            for (let i = 0; i < 28; i++) { const a = -Math.PI / 2 + fx2R(-1.3, 1.3), v = fx2R(80, 220); sys.add({ x: cx0, y: cy0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, gy: 520, life: fx2R(500, 900), size: fx2R(2, 4.5),
+                draw: (g, p) => { g.fillStyle = i % 3 ? '#ffca28' : '#fffde7'; g.beginPath(); g.arc(p.x, p.y, p.size, 0, Math.PI * 2); g.fill(); }, a0: 1, fi: 0.02 }); }
+            for (let i = 0; i < 8; i++) sys.add({ x: cx0 + fx2R(-10, 10), y: cy0, vx: fx2R(-30, 30), vy: fx2R(-60, -20), gy: 80, life: fx2R(700, 1100), sprite: foam, size: fx2R(10, 18), a0: 0.9 });
+            const star = FX2.sprite('clinkStar', [[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(255,240,180,.8)'], [1, 'rgba(255,200,80,0)']], 64);
+            sys.add({ x: cx0, y: cy0, life: 400, sprite: star, size: 20, grow: 300, blend: 'lighter', a0: 0.9, fi: 0.05 });
+        }
+        if (Math.random() < 0.08) sys.add({ x: fx2R(-w * 0.2, w * 0.2), y: -h * 0.36, life: 120, sprite: glow, size: h * 0.6, blend: 'lighter', a0: 0.5, fi: 0.2 });
+    });
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// 🏊 BASEINAS #24 – baseinas su takeliais, kamuolys įkrenta, didelis pliūpsnis, ratilai, antis
+// ============================================================
+function fxPool3(fieldId) {
+    const c = fxPrep(fieldId, true);
+    if (!c) return;
+    const T = 5400;
+    const w = Math.max(200, c.L * 2.3), h = w * 0.62;
+    const x = c.ix * (c.L * 0.55 + w * 0.5) * 0.85, y = c.iy * (c.L * 0.55 + h * 0.5) * 0.85;
+    const S = fx3Card(c, w, h, x, y, 'fx3-pool', T);
+    const water = fx3El(S.stage, 'fx3-water', '', { width: (w - 20) + 'px', height: (h - 20) + 'px', left: (-(w - 20) / 2) + 'px', top: (-(h - 20) / 2) + 'px' });
+    [0.33, 0.66].forEach(f => fx3El(water, 'fx3-lane', '', { top: (f * 100) + '%' }));
+    const dk = h * 0.3;
+    const duck = fx3El(S.stage, 'fx-obj fx3-duck', `<div class="vx-img" style="width:${dk}px">${FX3_SVG.duck}</div>`);
+    duck.animate([{ transform: fxT(-w * 0.32, -h * 0.18, 0, 0) }, { transform: fxT(-w * 0.32, -h * 0.18, 0, 1), offset: 0.12 }, { transform: fxT(-w * 0.2, -h * 0.2, -6), offset: 0.45 },
+        { transform: fxT(-w * 0.26, -h * 0.05, 10), offset: 0.55 }, { transform: fxT(-w * 0.1, -h * 0.1, -4), offset: 0.85 }, { transform: fxT(-w * 0.05, -h * 0.12, 0) }], { duration: T, fill: 'forwards' });
+    const ring = fx3El(S.stage, 'fx-obj fx3-ring', '<i></i>', { '--d': (h * 0.32) + 'px' });
+    ring.animate([{ transform: fxT(w * 0.28, h * 0.18, 0, 0) }, { transform: fxT(w * 0.28, h * 0.18, 0, 1), offset: 0.14 }, { transform: fxT(w * 0.22, h * 0.1, 40), offset: 0.55 }, { transform: fxT(w * 0.3, h * 0.2, 120) }], { duration: T, fill: 'forwards' });
+    const bs = h * 0.3;
+    const ball = fx3El(S.stage, 'fx-obj fx3-ball', `<div class="vx-img" style="width:${bs}px">${FX3_SVG.ball}</div>`);
+    const shadow = fx3El(S.stage, 'fx-obj fx3-bshadow', '', { '--d': bs + 'px' });
+    const bx = w * 0.05, by = h * 0.02;
+    ball.animate([{ transform: fxT(bx, by - h * 0.9, 0, 2.6), opacity: 0 }, { transform: fxT(bx, by - h * 0.9, 0, 2.6), opacity: 0, offset: 0.12 }, { transform: fxT(bx, by - h * 0.5, 90, 1.9), opacity: 1, offset: 0.18 },
+        { transform: fxT(bx, by, 200, 1), offset: 0.3, easing: 'ease-in' }, { transform: fxT(bx, by + 6, 210, 0.9), opacity: 0.85, offset: 0.33 },
+        { transform: fxT(bx + 10, by - 4, 230, 1), opacity: 1, offset: 0.5 }, { transform: fxT(bx + 30, by + 8, 300, 1), offset: 0.88 }, { transform: fxT(bx + 34, by + 8, 310, 0.9), opacity: 0 }], { duration: T, fill: 'forwards' });
+    shadow.animate([{ transform: fxT(bx, by + bs * 0.4, 0, 0.3), opacity: 0 }, { transform: fxT(bx, by + bs * 0.4, 0, 0.3), opacity: 0, offset: 0.14 }, { transform: fxT(bx, by + bs * 0.3, 0, 1), opacity: 0.35, offset: 0.3 }, { opacity: 0, offset: 0.33 }, { opacity: 0 }], { duration: T, fill: 'forwards' });
+    const sys = fx2Canvas(S, Math.max(w, h) * 0.75, 6);
+    const white = FX2.cloud('splash', '255,255,255');
+    let splashed = false;
+    sys.run(T, (el) => {
+        const t = el / T;
+        if (!splashed && t > 0.3) {
+            splashed = true;
+            fx2Shake(S.card, 3, 250);
+            for (let i = 0; i < 70; i++) {
+                const a = -Math.PI / 2 + fx2R(-1.4, 1.4), v = fx2R(90, 300);
+                sys.add({ x: bx + fx2R(-6, 6), y: by, vx: Math.cos(a) * v, vy: Math.sin(a) * v, gy: 650, life: fx2R(600, 1100), size: fx2R(1.8, 4.5), a0: 1, fi: 0.02,
+                    draw: (g, p) => { g.fillStyle = 'rgba(235,250,255,.95)'; g.beginPath(); g.ellipse(p.x, p.y, p.size, p.size * 1.4, Math.atan2(p.vy, p.vx), 0, Math.PI * 2); g.fill(); g.fillStyle = 'rgba(255,255,255,1)'; g.beginPath(); g.arc(p.x - p.size * 0.3, p.y - p.size * 0.3, p.size * 0.35, 0, Math.PI * 2); g.fill(); } });
+            }
+            for (let i = 0; i < 12; i++) sys.add({ x: bx + fx2R(-14, 14), y: by + fx2R(-6, 6), vx: fx2R(-40, 40), vy: fx2R(-50, -10), life: fx2R(600, 1000), sprite: white, size: fx2R(18, 34), grow: 40, a0: 0.8 });
+            for (let k = 0; k < 4; k++) sys.add({ x: bx, y: by, life: 1800 + k * 200, a0: 0.85, fi: 0.02, size: 8 + k * 6, grow: w * 0.25,
+                draw: (g, p, tt) => { g.strokeStyle = `rgba(255,255,255,${0.9 - tt * 0.6})`; g.lineWidth = 2.2 * (1 - tt) + 0.5; g.beginPath(); g.ellipse(p.x, p.y, p.size, p.size * 0.55, 0, 0, Math.PI * 2); g.stroke(); } });
+        }
+        if (t > 0.35 && t < 0.8 && Math.random() < 0.2) sys.add({ x: bx + fx2R(-20, 20), y: by + fx2R(-10, 10), life: 1400, a0: 0.6, fi: 0.05, size: 3, grow: 40,
+            draw: (g, p, tt) => { g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1.2; g.beginPath(); g.ellipse(p.x, p.y, p.size, p.size * 0.55, 0, 0, Math.PI * 2); g.stroke(); } });
+    });
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// ⚡ ELEKTRA #28 – naktinė scena, transformatorius, žaibai, lemputė užsidega, kibirkštys
+// ============================================================
+function fxElectric3(fieldId) {
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = 5000;
+    const w = Math.max(200, c.L * 2.2), h = w * 0.8;
+    const x = c.ix * (c.L * 0.6 + w * 0.5) * 0.9, y = c.iy * (c.L * 0.6 + h * 0.5) * 0.9;
+    const S = fx3Card(c, w, h, x, y, 'fx3-night', T);
+    const ps = h * 0.78;
+    const pole = fx3El(S.stage, 'fx-obj fx3-pole', `<div class="vx-img" style="width:${ps}px">${FX3_SVG.pole}</div>`);
+    pole.style.transform = fxT(-w * 0.18, h * 0.12);
+    const bw = h * 0.3;
+    const bulb = fx3El(S.stage, 'fx-obj fx3-bulb', `<div class="vx-img" style="width:${bw}px">${FX3_SVG.bulb}</div>`);
+    bulb.style.transform = fxT(w * 0.27, -h * 0.12);
+    const wire = fx3El(S.stage, 'fx3-wire', '', { left: (-w * 0.18 + ps * 0.33) + 'px', top: (h * 0.12 - ps * 0.5 + ps * 0.1) + 'px', width: (w * 0.45 - ps * 0.33 + bw * 0.1) + 'px' });
+    wire.style.transformOrigin = '0 0';
+    setTimeout(() => S.card.classList.add('lit'), T * 0.5);
+    const sys = fx2Canvas(S, Math.max(w, h) * 0.8, 6);
+    const spark = FX2.sprite('espark', [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(170,210,255,.9)'], [1, 'rgba(60,120,255,0)']], 48);
+    const warm = FX2.sprite('ewarm', [[0, 'rgba(255,250,220,.95)'], [0.4, 'rgba(255,220,120,.5)'], [1, 'rgba(255,200,80,0)']], 96);
+    const tops = [-0.34, 0, 0.34].map(k => ({ x: -w * 0.18 + k * ps * 0.57, y: h * 0.12 - ps * 0.5 + ps * 0.08 }));
+    const bulbP = { x: w * 0.27, y: -h * 0.12 - bw * 0.35 };
+    let next = 0;
+    const strike = (a, b, life, wdt) => {
+        let pts = fx3Bolt(a.x, a.y, b.x, b.y, Math.hypot(b.x - a.x, b.y - a.y) * 0.35);
+        const br = []; if (Math.random() < 0.7) { const k = pts[Math.floor(pts.length * fx2R(0.3, 0.7))]; br.push(fx3Bolt(k[0], k[1], k[0] + fx2R(-40, 40), k[1] + fx2R(10, 50), 20)); }
+        sys.add({ x: 0, y: 0, life, a0: 1, fi: 0.01, blend: 'lighter', draw: (g, p) => {
+            if (Math.random() < 0.35) pts = fx3Bolt(a.x, a.y, b.x, b.y, Math.hypot(b.x - a.x, b.y - a.y) * 0.35);
+            fx3DrawBolt(g, pts, wdt); br.forEach(q => fx3DrawBolt(g, q, wdt * 0.6));
+        } });
+        for (let i = 0; i < 16; i++) { const an = Math.random() * Math.PI * 2, v = fx2R(60, 260); sys.add({ x: b.x, y: b.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v, gy: 600, life: fx2R(300, 700), line: true, color: '#e8f1ff', lw: 1.4, trail: 0.05, blend: 'lighter', a0: 1, fi: 0.02 }); }
+        sys.add({ x: b.x, y: b.y, life: 200, sprite: spark, size: 40, grow: 120, blend: 'lighter', a0: 1, fi: 0.05 });
+    };
+    sys.run(T, (el) => {
+        const t = el / T;
+        if (t > 0.1 && t < 0.86 && el > next) {
+            next = el + fx2R(140, 320);
+            const a = tops[Math.floor(Math.random() * 3)];
+            if (t < 0.48) strike(a, tops[(tops.indexOf(a) + 1 + Math.floor(Math.random() * 2)) % 3], fx2R(90, 160), 1.6);
+            else if (Math.random() < 0.6) strike(a, { x: bulbP.x + fx2R(-6, 6), y: bulbP.y + fx2R(-4, 4) }, fx2R(110, 180), 2);
+            else strike({ x: fx2R(-w * 0.4, w * 0.4), y: -h * 0.5 }, { x: a.x, y: a.y }, fx2R(120, 200), 2.4);
+            if (Math.random() < 0.3) { fx2Shake(S.card, 3, 160); S.card.classList.remove('flash'); void S.card.offsetWidth; S.card.classList.add('flash'); }
+        }
+        if (t > 0.5 && t < 0.9) sys.add({ x: bulbP.x, y: bulbP.y + bw * 0.25, life: 40, sprite: warm, size: bw * 3.2 * (0.9 + Math.random() * 0.15), blend: 'lighter', a0: 0.75, fi: 0.01 });
+        if (t > 0.1 && t < 0.86 && Math.random() < 0.3) { const a = tops[Math.floor(Math.random() * 3)]; sys.add({ x: a.x, y: a.y, life: 60, sprite: spark, size: fx2R(12, 26), blend: 'lighter', a0: 0.8, fi: 0.02 }); }
+    });
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// 🧖 PIRTIS #32 – medinė pirtis, samtis užpila vandens ant akmenų, kyla garų debesys, termometras, vantos lapai
+// ============================================================
+function fxSauna3(fieldId) {
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = 5600;
+    const w = Math.max(200, c.L * 2.2), h = w * 0.78;
+    const x = c.ix * (c.L * 0.6 + w * 0.5) * 0.9, y = c.iy * (c.L * 0.6 + h * 0.5) * 0.9;
+    const S = fx3Card(c, w, h, x, y, 'fx3-wood', T);
+    const sw = w * 0.52;
+    const stove = fx3El(S.stage, 'fx-obj fx3-stove', `<div class="vx-img" style="width:${sw}px">${FX3_SVG.stove}</div>`);
+    stove.style.transform = fxT(-w * 0.14, h * 0.2);
+    const bk = w * 0.36;
+    const bucket = fx3El(S.stage, 'fx-obj fx3-bucket', `<div class="vx-img" style="width:${bk}px">${FX3_SVG.bucket}</div>`);
+    bucket.style.transform = fxT(w * 0.27, h * 0.22);
+    const th = h * 0.5;
+    const thermo = fx3El(S.stage, 'fx-obj fx3-thermo', `<div class="vx-img" style="width:${th * 0.27}px">${FX3_SVG.thermo}</div><span class="fx3-deg">60°</span>`);
+    thermo.style.transform = fxT(w * 0.4, -h * 0.18);
+    const ladle = bucket.querySelector('.fx3-ladle');
+    // samtis: pakyla, nuneša virš akmenų, apverčia
+    if (ladle) ladle.animate([{ transform: 'translate(0,0) rotate(0deg)' }, { transform: 'translate(0,0) rotate(0deg)', offset: 0.12 }, { transform: 'translate(-20px,-30px) rotate(-10deg)', offset: 0.22 },
+        { transform: 'translate(-150px,-62px) rotate(-18deg)', offset: 0.32 }, { transform: 'translate(-150px,-62px) rotate(-80deg)', offset: 0.4 }, { transform: 'translate(-150px,-62px) rotate(-80deg)', offset: 0.5 },
+        { transform: 'translate(0,0) rotate(0deg)', offset: 0.66 }, { transform: 'translate(0,0) rotate(0deg)' }], { duration: T, fill: 'forwards' });
+    const merc = thermo.querySelector('.fx3-merc');
+    if (merc) merc.animate([{ transform: 'scaleY(.45)' }, { transform: 'scaleY(.45)', offset: 0.36 }, { transform: 'scaleY(.98)', offset: 0.7 }, { transform: 'scaleY(.95)' }], { duration: T, fill: 'forwards' });
+    const deg = thermo.querySelector('.fx3-deg');
+    const t0 = performance.now();
+    const tick = () => { if (!deg.isConnected) return; const k = Math.min(1, Math.max(0, ((performance.now() - t0) / T - 0.36) / 0.34)); deg.textContent = Math.round(60 + 40 * k) + '°'; if (k < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    const sys = fx2Canvas(S, Math.max(w, h) * 0.8, 6);
+    const steam = [FX2.cloud('st1', '255,255,255'), FX2.cloud('st2', '235,240,245')];
+    const hot = FX2.sprite('hot', [[0, 'rgba(255,170,60,.9)'], [1, 'rgba(255,80,0,0)']], 64);
+    const stonesX = -w * 0.14, stonesY = h * 0.2 - sw * 0.75 * 0.5 + sw * 0.75 * 0.25;
+    let hissed = false;
+    sys.run(T, (el) => {
+        const t = el / T;
+        if (t > 0.36 && t < 0.48) for (let i = 0; i < 3; i++) sys.add({ x: stonesX + fx2R(-10, 18), y: stonesY - h * 0.26, vx: fx2R(-20, 20), vy: fx2R(40, 90), gy: 700, life: fx2R(250, 380), size: fx2R(1.6, 3),
+            draw: (g, p) => { g.fillStyle = 'rgba(120,200,255,.95)'; g.beginPath(); g.ellipse(p.x, p.y, p.size, p.size * 1.6, 0, 0, Math.PI * 2); g.fill(); }, a0: 1, fi: 0.02 });
+        if (t > 0.4 && t < 0.85) {
+            if (!hissed) { hissed = true; fx2Shake(S.card, 2, 200); }
+            const k = t < 0.55 ? 3 : 1;
+            for (let i = 0; i < k; i++) sys.add({ x: stonesX + fx2R(-sw * 0.3, sw * 0.3), y: stonesY, vx: fx2R(-30, 30), vy: fx2R(-120, -60), drag: 0.02, turb: 70, ph: Math.random() * 6,
+                life: fx2R(1500, 2400), sprite: steam[i % 2], size: fx2R(30, 60), grow: fx2R(60, 110), rot: Math.random() * 6, vr: fx2R(-0.5, 0.5), a0: fx2R(0.5, 0.8), fi: 0.12 });
+            if (Math.random() < 0.3) sys.add({ x: stonesX, y: stonesY, life: 300, sprite: hot, size: sw * 0.8, blend: 'lighter', a0: 0.4, fi: 0.3 });
+        }
+        if (t > 0.15 && t < 0.9 && Math.random() < 0.06) {
+            sys.add({ x: fx2R(-w * 0.45, w * 0.45), y: -h * 0.55, vx: fx2R(-20, 20), vy: fx2R(25, 45), turb: 60, life: fx2R(2200, 3000), size: fx2R(5, 8), rot: Math.random() * 6, vr: fx2R(-3, 3), a0: 0.95, fi: 0.1,
+                draw: (g, p) => { g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.fillStyle = '#6dbb45'; g.beginPath(); g.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#3f7d22'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(-p.size, 0); g.lineTo(p.size, 0); g.stroke(); g.restore(); } });
+        }
+    });
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// 💧 VANDUO #44 – chromuotas čiaupas, srovė, purslai, bala su ratilais
+// ============================================================
+function fxWater3(fieldId) {
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = 5000;
+    const w = Math.max(190, c.L * 2.1), h = w * 0.82;
+    const x = c.ix * (c.L * 0.6 + w * 0.5) * 0.9, y = c.iy * (c.L * 0.6 + h * 0.5) * 0.9;
+    const S = fx3Card(c, w, h, x, y, 'fx3-tiles', T);
+    const fw = w * 0.62;
+    const fc = fx3El(S.stage, 'fx-obj fx3-faucet', `<div class="vx-img" style="width:${fw}px">${FX3_SVG.faucet}</div>`);
+    fc.style.transform = fxT(-w * 0.1, -h * 0.28);
+    const handle = fc.querySelector('.fx3-handle');
+    if (handle) handle.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(0deg)', offset: 0.08 }, { transform: 'rotate(-35deg)', offset: 0.16 }, { transform: 'rotate(-35deg)', offset: 0.78 }, { transform: 'rotate(0deg)', offset: 0.86 }, { transform: 'rotate(0deg)' }], { duration: T, fill: 'forwards' });
+    const sx = -w * 0.1 + fw * (112 / 150 - 0.5), sy = -h * 0.28 + fw * 0.66 * (76 / 100 - 0.5);
+    const floorY = h * 0.32;
+    const pud = fx3El(S.stage, 'fx3-puddle', '', { left: sx + 'px', top: floorY + 'px' });
+    pud.animate([{ width: '0px', height: '0px', opacity: 0 }, { width: '0px', height: '0px', opacity: 0, offset: 0.18 }, { width: (w * 0.7) + 'px', height: (h * 0.2) + 'px', opacity: 1, offset: 0.7 }, { width: (w * 0.75) + 'px', height: (h * 0.22) + 'px', opacity: 1, offset: 0.9 }, { opacity: 0 }], { duration: T, fill: 'forwards' });
+    const sys = fx2Canvas(S, Math.max(w, h) * 0.8, 6);
+    sys.run(T, (el) => {
+        const t = el / T;
+        const flow = t > 0.15 && t < 0.8 ? 1 : (t > 0.8 && t < 0.86 ? 0.3 : 0);
+        for (let i = 0; i < Math.round(9 * flow); i++) {
+            sys.add({ x: sx + fx2R(-2.5, 2.5) * (1 + t), y: sy, vx: fx2R(-6, 6), vy: fx2R(60, 120), gy: 900, life: 900, a0: 0.9, fi: 0.01, size: fx2R(2.4, 4.4),
+                draw: (g, p) => {
+                    if (p.y > floorY) { p.age = p.life;
+                        if (Math.random() < 0.45) for (let k = 0; k < 2; k++) { const a = -Math.PI / 2 + fx2R(-1.2, 1.2), v = fx2R(40, 150); sys.add({ x: p.x, y: floorY, vx: Math.cos(a) * v, vy: Math.sin(a) * v, gy: 700, life: fx2R(250, 450), size: fx2R(1, 2.4), a0: 0.95, fi: 0.02,
+                            draw: (gg, q) => { gg.fillStyle = 'rgba(200,235,255,.95)'; gg.beginPath(); gg.arc(q.x, q.y, q.size, 0, Math.PI * 2); gg.fill(); } }); }
+                        return; }
+                    const len = Math.min(18, p.vy * 0.04);
+                    const gr = g.createLinearGradient(p.x, p.y - len, p.x, p.y);
+                    gr.addColorStop(0, 'rgba(120,200,255,0)'); gr.addColorStop(1, 'rgba(180,230,255,.95)');
+                    g.strokeStyle = gr; g.lineWidth = p.size * 1.6; g.lineCap = 'round';
+                    g.beginPath(); g.moveTo(p.x, p.y - len); g.lineTo(p.x, p.y); g.stroke();
+                } });
+        }
+        if (flow && Math.random() < 0.15) sys.add({ x: sx + fx2R(-w * 0.15, w * 0.15), y: floorY + fx2R(-4, 4), life: 1300, a0: 0.8, fi: 0.05, size: 4, grow: 50,
+            draw: (g, p, tt) => { g.strokeStyle = `rgba(255,255,255,${0.8 - tt * 0.7})`; g.lineWidth = 1.4; g.beginPath(); g.ellipse(p.x, p.y, p.size, p.size * 0.32, 0, 0, Math.PI * 2); g.stroke(); } });
+    });
+    // Didelis lašas – „vandens“ ženklas
+    const drop = fx3El(S.stage, 'fx-obj fx3-drop', '<i></i>', { '--d': (h * 0.22) + 'px' });
+    drop.animate([{ transform: fxT(w * 0.32, -h * 0.05, 0, 0), opacity: 0 }, { transform: fxT(w * 0.32, -h * 0.05, 0, 0), opacity: 0, offset: 0.25 }, { transform: fxT(w * 0.32, -h * 0.08, 0, 1.15), opacity: 1, offset: 0.33 },
+        { transform: fxT(w * 0.32, -h * 0.05, 0, 1), offset: 0.4 }, { transform: fxT(w * 0.32, -h * 0.07, 0, 1), opacity: 1, offset: 0.85 }, { transform: fxT(w * 0.32, -h * 0.05, 0, 0.6), opacity: 0 }], { duration: T, fill: 'forwards' });
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// 🏖️ PAPLŪDIMYS #48 – saulė, jūra su bangomis, skėtis išsiskleidžia, kamuolys šokinėja, žuvėdros
+// ============================================================
+function fxBeach3(fieldId) {
+    const c = fxPrep(fieldId, true);
+    if (!c) return;
+    const T = 5600;
+    const w = Math.max(210, c.L * 2.3), h = w * 0.7;
+    const x = c.ix * (c.L * 0.6 + w * 0.5) * 0.9, y = c.iy * (c.L * 0.6 + h * 0.5) * 0.9;
+    const S = fx3Card(c, w, h, x, y, 'fx3-beach', T);
+    fx3El(S.stage, 'fx3-sea', '<i class="w1"></i><i class="w2"></i><i class="w3"></i>', { width: w + 'px', height: (h * 0.42) + 'px', left: (-w / 2) + 'px', top: (-h * 0.12) + 'px' });
+    fx3El(S.stage, 'fx3-sand', '', { width: w + 'px', height: (h * 0.4) + 'px', left: (-w / 2) + 'px', top: (h * 0.18) + 'px' });
+    const sn = h * 0.42;
+    const sun = fx3El(S.stage, 'fx-obj fx3-sun', `<div class="vx-img" style="width:${sn}px">${FX3_SVG.sun}</div>`);
+    sun.animate([{ transform: fxT(w * 0.3, -h * 0.05, 0, 0.6) }, { transform: fxT(w * 0.3, -h * 0.3, 0, 1), offset: 0.25, easing: 'ease-out' }, { transform: fxT(w * 0.3, -h * 0.32, 0, 1) }], { duration: T, fill: 'forwards' });
+    const um = h * 0.62;
+    const umb = fx3El(S.stage, 'fx-obj fx3-umb', `<div class="vx-img" style="width:${um}px">${FX3_SVG.umbrella}</div>`);
+    umb.style.transform = fxT(-w * 0.25, h * 0.08);
+    const can = umb.querySelector('.fx3-canopy');
+    if (can) can.animate([{ transform: 'scaleX(.05) scaleY(.6)' }, { transform: 'scaleX(.05) scaleY(.6)', offset: 0.12 }, { transform: 'scaleX(1.06) scaleY(1)', offset: 0.26, easing: 'ease-out' }, { transform: 'scaleX(1)', offset: 0.3 }, { transform: 'scaleX(1)' }], { duration: T, fill: 'forwards' });
+    const bs = h * 0.17;
+    const ball = fx3El(S.stage, 'fx-obj fx3-ball', `<div class="vx-img" style="width:${bs}px">${FX3_SVG.ball}</div>`);
+    const kb = []; const gY = h * 0.3;
+    for (let i = 0; i <= 12; i++) { const f = i / 12, bounce = Math.abs(Math.sin(f * Math.PI * 3.5)) * h * 0.28 * (1 - f * 0.5); kb.push({ transform: fxT(-w * 0.05 + f * w * 0.32, gY - bounce, f * 540, 1), offset: 0.15 + f * 0.7 }); }
+    ball.animate([{ transform: fxT(-w * 0.05, gY, 0, 0), opacity: 0, offset: 0 }, { transform: fxT(-w * 0.05, gY, 0, 1), opacity: 1, offset: 0.14 }, ...kb, { transform: fxT(w * 0.27, gY, 540, 0.7), opacity: 0, offset: 1 }], { duration: T, fill: 'forwards' });
+    for (let i = 0; i < 2; i++) {
+        const g = fx3El(S.stage, 'fx-obj fx3-gull', `<div class="vx-img" style="width:${h * 0.16 * (1 - i * 0.25)}px">${FX3_SVG.gull}</div>`);
+        g.animate([{ transform: fxT(-w * 0.6, -h * 0.32 + i * 18) }, { transform: fxT(w * 0.6, -h * 0.4 + i * 14) }], { duration: T * (0.9 + i * 0.25), delay: i * 400, fill: 'both' });
+    }
+    const sys = fx2Canvas(S, Math.max(w, h) * 0.8, 6);
+    const glint = FX2.sprite('glint', [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,255,220,.6)'], [1, 'rgba(255,255,200,0)']], 32);
+    sys.run(T, () => {
+        if (Math.random() < 0.5) sys.add({ x: fx2R(-w * 0.5, w * 0.5), y: fx2R(-h * 0.1, h * 0.17), life: fx2R(300, 700), sprite: glint, size: fx2R(4, 12), blend: 'lighter', a0: 1, fi: 0.5,
+            draw: (g, p, tt) => { const s = p.size * Math.sin(tt * Math.PI); g.drawImage(p.sprite, p.x - s, p.y - s * 0.3, s * 2, s * 0.6); g.drawImage(p.sprite, p.x - s * 0.3, p.y - s, s * 0.6, s * 2); } });
+    });
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// 🎂 GIMTADIENIS #50 – tortas su žvakutėmis (užpučiamos), 5 fejerverkų papliūpos, konfeti ir balionai
+// ============================================================
+function fxBirthday3(fieldId) {
+    const c = fxPrep(fieldId, true);
+    if (!c) return;
+    const T = 6600;
+    const iw = fx3Inward(c);
+    const cw = Math.max(110, c.L * 1.3);
+    const ckx = iw.x * c.L * 1.0, cky = iw.y * c.L * 1.0;
+    const cake = fxEl(c, 'fx-obj fx3-cake', `<div class="vx-img" style="width:${cw}px">${FX3_SVG.cake}</div>`);
+    cake.animate([{ transform: fxT(ckx, cky + 30, 0, 0.2), opacity: 0 }, { transform: fxT(ckx, cky - 6, 0, 1.08), opacity: 1, offset: 0.08 }, { transform: fxT(ckx, cky, 0, 1), offset: 0.12 },
+        { transform: fxT(ckx, cky, 0, 1), opacity: 1, offset: 0.88 }, { transform: fxT(ckx, cky, 0, 0.8), opacity: 0 }], { duration: T, fill: 'forwards' });
+    const flames = cake.querySelectorAll('.fx3-cflame');
+    flames.forEach((f, i) => f.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.2 + i * 0.012 }, { transform: 'scale(.4,1.3) skewX(-30deg)', opacity: 0.6, offset: 0.23 + i * 0.012 }, { transform: 'scale(0)', opacity: 0, offset: 0.25 + i * 0.012 }, { transform: 'scale(0)', opacity: 0 }], { duration: T, fill: 'forwards' }));
+    // balionai
+    const bcols = ['#ff4d6d', '#4cc9f0', '#ffd23f', '#b388ff', '#3ddc97'];
+    bcols.forEach((col, i) => {
+        const b = fxEl(c, 'fx-obj fx3-balloon', `<div class="vx-img" style="width:${cw * 0.32}px">${FX3_SVG.balloon(col)}</div>`);
+        const bx = ckx + (i - 2) * cw * 0.42 + fx2R(-8, 8);
+        b.animate([{ transform: fxT(bx, cky + cw * 0.2, 0, 0.3), opacity: 0 }, { transform: fxT(bx, cky - cw * 0.1, -6, 1), opacity: 1, offset: 0.12 },
+            { transform: fxT(bx + 14, cky - cw * 0.9, 6, 1), offset: 0.5 }, { transform: fxT(bx - 10, cky - cw * 1.7, -6, 1), opacity: 1, offset: 0.85 }, { transform: fxT(bx, cky - cw * 2.1, 0, 1), opacity: 0 }],
+            { duration: T, delay: 300 + i * 160, fill: 'both' });
+    });
+    const R = Math.max(c.board.offsetWidth, c.board.offsetHeight) * 0.55;
+    const sys = fx2Canvas(c, R, 4);
+    const smoke = FX2.cloud('csmk', '200,200,200');
+    const fwCols = [['#ff1744', '#ff9100'], ['#ffc400', '#ff6d00'], ['#00b0ff', '#2962ff'], ['#00c853', '#64dd17'], ['#d500f9', '#651fff']];
+    const flare = FX2.sprite('fwflare', [[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(255,240,200,.8)'], [1, 'rgba(255,200,120,0)']], 64);
+    const launches = [0.28, 0.4, 0.52, 0.64, 0.76];
+    let li = 0, smoked = false;
+    const rockets = [];
+    sys.run(T, (el) => {
+        const t = el / T;
+        if (!smoked && t > 0.25) { smoked = true; for (let i = 0; i < 4; i++) for (let k = 0; k < 4; k++) sys.add({ x: ckx + (-0.2 + i * 0.13) * cw + cw * 0.02, y: cky - cw * 0.45, vx: fx2R(-8, 8), vy: fx2R(-40, -25), turb: 30, life: fx2R(900, 1400), sprite: smoke, size: fx2R(6, 10), grow: 14, a0: 0.5 }); }
+        if (li < launches.length && t > launches[li]) {
+            const k = li++;
+            const bcx = c.board.offsetWidth / 2 - c.pc.x, bcy = c.board.offsetHeight / 2 - c.pc.y;
+            const tx = bcx * 0.75 + fx2R(-R * 0.45, R * 0.45), ty = bcy * 0.75 + fx2R(-R * 0.4, R * 0.05);
+            rockets.push({ x: ckx + fx2R(-20, 20), y: cky - cw * 0.3, tx, ty, t0: el, k });
+        }
+        for (let i = rockets.length - 1; i >= 0; i--) {
+            const r = rockets[i]; const f = (el - r.t0) / 600;
+            const px = r.x + (r.tx - r.x) * Math.min(1, f), py = r.y + (r.ty - r.y) * (1 - Math.pow(1 - Math.min(1, f), 2));
+            sys.add({ x: px, y: py, vx: fx2R(-15, 15), vy: fx2R(10, 40), life: 380, size: 3, a0: 1, fi: 0.02, draw: (g, p) => { g.fillStyle = '#ffb300'; g.beginPath(); g.arc(p.x, p.y, p.size * (1 - p.age / p.life) + 0.8, 0, Math.PI * 2); g.fill(); } });
+            if (f >= 1) {
+                rockets.splice(i, 1);
+                const [c1, c2] = fwCols[r.k % fwCols.length];
+                sys.add({ x: px, y: py, life: 420, sprite: flare, size: 40, grow: 300, a0: 0.8, fi: 0.04 });
+                const n = 110;
+                for (let j = 0; j < n; j++) {
+                    const a = j / n * Math.PI * 2 + fx2R(-0.05, 0.05), v = fx2R(200, 320) * (j % 2 ? 1 : 0.7);
+                    sys.add({ x: px, y: py, vx: Math.cos(a) * v, vy: Math.sin(a) * v, gy: 160, drag: 0.04, life: fx2R(1000, 1600), a0: 1, fi: 0.02, col: j % 3 ? c1 : c2, tw: Math.random() * 6,
+                        draw: (g, p, tt) => { const tw = tt > 0.6 ? (Math.sin(p.age / 30 + p.tw) > 0 ? 1 : 0.3) : 1; g.globalAlpha *= tw; g.lineCap = 'round';
+                            g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 4.5; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * 0.06, p.y - p.vy * 0.06); g.stroke();
+                            g.strokeStyle = p.col; g.lineWidth = 3; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * 0.06, p.y - p.vy * 0.06); g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.arc(p.x, p.y, 1.8, 0, Math.PI * 2); g.fill(); } });
+                }
+                fx3Confetti(sys, px, py, 46, 300);
+            }
+        }
+    });
+    fxEnd(c, T + 2000);
+}
+
+// ============================================================
+// 🚕 TAKSI #26 – geltonas taksi privažiuoja, mirksi žibintai, šviečia TAXI ženklas
+// ============================================================
+function fxTaxi3(fieldId) {
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = 3600;
+    const iw = fx3Inward(c);
+    const vw = Math.max(100, c.L * 1.25);
+    const tx = iw.x * c.L * 0.95, ty = iw.y * c.L * 0.95;
+    const along = { x: 1, y: 0 };
+    const far = c.L * 2.2;
+    const car = fxEl(c, 'fx-obj fx3-taxi', `<div class="vx-img" style="width:${vw}px;transform:scaleX(-1)">${FX3_SVG.taxi}</div>`);
+    car.animate([{ transform: fxT(tx - along.x * far, ty - along.y * far, 0, 1), opacity: 0 }, { transform: fxT(tx - along.x * far * 0.7, ty - along.y * far * 0.7, 0, 1), opacity: 1, offset: 0.1 },
+        { transform: fxT(tx, ty, 0, 1), offset: 0.38, easing: 'cubic-bezier(.2,.7,.3,1)' }, { transform: fxT(tx + along.x * 3, ty + along.y * 3, 0, 1), offset: 0.42 }, { transform: fxT(tx, ty, 0, 1), offset: 0.46 },
+        { transform: fxT(tx, ty, 0, 1), opacity: 1, offset: 0.86 }, { transform: fxT(tx, ty, 0, 0.9), opacity: 0 }], { duration: T, fill: 'forwards' });
+    const sys = fx2Canvas(c, Math.max(c.L * 2.6, 260), 3);
+    const head = FX2.sprite('txhead', [[0, 'rgba(255,255,220,1)'], [0.3, 'rgba(255,250,200,.6)'], [1, 'rgba(255,250,180,0)']], 64);
+    const sign = FX2.sprite('txsign', [[0, 'rgba(255,240,120,.9)'], [1, 'rgba(255,220,0,0)']], 64);
+    const smoke = FX2.cloud('txsmk', '130,130,130');
+    sys.run(T, (el) => {
+        const t = el / T;
+        const m = new DOMMatrixReadOnly(getComputedStyle(car).transform);
+        const op = parseFloat(getComputedStyle(car).opacity) || 0;
+        if (op < 0.2) return;
+        sys.add({ x: m.e, y: m.f - vw * 0.24, life: 40, sprite: sign, size: vw * 0.5, blend: 'lighter', a0: 0.6 * op, fi: 0.01 });
+        const blink = t > 0.48 && t < 0.78 && Math.floor(el / 160) % 2 === 0;
+        sys.add({ x: m.e + vw * 0.46, y: m.f + vw * 0.07, life: 40, sprite: head, size: vw * (blink ? 0.9 : 0.35), blend: 'lighter', a0: op, fi: 0.01 });
+        if (t < 0.4 && Math.random() < 0.6) sys.add({ x: m.e - vw * 0.48, y: m.f + vw * 0.12, vx: -40, vy: -15, turb: 20, life: 700, sprite: smoke, size: 8, grow: 20, a0: 0.4 });
+    });
+    setTimeout(() => { if (typeof taxiBeep === 'function') { try { taxiBeep(); } catch (e) {} } }, T * 0.48);
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// 🏁 STARTAS #0 – plevėsuojanti finišo vėliava, šviesos spinduliai, „+€200“, monetų fontanas
+// ============================================================
+function fxStart3(fieldId, bonus) {
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = 4400;
+    const iw = fx3Inward(c);
+    const R0 = c.L * 0.95;
+    const cx = iw.x * R0, cy = iw.y * R0;
+    const rays = fxEl(c, 'fx3-rays');
+    const rs = c.L * 3;
+    Object.assign(rays.style, { width: rs + 'px', height: rs + 'px', left: (cx - rs / 2) + 'px', top: (cy - rs / 2) + 'px' });
+    rays.animate([{ transform: 'rotate(0deg) scale(.2)', opacity: 0 }, { transform: 'rotate(40deg) scale(1)', opacity: 1, offset: 0.15 }, { transform: 'rotate(160deg) scale(1)', opacity: 1, offset: 0.8 }, { transform: 'rotate(200deg) scale(1.1)', opacity: 0 }], { duration: T, fill: 'forwards' });
+    const fwid = c.L * 1.25, fh = fwid * 0.66;
+    const flag = fxEl(c, 'fx-obj fx3-flag', `<div class="fx3-flag-in" style="width:${fwid}px;height:${fh}px">` + Array.from({ length: 12 }, (_, i) => `<i style="width:${fwid / 12 + 0.6}px;left:${i * fwid / 12}px;background-position:${-i * fwid / 12}px 0;background-size:${fh / 3}px ${fh / 3}px;animation-delay:${-i * 0.07}s"></i>`).join('') + `</div><b class="fx3-flagpole" style="height:${fh * 1.9}px"></b>`);
+    flag.animate([{ transform: fxT(cx - fwid * 0.1, cy + fh * 0.6, -30, 0), opacity: 0 }, { transform: fxT(cx - fwid * 0.1, cy + fh * 0.45, 8, 1.1), opacity: 1, offset: 0.12, easing: 'ease-out' },
+        { transform: fxT(cx - fwid * 0.1, cy + fh * 0.45, 0, 1), offset: 0.18 }, { transform: fxT(cx - fwid * 0.1, cy + fh * 0.45, 0, 1), opacity: 1, offset: 0.85 }, { transform: fxT(cx - fwid * 0.1, cy + fh * 0.45, 0, 0.7), opacity: 0 }], { duration: T, fill: 'forwards' });
+    const amt = bonus || (window.START_BONUS || 200);
+    const txt = fxEl(c, 'fx-obj fx3-bonus', `<span>+€${amt}</span>`);
+    txt.style.setProperty('--fs', Math.max(26, c.L * 0.5) + 'px');
+    txt.animate([{ transform: fxT(cx, cy + fh * 0.6, 0, 0.2), opacity: 0 }, { transform: fxT(cx, cy + fh * 0.55, 0, 0.2), opacity: 0, offset: 0.16 }, { transform: fxT(cx, cy + fh * 0.5, -4, 1.3), opacity: 1, offset: 0.26, easing: 'ease-out' },
+        { transform: fxT(cx, cy + fh * 0.5, 0, 1), offset: 0.32 }, { transform: fxT(cx, cy + fh * 0.4, 0, 1), opacity: 1, offset: 0.85 }, { transform: fxT(cx, cy + fh * 0.2, 0, 0.9), opacity: 0 }], { duration: T, fill: 'forwards' });
+    const sys = fx2Canvas(c, Math.max(c.L * 3, 320), 3);
+    const sparkle = FX2.sprite('gold', [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,236,150,.9)'], [1, 'rgba(255,190,0,0)']], 48);
+    let burst = false;
+    sys.run(T, (el) => {
+        const t = el / T;
+        if (!burst && t > 0.24) {
+            burst = true;
+            for (let i = 0; i < 34; i++) { const a = -Math.PI / 2 + fx2R(-1.1, 1.1), v = fx2R(180, 380); sys.add({ x: cx, y: cy + fh * 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, gy: 700, life: fx2R(900, 1500), size: fx2R(5, 9), rot: Math.random() * 6, vr: fx2R(8, 16), a0: 1, fi: 0.02, draw: fx3Coin }); }
+            fx3Confetti(sys, cx, cy, 40, 260, ['#111', '#fff', '#ffd23f', '#28a745']);
+        }
+        if (t > 0.2 && t < 0.85 && Math.random() < 0.6) { const a = Math.random() * Math.PI * 2, r = fx2R(c.L * 0.3, c.L * 1.1); sys.add({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r, life: fx2R(400, 800), sprite: sparkle, size: fx2R(6, 16), blend: 'lighter', a0: 1, fi: 0.4 }); }
+    });
+    fxEnd(c, T + 1200);
+}
+
+// ============================================================
+// ⛓️ KALĖJIMAS #16 – grotos užsitrenkia, spyna užsirakina, prožektoriai šviečia
+// mode: 'in' (įkalintas), 'visit' (užsuko), 'out' (išėjo)
+// ============================================================
+function fxJail3(fieldId, mode) {
+    fieldId = fieldId || 16;
+    mode = mode || 'visit';
+    const c = fxPrep(fieldId, false);
+    if (!c) return;
+    const T = mode === 'out' ? 3000 : 3800;
+    const w = c.w * 1.04, h = c.h * 1.04;
+    const bars = fxEl(c, 'fx3-bars ' + mode, Array.from({ length: 6 }, () => '<i></i>').join('') + '<b></b>');
+    Object.assign(bars.style, { width: w + 'px', height: h + 'px', left: (-w / 2) + 'px', top: (-h / 2) + 'px' });
+    const down = [{ transform: 'translateY(-105%)', opacity: 1 }, { transform: 'translateY(0)', opacity: 1, offset: 0.16, easing: 'cubic-bezier(.6,0,1,1)' }, { transform: 'translateY(-4%)', offset: 0.2 }, { transform: 'translateY(0)', offset: 0.24 }];
+    if (mode === 'out') bars.animate([{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(0)', offset: 0.3 }, { transform: 'translateY(-105%)', opacity: 1, offset: 0.62, easing: 'ease-in' }, { transform: 'translateY(-105%)', opacity: 0 }], { duration: T, fill: 'forwards' });
+    else bars.animate([...down, { transform: 'translateY(0)', opacity: 1, offset: mode === 'visit' ? 0.62 : 0.86 }, mode === 'visit' ? { transform: 'translateY(-105%)', opacity: 1, offset: 0.85 } : { transform: 'translateY(0)', opacity: 0, offset: 0.98 }, { transform: mode === 'visit' ? 'translateY(-105%)' : 'translateY(0)', opacity: 0 }], { duration: T, fill: 'forwards' });
+    const ls = Math.max(40, c.s * 0.55);
+    const lock = fxEl(c, 'fx-obj fx3-lock', `<div class="vx-img" style="width:${ls}px">${FX3_SVG.lock}</div>`);
+    const lx = 0, ly = c.h * 0.18;
+    lock.animate([{ transform: fxT(lx, ly + 20, 0, 0), opacity: 0 }, { transform: fxT(lx, ly + 20, 0, 0), opacity: 0, offset: mode === 'out' ? 0 : 0.2 }, { transform: fxT(lx, ly, -10, 1.15), opacity: 1, offset: mode === 'out' ? 0.08 : 0.28 },
+        { transform: fxT(lx, ly, 0, 1), offset: mode === 'out' ? 0.14 : 0.34 }, { transform: fxT(lx, ly, 0, 1), opacity: 1, offset: 0.8 }, { transform: fxT(lx, ly - 10, 0, 0.8), opacity: 0 }], { duration: T, fill: 'forwards' });
+    const sh = lock.querySelector('.fx3-shackle');
+    if (sh) {
+        const open = 'translateY(-12px)', closed = 'translateY(0)';
+        const a = mode === 'out' ? [closed, open] : [open, closed];
+        const o = mode === 'out' ? 0.28 : 0.4;
+        sh.animate([{ transform: a[0] }, { transform: a[0], offset: o }, { transform: a[1], offset: o + 0.05 }, { transform: a[1] }], { duration: T, fill: 'forwards' });
+    }
+    const sys = fx2Canvas(c, Math.max(c.L * 2.4, 260), 4);
+    const dust = FX2.cloud('jdust', '170,170,170');
+    const sparkle = FX2.sprite('jsp', [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,236,150,.9)'], [1, 'rgba(255,190,0,0)']], 48);
+    let hit = false, clk = false;
+    sys.run(T, (el) => {
+        const t = el / T;
+        if (mode !== 'out' && !hit && t > 0.16) {
+            hit = true; fx2Shake(c.cell, 4, 300);
+            for (let i = 0; i < 16; i++) sys.add({ x: fx2R(-w / 2, w / 2), y: h / 2, vx: fx2R(-50, 50), vy: fx2R(-40, -5), turb: 30, life: fx2R(600, 1000), sprite: dust, size: fx2R(14, 24), grow: 30, a0: 0.55 });
+            for (let i = 0; i < 18; i++) { const a = -Math.PI / 2 + fx2R(-1.4, 1.4), v = fx2R(100, 240); sys.add({ x: fx2R(-w / 2, w / 2), y: h / 2, vx: Math.cos(a) * v, vy: Math.sin(a) * v, gy: 600, life: fx2R(300, 600), line: true, color: '#fff3c4', lw: 1.4, trail: 0.04, blend: 'lighter', a0: 1, fi: 0.02 }); }
+        }
+        const lt = mode === 'out' ? 0.3 : 0.42;
+        if (!clk && t > lt) { clk = true; for (let i = 0; i < 12; i++) { const a = Math.random() * Math.PI * 2; sys.add({ x: lx + Math.cos(a) * ls * 0.6, y: ly + Math.sin(a) * ls * 0.6, life: fx2R(400, 700), sprite: sparkle, size: fx2R(8, 16), blend: 'lighter', a0: 1, fi: 0.3 }); } }
+        if (mode === 'in' && t > 0.25 && t < 0.85) {
+            const iw = fx3Inward(c); const a = Math.atan2(iw.y, iw.x) + Math.sin(el / 450) * 0.6;
+            sys.add({ x: 0, y: 0, life: 40, a0: 0.5, fi: 0.01, blend: 'lighter', draw: (g) => {
+                const L = c.L * 2.2; const gr = g.createRadialGradient(0, 0, 0, 0, 0, L);
+                gr.addColorStop(0, 'rgba(255,255,230,.55)'); gr.addColorStop(1, 'rgba(255,255,230,0)');
+                g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, L, a - 0.75, a - 0.4); g.closePath(); g.fill();
+                g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, L, a + 0.4, a + 0.75); g.closePath(); g.fill();
+            } });
+        }
+    });
+    fxEnd(c, T + 300);
+}
+
+// ============================================================
+// 💬 PATARIMAI UŽVEDUS PELĘ (data-tip="raktas" arba title="tekstas")
+// Telefone – ilgai palaikius pirštą. Tekstas imamas pasirinkta kalba rodymo metu.
+// ============================================================
+const tipUi = { el: null, target: null, timer: null, hideTimer: null, longPress: false, touchTimer: null };
+function tipText(el) {
+    if (el.dataset.tip) {
+        const v = (typeof t === 'function') ? t(el.dataset.tip) : '';
+        if (v && v !== el.dataset.tip) return v;
+    }
+    if (el.hasAttribute('title')) {           // vietinius title paverčiam gražiais patarimais
+        const tt0 = el.getAttribute('title');
+        if (tt0) el.dataset.tipText = tt0;
+        el.removeAttribute('title');
+    }
+    return el.dataset.tipText || '';
+}
+function tipShow(el) {
+    const text = tipText(el);
+    if (!text) return;
+    if (!tipUi.el) {
+        tipUi.el = document.createElement('div');
+        tipUi.el.id = 'uiTip';
+        tipUi.el.setAttribute('role', 'tooltip');
+        document.body.appendChild(tipUi.el);
+    }
+    const tip = tipUi.el;
+    tip.textContent = text;
+    tip.className = '';
+    tip.style.left = '0px'; tip.style.top = '0px';
+    tip.classList.add('show');
+    const r = el.getBoundingClientRect(), tr = tip.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight, gap = 10;
+    const inLeft = !!el.closest('#leftPanel');
+    let side = inLeft ? 'right' : (r.top > tr.height + 24 ? 'top' : 'bottom');
+    let x, y;
+    const place = () => {
+        if (side === 'right') { x = r.right + gap; y = r.top + r.height / 2 - tr.height / 2; }
+        else if (side === 'top') { x = r.left + r.width / 2 - tr.width / 2; y = r.top - tr.height - gap; }
+        else { x = r.left + r.width / 2 - tr.width / 2; y = r.bottom + gap; }
+    };
+    place();
+    if (side === 'right' && x + tr.width > vw - 6) { side = 'bottom'; place(); }
+    if (side === 'bottom' && y + tr.height > vh - 6) { side = 'top'; place(); }
+    const cx = Math.max(6, Math.min(vw - tr.width - 6, x));
+    const cy = Math.max(6, Math.min(vh - tr.height - 6, y));
+    tip.style.left = cx + 'px'; tip.style.top = cy + 'px';
+    tip.classList.add('side-' + side);
+    // rodyklė rodo į elemento centrą net jei patarimas pastumtas nuo krašto
+    if (side === 'right') tip.style.setProperty('--ay', Math.max(10, Math.min(tr.height - 10, r.top + r.height / 2 - cy)) + 'px');
+    else tip.style.setProperty('--ax', Math.max(12, Math.min(tr.width - 12, r.left + r.width / 2 - cx)) + 'px');
+    tipUi.target = el;
+}
+function tipHide() {
+    clearTimeout(tipUi.timer);
+    if (tipUi.el) tipUi.el.classList.remove('show');
+    tipUi.target = null;
+}
+function tipFind(node) {
+    if (!node || !node.closest) return null;
+    const el = node.closest('[data-tip],[title],[data-tip-text]');
+    if (!el || !el.closest('#page-game, #uiTourBubble')) return null;
+    if (el.closest('.modal, [id$="Modal"]')) return null;     // modaluose nerodom
+    return el;
+}
+document.addEventListener('mouseover', (e) => {
+    const el = tipFind(e.target);
+    if (el === tipUi.target) return;
+    tipHide();
+    if (!el) return;
+    tipText(el);                              // nuimam title iškart, kad nerodytų naršyklės patarimo
+    tipUi.timer = setTimeout(() => tipShow(el), 380);
+});
+document.addEventListener('mouseout', (e) => {
+    const el = tipFind(e.target);
+    if (el && (!e.relatedTarget || !el.contains(e.relatedTarget))) tipHide();
+});
+document.addEventListener('mousedown', tipHide, true);
+document.addEventListener('scroll', tipHide, true);
+window.addEventListener('resize', tipHide);
+// 📱 Ilgas paspaudimas = patarimas (paspaudimas tada nesuveikia)
+document.addEventListener('touchstart', (e) => {
+    const el = tipFind(e.target);
+    clearTimeout(tipUi.touchTimer);
+    tipUi.longPress = false;
+    if (!el) return;
+    tipUi.touchTimer = setTimeout(() => {
+        tipUi.longPress = true;
+        tipShow(el);
+        clearTimeout(tipUi.hideTimer);
+        tipUi.hideTimer = setTimeout(tipHide, 3500);
+    }, 520);
+}, { passive: true });
+document.addEventListener('touchmove', () => clearTimeout(tipUi.touchTimer), { passive: true });
+document.addEventListener('touchend', (e) => {
+    clearTimeout(tipUi.touchTimer);
+    if (tipUi.longPress) { e.preventDefault(); tipUi.longPress = false; }
+}, { passive: false });
+document.addEventListener('contextmenu', (e) => { if (tipUi.longPress) e.preventDefault(); });
+
+// ============================================================
+// ⚙️ Kairės panelės nustatymų grupė (išskleidžiama, būsena įsimenama)
+// ============================================================
+function setLpSettings(open) {
+    const box = document.getElementById('lpSettings');
+    const btn = document.getElementById('lpSettingsToggle');
+    if (!box) return;
+    box.classList.toggle('open', !!open);
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    try { localStorage.setItem('bancrupt_lpSettings', open ? '1' : '0'); } catch (e) {}
+}
+function toggleLpSettings() {
+    const box = document.getElementById('lpSettings');
+    setLpSettings(!(box && box.classList.contains('open')));
+    if (typeof playClickSound === 'function') playClickSound();
+}
+(function initLpSettings() {
+    const go = () => {
+        let v = null;
+        try { v = localStorage.getItem('bancrupt_lpSettings'); } catch (e) {}
+        setLpSettings(v === '1');
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();
+
+// ============================================================
+// 🧭 PIRMO ŽAIDIMO GIDAS – keli burbulai paeiliui; vėl atidaromas „❓“ mygtuku
+// ============================================================
+const TOUR_KEY = 'bancrupt_tourDone';
+const TOUR_STEPS = [
+    { sel: '#rollBtn', key: 'tour.roll' },
+    { sel: '#center-1', key: 'tour.me' },
+    { sel: '#tradeBtn', key: 'tour.trade' },
+    { sel: '#infoBtn', key: 'tour.info' },
+    { sel: '#lpSettingsToggle', key: 'tour.settings', openPanel: true },
+    { sel: '#helpTourBtn', key: 'tour.help' }
+];
+const tourUi = { i: 0, steps: [], active: false, autoTried: false };
+function tourVisible(el) {
+    if (!el) return false;
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return false;
+    const st = getComputedStyle(el);
+    return st.visibility !== 'hidden' && st.display !== 'none';
+}
+function startTour(manual) {
+    if (tourUi.active) return;
+    const page = document.getElementById('page-game');
+    if (!page || page.style.display === 'none') return;
+    tourUi.steps = TOUR_STEPS.slice();
+    tourUi.i = 0;
+    tourUi.active = true;
+    tipHide();
+    if (!document.getElementById('uiTourBubble')) {
+        const hole = document.createElement('div'); hole.id = 'uiTourHole';
+        const b = document.createElement('div'); b.id = 'uiTourBubble';
+        b.innerHTML = '<div class="tour-step"></div><div class="tour-text"></div>' +
+            '<div class="tour-btns"><button type="button" class="tour-skip"></button><button type="button" class="tour-next"></button></div>';
+        document.body.appendChild(hole); document.body.appendChild(b);
+        b.querySelector('.tour-skip').onclick = () => endTour();
+        b.querySelector('.tour-next').onclick = () => { tourUi.i++; tourShowStep(); };
+        window.addEventListener('resize', () => { if (tourUi.active) tourShowStep(); });
+    }
+    if (manual && typeof playClickSound === 'function') playClickSound();
+    tourShowStep();
+}
+function tourShowStep() {
+    const hole = document.getElementById('uiTourHole'), b = document.getElementById('uiTourBubble');
+    // praleidžiam žingsnius, kurių elementas nematomas (pvz., telefone paslėpta panelė)
+    while (tourUi.i < tourUi.steps.length) {
+        const st = tourUi.steps[tourUi.i];
+        let el = document.querySelector(st.sel);
+        if (!tourVisible(el) && document.body.classList.contains('cmp') && el && el.closest('#leftPanel')) {
+            document.body.classList.add('lp-open'); tourUi.openedPanel = true;
+            const tg = document.getElementById('leftPanelToggle'); if (tg) tg.innerHTML = '◀';
+        }
+        if (tourVisible(el)) break;
+        tourUi.i++;
+    }
+    if (tourUi.i >= tourUi.steps.length) { endTour(); return; }
+    const visibleSteps = tourUi.steps.filter(s => tourVisible(document.querySelector(s.sel)) || (document.body.classList.contains('cmp') && document.querySelector(s.sel) && document.querySelector(s.sel).closest('#leftPanel')));
+    const st = tourUi.steps[tourUi.i];
+    const el = document.querySelector(st.sel);
+    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const r = el.getBoundingClientRect(), pad = 6;
+    Object.assign(hole.style, { left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
+    hole.classList.add('show');
+    const last = tourUi.i === tourUi.steps.length - 1;
+    const num = Math.min(visibleSteps.length, visibleSteps.indexOf(st) + 1) || (tourUi.i + 1);
+    b.querySelector('.tour-step').textContent = num + ' / ' + (visibleSteps.length || tourUi.steps.length);
+    b.querySelector('.tour-text').textContent = t(st.key);
+    b.querySelector('.tour-skip').textContent = t('tour.skip');
+    b.querySelector('.tour-skip').style.visibility = last ? 'hidden' : 'visible';
+    b.querySelector('.tour-next').textContent = last ? t('tour.done') : t('tour.next');
+    b.className = 'show';
+    b.style.left = '0px'; b.style.top = '0px';
+    const br = b.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight, gap = 14;
+    let side, x, y;
+    if (r.right + gap + br.width < vw - 8 && el.closest('#leftPanel')) { side = 'right'; x = r.right + gap; y = r.top + r.height / 2 - br.height / 2; }
+    else if (r.bottom + gap + br.height < vh - 8) { side = 'bottom'; x = r.left + r.width / 2 - br.width / 2; y = r.bottom + gap; }
+    else { side = 'top'; x = r.left + r.width / 2 - br.width / 2; y = r.top - br.height - gap; }
+    const cx = Math.max(8, Math.min(vw - br.width - 8, x)), cy = Math.max(8, Math.min(vh - br.height - 8, y));
+    b.style.left = cx + 'px'; b.style.top = cy + 'px';
+    b.classList.add('side-' + side);
+    if (side === 'right') b.style.setProperty('--ay', Math.max(14, Math.min(br.height - 14, r.top + r.height / 2 - cy)) + 'px');
+    else b.style.setProperty('--ax', Math.max(16, Math.min(br.width - 16, r.left + r.width / 2 - cx)) + 'px');
+    b.querySelector('.tour-next').focus({ preventScroll: true });
+}
+function endTour() {
+    tourUi.active = false;
+    const hole = document.getElementById('uiTourHole'), b = document.getElementById('uiTourBubble');
+    if (hole) hole.classList.remove('show');
+    if (b) b.className = '';
+    if (tourUi.openedPanel) { tourUi.openedPanel = false; document.body.classList.remove('lp-open'); const tg = document.getElementById('leftPanelToggle'); if (tg) tg.innerHTML = '▶'; }
+    try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {}
+}
+document.addEventListener('keydown', (e) => { if (tourUi.active && e.key === 'Escape') endTour(); });
+// Automatiškai – vieną kartą, kai pirmą kartą prasideda žaidimas
+function maybeAutoTour(state) {
+    if (tourUi.autoTried || !state || !state.gameStarted) return;
+    tourUi.autoTried = true;
+    let done = null;
+    try { done = localStorage.getItem(TOUR_KEY); } catch (e) {}
+    if (done === '1') return;
+    setTimeout(() => { if (!tourUi.active) startTour(false); }, 1800);
+}
+
 
 // 🚕 TAKSI: langelio pasirinkimas lentoje
 const taxiUi = { open: false, target: null, cost: 100, forbidden: [16, 26, 42], timer: null, deadline: 0 };
@@ -5821,7 +7834,7 @@ function makeWalker(playerId, taxi) {
         // 🚕 Figūrėlė „įsėda“ į taksi: važiuoja automobilis su žaidėjo spalvos ženklu ant stogo
         const car = document.createElement('span');
         car.className = 'taxi-car';
-        car.innerHTML = '<span class="taxi-car-body">🚕</span><span class="taxi-car-roof"></span>';
+        car.innerHTML = '<span class="taxi-car-body">' + FX3_SVG.taxi + '</span><span class="taxi-car-roof"></span>';
         car.querySelector('.taxi-car-roof').style.background = safeColor(p ? p.color : '#888');
         const holder = document.createElement('div');
         holder.className = 'walker-holder is-taxi';
@@ -5932,6 +7945,7 @@ async function animateMovement(playerId, fromPos, toPos, waitBefore, opts = {}) 
         cell.classList.add('highlight-yellow');
         walkerPos = currentPos;
         placeWalker(walker, currentPos, stepDuration);
+        if (currentPos === 0 && i < totalSteps && typeof fxStart3 === 'function') { try { fxStart3(0, 200); } catch (e) {} }   // 🏁 pravažiavo START
         lastCell = cell;
         if (camOn) cameraFollow(walker.firstChild, stepDuration + 60);
         
@@ -6149,6 +8163,9 @@ function openTrading() {
 function closeTrading() {
     const modal = document.getElementById('tradingModal');
     if (modal) modal.style.display = 'none';
+    window.isCounterOfferMode = false;
+    window.counterOfferData = null;
+    window.lastIncomingTrade = null;
     playClickSound();
 }
 
@@ -6177,6 +8194,11 @@ function showAuctionPanel() {
 function showTradeToPlayer() {
     document.getElementById('tradingOptions').style.display = 'none';
     document.getElementById('tradeToPlayerPanel').style.display = 'block';
+    
+    // Naujas pasiūlymas – tikrai ne counter-offer
+    window.isCounterOfferMode = false;
+    window.counterOfferData = null;
+    window.lastIncomingTrade = null;
     
     selectedOfferFields = [];
     selectedRequestFields = [];
@@ -6722,16 +8744,21 @@ function confirmProposeTrade() {
             requestMoney: requestMoney
         };
         
-        // 🆕 Counter-offer arba naujas pasiūlymas
-        if (window.lastIncomingTrade) {
+        // Counter-offer TIK jei tikrai įjungtas counter režimas (ne šiaip likęs senas pasiūlymas)
+        const counterSrc = (window.isCounterOfferMode === true)
+            ? ((window.counterOfferData && window.counterOfferData.incoming) || window.lastIncomingTrade)
+            : null;
+        if (counterSrc && counterSrc.tradeId) {
             socket.emit('counterTrade', {
-                tradeId: window.lastIncomingTrade.tradeId,
+                tradeId: counterSrc.tradeId,
                 offerFieldIds: selectedOfferFields,
                 requestFieldIds: selectedRequestFields,
                 offerMoney: offerMoney,
                 requestMoney: requestMoney
             });
             window.lastIncomingTrade = null;
+            window.counterOfferData = null;
+            window.isCounterOfferMode = false;
             
             closeTrading();
             const tradeMsg = tf('cli.pakoreguotas_pasiulymas_issiustas', { target: target.name });
@@ -6841,6 +8868,11 @@ function generateTradeMiniCards(fieldIds) {
 function closeTradeOffer() {
     document.getElementById('tradeOfferModal').style.display = 'none';
     currentTradeId = null;
+    // Uždarę gautą pasiūlymą išeiname ir iš counter-offer režimo,
+    // kad jis neperimtų kito, naujo pasiūlymo siuntimo.
+    window.isCounterOfferMode = false;
+    window.counterOfferData = null;
+    window.lastIncomingTrade = null;
     playClickSound();
 }
 
@@ -7305,6 +9337,7 @@ function toggleMode() {
 function updateUI(state) {
     if (!state) return;
     updateTaxiTestButton();
+    maybeAutoTour(state);
     // 🏗️ Statybų langas (sinchronizuojam laiką su serveriu)
     if (state.buildWindow && state.buildWindow.playerId === playerId) {
         const dl = Date.now() + state.buildWindow.msLeft;
@@ -7757,7 +9790,7 @@ function updateBoard(state) {
         let html = `<div class="cell-top-bar">${topBarHtml}<span class="cell-number">${index}</span></div>`;
 
         if (field.icon) {
-            html += `<span class="cell-bg-icon">${field.icon}</span>`;
+            html += FX3_CELL_ICONS[field.id] ? `<span class="cell-bg-icon has-svg">${FX3_CELL_ICONS[field.id]}</span>` : `<span class="cell-bg-icon">${field.icon}</span>`;
         }
 
         // 🆕 Naudoti vertimą pagal kalbą, jei yra

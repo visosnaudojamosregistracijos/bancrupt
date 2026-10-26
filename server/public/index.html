@@ -31,26 +31,19 @@
             <div id="landingGuest">
                 <p class="landing-subtitle" data-i18n="landing.subtitle">💰 Stalo žaidimas internetu</p>
 
-<div class="landing-buttons">
-    <button class="landing-btn landing-btn-primary" onclick="goToRegister()" data-i18n="landing.register">
-        📝 Registruotis
-    </button>
-    <button class="landing-btn landing-btn-secondary" onclick="goToLogin()" data-i18n="landing.login">
-        🔑 Prisijungti
-    </button>
-    <button class="landing-btn landing-btn-secondary" onclick="openLeaders()" style="background:linear-gradient(145deg, #f39c12, #e67e22);" data-i18n="landing.leaders">
-        🏆 Lyderiai
-    </button>
-    <button class="landing-btn landing-btn-secondary" onclick="openRulesModal()" data-i18n="landing.rules">
-        📖 Taisyklės
-    </button>
-    <button class="landing-btn landing-btn-secondary" onclick="goToMenu()" style="background:linear-gradient(145deg, #6c757d, #495057);" data-i18n="landing.playAsGuest">
-                    🎮 Žaisti kaip svečias
-                </button>
-                <button class="landing-btn landing-btn-secondary" onclick="openFeedback()" style="background:linear-gradient(145deg, #8b5cf6, #6f42c1);" data-i18n="feedback.title">
-    🐛 Pranešti apie klaidą / Pasiūlyti idėją
-</button>
-            </div>
+<div class="landing-buttons landing-buttons-v2">
+                    <button class="landing-play-btn" onclick="goToMenu()" data-i18n="landing.play">🎮 Žaisti</button>
+                    <p class="landing-hint" data-i18n="landing.noSignup">Registracija nebūtina – žaisk iškart</p>
+                    <div class="landing-row">
+                        <button class="landing-btn-ghost" onclick="goToLogin()" data-i18n="landing.login">🔑 Prisijungti</button>
+                        <button class="landing-btn-ghost" onclick="goToRegister()" data-i18n="landing.register">📝 Registruotis</button>
+                    </div>
+                    <nav class="landing-links">
+                        <button type="button" onclick="openLeaders()" data-i18n="landing.leaders">🏆 Lyderiai</button>
+                        <button type="button" onclick="openRulesModal()" data-i18n="landing.rules">📖 Taisyklės</button>
+                        <button type="button" onclick="openFeedback()" data-i18n="feedback.short">🐛 Pranešti</button>
+                    </nav>
+                </div>
             </div>
             
             <!-- Prisijungusio režimas -->
@@ -59,22 +52,17 @@
     <span data-i18n="landing.welcome">👤 Sveikas</span>, <strong id="landingUsername">---</strong>!
 </p>
                 
-                <div class="landing-buttons">
-                    <button class="landing-btn landing-btn-primary" onclick="goToMenu()" data-i18n="landing.play">
-    🎮 Žaisti
-</button>
-<button class="landing-btn landing-btn-secondary" onclick="openStatsModal()" data-i18n="landing.stats">
-    📊 Mano statistika
-</button>
-<button class="landing-btn landing-btn-secondary" onclick="openLeaders()" style="background:linear-gradient(145deg, #f39c12, #e67e22);" data-i18n="landing.leaders">
-    🏆 Lyderiai
-</button>
-<button class="landing-btn landing-btn-secondary" onclick="openRulesModal()" data-i18n="landing.rules">
-    📖 Taisyklės
-</button>
-<button class="landing-btn landing-btn-secondary" onclick="logout()" style="background:linear-gradient(145deg, #dc3545, #a71d2a);" data-i18n="landing.logout">
-    🚪 Atsijungti
-</button>
+                <div class="landing-buttons landing-buttons-v2">
+                    <button class="landing-play-btn" onclick="goToMenu()" data-i18n="landing.play">🎮 Žaisti</button>
+                    <div class="landing-row">
+                        <button class="landing-btn-ghost" onclick="openStatsModal()" data-i18n="landing.stats">📊 Mano statistika</button>
+                        <button class="landing-btn-ghost" onclick="openLeaders()" data-i18n="landing.leaders">🏆 Lyderiai</button>
+                    </div>
+                    <nav class="landing-links">
+                        <button type="button" onclick="openRulesModal()" data-i18n="landing.rules">📖 Taisyklės</button>
+                        <button type="button" onclick="openFeedback()" data-i18n="feedback.short">🐛 Pranešti</button>
+                        <button type="button" onclick="logout()" data-i18n="landing.logout">🚪 Atsijungti</button>
+                    </nav>
             </div>  <!-- /landing-buttons -->
         </div>      <!-- /landingUser -->
         
@@ -265,21 +253,10 @@
             </div>
             
             <div class="menu-buttons">
-                <button class="menu-btn" onclick="menuCreate()" data-i18n="menu.createGame">
-                    🆕 Sukurti žaidimą
-                </button>
-                <button class="menu-btn" onclick="menuJoin()" data-i18n="menu.joinGame">
-                    🔗 Prisijungti prie žaidimo
-                </button>
-                <button class="menu-btn" onclick="menuPublic()" data-i18n="menu.publicGames">
-                    🌐 Vieši stalai
-                </button>
-                <button class="menu-btn" onclick="openFeedback()" style="background:linear-gradient(145deg, #8b5cf6, #6f42c1); border-color: #8b5cf6;" data-i18n="feedback.title">
-    🐛 Pranešti apie klaidą / Pasiūlyti idėją
-</button>
-                <button class="menu-btn menu-btn-back" onclick="goToLanding()" data-i18n="menu.back">
-                    🔙 Atgal
-                </button>
+                <button class="menu-btn menu-btn-primary" onclick="menuCreate()" data-i18n="menu.createGame">🆕 Sukurti žaidimą</button>
+                <button class="menu-btn" onclick="menuPublic()" data-i18n="menu.publicGames">🌐 Vieši stalai</button>
+                <button class="menu-btn" onclick="menuJoin()" data-i18n="menu.joinByCode">🔢 Turiu stalo kodą</button>
+                <button class="menu-link-back" onclick="goToLanding()" data-i18n="menu.back">🔙 Atgal</button>
             </div>
             
             <!-- 🆕 FOOTER -->
@@ -372,9 +349,12 @@
     <span data-i18n="game.header.turn">🎯 Eina:</span> <span id="turnDisplayName">---</span>
     <span id="headerTurnTimer" style="margin-left:10px; color:#ffd700; font-weight:700; display:none;">⏱️ ---</span>
 </span>
+    <span id="headerHelpWrap">
+    <button id="helpTourBtn" type="button" onclick="startTour(true)" data-tip="tip.help" aria-label="?">❓</button>
     <button id="feedbackBtn" onclick="openFeedback()" title="Pranešti apie klaidą / Pasiūlyti idėją" data-i18n-title="html.feedbackTitle">
         🐛 <span class="btn-text" data-i18n="game.header.bugReport">Klaida / Pasiūlymas</span>
     </button>
+    </span>
 </div>
 
 
@@ -386,31 +366,53 @@
             </button>
             
             <aside id="leftPanel">
-                <div id="gameIdBox">
+<!-- 🎲 ŽAIDIMAS -->
+<div class="lp-group lp-game">
+<div id="gameIdBox" data-tip="tip.gameId">
     <span data-i18n="game.leftPanel.id">📋 ID:</span><br><span id="gameIdDisplayLeft">---</span>
 </div>
-
-<!-- 💀 Bankrotas – iškart po stalo ID, atskirtas linija -->
-<div class="left-bankrupt-wrap">
-    <button onclick="bankrupt()" id="bankruptBtn" class="left-btn btn-bankrupt left-bankrupt" data-i18n="game.bankruptButton">💀 Bankrotuoju</button>
+<div id="leftPlayerCount" data-tip="tip.players">
+    <span data-i18n="game.leftPanel.playerCount">👥</span> <span id="playerCountLeft">0/8</span>
+</div>
+<div id="leftTurnDisplay" data-tip="tip.turn">
+    <span data-i18n="game.leftPanel.turn">🎯</span> <span id="turnDisplayLeft">---</span>
+</div>
+<!-- 🆕 TURN TIMER -->
+<div id="turnTimerBox" data-tip="tip.timer" style="background: rgba(0,0,0,0.3); border: 2px solid #ffd700; border-radius: 8px; padding: 8px 6px; text-align: center; display: none;">
+    <div id="turnTimerLabel" style="color: #ffd700; font-size: 10px; font-weight: 700; margin-bottom: 2px;">⏱️ LIKO LAIKO</div>
+    <div id="turnTimer" style="color: #fff; font-size: 20px; font-weight: 900; text-shadow: 0 0 10px rgba(255,215,0,0.5);">---</div>
+    <div id="turnTimerPlayer" style="color: #d4b896; font-size: 9px; margin-top: 2px;">---</div>
+</div>
+<button onclick="openStats()" id="statsBtn" data-tip="tip.stats" class="left-btn" style="background: linear-gradient(145deg, #6f42c1, #5a32a3); color: #fff; border-color: #8b5cf6;" data-i18n="game.leftPanel.stats">
+    📈 Statistika
+</button>
+<button onclick="toggleInfoMode()" id="infoBtn" class="left-btn info-btn" data-tip="tip.info" data-i18n="game.leftPanel.info">ℹ️ Info: 🔴 IŠJ.</button>
+<button onclick="openVoteKick()" id="voteKickBtn" data-tip="tip.vote" class="left-btn vote-kick-btn" data-i18n="game.leftPanel.voteKick">
+    🗳️ Balsuoti
+</button>
+<button onclick="leaveGame()" id="leaveBtn" data-tip="tip.leave" class="left-btn leave-btn" data-i18n="game.leftPanel.leave" style="display:none;">
+    🚪 Išeiti į meniu
+</button>
 </div>
 
-
-
-                    <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange -->
+<!-- ⚙️ NUSTATYMAI (išskleidžiami) -->
+<div class="lp-group lp-settings" id="lpSettings">
+<button type="button" id="lpSettingsToggle" class="lp-settings-toggle" onclick="toggleLpSettings()" aria-expanded="false" aria-controls="lpSettingsBody" data-tip="tip.settings">
+    <span data-i18n="game.leftPanel.settings">⚙️ Nustatymai</span><span class="lp-caret" aria-hidden="true">▾</span>
+</button>
+<div id="lpSettingsBody" class="lp-settings-body">
                     <div id="gameLangSwitcher" style="display: flex; gap: 3px; width: 100%; justify-content: center;">
-                        <label class="lang-select-wrap small" title="Kalba / Language">🌐 <select class="lang-select" onchange="changeLanguage(this.value)" aria-label="Language"><option value="lt">🇱🇹 LT</option><option value="en">🇬🇧 EN</option><option value="ru">RU</option><option value="de">🇩🇪 DE</option><option value="es">🇪🇸 ES</option><option value="fr">🇫🇷 FR</option></select></label>
+                        <label class="lang-select-wrap small" data-tip="tip.lang">🌐 <select class="lang-select" onchange="changeLanguage(this.value)" aria-label="Language"><option value="lt">🇱🇹 LT</option><option value="en">🇬🇧 EN</option><option value="ru">RU</option><option value="de">🇩🇪 DE</option><option value="es">🇪🇸 ES</option><option value="fr">🇫🇷 FR</option></select></label>
                     </div>
-
-                    <div style="position:relative; width:100%; margin-top:6px;">
-    <button onclick="toggleMusicSimple()" id="musicBtn" class="left-btn" style="width:100%; padding:8px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;">
+<div style="position:relative; width:100%; margin-top:6px;">
+    <button onclick="toggleMusicSimple()" id="musicBtn" class="left-btn" data-tip="tip.music" style="width:100%; padding:8px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;">
     <span id="musicStatusDot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#28a745; box-shadow:0 0 6px #28a745;"></span>
     <span data-i18n="game.leftPanel.music">🎵 Muzika</span>
 </button>
     
     <div style="display:flex; align-items:center; gap:3px; margin-top:4px; width:100%; box-sizing:border-box;">
         <span style="font-size:10px; color:#bb8fce; flex-shrink:0;">🎵</span>
-        <input type="range" id="musicVolumeSliderSimple" min="0" max="100" value="15"
+        <input type="range" id="musicVolumeSliderSimple" data-tip="tip.musicVol" min="0" max="100" value="15"
                oninput="changeMusicVolumeSimple(this.value)"
                style="flex:1 1 0; width:0; min-width:0; max-width:100%; cursor:pointer; height:4px; box-sizing:border-box;">
         <span id="musicVolumeValueSimple" style="font-size:9px; color:#bb8fce; font-weight:700; min-width:18px; text-align:right; flex-shrink:0;">15</span>
@@ -418,23 +420,22 @@
 </div>
 
 <div style="position:relative; width:100%; margin-top:6px;">
-    <button onclick="toggleSoundSimple()" id="soundBtn" class="left-btn" style="width:100%; padding:8px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;">
+    <button onclick="toggleSoundSimple()" id="soundBtn" class="left-btn" data-tip="tip.sound" style="width:100%; padding:8px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;">
     <span id="soundStatusDot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#28a745; box-shadow:0 0 6px #28a745;"></span>
     <span data-i18n="game.leftPanel.sound">🔊 Garsas</span>
 </button>
     
     <div style="display:flex; align-items:center; gap:3px; margin-top:4px; width:100%; box-sizing:border-box;">
         <span style="font-size:10px; color:#ffd700; flex-shrink:0;">🔉</span>
-        <input type="range" id="soundVolumeSlider" min="0" max="100" value="50"
+        <input type="range" id="soundVolumeSlider" data-tip="tip.soundVol" min="0" max="100" value="50"
                oninput="changeSoundVolume(this.value)"
                style="flex:1 1 0; width:0; min-width:0; max-width:100%; cursor:pointer; height:4px; box-sizing:border-box;">
         <span id="soundVolumeValue" style="font-size:9px; color:#ffd700; font-weight:700; min-width:18px; text-align:right; flex-shrink:0;">50</span>
     </div>
 </div>
-
-                    <!-- 🆕 TEMOS PASIRINKIMAS -->
+<!-- 🆕 TEMOS PASIRINKIMAS -->
                     <div style="position: relative; width: 100%; margin-top: 6px;">
-                        <button onclick="toggleThemeMenu()" id="themeBtn" class="left-btn" style="width: 100%; padding: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <button onclick="toggleThemeMenu()" id="themeBtn" class="left-btn" data-tip="tip.theme" style="width: 100%; padding: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
                             <span id="themeIcon">☀️</span>
                             <span data-i18n="html.theme">Režimas</span>
                         </button>
@@ -446,40 +447,16 @@
                             <button onclick="setTheme('neon')" style="padding: 10px; background: transparent; color: #00ffff; border: none; cursor: pointer; font-size: 12px; text-align: left; font-weight: bold;" data-i18n="html.themeNeon">🌌 Neonas</button>
                         </div>
                     </div>
-
-<button onclick="leaveGame()" id="leaveBtn" class="left-btn leave-btn" data-i18n="game.leftPanel.leave" style="display:none;">
-    🚪 Išeiti į meniu
+<button onclick="toggleMode()" id="modeBtn" class="left-btn" data-tip="tip.mode" data-i18n="game.leftPanel.mode">
+    📐 Plotis: visas
 </button>
-
-<button onclick="toggleMode()" id="modeBtn" class="left-btn" style="background: linear-gradient(145deg, #17a2b8, #138496); color: #fff; border-color: #4dd0e1;" data-i18n="game.leftPanel.mode">
-    📊 Režimas: Adaptyvus
-</button>
-
-<button onclick="openStats()" id="statsBtn" class="left-btn" style="background: linear-gradient(145deg, #6f42c1, #5a32a3); color: #fff; border-color: #8b5cf6;" data-i18n="game.leftPanel.stats">
-    📈 Statistika
-</button>
-
-<button onclick="toggleInfoMode()" id="infoBtn" class="header-btn info-btn" style="padding:2px 8px; font-size:9px; min-width:auto;" data-i18n="game.leftPanel.info">ℹ️ Info: 🔴 IŠJ.</button>
-
-<button onclick="openVoteKick()" id="voteKickBtn" class="left-btn vote-kick-btn" data-i18n="game.leftPanel.voteKick">
-    🗳️ Balsuoti
-</button>
-                    
-                    <div id="leftPlayerCount">
-    <span data-i18n="game.leftPanel.playerCount">👥</span> <span id="playerCountLeft">0/8</span>
+</div>
 </div>
 
-<div id="leftTurnDisplay">
-    <span data-i18n="game.leftPanel.turn">🎯</span> <span id="turnDisplayLeft">---</span>
+<!-- 💀 Bankrotas – atskirai apačioje -->
+<div class="left-bankrupt-wrap lp-danger">
+    <button onclick="bankrupt()" id="bankruptBtn" class="left-btn btn-bankrupt left-bankrupt" data-i18n="game.bankruptButton" data-tip="tip.bankrupt">💀 Bankrotuoju</button>
 </div>
-
-<!-- 🆕 TURN TIMER -->
-<div id="turnTimerBox" style="background: rgba(0,0,0,0.3); border: 2px solid #ffd700; border-radius: 8px; padding: 8px 6px; text-align: center; display: none;">
-    <div id="turnTimerLabel" style="color: #ffd700; font-size: 10px; font-weight: 700; margin-bottom: 2px;">⏱️ LIKO LAIKO</div>
-    <div id="turnTimer" style="color: #fff; font-size: 20px; font-weight: 900; text-shadow: 0 0 10px rgba(255,215,0,0.5);">---</div>
-    <div id="turnTimerPlayer" style="color: #d4b896; font-size: 9px; margin-top: 2px;">---</div>
-</div>
-
                 </aside>
 
                 <div id="board">
@@ -524,12 +501,12 @@
                             <div class="center-row">
                                 <div id="center-1" class="center-cell player-info">
                                     <h4 data-i18n="game.iAm">👤 AŠ</h4>
-                                    <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish myinfo-demolish" style="display:none;" data-i18n="game.demolish">🏚️ Griauti</button>
+                                    <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish myinfo-demolish" data-tip="tip.demolish" style="display:none;" data-i18n="game.demolish">🏚️ Griauti</button>
                                     <div id="myInfo" data-i18n="html.waitingDots">Laukiama...</div>
                                     <div class="mini-cards-container"></div>
                                 </div>
                                 <div id="center-2" class="center-cell controls">
-                                    <button onclick="payJailFine()" id="jailBtn" class="btn-jail" style="display:none; margin-bottom:2px; width:100%;" data-i18n="game.payJail">⛓️ Išeiti iš kalėjimo (€50)</button>
+                                    <button onclick="payJailFine()" id="jailBtn" class="btn-jail" data-tip="tip.jail" style="display:none; margin-bottom:2px; width:100%;" data-i18n="game.payJail">⛓️ Išeiti iš kalėjimo (€50)</button>
 
                                     
                                     <h4 data-i18n="game.controls">🎲 VALDYMAS</h4>
@@ -562,10 +539,10 @@
                                         </div>
                                     </div>
                                     <div class="control-buttons">
-                                        <button onclick="rollDice()" id="rollBtn" class="btn-dice" data-i18n="game.rollDice">🎲 Mesti</button>
-                                        <button onclick="openTrading()" id="tradeBtn" class="btn-trade" data-i18n="game.trade">🏪 Prekyba</button>
+                                        <button onclick="rollDice()" id="rollBtn" class="btn-dice" data-tip="tip.roll" data-i18n="game.rollDice">🎲 Mesti</button>
+                                        <button onclick="openTrading()" id="tradeBtn" class="btn-trade" data-tip="tip.trade" data-i18n="game.trade">🏪 Prekyba</button>
                                     </div>
-                                    <button onclick="buildHouse()" id="buildBtn" class="btn-build" style="display:none; width:100%; margin-top:4px;" data-i18n="game.buildHouse">🏠 Statyti namą</button>
+                                    <button onclick="buildHouse()" id="buildBtn" class="btn-build" data-tip="tip.build" style="display:none; width:100%; margin-top:4px;" data-i18n="game.buildHouse">🏠 Statyti namą</button>
                                 </div>
                                 <div id="center-3" class="center-cell chat">
                                     <h4 data-i18n="game.chat">💬 CHAT</h4>
@@ -686,113 +663,93 @@
         </div>
     </div>
 
-    <!-- WAITING ROOM OVERLAY -->
+    <!-- WAITING ROOM OVERLAY (v2: vienas pagrindinis veiksmas apačioje) -->
 <div id="waitingRoomOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(145deg, rgba(26,107,60,0.98), rgba(15,74,42,0.98)); z-index:9993; justify-content:center; align-items:flex-start; padding:20px; overflow-y:auto;">
-    <div style="background:rgba(0,0,0,0.4); border:3px solid #c9a84c; border-radius:20px; padding:30px; max-width:1000px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-        
-        <h2 style="color:#ffd700; text-align:center; font-size:2em; margin-bottom:5px;">🏦 BANCRUPT</h2>
-        <p style="color:#d4b896; text-align:center; margin-bottom:25px;" data-i18n="waiting.title">⏳ Laukiama žaidėjų...</p>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-            
-            <!-- KAIRĖ PUSĖ -->
-            <div>
-                <!-- Stalo kodas -->
-                <div style="background:rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:20px; border:2px solid #c9a84c;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                        <span style="color:#d4b896; font-weight:600; font-size:13px;" data-i18n="waiting.tableCode">📋 Stalo kodas:</span>
-                        <button onclick="copyGameCode()" style="padding:5px 12px; border:none; border-radius:6px; background:#ffd700; color:#1a3b1a; font-weight:700; cursor:pointer; font-size:11px;" data-i18n="waiting.copyCode">📋 Kopijuoti</button>
+    <div class="wr-card">
+
+        <header class="wr-head">
+            <h2>🏦 BANCRUPT</h2>
+            <p data-i18n="waiting.title">⏳ Laukiama žaidėjų...</p>
+        </header>
+
+        <div class="wr-grid">
+
+            <!-- KAIRĖ: žaidėjai + figūrėlė -->
+            <div class="wr-col">
+                <section class="wr-section">
+                    <div class="wr-section-head">
+                        <span data-i18n="waiting.players">👥 Žaidėjai</span>
+                        <span id="waitingPlayerCount" class="wr-count">0/8</span>
                     </div>
-                    <div id="waitingGameCode" style="color:#fff; font-size:28px; font-weight:900; letter-spacing:6px; text-align:center; text-shadow:0 0 20px rgba(255,215,0,0.5);">------</div>
-                    
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:15px; margin-bottom:5px;">
-                        <span style="color:#d4b896; font-weight:600; font-size:13px;" data-i18n="waiting.link">🔗 Nuoroda:</span>
-                        <button onclick="copyGameLink()" style="padding:5px 12px; border:none; border-radius:6px; background:#17a2b8; color:#fff; font-weight:700; cursor:pointer; font-size:11px;" data-i18n="waiting.copyLink">🔗 Kopijuoti</button>
-                    </div>
-                    <div id="waitingGameLink" style="color:#9bd9e8; font-size:11px; text-align:center; word-break:break-all;">---</div>
-                </div>
-                
-                <!-- Žaidėjai -->
-                <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:15px; margin-bottom:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <span style="color:#ffd700; font-weight:700; font-size:15px;" data-i18n="waiting.players">👥 Žaidėjai</span>
-                        <span id="waitingPlayerCount" style="color:#d4b896; font-size:13px;">0/8</span>
-                    </div>
-                    <div id="waitingPlayersList" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; min-height:60px;">
-</div>
-                </div>
-                
-                <!-- 🎲 FIGŪRĖLĖS PASIRINKIMAS (raudona – nepasirinkta, žalia – pasirinkta) -->
+                    <div id="waitingPlayersList" class="wr-seats"></div>
+                </section>
+
                 <div id="piecePickerBox" class="piece-box need">
                     <div class="piece-title">🎲 PASIRINK FIGŪRĖLĘ</div>
                     <div class="piece-grid"></div>
                     <div class="piece-note"></div>
                 </div>
-
             </div>
-            <!-- UŽDARYTA KAIRĖ -->
-            
-            <!-- DEŠINĖ PUSĖ -->
-            <div>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <button id="readyBtn" onclick="toggleReady()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff; transition:all 0.3s;" data-i18n="waiting.ready">
-    ✋ Aš pasiruošęs
-</button>
-                    
-                    <button id="addBotBtn" onclick="addBot()" style="padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6f42c1, #5a32a3); color:#fff; transition:all 0.3s;" data-i18n="waiting.addBot">
-    ➕ Pridėti botą
-</button>
-                    
-                    <button id="startGameBtn" onclick="startGame()" style="display:none; padding:15px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;" data-i18n="waiting.startGame">
-    🚀 Pradėti žaidimą
-</button>
-                    <!-- Statusas (pvz., „Reikia bent 2 žaidėjų“) -->
-                    <div id="waitingStatusText" style="text-align:center; color:#d4b896; font-size:14px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px;" data-i18n="waiting.status">
-    Laukiama žaidėjų...
-</div>
-                    
 
-                    
-                    <button onclick="leaveGameFromWaiting()" style="width:100%; padding:12px; margin-top:10px; border:2px solid #ff6b6b; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff; transition:all 0.3s;" data-i18n="waiting.leave">
-    🏃 Pasitraukti iš stalo
-</button>
+            <!-- DEŠINĖ: kvietimas + nustatymai + chat -->
+            <div class="wr-col">
+                <section class="wr-section wr-invite">
+                    <div class="wr-section-head"><span data-i18n="waiting.invite">📨 Pakviesk draugus</span></div>
+                    <div class="wr-code-label" data-i18n="waiting.tableCode">📋 Stalo kodas:</div>
+                    <div id="waitingGameCode" class="wr-code">------</div>
+                    <button type="button" id="copyInviteBtn" class="wr-btn-invite" onclick="copyGameLink()" data-i18n="waiting.copyInvite">📋 Kopijuoti kvietimo nuorodą</button>
+                    <div class="wr-invite-foot">
+                        <span id="waitingGameLink" class="wr-link">---</span>
+                        <button type="button" id="copyCodeBtn" class="wr-textbtn" onclick="copyGameCode()" data-i18n="waiting.copyCodeOnly">Kopijuoti tik kodą</button>
+                    </div>
+                </section>
 
-                    <!-- 🏗️ STATYBŲ TAISYKLĖ -->
+                <section class="wr-section wr-settings">
+                    <div class="wr-section-head"><span data-i18n="waiting.settings">⚙️ Stalo nustatymai</span></div>
                     <div id="buildRuleBox" class="build-rule-box">
-                        <div id="buildRuleTitle" class="build-rule-title">🏗️ STATYBŲ TAISYKLĖ – GALITE PAKEISTI</div>
-                        <div class="build-rule-options">
+                        <div id="buildRuleTitle" class="build-rule-title">🏗️ Statybų taisyklė</div>
+                        <button type="button" id="buildRuleCurrent" class="build-rule-current" onclick="toggleBuildRuleList()" aria-expanded="false" aria-controls="buildRuleOptions">
+                            <span class="brc-num" id="buildRuleCurrentNum">2.</span>
+                            <span class="brc-text" id="buildRuleCurrentText">Atsistojus ant savo sklypo – po namą visoje gatvėje</span>
+                            <span class="brc-caret" aria-hidden="true">▾</span>
+                        </button>
+                        <div id="buildRuleOptions" class="build-rule-options">
                             <button type="button" class="build-rule-opt" data-rule="1" onclick="chooseBuildRule(1)"><span class="br-num">1.</span> <span data-i18n="waiting.buildRule1">Bet kada ir bet kur (turint pilną gatvę)</span></button>
                             <button type="button" class="build-rule-opt" data-rule="2" onclick="chooseBuildRule(2)"><span class="br-num">2.</span> <span data-i18n="waiting.buildRule2">Atsistojus ant savo sklypo – po namą visoje gatvėje</span></button>
                             <button type="button" class="build-rule-opt" data-rule="3" onclick="chooseBuildRule(3)"><span class="br-num">3.</span> <span data-i18n="waiting.buildRule3">Tik sklype, ant kurio stovi</span></button>
                         </div>
                         <div id="buildRuleNote" class="build-rule-note"></div>
                     </div>
+                    <label class="wr-toggle" for="waitingIsPublic">
+                        <input type="checkbox" id="waitingIsPublic" onchange="togglePublic()">
+                        <span class="wr-toggle-track"><span class="wr-toggle-dot"></span></span>
+                        <span class="wr-toggle-text">
+                            <strong data-i18n="waiting.public">🌐 Viešas stalas</strong>
+                            <small data-i18n="waiting.publicHint">Matys visi sąraše „Vieši stalai“</small>
+                        </span>
+                    </label>
+                </section>
 
-                    <!-- 🌐 Viešas stalas -->
-                    <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;">
-                        <input type="checkbox" id="waitingIsPublic" onchange="togglePublic()" style="width:18px; height:18px; cursor:pointer;">
-                        <label for="waitingIsPublic" style="color:#d4b896; font-size:13px; font-weight:600; cursor:pointer;" data-i18n="waiting.public">
-    🌐 Viešas stalas
-</label>
-                    </div>
+            </div>
+
+            <section class="wr-section wr-chat">
+                <div class="wr-section-head"><span data-i18n="waiting.chat">💬 Chat</span></div>
+                <div id="waitingChatMessages" class="wr-chat-msgs"></div>
+                <div class="wr-chat-row">
+                    <input type="text" id="waitingChatInput" placeholder="Rašyk žinutę..." data-i18n-placeholder="game.chatPlaceholder" onkeypress="if(event.key==='Enter') sendWaitingChat()">
+                    <button type="button" onclick="sendWaitingChat()" aria-label="Siųsti">➤</button>
                 </div>
-            </div>
-            <!-- UŽDARYTA DEŠINĖ -->
-            
+            </section>
         </div>
-        <!-- UŽDARYTA GRID -->
-        
-        <!-- CHAT -->
-        <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:12px; margin-top:20px;">
-            <div style="color:#ffd700; font-weight:700; font-size:13px; margin-bottom:8px;" data-i18n="waiting.chat">💬 Chat</div>
-            <div id="waitingChatMessages" style="height:100px; overflow-y:auto; font-size:12px; color:#d4b896; background:rgba(0,0,0,0.2); border-radius:8px; padding:8px; margin-bottom:8px;">
-            </div>
-            <div style="display:flex; gap:6px;">
-                <input type="text" id="waitingChatInput" placeholder="Rašyk žinutę..." data-i18n-placeholder="game.chatPlaceholder" onkeypress="if(event.key==='Enter') sendWaitingChat()" style="flex:1; padding:8px; border:1px solid #c9a84c; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; font-size:13px; outline:none;">
-                <button onclick="sendWaitingChat()" style="padding:8px 14px; background:#3d2b1f; color:#fff; border:none; border-radius:6px; cursor:pointer;">➤</button>
-            </div>
+
+        <!-- VEIKSMŲ JUOSTA -->
+        <div class="wr-actions">
+            <div id="waitingStatusText" class="wr-status">Laukiama žaidėjų...</div>
+            <button id="startGameBtn" class="wr-primary" onclick="startGame()" style="display:none;" disabled>▶ Pradėti žaidimą</button>
+            <button id="readyBtn" class="wr-primary" onclick="toggleReady()" style="display:none;">✋ Aš pasiruošęs</button>
+            <button type="button" class="wr-leave" onclick="leaveGameFromWaiting()" data-i18n="waiting.leaveShort">Išeiti iš stalo</button>
         </div>
-        
+
     </div>
 </div>
 

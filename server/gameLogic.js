@@ -610,6 +610,12 @@ class Game {
 
         await this.botSleep(1500);
 
+        // Kol botas „galvojo“, sandoris galėjo būti atšauktas arba įvykdytas
+        if (!this.tradingLogic.trades.get(tradeId)) {
+            console.log(`🤖 ${bot.name}: prekyba ${tradeId} jau nebeegzistuoja – nieko nedarom`);
+            return null;
+        }
+
         const accept = this.botShouldAcceptTrade(botId, trade);
 
         const result = this.tradingLogic.respondToTrade(tradeId, botId, accept);
@@ -1709,7 +1715,8 @@ if (currentPlayer.money < 0) {
             return { can: false, reason: L('srv.game.reikia_bent_zaideju') };
         }
 
-        const allReady = activePlayers.every(p => p.ready === true);
+        // 👑 Stalo kūrėjas pasiruošęs automatiškai – jis pats spaudžia „Pradėti“
+        const allReady = activePlayers.every(p => p.ready === true || p.isHost === true);
         if (!allReady) {
             return { can: false, reason: L('srv.game.ne_visi_zaidejai_pasiruose') };
         }
