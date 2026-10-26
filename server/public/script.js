@@ -3748,6 +3748,7 @@ function updateExitButton() {
 }
 
 // ⏸️ AFK juosta: „Tavo ėjimai daromi automatiškai – Aš čia!“
+const afkUi = { until: 0, srcMs: null, tick: null };
 function updateAfkBanner() {
     let banner = document.getElementById('afkBanner');
     const afk = myPlayer && !myPlayer.bankrupt && !myPlayer.left && !myPlayer.kicked &&
@@ -3768,9 +3769,24 @@ function updateAfkBanner() {
             playClickSound();
         };
     }
-    const left = Math.max(0, 10 - (myPlayer.afkAutoMoves || 0));
-    document.getElementById('afkBannerText').textContent =
-        tt('game.afk.banner', '⏸️ Tu AFK – tavo ėjimai daromi automatiškai. Liko automatinių ėjimų iki bankroto: {n}').replace('{n}', left);
+    // Kiek liko iki AFK bankroto (serveris siunčia afkMsLeft; tarp atnaujinimų skaičiuojam patys)
+    if (typeof myPlayer.afkMsLeft === 'number') {
+        if (afkUi.srcMs !== myPlayer.afkMsLeft) { afkUi.srcMs = myPlayer.afkMsLeft; afkUi.until = Date.now() + myPlayer.afkMsLeft; }
+    } else { afkUi.srcMs = null; afkUi.until = Date.now() + 10 * 60 * 1000; }
+    const renderLeft = () => {
+        const el = document.getElementById('afkBannerText');
+        if (!el) return;
+        const ms = Math.max(0, afkUi.until - Date.now());
+        const m = Math.floor(ms / 60000), s = Math.floor((ms % 60000) / 1000);
+        el.textContent = tt('game.afk.banner', '⏸️ Tu AFK – tavo ėjimai daromi automatiškai. Iki bankroto liko: {n}').replace('{n}', m + ':' + String(s).padStart(2, '0'));
+    };
+    renderLeft();
+    clearInterval(afkUi.tick);
+    afkUi.tick = setInterval(() => {
+        const b = document.getElementById('afkBanner');
+        if (!b || b.style.display === 'none') { clearInterval(afkUi.tick); return; }
+        renderLeft();
+    }, 1000);
     document.getElementById('afkBackBtn').textContent = tt('game.afk.back', '✋ Aš čia!');
     banner.style.display = 'flex';
 }

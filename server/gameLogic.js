@@ -117,7 +117,7 @@ class Game {
         this.turnTimer = null;
         this.turnTimerEndTime = null;
         this.turnTimeoutDuration = 60000;   // 60s (normalus; AFK – žr. getTurnDurationFor)
-        this.disconnectTimers = {};         // playerId -> setTimeout (bankrotas po 5 min.)
+        this.disconnectTimers = {};         // playerId -> setTimeout (bankrotas po 10 min.)
     }
 
     // ============================================
@@ -142,6 +142,7 @@ class Game {
         if (!p || p.isBot) return false;
         const wasAfk = (p.afkAutoMoves || 0) > 0;
         p.afkAutoMoves = 0;
+        p.afkSince = null;
         // Jei dabar jo eilė ir laukiama metimo – grąžinam pilną laiką
         if (wasAfk && this.currentTurn === playerId && this.gameStarted &&
             !this.isRolling && !this.waitingForBuy && this.turnTimer) {
@@ -186,7 +187,7 @@ class Game {
             delete this.disconnectTimers[playerId];
             const pl = this.getPlayerById(playerId);
             if (pl && pl.disconnected && !pl.bankrupt && !pl.left && !pl.kicked && this.gameStarted) {
-                console.log(`⏰ ${pl.name} negrįžo per 5 min. – bankrotas`);
+                console.log(`⏰ ${pl.name} negrįžo per 10 min. – bankrotas`);
                 this.forceBankrupt(playerId, 'disconnect');
             }
         }, C.DISCONNECT_BANKRUPT_MS);
@@ -1427,10 +1428,11 @@ class Game {
         return;
     }
 
-    // 🆕 AFK: per daug automatinių ėjimų iš eilės – priverstinis bankrotas
-    // (taikoma tik kai naršyklė atidaryta; uždarytai naršyklei – 5 min. taisyklė)
-    if (!currentPlayer.disconnected && (currentPlayer.afkAutoMoves || 0) >= C.AFK_MAX_AUTO_MOVES) {
-        console.log(`💀 ${currentPlayer.name}: ${C.AFK_MAX_AUTO_MOVES} automatinių ėjimų – priverstinis bankrotas`);
+    // 🆕 AFK: ėjimai daromi automatiškai jau 10 min. be pertraukos – priverstinis bankrotas
+    // (taikoma tik kai naršyklė atidaryta; uždarytai naršyklei – 10 min. atsijungimo taisyklė)
+    if (!currentPlayer.afkSince) currentPlayer.afkSince = Date.now();
+    if (!currentPlayer.disconnected && Date.now() - currentPlayer.afkSince >= C.AFK_BANKRUPT_MS) {
+        console.log(`💀 ${currentPlayer.name}: ${Math.round(C.AFK_BANKRUPT_MS / 60000)} min. automatinių ėjimų – priverstinis bankrotas`);
         this.forceBankrupt(currentPlayer.id, 'afk');
         return;
     }
@@ -3267,6 +3269,7 @@ this.addMessageKey('game.paidJailFine', {
                 .filter(p => !p.left)
                 .map(p => ({
                     ...p,
+                    afkMsLeft: p.afkSince ? Math.max(0, C.AFK_BANKRUPT_MS - (Date.now() - p.afkSince)) : null,
                     isDebtor: p.isDebtor || false,
                     kicked: p.kicked || false,
                     ready: p.ready || false

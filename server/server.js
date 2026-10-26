@@ -1073,7 +1073,7 @@ io.on('connection', (socket) => {
         player.socketId = socket.id;
         player.isActive = true;
         player.ip = socket.clientIp;
-        game.playerReconnected(player.id);   // 🆕 atšaukti 5 min. bankroto laikmatį
+        game.playerReconnected(player.id);   // 🆕 atšaukti 10 min. bankroto laikmatį
         
         console.log('✅ Žaidėjas sėkmingai prijungtas atgal:', player.name);
 
@@ -2353,7 +2353,7 @@ socket.on('movementFinished', () => {
             if (player && player.socketId === socket.id) {
                 if (game.gameStarted && !player.bankrupt && !player.left && !player.kicked) {
                     // 🆕 Žaidimas vyksta: žaidėjas lieka žaidime, jo ėjimai daromi automatiškai,
-                    // o jei per 5 min. negrįžta – bankrotuoja
+                    // o jei per 10 min. negrįžta – bankrotuoja
                     game.playerDisconnected(player.id);
                     io.to(socket.gameId).emit('gameState', game.getGameState());
                     io.to(socket.gameId).emit('message', L('srv.server.atsijunge_turi_min_grizti_kitaip', { player: player.name }));

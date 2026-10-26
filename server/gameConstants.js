@@ -132,14 +132,14 @@ module.exports = {
     AFK_TURN_TIMES: [60000, 20000, 5000],
     // Pirkimo sprendimo laikas pagal AFK lygį
     AFK_BUY_TIMES: [30000, 10000, 5000],
-    // Po tiek automatinių ėjimų iš eilės – priverstinis bankrotas
-    AFK_MAX_AUTO_MOVES: 10,
+    // Jei ėjimai daromi automatiškai tiek laiko be pertraukos – priverstinis bankrotas
+    AFK_BANKRUPT_MS: 10 * 60 * 1000,
 
     // ============================================
     // ATSIJUNGIMAS (naršyklė uždaryta)
     // ============================================
     // Jei žaidėjas negrįžta per tiek laiko – automatinis bankrotas
-    DISCONNECT_BANKRUPT_MS: 5 * 60 * 1000,
+    DISCONNECT_BANKRUPT_MS: 10 * 60 * 1000,
 
     // ============================================
     // ŽAIDĖJŲ SPALVOS
