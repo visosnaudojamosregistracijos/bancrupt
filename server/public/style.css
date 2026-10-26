@@ -553,6 +553,13 @@ button,
     color: #1a3b1a;
 }
 
+.lang-select-wrap { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; border: 2px solid var(--gold); border-radius: 8px;
+    background: rgba(0, 0, 0, 0.55); color: var(--gold); font-weight: 700; font-size: 13px; cursor: pointer; }
+.lang-select { background: transparent; color: var(--gold); border: none; outline: none; font-weight: 700; font-size: 12px; cursor: pointer; max-width: 150px; }
+.lang-select option { background: #1a3b1a; color: #ffd700; }
+.lang-select-wrap.small { width: 100%; justify-content: center; padding: 3px 4px; font-size: 11px; }
+.lang-select-wrap.small .lang-select { font-size: 11px; max-width: 100%; }
+
 #langSwitcher {
     position: fixed;
     top: 10px;
@@ -5722,6 +5729,252 @@ body.cmp #taxiPanel .tx-text { font-size: 12px; }
     font-weight: 900;
 }
 #taxiTestBtn:disabled { opacity: 0.45; }
+#airTestBtn {
+    background: repeating-linear-gradient(45deg, #6ec6ff 0 8px, #222 8px 16px) !important;
+    color: #fff !important; text-shadow: 0 1px 2px #000; border: 2px solid #2f9be0 !important;
+    font-weight: 900;
+}
+#airTestBtn:disabled { opacity: 0.45; }
+#gasTestBtn {
+    background: repeating-linear-gradient(45deg, #9be15d 0 8px, #222 8px 16px) !important;
+    color: #fff !important; text-shadow: 0 1px 2px #000; border: 2px solid #6abf2e !important;
+    font-weight: 900;
+}
+#gasTestBtn:disabled { opacity: 0.45; }
+
+/* ✈️ Oro uosto efektas */
+.ap-fx { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 950; transform: translateZ(34px); }
+body.board-3d .ap-fx, body.board-3dp .ap-fx { transform-style: flat; }
+.ap-plane, .ap-shadow { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+.ap-plane { width: 0; height: 0; }
+/* ✈️ emoji „žiūri“ į viršų dešinėn (-45°) – pasukam, kad nosis būtų +X kryptimi */
+.ap-emoji { position: absolute; left: 0; top: 0; line-height: 1; transform: translate(-50%, -50%) rotate(45deg);
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.35)); }
+.ap-trail { position: absolute; right: 0.35em; top: 0; transform: translateY(-50%); width: 0; border-radius: 4px;
+    background: linear-gradient(to left, rgba(255,255,255,0.95), rgba(255,255,255,0)); }
+.ap-shadow { margin: 0; border-radius: 50%; translate: -50% -50%;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.55), rgba(0,0,0,0) 70%); }
+#board.ap-hide-8 #cell-8 .cell-bg-icon { opacity: 0 !important; animation: none !important; transition: none; }
+.cell-bg-icon.ap-return { animation: apReturn 0.8s ease-out; }
+@keyframes apReturn {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+    70%  { opacity: 0.85; transform: translate(-50%, -50%) scale(1.08); }
+    100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+}
+.cell-bg-icon.ap-wiggle { animation: apWiggle 0.6s ease-in-out; }
+@keyframes apWiggle {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0); }
+    30% { transform: translate(-40%, -55%) rotate(-6deg); }
+    60% { transform: translate(-58%, -48%) rotate(4deg); }
+}
+.ap-lights { position: absolute; height: 4px; pointer-events: none;
+    transform: translate(-50%, -50%) rotate(var(--ar, 0deg)); border-radius: 2px;
+    background: repeating-linear-gradient(90deg, #fff6a8 0 6px, transparent 6px 14px);
+    box-shadow: 0 0 6px 1px rgba(255, 240, 140, 0.8);
+    animation: apLights 0.35s steps(2) infinite; }
+@keyframes apLights { 0% { opacity: 1; background-position: 0 0; } 100% { opacity: 0.35; background-position: 14px 0; } }
+
+/* 🧪 Efektų testo mygtukai – maži, tik ženkliukas */
+.fx-test-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; width: 100%; margin-top: 4px; }
+.fx-test-lbl { font-size: 12px; margin-right: 1px; }
+.fx-test-row .fx-test-btn { width: 22px !important; height: 22px !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important;
+    font-size: 12px !important; line-height: 1 !important; border-radius: 5px !important; flex: 0 0 auto !important;
+    background: repeating-linear-gradient(45deg, #ffe58a 0 5px, #fff6cf 5px 10px) !important; border: 1.5px solid #c9a13a !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25) !important; color: #000 !important; text-shadow: none !important; }
+.fx-test-row .fx-test-btn:disabled { opacity: 0.6; filter: grayscale(0.4); }
+#jailTestBtn { background: repeating-linear-gradient(45deg, #2f6bff 0 8px, #222 8px 16px) !important;
+    color: #fff !important; text-shadow: 0 1px 2px #000; border: 2px solid #ff2f3a !important; font-weight: 900; }
+#jailTestBtn:disabled { opacity: 0.45; }
+#spaTestBtn { background: repeating-linear-gradient(45deg, #7fd3e8 0 8px, #222 8px 16px) !important;
+    color: #fff !important; text-shadow: 0 1px 2px #000; border: 2px solid #ff9ad5 !important; font-weight: 900; }
+#spaTestBtn:disabled { opacity: 0.45; }
+#trainTestBtn { background: repeating-linear-gradient(45deg, #e07b39 0 8px, #222 8px 16px) !important; color: #fff !important; text-shadow: 0 1px 2px #000; border: 2px solid #b85a1f !important; font-weight: 900; }
+#shipTestBtn  { background: repeating-linear-gradient(45deg, #3c7fb8 0 8px, #222 8px 16px) !important; color: #fff !important; text-shadow: 0 1px 2px #000; border: 2px solid #1f5a8f !important; font-weight: 900; }
+#busTestBtn   { background: repeating-linear-gradient(45deg, #f2b600 0 8px, #222 8px 16px) !important; color: #fff !important; text-shadow: 0 1px 2px #000; border: 2px solid #c98f00 !important; font-weight: 900; }
+#trainTestBtn:disabled, #shipTestBtn:disabled, #busTestBtn:disabled { opacity: 0.45; }
+
+/* 🚂 🚢 🚌 Stočių efektai */
+#board.vx-hide-19 #cell-19 .cell-bg-icon,
+#board.vx-hide-37 #cell-37 .cell-bg-icon,
+#board.vx-hide-46 #cell-46 .cell-bg-icon { opacity: 0 !important; animation: none !important; }
+.vx-fx { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 940; transform: translateZ(30px); }
+body.board-3d .vx-fx, body.board-3dp .vx-fx { transform-style: flat; }
+.vx-veh { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform, opacity; }
+.vx-bob { position: absolute; left: 0; top: 0; }
+.vx-img { position: absolute; left: 0; top: 0; translate: -50% -60%; line-height: 0; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.35)); }
+.vx-img svg { width: 100%; height: auto; display: block; }
+.vx-train .vx-bob { animation: vxRattle 0.16s linear infinite; }
+.vx-bus .vx-bob   { animation: vxBounce 0.42s ease-in-out infinite; }
+.vx-ship .vx-bob  { animation: vxRock 1.3s ease-in-out infinite; }
+@keyframes vxRattle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.2px); } }
+@keyframes vxBounce { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-2.5px) rotate(-0.8deg); } }
+@keyframes vxRock {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50%      { transform: translateY(-5px) rotate(4deg); }
+}
+.vx-ground { position: absolute; left: 0; top: 0; transform-origin: 0 50%; opacity: 0; border-radius: 6px; }
+.vx-rails { height: 12px; margin-top: -6px;
+    background:
+        linear-gradient(#6b6b6b, #6b6b6b) 0 1px / 100% 2px no-repeat,
+        linear-gradient(#6b6b6b, #6b6b6b) 0 9px / 100% 2px no-repeat,
+        repeating-linear-gradient(90deg, #7a5230 0 4px, transparent 4px 11px); }
+.vx-road { height: 16px; margin-top: -8px; background:
+        repeating-linear-gradient(90deg, #fff 0 10px, transparent 10px 22px) 0 7px / 100% 2px no-repeat,
+        linear-gradient(rgba(60,60,60,0.75), rgba(60,60,60,0.75)); }
+.vx-waves { height: 22px; margin-top: -10px; border-radius: 10px;
+    background:
+        radial-gradient(circle at 10px 0, transparent 9px, rgba(255,255,255,0.85) 10px, transparent 12px) 0 6px / 20px 12px repeat-x,
+        linear-gradient(rgba(60,140,210,0.65), rgba(30,90,160,0.75));
+    animation: vxWaves 0.8s linear infinite; }
+@keyframes vxWaves { from { background-position: 0 6px, 0 0; } to { background-position: 20px 6px, 0 0; } }
+.vx-wake { position: absolute; left: 0; top: 0; width: 70px; height: 10px; translate: 0 2px; border-radius: 50%;
+    background: radial-gradient(ellipse at left, rgba(255,255,255,0.9), rgba(255,255,255,0) 70%); }
+.vx-ship .vx-wake { transform-origin: 0 50%; }
+.vx-puff { position: absolute; border-radius: 50%; translate: -50% -50%; pointer-events: none;
+    animation: vxPuff 1.3s ease-out forwards; }
+.vx-steam { background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(235,235,235,0.7) 45%, rgba(220,220,220,0) 72%); }
+.vx-exhaust { background: radial-gradient(circle, rgba(110,110,110,0.7) 0%, rgba(120,120,120,0.35) 50%, rgba(120,120,120,0) 72%); }
+@keyframes vxPuff {
+    0%   { opacity: 0.95; transform: translate(0, 0) scale(0.5); }
+    100% { opacity: 0;    transform: translate(var(--px, -10px), var(--py, -20px)) scale(2.4); }
+}
+
+/* 🎬 Langelių efektai */
+#board.fx-hide-11 #cell-11 .cell-bg-icon, #board.fx-hide-14 #cell-14 .cell-bg-icon, #board.fx-hide-32 #cell-32 .cell-bg-icon,
+#board.fx-hide-44 #cell-44 .cell-bg-icon { opacity: 0 !important; animation: none !important; }
+.fx-layer { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 945; transform: translateZ(32px); }
+body.board-3d .fx-layer, body.board-3dp .fx-layer { transform-style: flat; }
+.fx-obj { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform, opacity; }
+.fx-emoji span { position: absolute; left: 0; top: 0; translate: -50% -50%; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+.fx-obj .vx-img { translate: -50% -50%; }
+.fx-truck .vx-img { translate: -50% -55%; }
+/* VMI */
+.fx-money .vx-img { filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+.fx-coin { position: absolute; left: 0; top: 0; translate: -50% -50%; line-height: 1; }
+.fx-minus span { position: absolute; left: 0; top: 0; translate: -50% -50%; white-space: nowrap; font-weight: 900; font-size: var(--fs, 20px);
+    color: #e53935; text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 2px 3px rgba(0,0,0,0.35); }
+.fx-stamp span { position: absolute; left: 0; top: 0; translate: -50% -50%; white-space: nowrap; font-weight: 900; font-size: var(--fs, 13px);
+    letter-spacing: 0.5px; color: #d32f2f; border: 3px double #d32f2f; border-radius: 6px; padding: 2px 6px; background: rgba(255,255,255,0.72);
+    font-family: 'Courier New', monospace; box-shadow: 0 0 0 1px rgba(211,47,47,0.3); }
+
+/* SPA */
+.fx-tub .vx-img { translate: -50% -55%; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+.fx-bubble { position: absolute; left: 0; top: 0; border-radius: 50%; will-change: transform, opacity; translate: -50% -50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95) 0 12%, rgba(255,255,255,0.15) 30%, rgba(180,220,255,0.25) 60%, rgba(255,170,230,0.45) 100%);
+    box-shadow: inset 0 0 3px rgba(255,255,255,0.9), 0 0 2px rgba(120,170,220,0.5); }
+
+/* Baseinas */
+.fx-pool { position: absolute; border-radius: 6px; overflow: hidden; transform-origin: 0 50%;
+    background: linear-gradient(180deg, #5fc3f0, #2b8fd6); border: 3px solid #f4f7fa;
+    box-shadow: inset 0 0 0 2px #9fd7f3, 0 3px 8px rgba(0,0,0,0.35); }
+.fx-pool-lane { position: absolute; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1.5px;
+    background: repeating-linear-gradient(90deg, #e74c3c 0 6px, #fff 6px 12px); opacity: 0.85; }
+.fx-pool-shine { position: absolute; inset: 0; opacity: 0.45;
+    background: repeating-linear-gradient(115deg, rgba(255,255,255,0.0) 0 10px, rgba(255,255,255,0.55) 12px 14px, rgba(255,255,255,0) 16px 26px);
+    animation: fxShine 1.6s linear infinite; }
+@keyframes fxShine { from { background-position: 0 0; } to { background-position: 52px 0; } }
+.fx-pool-block { position: absolute; width: 12px; height: 36%; background: #e8e8e8; border: 2px solid #9aa; border-radius: 3px; }
+.fx-drop { position: absolute; left: 0; top: 0; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #e6f7ff; box-shadow: 0 0 3px #7fd0ff; }
+.fx-ring { position: absolute; top: 0; width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.9); }
+.fx-swim .fx-arm { transform-box: fill-box; transform-origin: 0% 50%; animation: fxStroke 0.5s ease-in-out infinite alternate; }
+.fx-swim .fx-arm2 { animation-delay: -0.5s; }
+@keyframes fxStroke { from { transform: rotate(-35deg); } to { transform: rotate(35deg); } }
+/* Elektra */
+.fx-dim { position: absolute; background: #0b1020; opacity: 0; }
+.fx-bolt { position: absolute; filter: drop-shadow(0 0 6px #fff59d) drop-shadow(0 0 12px #ffd54f); }
+.fx-glow { position: absolute; left: 0; top: 0; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,220,0.95) 0%, rgba(255,230,90,0.7) 30%, rgba(255,200,0,0) 70%); }
+.fx-spark { position: absolute; left: 0; top: 0; width: 12px; height: 2.5px; margin-top: -1px; border-radius: 2px; transform-origin: 0 50%;
+    background: linear-gradient(90deg, #fffbe0, #ffd54f); box-shadow: 0 0 4px #ffd54f; }
+/* Pirtis */
+.fx-hut .vx-img { translate: -50% -60%; }
+.fx-door { position: absolute; transform-origin: 0 50%; line-height: 0; }
+.fx-door svg { width: 100%; height: 100%; display: block; }
+/* Vanduo */
+.fx-man .vx-img { translate: -50% -60%; }
+.fx-man .fx-leg { transform-box: fill-box; transform-origin: 50% 0%; }
+.fx-man.walking .fx-leg1 { animation: fxLeg 0.42s ease-in-out infinite alternate; }
+.fx-man.walking .fx-leg2 { animation: fxLeg 0.42s ease-in-out infinite alternate-reverse; }
+.fx-man.walking .vx-img svg { animation: fxStep 0.21s ease-in-out infinite alternate; }
+@keyframes fxLeg { from { transform: rotate(-22deg); } to { transform: rotate(22deg); } }
+@keyframes fxStep { from { transform: translateY(0); } to { transform: translateY(-2px); } }
+.fx-bucket .vx-img { translate: -50% -10%; }
+.fx-bucket-water { transform-box: fill-box; transform: translateY(100%); }
+.fx-jet { position: absolute; width: 4px; transform-origin: 50% 0; border-radius: 2px;
+    background: linear-gradient(180deg, #bfe6ff, #3d9be9); box-shadow: 0 0 3px rgba(61,155,233,0.7); }
+/* Paplūdimys */
+.fx-beach { position: absolute; border-radius: 12px; overflow: hidden; border: 3px solid #fff8e1;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4); background: #ffe2a8; }
+.fx-sky { position: absolute; left: 0; right: 0; top: 0; height: 42%; background: linear-gradient(180deg, #7ec8f5, #c6ebff); }
+.fx-sun { position: absolute; right: 9%; top: 14%; width: calc(var(--bh) * 0.2); height: calc(var(--bh) * 0.2); border-radius: 50%;
+    background: radial-gradient(circle, #fff7b0 0%, #ffd23f 60%, #ffb300 100%);
+    box-shadow: 0 0 10px 4px rgba(255,210,63,0.75); animation: fxSun 2.4s ease-in-out infinite alternate; }
+@keyframes fxSun { from { box-shadow: 0 0 8px 3px rgba(255,210,63,0.6); } to { box-shadow: 0 0 16px 7px rgba(255,210,63,0.9); } }
+.fx-gull { position: absolute; left: -10%; top: 18%; font-size: calc(var(--bh) * 0.13); color: #3b3b3b; animation: fxGull 4.5s linear forwards; }
+@keyframes fxGull { from { transform: translate(0, 0); } 50% { transform: translate(calc(var(--bw) * 0.55), -4px); } to { transform: translate(calc(var(--bw) * 1.1), 2px); } }
+.fx-sea { position: absolute; left: 0; right: 0; top: 42%; height: 22%; overflow: hidden; background: linear-gradient(180deg, #1e88c8, #47b5e6); }
+.fx-wave { position: absolute; left: -20%; width: 140%; height: 4px; border-radius: 3px; opacity: 0.85;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.95) 0 14px, rgba(255,255,255,0) 14px 30px); }
+.fx-wave.w1 { top: 30%; animation: fxWave 2.2s linear infinite; }
+.fx-wave.w2 { top: 72%; opacity: 0.6; animation: fxWave 3s linear infinite reverse; }
+@keyframes fxWave { from { transform: translateX(0); } to { transform: translateX(30px); } }
+.fx-sand { position: absolute; left: 0; right: 0; bottom: 0; height: 38%;
+    background: radial-gradient(circle at 20% 30%, rgba(180,140,80,0.35) 1px, transparent 2px) 0 0 / 9px 9px,
+                linear-gradient(180deg, #f8e2a6, #eccb7c); }
+.fx-sand::before { content: ''; position: absolute; left: 0; right: 0; top: -5px; height: 9px; border-radius: 50%;
+    background: rgba(255,255,255,0.75); animation: fxFoam 2.2s ease-in-out infinite alternate; }
+@keyframes fxFoam { from { transform: translateY(0) scaleX(1); opacity: 0.8; } to { transform: translateY(3px) scaleX(1.03); opacity: 0.5; } }
+.fx-umb { position: absolute; left: 14%; bottom: 14%; width: calc(var(--bh) * 0.55); line-height: 0; transform-origin: 60% 100%; animation: fxUmb 1.8s ease-in-out infinite alternate; }
+.fx-umb svg { width: 100%; height: auto; display: block; }
+@keyframes fxUmb { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+.fx-towel { position: absolute; left: 42%; bottom: 10%; width: 22%; height: 12%; border-radius: 3px;
+    background: repeating-linear-gradient(90deg, #3498db 0 6px, #fff 6px 12px); transform: skewX(-20deg); }
+.fx-ball { position: absolute; right: 16%; bottom: 12%; font-size: calc(var(--bh) * 0.16); animation: fxBall 0.9s ease-in-out infinite alternate; }
+@keyframes fxBall { from { transform: translateY(0); } to { transform: translateY(-7px); } }
+.fx-shell { position: absolute; left: 70%; bottom: 4%; font-size: calc(var(--bh) * 0.1); }
+/* Gimtadienis */
+.fx-confetti { position: absolute; left: 0; top: 0; border-radius: 1px; will-change: transform, opacity; }
+
+/* 🚓 Policijos autobusiukas */
+.pv-van .vx-img { translate: -50% -55%; }
+.pv-bob { position: absolute; left: 0; top: 0; animation: vxBounce 0.42s ease-in-out infinite; }
+.pv-van.siren .pv-l1 { animation: pvBlue 0.36s steps(1) infinite; }
+.pv-van.siren .pv-l2 { animation: pvRed 0.36s steps(1) infinite; }
+@keyframes pvBlue { 0% { fill: #2f6bff; } 50% { fill: #0b1f66; } }
+@keyframes pvRed  { 0% { fill: #5a0b10; } 50% { fill: #ff2f3a; } }
+.pv-van.siren .vx-img { filter: drop-shadow(0 4px 3px rgba(0,0,0,0.35)) drop-shadow(0 0 6px rgba(80,120,255,0.55)); }
+.pv-piece-in { position: absolute; left: 0; top: 0; translate: -50% -70%; line-height: 0; }
+.pv-piece-in > * { width: 100% !important; height: 100% !important; }
+
+/* 💨 Dujų efektas */
+.cell.gas-host { animation: gasGlow 1.8s ease-out; }
+@keyframes gasGlow {
+    0%   { box-shadow: inset 0 0 0 0 rgba(160, 230, 60, 0); }
+    25%  { box-shadow: inset 0 0 22px 6px rgba(160, 230, 60, 0.75), 0 0 18px 4px rgba(160, 230, 60, 0.55); }
+    100% { box-shadow: inset 0 0 0 0 rgba(160, 230, 60, 0); }
+}
+.gas-fx { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 900; transform: translateZ(30px); }
+body.board-3d .gas-fx, body.board-3dp .gas-fx { transform-style: flat; }
+body.board-3d .gas-puff, body.board-3dp .gas-puff { filter: none; }
+.gas-puff {
+    position: absolute; left: 0; top: 0;
+    width: var(--sz, 50px); height: var(--sz, 50px); margin: calc(var(--sz, 50px) / -2) 0 0 calc(var(--sz, 50px) / -2);
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%,
+        hsla(var(--h, 80), 90%, 72%, 0.92) 0%,
+        hsla(var(--h, 80), 75%, 55%, 0.65) 42%,
+        hsla(var(--h, 80), 60%, 45%, 0) 72%);
+    filter: blur(2px);
+    opacity: 0;
+    transform: translate(0, 0) scale(0.25) rotate(0deg);
+    animation: gasPuff 3s ease-out var(--d, 0s) forwards;
+    will-change: transform, opacity;
+}
+@keyframes gasPuff {
+    0%   { opacity: 0;    transform: translate(0, 0) scale(0.25) rotate(0deg); }
+    18%  { opacity: 0.95; transform: translate(calc(var(--tx) * 0.2), calc(var(--ty) * 0.2)) scale(calc(var(--s) * 0.9)) rotate(calc(var(--r) * 0.3)); }
+    100% { opacity: 0;    transform: translate(var(--tx), var(--ty)) scale(calc(var(--s) * 2.3)) rotate(var(--r)); }
+}
 
 /* ============================================================
    🏗️ STATYBŲ LANGAS (15 s)
@@ -6204,3 +6457,123 @@ body:not(.cmp) #gameHeader #gameIdDisplay { display: none !important; }
 #piecePickerBox .piece-note.flash { color: #ffd700; font-weight: 800; font-size: 13px; }
 .wr-nopiece { display: inline-flex; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 18px; opacity: 0.8; }
 @media (max-width: 768px) { #piecePickerBox .piece-title { font-size: 12px; } }
+
+/* ============================================================
+   🏗️ STATYBŲ MYGTUKAS (žalias – užtenka pinigų, raudonas – ne) ir 15 s langas 5 langelyje
+   ============================================================ */
+#center-2 #buildBtn {
+    width: auto !important;
+    min-width: 33%;
+    max-width: 100%;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    white-space: nowrap;
+    align-self: center;
+}
+#buildBtn.can-pay { background: linear-gradient(145deg, #2ecc71, #1e8f4a) !important; color: #fff; }
+#buildBtn.can-pay:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(46, 204, 113, 0.45), inset 0 1px 0 rgba(255,255,255,0.3) !important; }
+#buildBtn.no-money { background: linear-gradient(145deg, #e74c3c, #a93226) !important; color: #fff; opacity: 0.92; }
+#buildPicker .bp-item.no-money { opacity: 0.45; filter: grayscale(0.6); cursor: not-allowed; }
+
+/* 15 s langas – 5 langelio (pranešimų) viduje, kaip pirkimo kortelė */
+#buildWindowPanel.in-cell5 {
+    position: absolute;
+    inset: 0;
+    left: 0;
+    top: 0;
+    transform: none;
+    width: auto;
+    max-width: none;
+    z-index: 12;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border-width: 2px;
+    text-align: center;
+    animation: bwInCell 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+@keyframes bwInCell { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+#buildWindowPanel.in-cell5 .bw-body { width: 100%; max-width: 260px; }
+#buildWindowPanel.in-cell5 .bw-btns { justify-content: center; }
+#buildWindowPanel.in-cell5 .bw-icon { font-size: 30px; }
+body.cmp #buildWindowPanel.in-cell5 { padding: 4px 6px; gap: 2px; }
+body.cmp #buildWindowPanel.in-cell5 .bw-icon { font-size: 18px; }
+body.cmp #buildWindowPanel.in-cell5 .bw-title { font-size: 12px; }
+body.cmp #buildWindowPanel.in-cell5 .bw-bar { margin: 3px 0; }
+body.cmp #buildWindowPanel.in-cell5 button { padding: 4px 8px; font-size: 11px; }
+body.cmp #buildWindowPanel.in-cell5 .bw-left { font-size: 11px; }
+
+/* ============================================================
+   🤝 PREKYBA: žaidėjai su figūrėle ir spalva
+   ============================================================ */
+#tradeTargetPlayer.trade-select-hidden { display: none !important; }
+#tradeTargetChips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 6px 0 8px; }
+#tradeTargetChips .ttc {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 5px 8px 5px 6px;
+    border-radius: 10px;
+    border: 2px solid var(--ttc-color, #c9a84c);
+    border-left-width: 6px;
+    background: rgba(255, 255, 255, 0.75);
+    color: #3d2b1f;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+#tradeTargetChips .ttc:hover { transform: translateY(-1px); background: #fff; }
+#tradeTargetChips .ttc.active {
+    background: #fff;
+    box-shadow: 0 0 0 2px var(--ttc-color, #c9a84c), 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+#tradeTargetChips .ttc.active::after { content: '✓'; margin-left: auto; color: #1e9e50; font-weight: 900; }
+#tradeTargetChips .ttc-piece { width: 26px; height: 26px; flex-shrink: 0; display: inline-flex; }
+#tradeTargetChips .ttc-piece .tok { width: 100%; height: 100%; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4)); }
+#tradeTargetChips .ttc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.3); }
+#tradeTargetChips .ttc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+#tradeTargetChips .ttc-money { font-size: 11px; color: #1a6b3c; font-weight: 800; flex-shrink: 0; }
+#tradeTargetChips .ttc-empty { color: #6c757d; padding: 6px; }
+@media (max-width: 480px) { #tradeTargetChips { grid-template-columns: 1fr; } #tradeTargetChips .ttc { font-size: 12px; } }
+
+/* 🏪 Prekybos langas: „Patvirtinti / Grįžti“ visada matomi apačioje, ✕ kampe */
+#tradingModal .trading-box { position: relative; }
+#tradingModal .trade-x {
+    position: absolute; top: 10px; right: 12px;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid #c9a84c; background: rgba(255, 255, 255, 0.85);
+    color: #3d2b1f; font-size: 16px; font-weight: 900; line-height: 1; cursor: pointer; z-index: 3;
+}
+#tradingModal .trade-x:hover { background: #fff; }
+#tradingModal .trade-actions {
+    position: sticky;
+    bottom: -30px;
+    margin: 8px -30px -30px;
+    padding: 12px 30px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    z-index: 30;
+    isolation: isolate;
+    background: linear-gradient(to top, #e8d5b5 78%, rgba(232, 213, 181, 0));
+    border-radius: 0 0 17px 17px;
+}
+#tradingModal .trade-actions button { margin: 0 !important; padding: 10px 6px !important; font-size: 14px !important; white-space: normal; line-height: 1.15; }
+@media (max-width: 420px) { #tradingModal .trade-actions button { font-size: 13px !important; } }
+
+/* ⏱️ Statybų lango laikmatis – virš mygtukų (juosta + sekundės vienoje eilutėje) */
+#buildWindowPanel .bw-timer { display: flex; align-items: center; gap: 8px; margin: 6px 0 8px; }
+#buildWindowPanel .bw-timer .bw-bar { flex: 1; margin: 0; height: 8px; }
+#buildWindowPanel .bw-timer .bw-left { flex-shrink: 0; font-size: 15px; font-weight: 900; color: #ffd700; min-width: 54px; text-align: right; }
+#buildWindowPanel .bw-btns { flex-wrap: nowrap; }
+body.cmp #buildWindowPanel .bw-timer { margin: 3px 0 4px; gap: 5px; }
+body.cmp #buildWindowPanel .bw-timer .bw-left { font-size: 11px; min-width: 36px; }
+#buildWindowPanel.in-cell5 .bw-body { max-width: 340px; }
+#buildWindowPanel .bw-btns button { white-space: nowrap; }

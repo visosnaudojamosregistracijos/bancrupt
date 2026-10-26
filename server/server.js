@@ -2,6 +2,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const { L } = require('./i18nSrv');   // 🌐 tekstai iš lang/lt.json
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
@@ -39,7 +40,11 @@ const ALLOWED_ORIGINS = [
     'http://bankrotuoju.lt',
     'http://www.bankrotuoju.lt',
     'https://bankrotuoju.lt',
-    'https://www.bankrotuoju.lt'
+    'https://www.bankrotuoju.lt',
+    'http://bankro.lt',               // 🆕
+    'http://www.bankro.lt',           // 🆕
+    'https://bankro.lt',              // 🆕
+    'https://www.bankro.lt'           // 🆕
 ];
 
 // ============================================
@@ -50,8 +55,8 @@ const LIMITS = {
     MAX_PRIVATE_GAMES: 100,
     MAX_TOTAL_GAMES: 200,
     MAX_PLAYERS_TOTAL: 2400,
-    MAX_GAMES_PER_PLAYER: 3,
-    MAX_GAMES_PER_IP: 5,
+    MAX_GAMES_PER_PLAYER: 5,     // vienas žaidėjas – iki 5 aktyvių stalų vienu metu
+    MAX_GAMES_PER_IP: 10,        // iš vieno IP (pvz., namų internetas) – iki 10 stalų
     EMPTY_GAME_TIMEOUT: 10 * 60 * 1000,
     INACTIVE_GAME_TIMEOUT: 30 * 60 * 1000,
     FINISHED_GAME_TIMEOUT: 5 * 60 * 1000,
@@ -127,7 +132,7 @@ function httpRateLimitMiddleware(req, res, next) {
         .then(() => next())
         .catch(() => {
             console.log(`⚠️ Rate limit viršytas (HTTP): ${ip}`);
-            res.status(429).json({ error: '⏳ Per daug užklausų. Palauk minutę.' });
+            res.status(429).json({ error: L('srv.server.per_daug_uzklausu_palauk_minute') });
         });
 }
 
@@ -138,7 +143,7 @@ function authRateLimitMiddleware(req, res, next) {
         .then(() => next())
         .catch(() => {
             console.log(`⚠️ Rate limit viršytas (auth): ${ip}`);
-            res.status(429).json({ error: '⏳ Per daug bandymų. Palauk 5 minutes.' });
+            res.status(429).json({ error: L('srv.server.per_daug_bandymu_palauk_minutes') });
         });
 }
 
@@ -187,7 +192,7 @@ app.post('/api/feedback', async (req, res) => {
     // 🛡️ El. paštas – tik tikras el. pašto adresas (arba nieko)
     let email = typeof body.email === 'string' ? body.email.trim().slice(0, 100) : '';
     if (email && !/^[^\s@<>"'`]+@[^\s@<>"'`]+\.[^\s@<>"'`]{2,}$/.test(email)) {
-        return res.status(400).json({ error: 'Neteisingas el. pašto adresas' });
+        return res.status(400).json({ error: L('srv.server.neteisingas_el_pasto_adresas') });
     }
     if (!email) email = null;
 
@@ -197,15 +202,15 @@ app.post('/api/feedback', async (req, res) => {
     
     // Validacija
     if (!message || message.length < 5) {
-        return res.status(400).json({ error: 'Aprašymas per trumpas' });
+        return res.status(400).json({ error: L('srv.server.aprasymas_per_trumpas') });
     }
     
     if (!type || !['bug', 'idea', 'complaint'].includes(type)) {
-        return res.status(400).json({ error: 'Neteisingas tipas' });
+        return res.status(400).json({ error: L('srv.server.neteisingas_tipas') });
     }
     
     if (message.length > 2000) {
-        return res.status(400).json({ error: 'Aprašymas per ilgas (max 2000 simbolių)' });
+        return res.status(400).json({ error: L('srv.server.aprasymas_per_ilgas_max_2000') });
     }
     
     try {
@@ -220,7 +225,7 @@ app.post('/api/feedback', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('❌ Feedback DB klaida:', err);
-        res.status(500).json({ error: 'Serverio klaida' });
+        res.status(500).json({ error: L('srv.server.serverio_klaida') });
     }
 });
 
@@ -236,7 +241,7 @@ app.get('/api/admin/stats/visitors', async (req, res) => {
         res.json(data);
     } catch (err) {
         console.error('❌ Lankytojų statistikos klaida:', err);
-        res.status(500).json({ error: 'DB klaida' });
+        res.status(500).json({ error: L('srv.server.db_klaida') });
     }
 });
 
@@ -299,7 +304,7 @@ function checkSocketRateLimit(socket, eventName) {
             .then(() => resolve(true))
             .catch(() => {
                 console.log(`⚠️ Rate limit viršytas (Socket.IO): ${key}`);
-                socket.emit('error', '⏳ Per daug užklausų. Palauk kelias sekundes.');
+                socket.emit('error', L('srv.server.per_daug_uzklausu_palauk_kelias'));
                 resolve(false);
             });
     });
@@ -378,7 +383,7 @@ setInterval(() => {
 // ============================================
 function canCreateGame(socket, isPublic) {
     if (games.size >= LIMITS.MAX_TOTAL_GAMES) {
-        return { can: false, reason: `Serveris pilnas (max ${LIMITS.MAX_TOTAL_GAMES} stalų)` };
+        return { can: false, reason: L('srv.server.serveris_pilnas_max_stalu', { MAX_TOTAL_GAMES: LIMITS.MAX_TOTAL_GAMES }) };
     }
     
     if (isPublic) {
@@ -387,7 +392,7 @@ function canCreateGame(socket, isPublic) {
             if (g.isPublic && !g.gameStarted) publicCount++;
         }
         if (publicCount >= LIMITS.MAX_PUBLIC_GAMES) {
-            return { can: false, reason: `Viešų stalų limitas (${LIMITS.MAX_PUBLIC_GAMES})` };
+            return { can: false, reason: L('srv.server.viesu_stalu_limitas', { MAX_PUBLIC_GAMES: LIMITS.MAX_PUBLIC_GAMES }) };
         }
     }
     
@@ -397,7 +402,7 @@ function canCreateGame(socket, isPublic) {
             if (!g.isPublic && !g.gameStarted) privateCount++;
         }
         if (privateCount >= LIMITS.MAX_PRIVATE_GAMES) {
-            return { can: false, reason: `Privačių stalų limitas (${LIMITS.MAX_PRIVATE_GAMES})` };
+            return { can: false, reason: L('srv.server.privaciu_stalu_limitas', { MAX_PRIVATE_GAMES: LIMITS.MAX_PRIVATE_GAMES }) };
         }
     }
     
@@ -405,7 +410,7 @@ function canCreateGame(socket, isPublic) {
         g.players.some(p => p.socketId === socket.id)
     ).length;
     if (playerGames >= LIMITS.MAX_GAMES_PER_PLAYER) {
-        return { can: false, reason: `Tu jau turi ${LIMITS.MAX_GAMES_PER_PLAYER} aktyvius stalus` };
+        return { can: false, reason: L('srv.server.tu_jau_turi_aktyvius_stalus', { MAX_GAMES_PER_PLAYER: LIMITS.MAX_GAMES_PER_PLAYER }) };
     }
     
     const ip = getClientIp(socket);
@@ -413,14 +418,14 @@ function canCreateGame(socket, isPublic) {
         g.players.some(p => p.ip === ip)
     ).length;
     if (ipGames >= LIMITS.MAX_GAMES_PER_IP) {
-        return { can: false, reason: `Per daug stalų iš tavo IP (max ${LIMITS.MAX_GAMES_PER_IP})` };
+        return { can: false, reason: L('srv.server.per_daug_stalu_is_tavo', { MAX_GAMES_PER_IP: LIMITS.MAX_GAMES_PER_IP }) };
     }
     
     const totalPlayers = [...games.values()].reduce((sum, g) => 
         sum + g.players.filter(p => !p.left && !p.kicked).length, 0
     );
     if (totalPlayers >= LIMITS.MAX_PLAYERS_TOTAL) {
-        return { can: false, reason: `Serveris pilnas (max ${LIMITS.MAX_PLAYERS_TOTAL} žaidėjų)` };
+        return { can: false, reason: L('srv.server.serveris_pilnas_max_zaideju', { MAX_PLAYERS_TOTAL: LIMITS.MAX_PLAYERS_TOTAL }) };
     }
     
     return { can: true };
@@ -439,7 +444,7 @@ function broadcastPublicGames() {
             if (activePlayers.length < game.maxPlayers) {
                 publicGames.push({
                     gameId: gameId,
-                    hostName: activePlayers[0] ? activePlayers[0].name : 'Nežinomas',
+                    hostName: activePlayers[0] ? activePlayers[0].name : L('srv.word.unknown'),
                     playerCount: activePlayers.length,
                     maxPlayers: game.maxPlayers,
                     isPublic: true
@@ -537,7 +542,7 @@ try {
                 
                 // 🆕 SIŲSTI METIMO PRANEŠIMĄ VISIEMS
                 if (result.rollResult.dice && result.rollResult.player) {
-                    const rollMsg = `${result.rollResult.player.name} metė ${result.rollResult.dice[0]}+${result.rollResult.dice[1]}=${result.rollResult.total}`;
+                    const rollMsg = L('srv.game.rolled', { player: result.rollResult.player.name, d1: result.rollResult.dice[0], d2: result.rollResult.dice[1], total: result.rollResult.total });
                     io.to(gameId).emit('message', rollMsg);
                 }
                 
@@ -745,6 +750,25 @@ io.on('connection', (socket) => {
         'respondToTrade', 'counterTrade', 'chatMessage', 'startVoteKick', 'voteKick', 'imBack',
         'taxiRide', 'taxiDecline', 'finishBuild'
     ]);
+    // ⏱️ Veiksmai savo eilėje atnaujina ėjimo laikmatį (iki 3 min); aukcionas / mainai jį sustabdo
+    const TURN_ACTION_EVENTS = new Set([
+        'canBuildHouse', 'buildHouse', 'demolishHouse', 'sellToBank', 'startAuction',
+        'proposeTrade', 'respondToTrade', 'counterTrade', 'payJailFine'
+    ]);
+    const TURN_CHECK_EVENTS = new Set(['bidAuction', 'respondToTrade', 'counterTrade', 'proposeTrade', 'startAuction']);
+    socket.onAny((eventName) => {
+        if (!TURN_ACTION_EVENTS.has(eventName) && !TURN_CHECK_EVENTS.has(eventName)) return;
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const gid = socket.gameId, pid = socket.playerId;
+        // po to, kai pats įvykis apdorotas
+        setTimeout(() => {
+            const g = games.get(gid);
+            if (g && typeof g.updateTurnTimerAfterAction === 'function') {
+                g.updateTurnTimerAfterAction(pid, TURN_ACTION_EVENTS.has(eventName));
+            }
+        }, 50);
+    });
+
     socket.onAny((eventName) => {
         if (!AFK_RESET_EVENTS.has(eventName)) return;
         if (!socket.gameId || socket.playerId === undefined) return;
@@ -753,7 +777,7 @@ io.on('connection', (socket) => {
         const wasAfk = g.markPlayerActive(socket.playerId);
         if (wasAfk) {
             const p = g.getPlayerById(socket.playerId);
-            io.to(socket.gameId).emit('message', `👋 ${p ? p.name : 'Žaidėjas'} grįžo prie stalo`);
+            io.to(socket.gameId).emit('message', L('srv.server.grizo_prie_stalo', { v: p ? p.name : L('srv.word.player') }));
             io.to(socket.gameId).emit('gameState', g.getGameState());
         }
     });
@@ -773,13 +797,13 @@ io.on('connection', (socket) => {
         const userId = socket.userId || null;
         
         if (!playerName || playerName.trim() === '') {
-            socket.emit('error', 'Įvesk vardą!');
+            socket.emit('error', L('srv.server.ivesk_varda'));
             return;
         }
         
         const check = canCreateGame(socket, isPublic);
         if (!check.can) {
-            socket.emit('error', `❌ ${check.reason}`);
+            socket.emit('error', L('srv.server.txt', { reason: check.reason }));
             return;
         }
         
@@ -842,7 +866,7 @@ io.on('connection', (socket) => {
 
         io.to(gameId).emit('gameState', game.getGameState());
         io.to(gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
-        io.to(gameId).emit('message', `🎉 ${playerName} sukūrė žaidimą!`);
+        io.to(gameId).emit('message', L('srv.server.sukure_zaidima', { playerName }));
 
         // 🆕 Siųsti vidurio langelius
         try {
@@ -895,7 +919,7 @@ io.on('connection', (socket) => {
         console.log('📥 Gauta joinGame užklausa:', { gameId, playerName, color, userId });
         
         if (!gameId || !playerName) {
-            socket.emit('error', 'Įvesk žaidimo ID ir vardą!');
+            socket.emit('error', L('srv.server.ivesk_zaidimo_id_ir_varda'));
             return;
         }
         
@@ -904,7 +928,7 @@ io.on('connection', (socket) => {
         try {
             const st = await joinFailLimiter.get(joinKey);
             if (st && st.consumedPoints >= 20) {
-                socket.emit('error', '⏳ Per daug neteisingų kodų. Pabandyk po kelių minučių.');
+                socket.emit('error', L('srv.server.per_daug_neteisingu_kodu_pabandyk'));
                 return;
             }
         } catch (e) { /* nieko */ }
@@ -912,12 +936,12 @@ io.on('connection', (socket) => {
         const game = games.get(gameId);
         if (!game) {
             joinFailLimiter.consume(joinKey).catch(() => {});
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
         
         if (game.gameStarted) {
-            socket.emit('error', 'Žaidimas jau prasidėjo!');
+            socket.emit('error', L('srv.server.zaidimas_jau_prasidejo'));
             return;
         }
 
@@ -959,7 +983,7 @@ io.on('connection', (socket) => {
 
         io.to(gameId.toUpperCase()).emit('gameState', game.getGameState());
         io.to(gameId.toUpperCase()).emit('waitingRoomUpdate', game.getWaitingRoomState());
-        io.to(gameId.toUpperCase()).emit('message', `👋 ${playerName} prisijungė prie žaidimo!`);
+        io.to(gameId.toUpperCase()).emit('message', L('srv.server.prisijunge_prie_zaidimo', { playerName }));
 
         // 🆕 Siųsti vidurio langelius
         try {
@@ -1008,36 +1032,36 @@ io.on('connection', (socket) => {
         console.log('🔄 GAUTA reconnectPlayer:', { gameId, playerToken });
         
         if (!gameId || !playerToken) {
-            socket.emit('reconnectFailed', 'Trūksta duomenų');
+            socket.emit('reconnectFailed', L('srv.server.truksta_duomenu'));
             return;
         }
         
         const game = games.get(gameId.toUpperCase());
         if (!game) {
             console.log('❌ Žaidimas nerastas:', gameId);
-            socket.emit('reconnectFailed', 'Žaidimas nerastas');
+            socket.emit('reconnectFailed', L('srv.server.zaidimas_nerastas_2'));
             return;
         }
         
         const player = game.players.find(p => p.token === playerToken);
         if (!player) {
             console.log('❌ Žaidėjas nerastas pagal token');
-            socket.emit('reconnectFailed', 'Žaidėjas nerastas');
+            socket.emit('reconnectFailed', L('srv.game.zaidejas_nerastas'));
             return;
         }
         
         if (player.bankrupt) {
-            socket.emit('reconnectFailed', 'Žaidėjas bankrutavęs');
+            socket.emit('reconnectFailed', L('srv.game.zaidejas_jau_bankrutaves'));
             return;
         }
         
         if (player.left) {
-            socket.emit('reconnectFailed', 'Žaidėjas pasitraukęs');
+            socket.emit('reconnectFailed', L('srv.trade.zaidejas_pasitraukes'));
             return;
         }
         
         if (player.kicked) {
-            socket.emit('reconnectFailed', 'Žaidėjas pašalintas');
+            socket.emit('reconnectFailed', L('srv.trade.zaidejas_pasalintas'));
             return;
         }
         
@@ -1066,7 +1090,7 @@ io.on('connection', (socket) => {
 
         io.to(gameId.toUpperCase()).emit('gameState', game.getGameState());
         io.to(gameId.toUpperCase()).emit('waitingRoomUpdate', game.getWaitingRoomState());
-        io.to(gameId.toUpperCase()).emit('message', `🔄 ${player.name} grįžo į žaidimą!`);
+        io.to(gameId.toUpperCase()).emit('message', L('srv.server.grizo_zaidima', { player: player.name }));
 
         // 🆕 Siųsti vidurio langelius
         try {
@@ -1109,13 +1133,13 @@ io.on('connection', (socket) => {
         
         try {
             if (!socket.gameId || socket.playerId === undefined) {
-                socket.emit('error', 'Neprisijungei prie žaidimo!');
+                socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
                 return;
             }
             
             const game = games.get(socket.gameId);
             if (!game) {
-                socket.emit('error', 'Žaidimas nerastas!');
+                socket.emit('error', L('srv.server.zaidimas_nerastas'));
                 return;
             }
             
@@ -1156,7 +1180,7 @@ io.on('connection', (socket) => {
             
             // 🆕 SIŲSTI METIMO PRANEŠIMĄ VISIEMS   ← NAUJA!
             if (result.dice && result.player) {
-                const rollMsg = `${result.player.name} metė ${result.dice[0]}+${result.dice[1]}=${result.total}`;
+                const rollMsg = L('srv.game.rolled', { player: result.player.name, d1: result.dice[0], d2: result.dice[1], total: result.total });
                 io.to(socket.gameId).emit('message', rollMsg);
             }
             
@@ -1181,7 +1205,7 @@ io.on('connection', (socket) => {
             
         } catch (err) {
             console.error('❌ rollDice klaida:', err);
-            socket.emit('error', 'Serverio klaida: ' + err.message);
+            socket.emit('error', L('srv.server.server_error', { err: err.message }));
         }
     });
 
@@ -1233,13 +1257,13 @@ socket.on('movementFinished', () => {
 
    socket.on('buyProperty', () => {
     if (!socket.gameId || socket.playerId === undefined) {
-        socket.emit('error', 'Neprisijungei prie žaidimo!');
+        socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
         return;
     }
     
     const game = games.get(socket.gameId);
     if (!game) {
-        socket.emit('error', 'Žaidimas nerastas!');
+        socket.emit('error', L('srv.server.zaidimas_nerastas'));
         return;
     }
 
@@ -1270,13 +1294,13 @@ socket.on('movementFinished', () => {
 
     socket.on('cancelBuy', () => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1305,13 +1329,13 @@ socket.on('movementFinished', () => {
         });
         
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1328,25 +1352,25 @@ socket.on('movementFinished', () => {
         });
         
         io.to(socket.gameId).emit('gameState', game.getGameState());
-        io.to(socket.gameId).emit('message', `💀 ${result.playerName} bankrotavo!`);
+        io.to(socket.gameId).emit('message', L('srv.game.bankrotavo', { playerName: result.playerName }));
     });
 
     socket.on('endTurn', () => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
         // 🛡️ Baigti ėjimą gali tik tas, kurio eilė, ir tik kai nieko nelaukiama
         if (game.currentTurn !== socket.playerId || game.isRolling || game.waitingForBuy ||
             game.pendingFieldPlayerId !== null && game.pendingFieldPlayerId !== undefined) {
-            socket.emit('error', 'Dabar negali baigti ėjimo');
+            socket.emit('error', L('srv.server.dabar_negali_baigti_ejimo'));
             return;
         }
 
@@ -1396,13 +1420,13 @@ socket.on('movementFinished', () => {
     // ============================================
     socket.on('canBuildHouse', ({ fieldId }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1421,13 +1445,13 @@ socket.on('movementFinished', () => {
 
     socket.on('buildHouse', ({ fieldId }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1445,13 +1469,13 @@ socket.on('movementFinished', () => {
 
     socket.on('payJailFine', () => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1472,13 +1496,13 @@ socket.on('movementFinished', () => {
     // ============================================
     socket.on('sellToBank', ({ fieldIds }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1494,13 +1518,13 @@ socket.on('movementFinished', () => {
 
     socket.on('startAuction', ({ fieldId }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1514,23 +1538,23 @@ socket.on('movementFinished', () => {
         if (game.emitFunction) {
             game.emitFunction('auctionStarted', result);
             game.emitFunction('gameState', game.getGameState());
-            game.emitFunction('message', `🔨 ${game.players.find(p => p.id === socket.playerId).name} paskelbė aukcioną!`);
+            game.emitFunction('message', L('srv.server.paskelbe_aukciona', { v: game.players.find(p => p.id === socket.playerId).name }));
         } else {
             io.to(socket.gameId).emit('auctionStarted', result);
             io.to(socket.gameId).emit('gameState', game.getGameState());
-            io.to(socket.gameId).emit('message', `🔨 ${game.players.find(p => p.id === socket.playerId).name} paskelbė aukcioną!`);
+            io.to(socket.gameId).emit('message', L('srv.server.paskelbe_aukciona', { v: game.players.find(p => p.id === socket.playerId).name }));
         }
     });
 
     socket.on('bidAuction', ({ auctionId, bidAmount }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1552,13 +1576,13 @@ socket.on('movementFinished', () => {
 
     socket.on('endAuction', ({ auctionId }) => {
         if (!socket.gameId) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1572,20 +1596,20 @@ socket.on('movementFinished', () => {
 
         io.to(socket.gameId).emit('auctionEnded', result);
         io.to(socket.gameId).emit('gameState', game.getGameState());
-        io.to(socket.gameId).emit('message', `🔨 Aukcionas baigėsi! ${result.winnerName || 'Niekas nelaimėjo'}`);
+        io.to(socket.gameId).emit('message', L('srv.server.aukcionas_baigesi', { v: result.winnerName || L('srv.word.nobodyWon') }));
     });
 
     socket.on('proposeTrade', (data) => {
         const { targetPlayerId, offerFieldIds, requestFieldIds, offerMoney, requestMoney } = data;
         
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1610,8 +1634,8 @@ socket.on('movementFinished', () => {
                         io.to(socket.gameId).emit('tradeResponded', botResult.result);
                         io.to(socket.gameId).emit('gameState', game.getGameState());
                         
-                        const action = botResult.accept ? 'priėmė' : 'atmetė';
-                        io.to(socket.gameId).emit('message', `🤖 ${botResult.botName} ${action} prekybą`);
+                        const action = botResult.accept ? L('srv.word.accepted') : L('srv.word.rejected');
+                        io.to(socket.gameId).emit('message', L('srv.server.prekyba', { botName: botResult.botName, action }));
                         
                         const chatEvent = botResult.accept ? 'trade_accept' : 'trade_reject';
                         const chatMsg = game.sendBotChat(targetPlayerId, chatEvent);
@@ -1628,13 +1652,13 @@ socket.on('movementFinished', () => {
 
     socket.on('respondToTrade', ({ tradeId, accept }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1650,13 +1674,13 @@ socket.on('movementFinished', () => {
 
     socket.on('counterTrade', ({ tradeId, offerFieldIds, requestFieldIds, offerMoney, requestMoney }) => {
     if (!socket.gameId || socket.playerId === undefined) {
-        socket.emit('error', 'Neprisijungei prie žaidimo!');
+        socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
         return;
     }
     
     const game = games.get(socket.gameId);
     if (!game) {
-        socket.emit('error', 'Žaidimas nerastas!');
+        socket.emit('error', L('srv.server.zaidimas_nerastas'));
         return;
     }
 
@@ -1681,7 +1705,7 @@ socket.on('movementFinished', () => {
 
     socket.on('getPendingTrades', () => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
@@ -1694,13 +1718,13 @@ socket.on('movementFinished', () => {
 
     socket.on('getDemolishableProperties', () => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1710,13 +1734,13 @@ socket.on('movementFinished', () => {
 
     socket.on('demolishHouse', ({ fieldId }) => {
     if (!socket.gameId || socket.playerId === undefined) {
-        socket.emit('error', 'Neprisijungei prie žaidimo!');
+        socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
         return;
     }
     
     const game = games.get(socket.gameId);
     if (!game) {
-        socket.emit('error', 'Žaidimas nerastas!');
+        socket.emit('error', L('srv.server.zaidimas_nerastas'));
         return;
     }
 
@@ -1736,19 +1760,19 @@ socket.on('movementFinished', () => {
     // ============================================
     socket.on('startVoteKick', ({ targetPlayerId }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
         const targetId = parseInt(targetPlayerId);
         if (isNaN(targetId)) {
-            socket.emit('error', 'Neteisingas žaidėjo ID');
+            socket.emit('error', L('srv.server.neteisingas_zaidejo_id'));
             return;
         }
 
@@ -1763,9 +1787,9 @@ socket.on('movementFinished', () => {
 
         io.to(socket.gameId).emit('voteKickStarted', {
             initiatorId: socket.playerId,
-            initiatorName: initiator ? initiator.name : 'Nežinomas',
+            initiatorName: initiator ? initiator.name : L('srv.word.unknown'),
             targetId: targetId,
-            targetName: target ? target.name : 'Nežinomas',
+            targetName: target ? target.name : L('srv.word.unknown'),
             requiredVotes: result.voteKick.requiredVotes,
             timeLeft: result.voteKick.timeLeft,
             votes: result.voteKick.votes,
@@ -1778,18 +1802,18 @@ socket.on('movementFinished', () => {
 
     socket.on('voteKick', ({ vote }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
         if (!game.activeVoteKick) {
-            socket.emit('error', 'Balsavimas nevyksta');
+            socket.emit('error', L('srv.game.balsavimas_nevyksta'));
             return;
         }
 
@@ -1821,13 +1845,13 @@ socket.on('movementFinished', () => {
     // ============================================
     socket.on('playerReady', ({ ready }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1856,13 +1880,13 @@ socket.on('movementFinished', () => {
         });
         
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
         
@@ -1870,12 +1894,12 @@ socket.on('movementFinished', () => {
         const hostId = hostPlayer ? hostPlayer.id : 0;
         
         if (socket.playerId !== hostId) {
-            socket.emit('error', 'Tik žaidimo kūrėjas gali pridėti botus!');
+            socket.emit('error', L('srv.server.tik_zaidimo_kurejas_gali_prideti'));
             return;
         }
         
         if (game.gameStarted) {
-            socket.emit('error', 'Žaidimas jau prasidėjo!');
+            socket.emit('error', L('srv.server.zaidimas_jau_prasidejo'));
             return;
         }
         
@@ -1888,20 +1912,20 @@ socket.on('movementFinished', () => {
         
         console.log(`🤖 Botas pridėtas: ${bot.name} (ID: ${bot.id})`);
         
-        io.to(socket.gameId).emit('message', `🤖 ${bot.name} prisijungė prie žaidimo!`);
+        io.to(socket.gameId).emit('message', L('srv.server.prisijunge_prie_zaidimo_2', { bot: bot.name }));
         io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
         io.to(socket.gameId).emit('gameState', game.getGameState());
     });
 
     socket.on('startGame', () => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1934,13 +1958,13 @@ socket.on('movementFinished', () => {
 
     socket.on('kickPlayer', ({ targetId }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -1957,7 +1981,7 @@ socket.on('movementFinished', () => {
 
         io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
         io.to(socket.gameId).emit('gameState', game.getGameState());
-        io.to(socket.gameId).emit('message', `❌ ${result.targetName} buvo išmestas`);
+        io.to(socket.gameId).emit('message', L('srv.server.buvo_ismestas', { targetName: result.targetName }));
     });
 
     socket.on('getWaitingRoom', () => {
@@ -1972,14 +1996,14 @@ socket.on('movementFinished', () => {
     // ============================================
     socket.on('reserveColor', ({ gameId, color }) => {
         if (!gameId || !color) {
-            socket.emit('reserveColorResult', { error: 'Trūksta duomenų' });
+            socket.emit('reserveColorResult', { error: L('srv.server.truksta_duomenu') });
             return;
         }
         
         const game = games.get(gameId.toUpperCase());
         if (!game) {
             joinFailLimiter.consume('join:' + (socket.clientIp || socket.handshake.address)).catch(() => {});
-            socket.emit('reserveColorResult', { error: 'Žaidimas nerastas' });
+            socket.emit('reserveColorResult', { error: L('srv.server.zaidimas_nerastas_2') });
             return;
         }
         socket.join('colors:' + gameId.toUpperCase());
@@ -2026,7 +2050,7 @@ socket.on('movementFinished', () => {
         console.log('🎨 Gauta getGameColors užklausa:', gameId);
         
         if (!gameId) {
-            socket.emit('gameColors', { error: 'Nėra stalo kodo', available: [], used: [] });
+            socket.emit('gameColors', { error: L('srv.server.nera_stalo_kodo'), available: [], used: [] });
             return;
         }
         
@@ -2035,7 +2059,7 @@ socket.on('movementFinished', () => {
         try {
             const st = await joinFailLimiter.get(colorsKey);
             if (st && st.consumedPoints >= 20) {
-                socket.emit('gameColors', { error: '⏳ Per daug neteisingų kodų. Pabandyk po kelių minučių.', available: [], used: [] });
+                socket.emit('gameColors', { error: L('srv.server.per_daug_neteisingu_kodu_pabandyk'), available: [], used: [] });
                 return;
             }
         } catch (e) { /* nieko */ }
@@ -2045,7 +2069,7 @@ socket.on('movementFinished', () => {
         if (!game) {
             joinFailLimiter.consume(colorsKey).catch(() => {});
             socket.emit('gameColors', { 
-                error: 'Žaidimas nerastas', 
+                error: L('srv.server.zaidimas_nerastas_2'), 
                 available: [], 
                 used: [] 
             });
@@ -2085,7 +2109,7 @@ socket.on('movementFinished', () => {
                 if (activePlayers.length < game.maxPlayers) {
                     publicGames.push({
                         gameId: gameId,
-                        hostName: activePlayers[0] ? activePlayers[0].name : 'Nežinomas',
+                        hostName: activePlayers[0] ? activePlayers[0].name : L('srv.word.unknown'),
                         playerCount: activePlayers.length,
                         maxPlayers: game.maxPlayers,
                         isPublic: true
@@ -2104,13 +2128,13 @@ socket.on('movementFinished', () => {
 
     socket.on('setGamePublic', ({ isPublic }) => {
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
         
@@ -2118,12 +2142,12 @@ socket.on('movementFinished', () => {
         const hostId = hostPlayer ? hostPlayer.id : 0;
         
         if (socket.playerId !== hostId) {
-            socket.emit('error', 'Tik žaidimo kūrėjas gali keisti viešumą');
+            socket.emit('error', L('srv.server.tik_zaidimo_kurejas_gali_keisti'));
             return;
         }
         
         if (game.gameStarted) {
-            socket.emit('error', 'Žaidimas jau prasidėjo');
+            socket.emit('error', L('srv.game.zaidimas_jau_prasidejo'));
             return;
         }
         
@@ -2134,7 +2158,7 @@ socket.on('movementFinished', () => {
             }
             
             if (publicCount >= LIMITS.MAX_PUBLIC_GAMES) {
-                socket.emit('error', `Jau yra ${LIMITS.MAX_PUBLIC_GAMES} vieši stalai!`);
+                socket.emit('error', L('srv.server.jau_yra_viesi_stalai', { MAX_PUBLIC_GAMES: LIMITS.MAX_PUBLIC_GAMES }));
                 return;
             }
         }
@@ -2164,6 +2188,18 @@ socket.on('movementFinished', () => {
         const game = games.get(socket.gameId);
         if (!game) return;
         const result = game.debugToTaxi(socket.playerId);
+        if (result.error) socket.emit('error', result.error);
+        else io.to(socket.gameId).emit('gameState', game.getGameState());
+    });
+
+    // 🧪 Efektų testai (tik su BANCRUPT_TEST=1) – perkelia ant langelio su efektu
+    socket.on('debugField', (data) => {
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        const fieldId = data && parseInt(data.fieldId, 10);
+        if (![2, 5, 8, 11, 13, 14, 19, 24, 28, 32, 37, 42, 44, 46, 48, 50].includes(fieldId)) return socket.emit('error', L('srv.game.neteisingas_langelis'));
+        const result = game.debugToField(socket.playerId, fieldId);
         if (result.error) socket.emit('error', result.error);
         else io.to(socket.gameId).emit('gameState', game.getGameState());
     });
@@ -2205,7 +2241,7 @@ socket.on('movementFinished', () => {
         const hostPlayer = game.players.find(p => p.isHost === true);
         const hostId = hostPlayer ? hostPlayer.id : 0;
         if (socket.playerId !== hostId) {
-            socket.emit('error', 'Statybų taisyklę gali keisti tik stalo kūrėjas');
+            socket.emit('error', L('srv.server.statybu_taisykle_gali_keisti_tik'));
             return;
         }
         const result = game.setBuildRule(rule);
@@ -2220,13 +2256,13 @@ socket.on('movementFinished', () => {
         console.log('🏃 GAUTA leaveGame UŽKLAUSA:', { socketId: socket.id, playerId: socket.playerId });
         
         if (!socket.gameId || socket.playerId === undefined) {
-            socket.emit('error', 'Neprisijungei prie žaidimo!');
+            socket.emit('error', L('srv.server.neprisijungei_prie_zaidimo'));
             return;
         }
         
         const game = games.get(socket.gameId);
         if (!game) {
-            socket.emit('error', 'Žaidimas nerastas!');
+            socket.emit('error', L('srv.server.zaidimas_nerastas'));
             return;
         }
 
@@ -2258,10 +2294,10 @@ socket.on('movementFinished', () => {
             return;
         }
 
-        io.to(gameIdCopy).emit('message', `😭 ${result.playerName} susinervino ir pabėgo į kampą!`);
+        io.to(gameIdCopy).emit('message', L('srv.server.susinervino_ir_pabego_kampa', { playerName: result.playerName }));
         
         if (result.winner) {
-            io.to(gameIdCopy).emit('message', `🏆 ${result.winner} LAIMĖJO! Visi kiti pabėgo!`);
+            io.to(gameIdCopy).emit('message', L('srv.server.laimejo_visi_kiti_pabego', { winner: result.winner }));
             io.to(gameIdCopy).emit('gameFinished', {
                 winner: result.winner,
                 winnerId: result.winnerId
@@ -2319,12 +2355,12 @@ socket.on('movementFinished', () => {
                     // o jei per 5 min. negrįžta – bankrotuoja
                     game.playerDisconnected(player.id);
                     io.to(socket.gameId).emit('gameState', game.getGameState());
-                    io.to(socket.gameId).emit('message', `📴 ${player.name} atsijungė – turi 5 min. grįžti, kitaip bankrotuos`);
+                    io.to(socket.gameId).emit('message', L('srv.server.atsijunge_turi_min_grizti_kitaip', { player: player.name }));
                 } else if (!game.gameStarted) {
                     player.isActive = false;
                     io.to(socket.gameId).emit('gameState', game.getGameState());
                     io.to(socket.gameId).emit('waitingRoomUpdate', game.getWaitingRoomState());
-                    io.to(socket.gameId).emit('message', `👋 ${player.name} paliko žaidimą`);
+                    io.to(socket.gameId).emit('message', L('srv.server.paliko_zaidima', { player: player.name }));
                 }
             }
             

@@ -88,6 +88,9 @@ module.exports = {
 
     // 🏗️ Statybų langas po sustojimo (kiekvienas pastatytas namas laiką atnaujina)
     BUILD_WINDOW_MS: 15000,
+    TURN_MAX_MS: 180000,          // ⏱️ ėjimo laikmatis po veiksmų atsinaujina, bet ne ilgiau nei 3 min
+    TURN_RESUME_MIN_MS: 20000,    // po aukciono / mainų – bent 20 s
+    TRADE_PAUSE_MAX_MS: 60000,    // laukiant atsakymo į mainus laikmatis stovi ne ilgiau nei 60 s
 
     // 🎲 Figūrėlių formos (žaidėjas renkasi laukimo kambaryje)
     PIECES: ['pawn', 'cup', 'lamp', 'cat', 'knight', 'piggy', 'basketball', 'tractor'],

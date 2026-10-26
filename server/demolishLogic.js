@@ -1,15 +1,11 @@
 // ============================================
-// server/buildingLogic.js
+// server/demolishLogic.js
 // ============================================
 
 const C = require('./gameConstants');
-const db = require('./db');
 
-// ============================================
-// NAMŲ IR VIEZBUČIŲ STATYMO LOGIKA
-// ============================================
-
-class BuildingLogic {
+const { L } = require('./i18nSrv');   // 🌐 tekstai iš lang/lt.json
+class DemolishLogic {
     constructor(game) {
         this.game = game;
     }
@@ -32,161 +28,184 @@ class BuildingLogic {
     }
 
     // ============================================
-    // AR TAI SERVICE3 (speciali grupė be statybų)
-    // ============================================
-    isService3(fieldId) {
-        return C.SERVICE3_IDS.includes(fieldId);
-    }
-
-    // ============================================
-    // AR ŽAIDĖJAS TURI VISĄ GRUPĘ
-    // ============================================
-    hasFullGroup(playerId, fieldId) {
-        const player = this.getPlayer(playerId);
-        if (!player || player.bankrupt) return false;
-
-        const field = this.getField(fieldId);
-        if (!field || !field.color) return false;
-
-        const groupFields = this.getGroupByColor(field.color);
-        if (groupFields.length === 0) return false;
-
-        const hasAll = groupFields.every(id => player.properties.includes(id));
-        return hasAll;
-    }
-
-    // ============================================
-    // GAUTI ŽAIDĖJO SKLYPUS SU NAMAIS
+    // GAUTI SKLYPUS SU NAMAIS – TIK TUOS, KURIUOS GALIMA GRIAUTI
     // ============================================
     getPlayerPropertiesWithHouses(playerId) {
         const player = this.getPlayer(playerId);
         if (!player) return [];
 
-        return player.properties.map(fieldId => {
-            const field = this.getField(fieldId);
-            if (!field) return null;
-            return {
-                id: fieldId,
-                name: field.name,
-                color: field.color,
-                houses: player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0
-            };
-        }).filter(p => p !== null);
+        const result = [];
+
+        // Surinkti visus sklypus su namais pagal spalvas
+        const propertiesByColor = {};
+        player.properties.forEach(fieldId => {
+            const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
+            if (houses > 0) {
+                const field = this.getField(fieldId);
+                if (field && field.color) {
+                    // 🆕 SERVICE3 neturi namų – bet jei kas nors įrašė, praleisti
+                    if (C.SERVICE3_IDS.includes(fieldId)) return;
+                    
+                    if (!propertiesByColor[field.color]) {
+                        propertiesByColor[field.color] = [];
+                    }
+                    propertiesByColor[field.color].push({
+                        id: fieldId,
+                        name: field.name,
+                        color: field.color,
+                        cost: field.cost,
+                        houses: houses,
+                        isHotel: houses >= 5,
+                        refund: this.getRefundAmount(fieldId, playerId),
+                        type: field.type,
+                        icon: field.icon
+                    });
+                }
+            }
+        });
+
+        // Kiekvienai spalvai patikrinti ar galima griauti
+        for (const color in propertiesByColor) {
+            const props = propertiesByColor[color];
+            
+            if (props.length === 0) continue;
+
+            // Rasti max ir min namų skaičių grupėje
+            const maxHouses = Math.max(...props.map(p => p.houses));
+            const minHouses = Math.min(...props.map(p => p.houses));
+            
+            // Galima griauti TIK iš tų, kurie turi DAUGIAUSIAI namų
+            if (maxHouses - minHouses <= 1) {
+                // Jei visi vienodi - galima griauti iš VISŲ
+                props.forEach(p => {
+                    result.push({
+                        id: p.id,
+                        name: p.name,
+                        color: p.color,
+                        cost: p.cost,
+                        houses: p.houses,
+                        isHotel: p.isHotel,
+                        refund: p.refund,
+                        type: p.type,
+                        icon: p.icon
+                    });
+                });
+            } else {
+                // Jei skirtumas > 1 - galima griauti TIK iš tų, kurie turi MAX
+                props.forEach(p => {
+                    if (p.houses === maxHouses) {
+                        result.push({
+                            id: p.id,
+                            name: p.name,
+                            color: p.color,
+                            cost: p.cost,
+                            houses: p.houses,
+                            isHotel: p.isHotel,
+                            refund: p.refund
+                        });
+                    }
+                });
+            }
+        }
+
+        // Rikiuoti pagal kainą
+        result.sort((a, b) => a.cost - b.cost);
+
+        return result;
     }
 
     // ============================================
-    // AR GALIMA STATYTI
+    // GAUTI GRĄŽOS SUMĄ
     // ============================================
-    canBuildHouse(playerId, fieldId) {
+    getRefundAmount(fieldId, playerId) {
+        // 🆕 Naudoti perduotą playerId, arba currentTurn
+        const playerIdToUse = (playerId !== undefined && playerId !== null) 
+            ? playerId 
+            : this.game.currentTurn;
+        
+        const player = this.getPlayer(playerIdToUse);
+        if (!player) return 0;
+        
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
+        const field = this.getField(fieldId);
+        if (!field) return 0;
+
+        if (houses >= 5) {
+            // Viešbutis - 75% sklypo vertės
+            return Math.floor(field.cost * C.HOTEL_DEMOLISH_REFUND);
+        } else {
+            // Namas - 37.5% sklypo vertės
+            return Math.floor(field.cost * C.DEMOLISH_REFUND_RATIO);
+        }
+    }
+
+    // ============================================
+    // AR GALIMA GRIAUTI
+    // ============================================
+    canDemolish(playerId, fieldId) {
         const player = this.getPlayer(playerId);
         if (!player || player.bankrupt) {
-            return { can: false, reason: 'Žaidėjas neaktyvus' };
+            return { can: false, reason: L('srv.game.zaidejas_neaktyvus') };
         }
         if (this.game.currentTurn !== playerId) {
-            return { can: false, reason: 'Ne tavo eilė' };
+            return { can: false, reason: L('srv.game.ne_tavo_eile') };
         }
-        if (!player.isBot && (this.game.isRolling || this.game.pendingFieldPlayerId === playerId)) {
-            return { can: false, reason: 'Palauk, kol figūrėlė sustos' };
+        if (!player.properties.includes(fieldId)) {
+            return { can: false, reason: L('srv.demolish.neturi_sio_sklypo') };
+        }
+
+        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
+        if (houses === 0) {
+            return { can: false, reason: L('srv.demolish.nera_namu_ant_sio_sklypo') };
         }
 
         const field = this.getField(fieldId);
-        if (!field) {
-            return { can: false, reason: 'Sklypas nerastas' };
+        if (!field || !field.color) {
+            return { can: false, reason: L('srv.demolish.cia_negalima_griauti') };
         }
 
-        // 🏗️ STATYBŲ TAISYKLĖ (pasirenka stalo kūrėjas)
-        const rule = this.game.buildRule || 2;
-        const built = this.game.builtThisTurn || {};
-        const standField = this.getField(player.position);
-        if (rule === 3) {
-            // 3 – tik sklype, ant kurio stovi, po vieną namą kartą
-            if (player.position !== fieldId) {
-                return { can: false, reason: 'Pagal taisyklę statyti galima tik sklype, ant kurio stovi' };
-            }
-            if ((built[fieldId] || 0) >= 1) {
-                return { can: false, reason: 'Šiame sklype šį kartą jau statei' };
-            }
-        } else if (rule === 2) {
-            // 2 – atsistojus ant savo gatvės sklypo: po vieną namą ant kiekvieno tos gatvės sklypo
-            if (!standField || standField.type !== 'property' || !standField.color ||
-                standField.color !== field.color || !player.properties.includes(standField.id)) {
-                return { can: false, reason: 'Pagal taisyklę statyti galima tik atsistojus ant savo šios gatvės sklypo' };
-            }
-            if ((built[fieldId] || 0) >= 1) {
-                return { can: false, reason: 'Šiame sklype šį kartą jau statei (po vieną namą kiekviename)' };
-            }
-        }
-        // 1 – bet kada ir bet kur (savo ėjimo metu, turint pilną gatvę)
-        if (!field.color) {
-            return { can: false, reason: 'Čia negalima statyti' };
+        // 🆕 SERVICE3 neturi namų
+        if (C.SERVICE3_IDS.includes(fieldId)) {
+            return { can: false, reason: L('srv.demolish.siame_sklype_negalima_griauti') };
         }
 
-        // 🆕 SERVICE3 negali statyti
-        if (this.isService3(fieldId)) {
-            return { can: false, reason: 'Šiame sklype negalima statyti namų' };
-        }
-
-        // 🆕 Tik property tipo sklypai
-        if (field.type !== 'property') {
-            return { can: false, reason: 'Čia negalima statyti' };
-        }
-
-        // Ar turi visą grupę?
-        if (!this.hasFullGroup(playerId, fieldId)) {
-            return { can: false, reason: 'Neturi visos grupės sklypų' };
-        }
-
+        // Patikrinti ar galima griauti pagal grupės taisykles
         const groupFields = this.getGroupByColor(field.color);
-        if (!player.houses) player.houses = {};
-
-        const currentHouses = player.houses[fieldId] || 0;
-        
-        // Ar jau yra viešbutis?
-        if (currentHouses >= 5) {
-            return { can: false, reason: 'Jau yra viešbutis ant šio sklypo' };
+        if (groupFields.length === 0) {
+            return { can: false, reason: L('srv.demolish.nerasta_grupe') };
         }
 
-        // Ar visur po 4 namus (galima statyti viešbutį)?
-        const allHave4 = groupFields.every(id => (player.houses[id] || 0) >= 4);
-        if (allHave4) {
-            const buildCost = this.getHotelCost(fieldId);
-            if (player.money < buildCost) {
-                return { can: false, reason: `Nepakanka pinigų viešbučiui (reikia €${buildCost})` };
-            }
-            return { can: true, cost: buildCost, isHotel: true };
+        // Ar žaidėjas turi visus grupės sklypus?
+        const hasAll = groupFields.every(id => player.properties.includes(id));
+        if (!hasAll) {
+            return { can: false, reason: L('srv.build.neturi_visos_grupes_sklypu') };
         }
 
-        // Ar visur vienodas namų skaičius?
-        const housesInGroup = groupFields.map(id => player.houses[id] || 0);
+        // Patikrinti tolygumą
+        const housesInGroup = groupFields.map(id => 
+            player.houses && player.houses[id] ? player.houses[id] : 0
+        );
         const minHouses = Math.min(...housesInGroup);
         const maxHouses = Math.max(...housesInGroup);
 
-        // Jei jau yra 4 namai ant šio sklypo, bet ne visur po 4
-        if (currentHouses >= 4) {
-            return { can: false, reason: 'Pirmiausia pastatyk po 4 namus visuose grupės sklypuose' };
+        // Galima griauti tik iš tų sklypų, kurie turi DAUGIAUSIAI namų
+        if (houses < maxHouses) {
+            return { can: false, reason: L('srv.demolish.pirmiausia_griauk_is_sklypu_kurie') };
         }
 
         if (maxHouses - minHouses > 1) {
-            return { can: false, reason: 'Pirmiausia išlygink namų skaičių visuose grupės sklypuose' };
+            return { can: false, reason: L('srv.build.pirmiausia_islygink_namu_skaiciu_visuose') };
         }
 
-        if (currentHouses > minHouses) {
-            return { can: false, reason: 'Kiti grupės sklypai turi mažiau namų' };
-        }
-
-        const buildCost = this.getBuildCost(fieldId);
-        if (player.money < buildCost) {
-            return { can: false, reason: `Nepakanka pinigų (reikia €${buildCost})` };
-        }
-
-        return { can: true, cost: buildCost, isHotel: false };
+        const refund = this.getRefundAmount(fieldId, playerId);
+        return { can: true, refund: refund };
     }
 
     // ============================================
-    // STATYTI NAMĄ ARBA VIEZBUTĮ
+    // GRIAUTI NAMĄ
     // ============================================
-    buildHouse(playerId, fieldId) {
-        const result = this.canBuildHouse(playerId, fieldId);
+    demolishHouse(playerId, fieldId, isBailiff = false) {
+        const result = this.canDemolish(playerId, fieldId);
         if (!result.can) {
             return { error: result.reason };
         }
@@ -195,222 +214,54 @@ class BuildingLogic {
         const field = this.getField(fieldId);
         
         if (!player || !field) {
-            return { error: 'Žaidėjas arba sklypas nerastas' };
+            return { error: L('srv.build.zaidejas_arba_sklypas_nerastas') };
         }
 
-        const cost = result.cost;
-        const isHotel = result.isHotel || false;
+        const refund = result.refund;
 
-        player.money -= cost;
+        // Nuimti vieną namą
+        player.houses[fieldId] = player.houses[fieldId] - 1;
+        
+        // Jei namų skaičius tapo 0 - ištrinti
+        if (player.houses[fieldId] === 0) {
+            delete player.houses[fieldId];
+        }
 
-        if (!player.houses) player.houses = {};
-        if (!this.game.builtThisTurn) this.game.builtThisTurn = {};
-        this.game.builtThisTurn[fieldId] = (this.game.builtThisTurn[fieldId] || 0) + 1;
+        // Pridėti pinigus
+        player.money += refund;
 
-        if (isHotel) {
-            player.houses[fieldId] = 5;
-            const message = `🏨 ${player.name} pastatė VIEZBUTĮ ant ${field.name} už €${cost}! 🎉`;
-            this.game.addMessage(message);
+        // 🆕 Patikrinti, ar žaidėjas jau nebe minusе
+        if (player.money >= 0 && player.isDebtor) {
+            player.isDebtor = false;
+            console.log(`✅ ${player.name}: isDebtor → false po nugriovimo (money: €${player.money})`);
+        }
 
-            // 🆕 ĮRAŠYTI STATISTIKĄ
-            if (player.userId && !player.isBot) {
-                db.updateStats(player.userId, { houses_built: 1 }).catch(err => {
-                    console.error('❌ houses_built klaida:', err);
-                });
-            }
-
-            this.game.turnHistory.push({
-                player: player.name,
-                action: 'build_hotel',
-                field: field.name,
-                timestamp: new Date().toISOString()
-            });
-            
-            if (this.game.emitFunction) {
-                this.game.emitFunction('buildingBuilt', {
-                    playerId: player.id,
-                    playerName: player.name,
-                    fieldId: fieldId,
-                    fieldName: field.name,
-                    houseCount: 5,
-                    isHotel: true,
-                    cost: cost
-                });
-            }
-            
-            return { 
-                success: true, 
-                fieldId: fieldId,
-                fieldName: field.name,
-                houses: 5,
-                isHotel: true,
-                cost: cost,
-                message: message
-            };
+        const remainingHouses = player.houses[fieldId] || 0;
+        const isHotel = remainingHouses >= 5;
+        const typeText = isHotel ? L('srv.word.hotelAcc') : L('srv.word.houseAcc');
+        
+        // 🆕 SKIRTINGI PRANEŠIMAI
+        let message;
+        if (isBailiff) {
+            // 🏛️ AFK – antstoliai
+            message = L('srv.demolish.anstoliai_konfiskavo_ant_uz_skolas', { player: player.name, typeText, field: field.name, refund });
         } else {
-            player.houses[fieldId] = (player.houses[fieldId] || 0) + 1;
-            const houseCount = player.houses[fieldId];
-            const message = `🏠 ${player.name} pastatė namą ant ${field.name} (dabar ${houseCount} namai) už €${cost}!`;
-            this.game.addMessage(message);
-
-            // 🆕 ĮRAŠYTI STATISTIKĄ
-            if (player.userId && !player.isBot) {
-                db.updateStats(player.userId, { houses_built: 1 }).catch(err => {
-                    console.error('❌ houses_built klaida:', err);
-                });
-            }
-
-            this.game.turnHistory.push({
-                player: player.name,
-                action: 'build_house',
-                field: field.name,
-                houses: houseCount,
-                timestamp: new Date().toISOString()
-            });
-
-            if (this.game.emitFunction) {
-                this.game.emitFunction('buildingBuilt', {
-                    playerId: player.id,
-                    playerName: player.name,
-                    fieldId: fieldId,
-                    fieldName: field.name,
-                    houseCount: houseCount,
-                    isHotel: false,
-                    cost: cost
-                });
-            }
-
-            const groupFields = this.getGroupByColor(field.color);
-            const allHave4 = groupFields.every(id => (player.houses[id] || 0) >= 4);
-            if (allHave4) {
-                this.game.addMessage(`🏆 ${player.name} gali statyti VIEZBUTĮ ant ${field.color} grupės!`);
-            }
-
-            return { 
-                success: true, 
-                fieldId: fieldId,
-                fieldName: field.name,
-                houses: houseCount,
-                isHotel: false,
-                cost: cost,
-                message: message
-            };
-        }
-    }
-
-    // ============================================
-    // STATYBOS KAINOS
-    // ============================================
-    getBuildCost(fieldId) {
-        const field = this.getField(fieldId);
-        if (!field) return 0;
-        return Math.floor(field.cost * C.BUILD_COST_RATIO);
-    }
-
-    getHotelCost(fieldId) {
-        const field = this.getField(fieldId);
-        if (!field) return 0;
-        return Math.floor(field.cost * C.HOTEL_COST_RATIO);
-    }
-
-    // ============================================
-    // GAUTI GRUPĖS STATUSĄ
-    // ============================================
-    getGroupStatus(playerId) {
-        const player = this.getPlayer(playerId);
-        if (!player) return [];
-
-        const result = [];
-        const processedColors = new Set();
-
-        player.properties.forEach(fieldId => {
-            const field = this.getField(fieldId);
-            if (!field || !field.color) return;
-            if (processedColors.has(field.color)) return;
-            processedColors.add(field.color);
-
-            const groupFields = this.getGroupByColor(field.color);
-            const groupStatus = groupFields.map(id => {
-                const f = this.getField(id);
-                if (!f) return null;
-                return {
-                    id: id,
-                    name: f.name,
-                    owned: player.properties.includes(id),
-                    houses: player.houses && player.houses[id] ? player.houses[id] : 0
-                };
-            }).filter(f => f !== null);
-
-            const hasFull = this.hasFullGroup(playerId, fieldId);
-            result.push({
-                color: field.color,
-                fields: groupStatus,
-                hasFull: hasFull,
-                totalHouses: groupStatus.reduce((sum, f) => sum + f.houses, 0)
-            });
-        });
-
-        return result;
-    }
-
-    // ============================================
-    // NUOMOS SKAIČIAVIMAS
-    // ============================================
-    // Bazinė nuoma = 10% sklypo vertės
-    // Daugiklis pagal namų skaičių:
-    //   0 namų → × 1
-    //   1 namas → × 10
-    //   2 namai → × 20
-    //   3 namai → × 30
-    //   4 namai → × 40
-    //   Viešbutis → × 50
-    // ============================================
-    getRentWithHouses(playerId, fieldId) {
-        const player = this.getPlayer(playerId);
-        const field = this.getField(fieldId);
-        if (!player || !field) return 0;
-
-        // 🆕 SERVICE3 – fiksuota nuoma pagal turimų sklypų skaičių
-        if (C.SERVICE3_IDS.includes(fieldId)) {
-            const ownedInGroup = player.properties.filter(id => C.SERVICE3_IDS.includes(id)).length;
-            const rent = C.SERVICE_RENT[ownedInGroup] || C.SERVICE_RENT[1] || 50;
-            return rent;
+            // 🏚️ Žaidėjas pats
+            message = L('srv.demolish.nugriove_ant_ir_gavo', { player: player.name, typeText, field: field.name, refund });
         }
 
-        // 🆕 NAUJA FORMULĖ
-        const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
-        
-        // Patikrinti, ar žaidėjas turi pilną grupę
-        const fieldColor = field.color;
-        const groupFields = C.COLOR_GROUPS[fieldColor] || [];
-        const hasFullGroup = groupFields.every(id => player.properties.includes(id));
-        
-        let rent = 0;
-        
-        if (houses === 0) {
-            // Be namų
-            if (hasFullGroup) {
-                // Pilna gatvė be namų
-                rent = Math.round(field.cost * 0.20);
-            } else {
-                // Vienas sklypas be namų
-                rent = Math.round(field.cost * 0.10);
-            }
-        } else if (houses === 1) {
-            rent = Math.round(field.cost * 1.00);
-        } else if (houses === 2) {
-            rent = Math.round(field.cost * 2.00);
-        } else if (houses === 3) {
-            rent = Math.round(field.cost * 3.00);
-        } else if (houses === 4) {
-            rent = Math.round(field.cost * 4.00);
-        } else if (houses >= 5) {
-            // Viešbutis
-            rent = Math.round(field.cost * 5.00);
-        }
-        
-        return rent;
+        this.game.addMessage(message);
+
+        return {
+            success: true,
+            fieldId: fieldId,
+            fieldName: field.name,
+            houses: remainingHouses,
+            refund: refund,
+            message: message,
+            isBailiff: isBailiff
+        };
     }
 }
 
-module.exports = BuildingLogic;
+module.exports = DemolishLogic;

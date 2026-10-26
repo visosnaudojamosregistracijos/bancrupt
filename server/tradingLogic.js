@@ -4,6 +4,7 @@
 
 const C = require('./gameConstants');
 
+const { L } = require('./i18nSrv');   // 🌐 tekstai iš lang/lt.json
 class TradingLogic {
     constructor(game) {
         this.game = game;
@@ -108,23 +109,23 @@ class TradingLogic {
     // ============================================
     sellToBank(playerId, fieldIds, isBailiff = false) {
     fieldIds = this.normFieldIds(fieldIds);
-    if (!fieldIds || fieldIds.length === 0) return { error: 'Pasirink bent vieną kortelę' };
+    if (!fieldIds || fieldIds.length === 0) return { error: L('srv.trade.pasirink_bent_viena_kortele') };
     const player = this.getPlayer(playerId);
-    if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-    if (player.left) return { error: 'Žaidėjas pasitraukęs' };
-    if (player.kicked) return { error: 'Žaidėjas pašalintas' };
+    if (!player || player.bankrupt) return { error: L('srv.game.zaidejas_neaktyvus') };
+    if (player.left) return { error: L('srv.trade.zaidejas_pasitraukes') };
+    if (player.kicked) return { error: L('srv.trade.zaidejas_pasalintas') };
 
     let totalPrice = 0;
     const soldFields = [];
 
     for (const fieldId of fieldIds) {
         if (!player.properties.includes(fieldId)) {
-            return { error: `Neturi kortelės ${fieldId}` };
+            return { error: L('srv.trade.neturi_korteles', { fieldId }) };
         }
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) {
             const field = this.game.board.find(f => f.id === fieldId);
-            return { error: `Negali parduoti ${field ? field.name : 'kortelės'} - turi namų!` };
+            return { error: L('srv.trade.negali_parduoti_turi_namu', { v: field ? field.name : L('srv.word.cardGen') }) };
         }
         
         const price = this.getBankBuybackPrice(fieldId);
@@ -145,10 +146,10 @@ class TradingLogic {
     let message;
     if (isBailiff) {
         // 🏛️ AFK – antstoliai
-        message = `🏛️ ANSTOLIAI: ${player.name} konfiskavo ${soldFields.length} sklypą(-us) už skolas! Gavo €${totalPrice}`;
+        message = L('srv.trade.anstoliai_konfiskavo_sklypa_us_uz', { player: player.name, v: soldFields.length, totalPrice });
     } else {
         // 🏦 Žaidėjas pats
-        message = `🏦 ${player.name} pardavė ${soldFields.length} kortelę(-es) bankui už €${totalPrice}!`;
+        message = L('srv.trade.pardave_kortele_es_bankui_uz', { player: player.name, v: soldFields.length, totalPrice });
     }
     
     this.game.addMessage(message);
@@ -172,36 +173,36 @@ class TradingLogic {
     startAuction(playerId, fieldId) {
         const player = this.getPlayer(playerId);
         if (!player || player.bankrupt) {
-            return { error: 'Žaidėjas neaktyvus' };
+            return { error: L('srv.game.zaidejas_neaktyvus') };
         }
         if (player.left) {
-            return { error: 'Žaidėjas pasitraukęs' };
+            return { error: L('srv.trade.zaidejas_pasitraukes') };
         }
         if (player.kicked) {
-            return { error: 'Žaidėjas pašalintas' };
+            return { error: L('srv.trade.zaidejas_pasalintas') };
         }
 
         if (!player.properties.includes(fieldId)) {
-            return { error: 'Neturi šios kortelės' };
+            return { error: L('srv.trade.neturi_sios_korteles') };
         }
 
         // 🛡️ Vienu metu – tik vienas aukcionas (langas rodo vieną)
         if ([...this.auctions.values()].some(x => x.isActive)) {
-            return { error: 'Jau vyksta kitas aukcionas – palauk, kol baigsis' };
+            return { error: L('srv.trade.jau_vyksta_kitas_aukcionas_palauk') };
         }
 
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
         if (houses > 0) {
-            return { error: 'Negali aukcionuoti kortelės su namais!' };
+            return { error: L('srv.trade.negali_aukcionuoti_korteles_su_namais') };
         }
         
         if (this.hasHousesInGroup(playerId, fieldId)) {
-            return { error: 'Negali aukcionuoti – grupėje yra pastatytų namų!' };
+            return { error: L('srv.trade.negali_aukcionuoti_grupeje_yra_pastatytu') };
         }
 
         const field = this.game.board.find(f => f.id === fieldId);
         if (!field) {
-            return { error: 'Kortelė nerasta' };
+            return { error: L('srv.trade.kortele_nerasta') };
         }
 
         const auctionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
@@ -239,7 +240,7 @@ class TradingLogic {
             delete player.houses[fieldId];
         }
 
-        this.game.addMessage(`🔨 ${player.name} paskelbė aukcioną: ${field.name}! Bankas siūlo €${startPrice}`);
+        this.game.addMessage(L('srv.trade.paskelbe_aukciona_bankas_siulo', { player: player.name, field: field.name, startPrice }));
 
         const auction = this.auctions.get(auctionId);
         const timeLeft = endTime - Date.now();
@@ -317,19 +318,19 @@ class TradingLogic {
         if (this.game.emitFunction) {
             this.game.emitFunction('auctionUpdated', result);
             this.game.emitFunction('gameState', this.game.getGameState());
-            this.game.emitFunction('message', `🤖 ${bot.name} pasiūlė €${bidAmount} už ${auction.fieldName}!`);
+            this.game.emitFunction('message', L('srv.trade.pasiule_uz', { bot: bot.name, bidAmount, fieldName: auction.fieldName }));
         }
     }
 
     botShouldBidAuction(bot, auction) {
-        if (!bot || !auction) return { can: false, reason: 'Nėra duomenų' };
+        if (!bot || !auction) return { can: false, reason: L('srv.trade.nera_duomenu') };
         
         const field = this.game.board.find(f => f.id === auction.fieldId);
-        if (!field) return { can: false, reason: 'Kortelė nerasta' };
+        if (!field) return { can: false, reason: L('srv.trade.kortele_nerasta') };
         
         const minMoney = auction.currentBid * 1.5;
         if (bot.money < minMoney) {
-            return { can: false, reason: 'nepakanka pinigų' };
+            return { can: false, reason: L('srv.trade.nepakanka_pinigu') };
         }
         
         const baseRent = field.cost * C.RENT_BASE_RATIO;
@@ -361,7 +362,7 @@ class TradingLogic {
         }
         
         if (auction.currentBid >= maxBid) {
-            return { can: false, reason: 'per brangu' };
+            return { can: false, reason: L('srv.trade.per_brangu') };
         }
         
         const increment = 1.05 + Math.random() * 0.10;
@@ -376,11 +377,11 @@ class TradingLogic {
         }
         
         if (bidAmount > bot.money) {
-            return { can: false, reason: 'nepakanka pinigų bid\'ui' };
+            return { can: false, reason: L('srv.trade.nepakanka_pinigu_bid_ui') };
         }
         
         if (Math.random() > 0.7) {
-            return { can: false, reason: 'atsitiktinai praleidžia' };
+            return { can: false, reason: L('srv.trade.atsitiktinai_praleidzia') };
         }
         
         return { can: true, amount: bidAmount };
@@ -391,31 +392,31 @@ class TradingLogic {
     // ============================================
     bidAuction(playerId, auctionId, bidAmount) {
         bidAmount = this.normMoney(bidAmount);
-        if (bidAmount === null) return { error: 'Neteisinga suma' };
+        if (bidAmount === null) return { error: L('srv.trade.neteisinga_suma') };
         const auction = this.auctions.get(auctionId);
-        if (!auction || !auction.isActive) return { error: 'Aukcionas neaktyvus' };
+        if (!auction || !auction.isActive) return { error: L('srv.trade.aukcionas_neaktyvus') };
         
         if (auction.sellerId === playerId) {
-            return { error: 'Tu esi pardavėjas - negali siūlyti savo aukcione!' };
+            return { error: L('srv.trade.tu_esi_pardavejas_negali_siulyti') };
         }
         
         if (Date.now() > auction.endTime) {
-            return { error: 'Aukcionas jau baigėsi' };
+            return { error: L('srv.trade.aukcionas_jau_baigesi') };
         }
 
         const player = this.getPlayer(playerId);
-        if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-        if (player.left) return { error: 'Žaidėjas pasitraukęs' };
-        if (player.kicked) return { error: 'Žaidėjas pašalintas' };
-        if (player.money < bidAmount) return { error: 'Neturi tiek pinigų' };
+        if (!player || player.bankrupt) return { error: L('srv.game.zaidejas_neaktyvus') };
+        if (player.left) return { error: L('srv.trade.zaidejas_pasitraukes') };
+        if (player.kicked) return { error: L('srv.trade.zaidejas_pasalintas') };
+        if (player.money < bidAmount) return { error: L('srv.trade.neturi_tiek_pinigu') };
         
         // 🛡️ Didžiausią sumą jau pasiūlęs žaidėjas negali persiūlyti pats savęs (ir taip pratęsti aukciono)
         if (auction.currentBidder === playerId) {
-            return { error: 'Tavo pasiūlymas jau didžiausias!' };
+            return { error: L('srv.trade.tavo_pasiulymas_jau_didziausias') };
         }
 
         if (bidAmount <= auction.currentBid) {
-            return { error: `Siūlyk daugiau nei €${auction.currentBid}!` };
+            return { error: L('srv.trade.siulyk_daugiau_nei', { currentBid: auction.currentBid }) };
         }
 
         auction.currentBid = bidAmount;
@@ -442,7 +443,7 @@ class TradingLogic {
             this.endAuctionServerSide(auctionId);
         }, C.AUCTION_EXTENSION);
 
-        this.game.addMessage(`💰 ${player.name} pasiūlė €${bidAmount} už ${auction.fieldName}!`);
+        this.game.addMessage(L('srv.trade.pasiule_uz_2', { player: player.name, bidAmount, fieldName: auction.fieldName }));
 
         return { 
             success: true, 
@@ -469,9 +470,9 @@ class TradingLogic {
             this.game.emitFunction('gameState', this.game.getGameState());
             
             if (result.winnerId === 'bank') {
-                this.game.emitFunction('message', `🏦 Bankas laimėjo aukcioną: ${result.fieldName} už €${result.finalBid}`);
+                this.game.emitFunction('message', L('srv.trade.bankas_laimejo_aukciona_uz', { fieldName: result.fieldName, finalBid: result.finalBid }));
             } else if (result.winnerName) {
-                this.game.emitFunction('message', `🔨 ${result.winnerName} laimėjo aukcioną: ${result.fieldName} už €${result.finalBid}!`);
+                this.game.emitFunction('message', L('srv.trade.laimejo_aukciona_uz', { winnerName: result.winnerName, fieldName: result.fieldName, finalBid: result.finalBid }));
             }
         }
     }
@@ -501,7 +502,7 @@ class TradingLogic {
             }
         }
         
-        this.game.addMessage(`🏦 Bankas laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}. Kortelė grąžinta į rinką.`);
+        this.game.addMessage(L('srv.trade.bankas_laimejo_aukciona_uz_kortele', { fieldName: auction.fieldName, currentBid: auction.currentBid }));
         
         this.auctions.delete(auctionId);
         
@@ -540,7 +541,7 @@ class TradingLogic {
             }
         }
         
-        this.game.addMessage(`🔨 ${winner.name} laimėjo aukcioną: ${auction.fieldName} už €${auction.currentBid}!`);
+        this.game.addMessage(L('srv.trade.laimejo_aukciona_uz_2', { winner: winner.name, fieldName: auction.fieldName, currentBid: auction.currentBid }));
     }
 
     this.auctions.delete(auctionId);
@@ -567,40 +568,40 @@ class TradingLogic {
         offerMoney = this.normMoney(offerMoney || 0);
         requestMoney = this.normMoney(requestMoney || 0);
         if (!offerFieldIds || !requestFieldIds || offerMoney === null || requestMoney === null) {
-            return { error: 'Neteisingi pasiūlymo duomenys' };
+            return { error: L('srv.trade.neteisingi_pasiulymo_duomenys') };
         }
         if (offerFieldIds.length > 3 || requestFieldIds.length > 3) {
-            return { error: 'Galima siūlyti ir prašyti daugiausiai po 3 korteles' };
+            return { error: L('srv.trade.galima_siulyti_ir_prasyti_daugiausiai') };
         }
         const player = this.getPlayer(playerId);
-        if (!player || player.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-        if (player.left) return { error: 'Žaidėjas pasitraukęs' };
-        if (player.kicked) return { error: 'Žaidėjas pašalintas' };
+        if (!player || player.bankrupt) return { error: L('srv.game.zaidejas_neaktyvus') };
+        if (player.left) return { error: L('srv.trade.zaidejas_pasitraukes') };
+        if (player.kicked) return { error: L('srv.trade.zaidejas_pasalintas') };
         
-        if (playerId === targetPlayerId) return { error: 'Negali siūlyti sau' };
+        if (playerId === targetPlayerId) return { error: L('srv.trade.negali_siulyti_sau') };
 
         const target = this.getPlayer(targetPlayerId);
-        if (!target || target.bankrupt) return { error: 'Žaidėjas neaktyvus' };
-        if (target.left) return { error: 'Žaidėjas pasitraukęs' };
-        if (target.kicked) return { error: 'Žaidėjas pašalintas' };
+        if (!target || target.bankrupt) return { error: L('srv.game.zaidejas_neaktyvus') };
+        if (target.left) return { error: L('srv.trade.zaidejas_pasitraukes') };
+        if (target.kicked) return { error: L('srv.trade.zaidejas_pasalintas') };
 
         // 🛡️ Negalima siūlyti daugiau pinigų nei turi, nei prašyti daugiau nei turi kitas
-        if (offerMoney > Math.max(0, player.money)) return { error: `Neturi tiek pinigų (turi €${player.money})` };
-        if (requestMoney > Math.max(0, target.money)) return { error: `${target.name} neturi tiek pinigų (turi €${target.money})` };
+        if (offerMoney > Math.max(0, player.money)) return { error: L('srv.trade.neturi_tiek_pinigu_turi', { money: player.money }) };
+        if (requestMoney > Math.max(0, target.money)) return { error: L('srv.trade.neturi_tiek_pinigu_turi_2', { target: target.name, money: target.money }) };
 
         if (offerFieldIds && offerFieldIds.length > 0) {
             for (const fieldId of offerFieldIds) {
                 if (!player.properties.includes(fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Neturi siūlomos kortelės: ${field ? field.name : fieldId}` };
+                    return { error: L('srv.trade.neturi_siulomos_korteles', { v: field ? field.name : fieldId }) };
                 }
                 if (this.hasHouses(playerId, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Negali siūlyti kortelės su namais: ${field ? field.name : fieldId}` };
+                    return { error: L('srv.trade.negali_siulyti_korteles_su_namais', { v: field ? field.name : fieldId }) };
                 }
                 if (this.hasHousesInGroup(playerId, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Negali siūlyti ${field ? field.name : fieldId} – grupėje yra pastatytų namų!` };
+                    return { error: L('srv.trade.negali_siulyti_grupeje_yra_pastatytu', { v: field ? field.name : fieldId }) };
                 }
             }
         }
@@ -609,15 +610,15 @@ class TradingLogic {
             for (const fieldId of requestFieldIds) {
                 if (!target.properties.includes(fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Gavėjas neturi prašomos kortelės: ${field ? field.name : fieldId}` };
+                    return { error: L('srv.trade.gavejas_neturi_prasomos_korteles', { v: field ? field.name : fieldId }) };
                 }
                 if (this.hasHouses(targetPlayerId, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Negali prašyti kortelės su namais: ${field ? field.name : fieldId}` };
+                    return { error: L('srv.trade.negali_prasyti_korteles_su_namais', { v: field ? field.name : fieldId }) };
                 }
                 if (this.hasHousesInGroup(targetPlayerId, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Negali prašyti ${field ? field.name : fieldId} – grupėje yra pastatytų namų!` };
+                    return { error: L('srv.trade.negali_prasyti_grupeje_yra_pastatytu', { v: field ? field.name : fieldId }) };
                 }
             }
         }
@@ -661,7 +662,7 @@ class TradingLogic {
         let offerMoneyMsg = offerMoney > 0 ? ` + €${offerMoney}` : '';
         let requestMoneyMsg = requestMoney > 0 ? ` + €${requestMoney}` : '';
         
-        this.game.addMessage(`📩 ${player.name} pasiūlė ${target.name}: ${offerNames}${offerMoneyMsg} ⇄ ${requestNames}${requestMoneyMsg}`);
+        this.game.addMessage(L('srv.trade.pasiule', { player: player.name, target: target.name, offerNames, offerMoneyMsg, requestNames, requestMoneyMsg }));
 
         if (target.isBot === true) {
             console.log(`🤖 ${target.name} yra botas – apdorojamas prekybos pasiūlymas`);
@@ -690,9 +691,9 @@ class TradingLogic {
     respondToTrade(tradeId, playerId, accept) {
         const trade = this.trades.get(tradeId);
         
-        if (!trade) return { error: 'Pasiūlymas nerastas' };
-        if (trade.toPlayer !== playerId) return { error: 'Ne tau skirtas šis pasiūlymas' };
-        if (trade.status !== 'pending') return { error: 'Pasiūlymas jau atsakytas' };
+        if (!trade) return { error: L('srv.trade.pasiulymas_nerastas') };
+        if (trade.toPlayer !== playerId) return { error: L('srv.trade.ne_tau_skirtas_sis_pasiulymas') };
+        if (trade.status !== 'pending') return { error: L('srv.trade.pasiulymas_jau_atsakytas') };
 
         if (accept) {
             const fromPlayer = this.getPlayer(trade.fromPlayer);
@@ -700,11 +701,11 @@ class TradingLogic {
             
             if (!fromPlayer || fromPlayer.bankrupt) {
                 trade.status = 'rejected';
-                return { error: 'Siūlytojas neaktyvus' };
+                return { error: L('srv.trade.siulytojas_neaktyvus') };
             }
             if (!toPlayer || toPlayer.bankrupt) {
                 trade.status = 'rejected';
-                return { error: 'Gavėjas neaktyvus' };
+                return { error: L('srv.trade.gavejas_neaktyvus') };
             }
 
             if (trade.offerFieldIds && trade.offerFieldIds.length > 0) {
@@ -712,7 +713,7 @@ class TradingLogic {
                     if (!fromPlayer.properties.includes(fieldId)) {
                         trade.status = 'rejected';
                         const field = this.game.board.find(f => f.id === fieldId);
-                        return { error: `Siūlytojas nebeturi kortelės: ${field ? field.name : fieldId}` };
+                        return { error: L('srv.trade.siulytojas_nebeturi_korteles', { v: field ? field.name : fieldId }) };
                     }
                 }
             }
@@ -722,7 +723,7 @@ class TradingLogic {
                     if (!toPlayer.properties.includes(fieldId)) {
                         trade.status = 'rejected';
                         const field = this.game.board.find(f => f.id === fieldId);
-                        return { error: `Gavėjas nebeturi kortelės: ${field ? field.name : fieldId}` };
+                        return { error: L('srv.trade.gavejas_nebeturi_korteles', { v: field ? field.name : fieldId }) };
                     }
                 }
             }
@@ -730,18 +731,18 @@ class TradingLogic {
             // 🛡️ Kol pasiūlymas laukė, galėjo pasikeisti pinigai ar atsirasti namų
             if ((trade.offerMoney || 0) > Math.max(0, fromPlayer.money)) {
                 trade.status = 'rejected';
-                return { error: `${fromPlayer.name} nebeturi tiek pinigų` };
+                return { error: L('srv.trade.nebeturi_tiek_pinigu', { fromPlayer: fromPlayer.name }) };
             }
             if ((trade.requestMoney || 0) > Math.max(0, toPlayer.money)) {
                 trade.status = 'rejected';
-                return { error: 'Neturi tiek pinigų' };
+                return { error: L('srv.trade.neturi_tiek_pinigu') };
             }
             const withHouses = [...(trade.offerFieldIds || []).map(id => [trade.fromPlayer, id]), ...(trade.requestFieldIds || []).map(id => [trade.toPlayer, id])]
                 .find(([pid, id]) => this.hasHouses(pid, id) || this.hasHousesInGroup(pid, id));
             if (withHouses) {
                 trade.status = 'rejected';
                 const field = this.game.board.find(f => f.id === withHouses[1]);
-                return { error: `Negalima – ${field ? field.name : 'kortelės'} grupėje jau pastatyta namų` };
+                return { error: L('srv.trade.negalima_grupeje_jau_pastatyta_namu', { v: field ? field.name : L('srv.word.cardGen') }) };
             }
 
             if (trade.offerFieldIds && trade.offerFieldIds.length > 0) {
@@ -775,7 +776,7 @@ class TradingLogic {
 
             trade.status = 'accepted';
             
-            const message = `✅ Prekyba įvykdyta tarp ${fromPlayer.name} ir ${toPlayer.name}!`;
+            const message = L('srv.trade.prekyba_ivykdyta_tarp_ir', { fromPlayer: fromPlayer.name, toPlayer: toPlayer.name });
             this.game.addMessage(message);
             this.game.turnHistory.push({
                 player: fromPlayer.name,
@@ -793,9 +794,9 @@ class TradingLogic {
         } else {
             trade.status = 'rejected';
             const player = this.getPlayer(playerId);
-            this.game.addMessage(`❌ ${player?.name || 'Žaidėjas'} atmetė pasiūlymą`);
+            this.game.addMessage(L('srv.trade.atmete_pasiulyma', { v: player?.name || L('srv.word.player') }));
             this.trades.delete(tradeId);
-            return { success: false, message: 'Pasiūlymas atmestas' };
+            return { success: false, message: L('srv.trade.pasiulymas_atmestas') };
         }
     }
 
@@ -806,40 +807,40 @@ class TradingLogic {
         newOfferMoney = this.normMoney(newOfferMoney || 0);
         newRequestMoney = this.normMoney(newRequestMoney || 0);
         if (!newOfferFieldIds || !newRequestFieldIds || newOfferMoney === null || newRequestMoney === null) {
-            return { error: 'Neteisingi pasiūlymo duomenys' };
+            return { error: L('srv.trade.neteisingi_pasiulymo_duomenys') };
         }
         if (newOfferFieldIds.length > 3 || newRequestFieldIds.length > 3) {
-            return { error: 'Galima siūlyti ir prašyti daugiausiai po 3 korteles' };
+            return { error: L('srv.trade.galima_siulyti_ir_prasyti_daugiausiai') };
         }
         const trade = this.trades.get(tradeId);
-        if (!trade) return { error: 'Pasiūlymas nerastas' };
-        if (trade.toPlayer !== playerId) return { error: 'Ne tau skirtas šis pasiūlymas' };
-        if (trade.status !== 'pending') return { error: 'Pasiūlymas jau atsakytas' };
+        if (!trade) return { error: L('srv.trade.pasiulymas_nerastas') };
+        if (trade.toPlayer !== playerId) return { error: L('srv.trade.ne_tau_skirtas_sis_pasiulymas') };
+        if (trade.status !== 'pending') return { error: L('srv.trade.pasiulymas_jau_atsakytas') };
 
         const fromPlayer = this.getPlayer(trade.fromPlayer);
         const toPlayer = this.getPlayer(trade.toPlayer);
         
-        if (!fromPlayer || fromPlayer.bankrupt) return { error: 'Siūlytojas neaktyvus' };
-        if (!toPlayer || toPlayer.bankrupt) return { error: 'Gavėjas neaktyvus' };
+        if (!fromPlayer || fromPlayer.bankrupt) return { error: L('srv.trade.siulytojas_neaktyvus') };
+        if (!toPlayer || toPlayer.bankrupt) return { error: L('srv.trade.gavejas_neaktyvus') };
 
         // 🛡️ Pinigų užtenka?
-        if (newOfferMoney > Math.max(0, toPlayer.money)) return { error: `Neturi tiek pinigų (turi €${toPlayer.money})` };
-        if (newRequestMoney > Math.max(0, fromPlayer.money)) return { error: `${fromPlayer.name} neturi tiek pinigų (turi €${fromPlayer.money})` };
+        if (newOfferMoney > Math.max(0, toPlayer.money)) return { error: L('srv.trade.neturi_tiek_pinigu_turi', { money: toPlayer.money }) };
+        if (newRequestMoney > Math.max(0, fromPlayer.money)) return { error: L('srv.trade.neturi_tiek_pinigu_turi_3', { fromPlayer: fromPlayer.name, money: fromPlayer.money }) };
 
         // 🆕 VALIDACIJA: ar aš (toPlayer) turiu siūlomas korteles?
         if (newOfferFieldIds && newOfferFieldIds.length > 0) {
             for (const fieldId of newOfferFieldIds) {
                 if (!toPlayer.properties.includes(fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Tu neturi kortelės: ${field ? field.name : fieldId}` };
+                    return { error: L('srv.trade.tu_neturi_korteles', { v: field ? field.name : fieldId }) };
                 }
                 if (this.hasHouses(playerId, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Negali siūlyti kortelės su namais: ${field ? field.name : fieldId}` };
+                    return { error: L('srv.trade.negali_siulyti_korteles_su_namais', { v: field ? field.name : fieldId }) };
                 }
                 if (this.hasHousesInGroup(playerId, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Negali siūlyti ${field ? field.name : fieldId} – grupėje yra pastatytų namų!` };
+                    return { error: L('srv.trade.negali_siulyti_grupeje_yra_pastatytu', { v: field ? field.name : fieldId }) };
                 }
             }
         }
@@ -849,15 +850,15 @@ class TradingLogic {
             for (const fieldId of newRequestFieldIds) {
                 if (!fromPlayer.properties.includes(fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `${fromPlayer.name} nebeturi kortelės: ${field ? field.name : fieldId}` };
+                    return { error: L('srv.trade.nebeturi_korteles', { fromPlayer: fromPlayer.name, v: field ? field.name : fieldId }) };
                 }
                 if (this.hasHouses(trade.fromPlayer, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Negali prašyti kortelės su namais: ${field ? field.name : fieldId}` };
+                    return { error: L('srv.trade.negali_prasyti_korteles_su_namais', { v: field ? field.name : fieldId }) };
                 }
                 if (this.hasHousesInGroup(trade.fromPlayer, fieldId)) {
                     const field = this.game.board.find(f => f.id === fieldId);
-                    return { error: `Negali prašyti ${field ? field.name : fieldId} – grupėje yra pastatytų namų!` };
+                    return { error: L('srv.trade.negali_prasyti_grupeje_yra_pastatytu', { v: field ? field.name : fieldId }) };
                 }
             }
         }
@@ -880,7 +881,7 @@ class TradingLogic {
         // 🆕 Seną pažymim kaip 'countered'
         trade.status = 'countered';
 
-        this.game.addMessage(`🔄 ${toPlayer.name} pakoregavo pasiūlymą ${fromPlayer.name}`);
+        this.game.addMessage(L('srv.trade.pakoregavo_pasiulyma', { toPlayer: toPlayer.name, fromPlayer: fromPlayer.name }));
 
         // 🆕 Paruošti vardus
         let offerNames = 'pinigai';
@@ -915,7 +916,7 @@ class TradingLogic {
             requestFieldIds: newRequestFieldIds || [],
             offerMoney: newOfferMoney || 0,
             requestMoney: newRequestMoney || 0,
-            message: 'Pakoreguotas pasiūlymas išsiųstas'
+            message: L('srv.trade.pakoreguotas_pasiulymas_issiustas')
         };
     }
 
@@ -1005,9 +1006,9 @@ class TradingLogic {
                     
                 result.push({
                     tradeId: id,
-                    fromPlayer: fromPlayer ? fromPlayer.name : 'nežinomas',
+                    fromPlayer: fromPlayer ? fromPlayer.name : L('srv.word.unknown'),
                     fromPlayerId: trade.fromPlayer,        // 🆕 PRIDĖTA
-                    toPlayer: fromPlayer ? fromPlayer.name : 'nežinomas',
+                    toPlayer: fromPlayer ? fromPlayer.name : L('srv.word.unknown'),
                     toPlayerId: trade.toPlayer,            // 🆕 PRIDĖTA
                     offerField: offerNames,
                     requestField: requestNames,

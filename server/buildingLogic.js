@@ -3,6 +3,7 @@
 // ============================================
 
 const C = require('./gameConstants');
+const { L } = require('./i18nSrv');   // 🌐 tekstai iš lang/lt.json
 const db = require('./db');
 
 // ============================================
@@ -80,60 +81,65 @@ class BuildingLogic {
     canBuildHouse(playerId, fieldId) {
         const player = this.getPlayer(playerId);
         if (!player || player.bankrupt) {
-            return { can: false, reason: 'Žaidėjas neaktyvus' };
+            return { can: false, reason: L('srv.game.zaidejas_neaktyvus') };
         }
         if (this.game.currentTurn !== playerId) {
-            return { can: false, reason: 'Ne tavo eilė' };
+            return { can: false, reason: L('srv.game.ne_tavo_eile') };
         }
         if (!player.isBot && (this.game.isRolling || this.game.pendingFieldPlayerId === playerId)) {
-            return { can: false, reason: 'Palauk, kol figūrėlė sustos' };
+            return { can: false, reason: L('srv.build.palauk_kol_figurele_sustos') };
         }
 
         const field = this.getField(fieldId);
         if (!field) {
-            return { can: false, reason: 'Sklypas nerastas' };
+            return { can: false, reason: L('srv.build.sklypas_nerastas') };
         }
 
         // 🏗️ STATYBŲ TAISYKLĖ (pasirenka stalo kūrėjas)
         const rule = this.game.buildRule || 2;
         const built = this.game.builtThisTurn || {};
         const standField = this.getField(player.position);
-        if (rule === 3) {
-            // 3 – tik sklype, ant kurio stovi, po vieną namą kartą
-            if (player.position !== fieldId) {
-                return { can: false, reason: 'Pagal taisyklę statyti galima tik sklype, ant kurio stovi' };
+        // 2 ir 3 taisyklės: statyti galima tik tą ėjimą, kai ką tik atsistojai (ne stovint nuo praėjusio ėjimo)
+        if (rule !== 1) {
+            const lp = this.game.landingPos;
+            if (!lp || lp.playerId !== playerId || lp.pos !== player.position) {
+                return { can: false, reason: L('srv.build.statyti_galima_tik_ta_ejima') };
             }
-            if ((built[fieldId] || 0) >= 1) {
-                return { can: false, reason: 'Šiame sklype šį kartą jau statei' };
+        }
+        if (rule === 3) {
+            // 3 – tik sklype, ant kurio stovi; kiek namų – lemia tolygus statymas
+            // (dažniausiai vienas; du – kai atsilikusį sklypą išlygini ir pradedi kitą lygį)
+            if (player.position !== fieldId) {
+                return { can: false, reason: L('srv.build.pagal_taisykle_statyti_galima_tik') };
             }
         } else if (rule === 2) {
             // 2 – atsistojus ant savo gatvės sklypo: po vieną namą ant kiekvieno tos gatvės sklypo
             if (!standField || standField.type !== 'property' || !standField.color ||
                 standField.color !== field.color || !player.properties.includes(standField.id)) {
-                return { can: false, reason: 'Pagal taisyklę statyti galima tik atsistojus ant savo šios gatvės sklypo' };
+                return { can: false, reason: L('srv.build.pagal_taisykle_statyti_galima_tik_2') };
             }
             if ((built[fieldId] || 0) >= 1) {
-                return { can: false, reason: 'Šiame sklype šį kartą jau statei (po vieną namą kiekviename)' };
+                return { can: false, reason: L('srv.build.siame_sklype_si_karta_jau') };
             }
         }
         // 1 – bet kada ir bet kur (savo ėjimo metu, turint pilną gatvę)
         if (!field.color) {
-            return { can: false, reason: 'Čia negalima statyti' };
+            return { can: false, reason: L('srv.build.cia_negalima_statyti') };
         }
 
         // 🆕 SERVICE3 negali statyti
         if (this.isService3(fieldId)) {
-            return { can: false, reason: 'Šiame sklype negalima statyti namų' };
+            return { can: false, reason: L('srv.build.siame_sklype_negalima_statyti_namu') };
         }
 
         // 🆕 Tik property tipo sklypai
         if (field.type !== 'property') {
-            return { can: false, reason: 'Čia negalima statyti' };
+            return { can: false, reason: L('srv.build.cia_negalima_statyti') };
         }
 
         // Ar turi visą grupę?
         if (!this.hasFullGroup(playerId, fieldId)) {
-            return { can: false, reason: 'Neturi visos grupės sklypų' };
+            return { can: false, reason: L('srv.build.neturi_visos_grupes_sklypu') };
         }
 
         const groupFields = this.getGroupByColor(field.color);
@@ -143,7 +149,7 @@ class BuildingLogic {
         
         // Ar jau yra viešbutis?
         if (currentHouses >= 5) {
-            return { can: false, reason: 'Jau yra viešbutis ant šio sklypo' };
+            return { can: false, reason: L('srv.build.jau_yra_viesbutis_ant_sio') };
         }
 
         // Ar visur po 4 namus (galima statyti viešbutį)?
@@ -151,7 +157,7 @@ class BuildingLogic {
         if (allHave4) {
             const buildCost = this.getHotelCost(fieldId);
             if (player.money < buildCost) {
-                return { can: false, reason: `Nepakanka pinigų viešbučiui (reikia €${buildCost})` };
+                return { can: false, reason: L('srv.build.nepakanka_pinigu_viesbuciui_reikia', { buildCost }) };
             }
             return { can: true, cost: buildCost, isHotel: true };
         }
@@ -163,20 +169,20 @@ class BuildingLogic {
 
         // Jei jau yra 4 namai ant šio sklypo, bet ne visur po 4
         if (currentHouses >= 4) {
-            return { can: false, reason: 'Pirmiausia pastatyk po 4 namus visuose grupės sklypuose' };
+            return { can: false, reason: L('srv.build.pirmiausia_pastatyk_po_namus_visuose') };
         }
 
         if (maxHouses - minHouses > 1) {
-            return { can: false, reason: 'Pirmiausia išlygink namų skaičių visuose grupės sklypuose' };
+            return { can: false, reason: L('srv.build.pirmiausia_islygink_namu_skaiciu_visuose') };
         }
 
         if (currentHouses > minHouses) {
-            return { can: false, reason: 'Kiti grupės sklypai turi mažiau namų' };
+            return { can: false, reason: L('srv.build.kiti_grupes_sklypai_turi_maziau') };
         }
 
         const buildCost = this.getBuildCost(fieldId);
         if (player.money < buildCost) {
-            return { can: false, reason: `Nepakanka pinigų (reikia €${buildCost})` };
+            return { can: false, reason: L('srv.build.nepakanka_pinigu_reikia', { buildCost }) };
         }
 
         return { can: true, cost: buildCost, isHotel: false };
@@ -195,7 +201,7 @@ class BuildingLogic {
         const field = this.getField(fieldId);
         
         if (!player || !field) {
-            return { error: 'Žaidėjas arba sklypas nerastas' };
+            return { error: L('srv.build.zaidejas_arba_sklypas_nerastas') };
         }
 
         const cost = result.cost;
@@ -209,7 +215,7 @@ class BuildingLogic {
 
         if (isHotel) {
             player.houses[fieldId] = 5;
-            const message = `🏨 ${player.name} pastatė VIEZBUTĮ ant ${field.name} už €${cost}! 🎉`;
+            const message = L('srv.build.pastate_viezbuti_ant_uz', { player: player.name, field: field.name, cost });
             this.game.addMessage(message);
 
             // 🆕 ĮRAŠYTI STATISTIKĄ
@@ -250,7 +256,7 @@ class BuildingLogic {
         } else {
             player.houses[fieldId] = (player.houses[fieldId] || 0) + 1;
             const houseCount = player.houses[fieldId];
-            const message = `🏠 ${player.name} pastatė namą ant ${field.name} (dabar ${houseCount} namai) už €${cost}!`;
+            const message = L('srv.build.pastate_nama_ant_dabar_namai', { player: player.name, field: field.name, houseCount, cost });
             this.game.addMessage(message);
 
             // 🆕 ĮRAŠYTI STATISTIKĄ
@@ -283,7 +289,7 @@ class BuildingLogic {
             const groupFields = this.getGroupByColor(field.color);
             const allHave4 = groupFields.every(id => (player.houses[id] || 0) >= 4);
             if (allHave4) {
-                this.game.addMessage(`🏆 ${player.name} gali statyti VIEZBUTĮ ant ${field.color} grupės!`);
+                this.game.addMessage(L('srv.build.gali_statyti_viezbuti_ant_grupes', { player: player.name, color: field.color }));
             }
 
             return { 

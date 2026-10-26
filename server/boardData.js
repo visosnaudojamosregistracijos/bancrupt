@@ -46,7 +46,7 @@ const boardData = [
     { id: 29, name: 'Lazdijai', type: 'property', color: '#8B6914', cost: 290, icon: '' },
     { id: 30, name: 'Druskininkai', type: 'property', color: '#8B6914', cost: 300, icon: '' },
     { id: 31, name: 'Panevėžys', type: 'property', color: '#1abc9c', cost: 310, icon: '' },
-    { id: 32, name: 'SAUNA', type: 'service3', color: null, cost: 100, icon: '🧖' },
+    { id: 32, name: 'PIRTIS', type: 'service3', color: null, cost: 100, icon: '🧖' },
     { id: 33, name: 'Pasvalys', type: 'property', color: '#1abc9c', cost: 310, icon: '' },
     { id: 34, name: 'Kupiškis', type: 'property', color: '#1abc9c', cost: 320, icon: '' },
     { id: 35, name: 'Šiauliai', type: 'property', color: '#ff69b4', cost: 330, icon: '' },

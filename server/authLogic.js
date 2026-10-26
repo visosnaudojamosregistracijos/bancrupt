@@ -6,6 +6,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('./db');
+const { L } = require('./i18nSrv');
 
 // ============================================
 // JWT KONFIGŪRACIJA
@@ -87,31 +88,31 @@ function isValidSecurityAnswer(answer) {
 async function register(username, email, password, securityQuestion, securityAnswer) {
     // Validacija
     if (!isValidUsername(username)) {
-        return { error: 'Vardas turi būti 3-20 simbolių, tik raidės, skaičiai, _ ir -' };
+        return { error: L('srv.auth.usernameRule') };
     }
     if (!isValidEmail(email)) {
-        return { error: 'Neteisingas el. pašto formatas' };
+        return { error: L('srv.auth.emailFormat') };
     }
     if (!isValidPassword(password)) {
-        return { error: 'Slaptažodis turi būti bent 6 simbolių' };
+        return { error: L('srv.auth.passwordMin') };
     }
     if (!isValidSecurityQuestion(securityQuestion)) {
-        return { error: 'Pasirink saugumo klausimą iš sąrašo' };
+        return { error: L('srv.auth.pickQuestion') };
     }
     if (!isValidSecurityAnswer(securityAnswer)) {
-        return { error: 'Atsakymas turi būti 2-100 simbolių' };
+        return { error: L('srv.auth.answerLen') };
     }
 
     // Patikrinti ar vardas užimtas
     const existingUsername = await db.findUserByUsername(username);
     if (existingUsername) {
-        return { error: 'Toks vardas jau užimtas' };
+        return { error: L('srv.auth.usernameTaken') };
     }
 
     // Patikrinti ar el. paštas užimtas
     const existingEmail = await db.findUserByEmail(email);
     if (existingEmail) {
-        return { error: 'Toks el. paštas jau registruotas' };
+        return { error: L('srv.auth.emailTaken') };
     }
 
     // Hash'uoti slaptažodį ir atsakymą
@@ -140,7 +141,7 @@ async function register(username, email, password, securityQuestion, securityAns
         };
     } catch (err) {
         console.error('❌ Registracijos klaida:', err);
-        return { error: 'Nepavyko užregistruoti. Bandyk dar kartą.' };
+        return { error: L('srv.auth.registerFailed') };
     }
 }
 
@@ -149,17 +150,17 @@ async function register(username, email, password, securityQuestion, securityAns
 // ============================================
 async function login(username, password) {
     if (!username || !password) {
-        return { error: 'Įvesk vardą ir slaptažodį' };
+        return { error: L('srv.auth.enterNamePass') };
     }
 
     const user = await db.findUserByUsername(username);
     if (!user) {
-        return { error: 'Neteisingas vardas arba slaptažodis' };
+        return { error: L('srv.auth.wrongCredentials') };
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
-        return { error: 'Neteisingas vardas arba slaptažodis' };
+        return { error: L('srv.auth.wrongCredentials') };
     }
 
     await db.updateLastLogin(user.id);
@@ -202,20 +203,20 @@ async function getUserFromToken(token) {
 // ============================================
 async function verifyUserAndGetQuestion(username, email) {
     if (!username || !email) {
-        return { error: 'Įvesk vardą ir el. paštą' };
+        return { error: L('srv.auth.enterNameEmail') };
     }
 
     const user = await db.findUserByUsername(username);
     if (!user) {
-        return { error: 'Vartotojas su tokiu vardu nerastas' };
+        return { error: L('srv.auth.userNotFoundByName') };
     }
 
     if (user.email.toLowerCase() !== email.toLowerCase().trim()) {
-        return { error: 'El. paštas nesutampa su registruotu' };
+        return { error: L('srv.auth.emailMismatchReg') };
     }
 
     if (!user.security_question) {
-        return { error: 'Šis vartotojas neturi saugumo klausimo. Susisiek su administratoriumi.' };
+        return { error: L('srv.auth.noQuestion') };
     }
 
     return {
@@ -231,26 +232,26 @@ async function verifyUserAndGetQuestion(username, email) {
 // ============================================
 async function verifySecurityAnswer(username, email, answer) {
     if (!username || !email || !answer) {
-        return { error: 'Trūksta duomenų' };
+        return { error: L('srv.auth.missingData') };
     }
 
     const user = await db.findUserByUsername(username);
     if (!user) {
-        return { error: 'Vartotojas nerastas' };
+        return { error: L('srv.auth.userNotFound') };
     }
 
     if (user.email.toLowerCase() !== email.toLowerCase().trim()) {
-        return { error: 'El. paštas nesutampa' };
+        return { error: L('srv.auth.emailMismatch') };
     }
 
     if (!user.security_answer_hash) {
-        return { error: 'Šis vartotojas neturi saugumo atsakymo' };
+        return { error: L('srv.auth.noAnswer') };
     }
 
     // Tikslus palyginimas (ne jautrus dydžiui)
     const answerMatch = await bcrypt.compare(answer.trim(), user.security_answer_hash);
     if (!answerMatch) {
-        return { error: 'Neteisingas atsakymas' };
+        return { error: L('srv.auth.wrongAnswer') };
     }
 
     return {
@@ -272,12 +273,12 @@ async function resetPassword(username, email, answer, newPassword) {
 
     // Patikrinti naują slaptažodį
     if (!isValidPassword(newPassword)) {
-        return { error: 'Naujas slaptažodis turi būti bent 6 simbolių' };
+        return { error: L('srv.auth.newPasswordMin') };
     }
 
     const user = await db.findUserByUsername(username);
     if (!user) {
-        return { error: 'Vartotojas nerastas' };
+        return { error: L('srv.auth.userNotFound') };
     }
 
     // Hash'uoti naują slaptažodį
@@ -299,25 +300,25 @@ async function resetPassword(username, email, answer, newPassword) {
 // ============================================
 async function changePassword(userId, currentPassword, newPassword) {
     if (!currentPassword || !newPassword) {
-        return { error: 'Įvesk dabartinį ir naują slaptažodį' };
+        return { error: L('srv.auth.enterCurNew') };
     }
 
     if (!isValidPassword(newPassword)) {
-        return { error: 'Naujas slaptažodis turi būti bent 6 simbolių' };
+        return { error: L('srv.auth.newPasswordMin') };
     }
 
     if (currentPassword === newPassword) {
-        return { error: 'Naujas slaptažodis negali būti toks pat kaip dabartinis' };
+        return { error: L('srv.auth.sameAsCurrent') };
     }
 
     const user = await db.findUserById(userId);
     if (!user) {
-        return { error: 'Vartotojas nerastas' };
+        return { error: L('srv.auth.userNotFound') };
     }
 
     const passwordMatch = await bcrypt.compare(currentPassword, user.password_hash);
     if (!passwordMatch) {
-        return { error: 'Neteisingas dabartinis slaptažodis' };
+        return { error: L('srv.auth.wrongCurrent') };
     }
 
     const newPasswordHash = await bcrypt.hash(newPassword, 10);

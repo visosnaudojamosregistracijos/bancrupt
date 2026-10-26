@@ -11,12 +11,10 @@
 </head>
 <body>
 
-    <!-- 🌐 KALBOS PASIRINKIMAS (laikinai išjungtas) -->
-<!-- <div id="langSwitcher" style="position: fixed; top: 10px; right: 10px; z-index: 999999; display: flex; gap: 5px;">
-    <button class="lang-btn" data-lang="lt" onclick="changeLanguage('lt')">🇱🇹 LT</button>
-    <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')">🇬🇧 EN</button>
-    <button class="lang-btn" data-lang="ru" onclick="changeLanguage('ru')">🇷🇺 RU</button>
-</div> -->
+    <!-- 🌐 KALBOS PASIRINKIMAS -->
+<div id="langSwitcher" style="position: fixed; top: 10px; right: 10px; z-index: 999999; display: flex; gap: 5px;">
+    <label class="lang-select-wrap" title="Kalba / Language">🌐 <select class="lang-select" onchange="changeLanguage(this.value)" aria-label="Language"><option value="lt">🇱🇹 LT – Lietuvių</option><option value="en">🇬🇧 EN – English</option><option value="ru">RU – Русский</option><option value="de">🇩🇪 DE – Deutsch</option><option value="es">🇪🇸 ES – Español</option><option value="fr">🇫🇷 FR – Français</option></select></label>
+</div>
 
    
     <!-- PUSLAPIS 1: LANDING -->
@@ -81,7 +79,7 @@
         </div>      <!-- /landingUser -->
         
         <!-- 🆕 FOOTER -->
-        <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+        <div class="page-footer" data-i18n="html.footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
         
     </div>  <!-- /landing-container -->
 </div>  
@@ -137,7 +135,7 @@
         </div>                <!-- /lobby-container -->
         
         <!-- 🆕 FOOTER -->
-        <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+        <div class="page-footer" data-i18n="html.footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
         
     </div>                    <!-- /wrapper -->
 </div> 
@@ -173,7 +171,7 @@
         </div>                <!-- /lobby-container -->
         
         <!-- 🆕 FOOTER -->
-        <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+        <div class="page-footer" data-i18n="html.footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
         
     </div>                    <!-- /wrapper -->
 </div>                        <!-- /page-login -->
@@ -249,7 +247,7 @@
             </div>            <!-- /lobby-container -->
             
             <!-- 🆕 FOOTER -->
-            <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+            <div class="page-footer" data-i18n="html.footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
             
         </div>                <!-- /wrapper -->
     </div> 
@@ -285,7 +283,7 @@
             </div>
             
             <!-- 🆕 FOOTER -->
-            <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+            <div class="page-footer" data-i18n="html.footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
             
         </div>
     </div>
@@ -323,7 +321,7 @@
                 
                 <div id="createMessages" style="margin-top:20px; color:#d4b896; font-size:14px; min-height:30px;"></div>
             <!-- 🆕 FOOTER -->
-                <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+                <div class="page-footer" data-i18n="html.footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
                 
             </div>            <!-- /lobby-container -->
         </div>                <!-- /wrapper -->
@@ -358,7 +356,7 @@
                 
                 <div id="joinMessages" style="margin-top:20px; color:#d4b896; font-size:14px; min-height:30px;"></div>
             <!-- 🆕 FOOTER -->
-                <div class="page-footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
+                <div class="page-footer" data-i18n="html.footer">© 2026 BANCRUPT. Visos teisės saugomos.</div>
                 
             </div>            <!-- /lobby-container -->
         </div>                <!-- /wrapper -->
@@ -374,7 +372,7 @@
     <span data-i18n="game.header.turn">🎯 Eina:</span> <span id="turnDisplayName">---</span>
     <span id="headerTurnTimer" style="margin-left:10px; color:#ffd700; font-weight:700; display:none;">⏱️ ---</span>
 </span>
-    <button id="feedbackBtn" onclick="openFeedback()" title="Pranešti apie klaidą / Pasiūlyti idėją">
+    <button id="feedbackBtn" onclick="openFeedback()" title="Pranešti apie klaidą / Pasiūlyti idėją" data-i18n-title="html.feedbackTitle">
         🐛 <span class="btn-text" data-i18n="game.header.bugReport">Klaida / Pasiūlymas</span>
     </button>
 </div>
@@ -383,7 +381,7 @@
 
             <div id="gameBody">
             <!-- 🆕 Kairės panelės toggle mygtukas -->
-            <button id="leftPanelToggle" onclick="toggleLeftPanel()" title="Slėpti/Parodyti panelę">
+            <button id="leftPanelToggle" onclick="toggleLeftPanel()" title="Slėpti/Parodyti panelę" data-i18n-title="html.togglePanel">
                 ◀
             </button>
             
@@ -399,14 +397,10 @@
 
 
 
-                    <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange (laikinai išjungtas) -->
-                    <!-- 
+                    <!-- 🌐 KALBOS PASIRINKIMAS žaidimo lange -->
                     <div id="gameLangSwitcher" style="display: flex; gap: 3px; width: 100%; justify-content: center;">
-                        <button class="lang-btn" data-lang="lt" onclick="changeLanguage('lt')" style="flex:1; padding:5px 2px; font-size:10px;">🇱🇹</button>
-                        <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')" style="flex:1; padding:5px 2px; font-size:10px;">🇬🇧</button>
-                        <button class="lang-btn" data-lang="ru" onclick="changeLanguage('ru')" style="flex:1; padding:5px 2px; font-size:10px;">🇷🇺</button>
+                        <label class="lang-select-wrap small" title="Kalba / Language">🌐 <select class="lang-select" onchange="changeLanguage(this.value)" aria-label="Language"><option value="lt">🇱🇹 LT</option><option value="en">🇬🇧 EN</option><option value="ru">RU</option><option value="de">🇩🇪 DE</option><option value="es">🇪🇸 ES</option><option value="fr">🇫🇷 FR</option></select></label>
                     </div>
-                    -->
 
                     <div style="position:relative; width:100%; margin-top:6px;">
     <button onclick="toggleMusicSimple()" id="musicBtn" class="left-btn" style="width:100%; padding:8px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;">
@@ -442,14 +436,14 @@
                     <div style="position: relative; width: 100%; margin-top: 6px;">
                         <button onclick="toggleThemeMenu()" id="themeBtn" class="left-btn" style="width: 100%; padding: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
                             <span id="themeIcon">☀️</span>
-                            <span>Režimas</span>
+                            <span data-i18n="html.theme">Režimas</span>
                         </button>
                         
                         <!-- Iššokantis meniu -->
                         <div id="themeMenu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #2a2a2a; border: 2px solid #ffd700; border-radius: 8px; z-index: 1000; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); flex-direction: column; overflow: hidden;">
-                            <button onclick="setTheme('light')" style="padding: 10px; background: transparent; color: #fff; border: none; border-bottom: 1px solid #444; cursor: pointer; font-size: 12px; text-align: left;">☀️ Šviesus</button>
-                            <button onclick="setTheme('dark')" style="padding: 10px; background: transparent; color: #fff; border: none; border-bottom: 1px solid #444; cursor: pointer; font-size: 12px; text-align: left;">🌙 Tamsus</button>
-                            <button onclick="setTheme('neon')" style="padding: 10px; background: transparent; color: #00ffff; border: none; cursor: pointer; font-size: 12px; text-align: left; font-weight: bold;">🌌 Neonas</button>
+                            <button onclick="setTheme('light')" style="padding: 10px; background: transparent; color: #fff; border: none; border-bottom: 1px solid #444; cursor: pointer; font-size: 12px; text-align: left;" data-i18n="html.themeLight">☀️ Šviesus</button>
+                            <button onclick="setTheme('dark')" style="padding: 10px; background: transparent; color: #fff; border: none; border-bottom: 1px solid #444; cursor: pointer; font-size: 12px; text-align: left;" data-i18n="html.themeDark">🌙 Tamsus</button>
+                            <button onclick="setTheme('neon')" style="padding: 10px; background: transparent; color: #00ffff; border: none; cursor: pointer; font-size: 12px; text-align: left; font-weight: bold;" data-i18n="html.themeNeon">🌌 Neonas</button>
                         </div>
                     </div>
 
@@ -531,7 +525,7 @@
                                 <div id="center-1" class="center-cell player-info">
                                     <h4 data-i18n="game.iAm">👤 AŠ</h4>
                                     <button onclick="openDemolish()" id="demolishBtn" class="btn-demolish myinfo-demolish" style="display:none;" data-i18n="game.demolish">🏚️ Griauti</button>
-                                    <div id="myInfo">Laukiama...</div>
+                                    <div id="myInfo" data-i18n="html.waitingDots">Laukiama...</div>
                                     <div class="mini-cards-container"></div>
                                 </div>
                                 <div id="center-2" class="center-cell controls">
@@ -618,7 +612,7 @@
 
                                     <div id="buyCard" style="display:none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); border-radius: 8px; z-index: 10; align-items: center; justify-content: center; padding: 8px;">
                                         <div id="buyCardBox" style="background: linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius: 12px; padding: 12px; width: 100%; max-width: 200px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); border: 3px solid #c9a84c; transition: all 0.3s ease;">
-                                            <div id="buyCardHeader" style="text-align: center; font-size: 12px; font-weight: 700; color: #1a6b3c; border-bottom: 2px solid #c9a84c; padding-bottom: 4px; margin-bottom: 6px;">
+                                            <div id="buyCardHeader" style="text-align: center; font-size: 12px; font-weight: 700; color: #1a6b3c; border-bottom: 2px solid #c9a84c; padding-bottom: 4px; margin-bottom: 6px;" data-i18n="html.waitingUpper">
                                                 ⏳ LAUKIAMA
                                             </div>
                                             <div id="buyCardColor" style="width: 100%; height: 30px; border-radius: 6px; margin-bottom: 6px; border: 2px solid #3d2b1f;"></div>
@@ -900,7 +894,7 @@
             <div style="font-size:60px; margin-bottom:10px;">💀</div>
             <h2 style="color:#dc3545; margin-bottom:10px;" data-i18n="game.bankruptModal.title">AR TIKRAI NORI BANKROTUOTI?</h2>
 <p style="color:#3d2b1f; margin-bottom:12px; font-size:16px;" data-i18n-html="game.bankruptModal.text">Prarasi visus pinigus ir objektus!<br>Žaidimą galėsi tik stebėti.</p>
-<p id="bankruptCountdown" style="color:#6c757d; margin-bottom:16px; font-size:14px; font-weight:700;">⏱️ Liko 60 s apsispręsti</p>
+<p id="bankruptCountdown" style="color:#6c757d; margin-bottom:16px; font-size:14px; font-weight:700;" data-i18n="html.decideIn60">⏱️ Liko 60 s apsispręsti</p>
 <div style="display:flex; gap:10px; justify-content:center;">
     <button onclick="confirmBankrupt()" style="flex:1; padding:12px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;" data-i18n="game.bankruptModal.confirm">✅ TAIP, BANKROTUOTI</button>
     <button onclick="cancelBankrupt()" style="flex:1; padding:12px 20px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="game.bankruptModal.cancel">❌ NE, GRĮŽTI</button>
@@ -920,7 +914,8 @@
 
     <!-- PREKYBOS MODALAS -->
     <div id="tradingModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9998; justify-content:center; align-items:center;">
-        <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+        <div class="trading-box" style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:500px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #c9a84c; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <button type="button" class="trade-x" onclick="closeTrading()" title="Uždaryti" data-i18n-title="html.close">✕</button>
             <h2 style="color:#1a6b3c; margin-bottom:15px;" data-i18n="game.trading.title">🏪 PREKYBA</h2>
             
             <div id="tradingOptions">
@@ -939,58 +934,64 @@
             </div>
 
             <div id="sellToBankPanel" style="display:none;">
-                <h3 style="color:#3d2b1f;">🏦 Parduoti bankui</h3>
-                <p style="color:#6c757d; font-size:14px; line-height:1.5;">
+                <h3 style="color:#3d2b1f;" data-i18n="html.sellToBank">🏦 Parduoti bankui</h3>
+                <p style="color:#6c757d; font-size:14px; line-height:1.5;" data-i18n-html="html.sellInfo">
                     ✅ <strong>Saugu:</strong> Gauni <strong style="color:#28a745;">80%</strong> vertės iškart.<br>
                     <span style="color:#dc3545;">💡 Jei nori daugiau – bandyk aukcioną (70% startinė, bet gali gauti daugiau).</span>
                 </p>
                 <div id="sellableProperties" style="margin:10px 0; text-align:left;"></div>
-                <button onclick="confirmSellToBank()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                <div class="trade-actions">
+                <button onclick="confirmSellToBank()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;" data-i18n="html.confirmSale">
                     ✅ Patvirtinti pardavimą
                 </button>
-                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="html.back">
                     🔙 Grįžti
                 </button>
+                </div>
             </div>
 
             <div id="auctionPanel" style="display:none;">
-                <h3 style="color:#3d2b1f;">🔨 Skelbti aukcioną</h3>
-                <p style="color:#6c757d; font-size:13px; line-height:1.5;">
+                <h3 style="color:#3d2b1f;" data-i18n="html.startAuctionTitle">🔨 Skelbti aukcioną</h3>
+                <p style="color:#6c757d; font-size:13px; line-height:1.5;" data-i18n-html="html.auctionInfo">
                     ⚠️ <strong>Rizikinga:</strong> Bankas siūlo tik <strong style="color:#dc3545;">70%</strong> vertės.<br>
                     ✅ Jei kas persiūlo – gausi <strong style="color:#28a745;">daugiau</strong>.<br>
                     ❌ Jei niekas – gausi tik 70% ir kortelė <strong>dingsta</strong>.<br>
                     <span style="color:#28a745;">💡 Norėdamas saugiai – parduok bankui (80%).</span>
                 </p>
                 <div id="auctionableProperties" style="margin:10px 0; text-align:left;"></div>
-                <button onclick="confirmStartAuction()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
+                <div class="trade-actions">
+                <button onclick="confirmStartAuction()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;" data-i18n="html.startAuctionBtn">
                     🔨 Pradėti aukcioną
                 </button>
-                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="html.back">
                     🔙 Grįžti
                 </button>
+                </div>
             </div>
 
             <div id="tradeToPlayerPanel" style="display:none;">
-                <h3 style="color:#3d2b1f;">🤝 Siūlyti žaidėjui</h3>
-                <p style="color:#6c757d; font-size:13px;">Galima pasirinkti iki 3 kortelių</p>
+                <h3 style="color:#3d2b1f;" data-i18n="html.offerToPlayer">🤝 Siūlyti žaidėjui</h3>
+                <p style="color:#6c757d; font-size:13px;" data-i18n="html.upTo3Cards">Galima pasirinkti iki 3 kortelių</p>
                 <div style="margin:10px 0; text-align:left;">
-                    <label style="font-weight:600;">Pasirink žaidėją:</label>
+                    <label style="font-weight:600;" data-i18n="html.choosePlayer">Pasirink žaidėją:</label>
                     <select id="tradeTargetPlayer" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;"></select>
                     
-                    <label style="font-weight:700; margin-top:10px; display:block; color:#28a745; font-size:14px;">🟢 KĄ SIŪLAI (tavo kortelės, atiduodi):</label>
+                    <label style="font-weight:700; margin-top:10px; display:block; color:#28a745; font-size:14px;" data-i18n="html.youOffer">🟢 KĄ SIŪLAI (tavo kortelės, atiduodi):</label>
                     <div id="tradeOfferFields" style="background:rgba(255,255,255,0.3); border-radius:8px; padding:5px; margin:5px 0; max-height:150px; overflow-y:auto;"></div>
-                    <input type="number" id="tradeOfferMoney" placeholder="Pridėti pinigų (€)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;">
+                    <input type="number" id="tradeOfferMoney" placeholder="Pridėti pinigų (€)" data-i18n-placeholder="html.addMoney" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;">
                     
-                    <label style="font-weight:700; margin-top:10px; display:block; color:#dc3545; font-size:14px;">🔴 KO PRAŠAI (svetimos kortelės, gauni):</label>
+                    <label style="font-weight:700; margin-top:10px; display:block; color:#dc3545; font-size:14px;" data-i18n="html.youRequest">🔴 KO PRAŠAI (svetimos kortelės, gauni):</label>
                     <div id="tradeRequestFields" style="background:rgba(255,255,255,0.3); border-radius:8px; padding:5px; margin:5px 0; max-height:150px; overflow-y:auto;"></div>
-                    <input type="number" id="tradeRequestMoney" placeholder="Prašyti pinigų (€)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;">
+                    <input type="number" id="tradeRequestMoney" placeholder="Prašyti pinigų (€)" data-i18n-placeholder="html.requestMoney" style="width:100%; padding:10px; border-radius:8px; border:1px solid #c9a84c; margin:5px 0;">
                 </div>
-                <button onclick="confirmProposeTrade()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
+                <div class="trade-actions">
+                <button onclick="confirmProposeTrade()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;" data-i18n="html.sendOffer">
                     📩 Siųsti pasiūlymą
                 </button>
-                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+                <button onclick="backToTradingOptions()" class="btn-trade-option" style="width:100%; padding:12px; margin:5px 0; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="html.back">
                     🔙 Grįžti
                 </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1000,10 +1001,10 @@
         <div style="background:linear-gradient(145deg, #f5f0e8, #e8d5b5); border-radius:20px; padding:30px; max-width:550px; width:90%; max-height:90vh; overflow-y:auto; text-align:center; border:3px solid #17a2b8; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
             <h2 style="color:#17a2b8; margin-bottom:15px;" data-i18n="game.tradeOffer.title">📩 GAUTAS PASIŪLYMAS</h2>
             <div style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
-                <p style="margin-bottom:10px;"><strong>Siūlo:</strong> <span id="offerFromPlayer" style="color:#1a6b3c; font-weight:700;"></span></p>
+                <p style="margin-bottom:10px;"><strong data-i18n="html.offers">Siūlo:</strong> <span id="offerFromPlayer" style="color:#1a6b3c; font-weight:700;"></span></p>
                 
                 <div style="background:rgba(255,255,255,0.4); border-radius:8px; padding:8px; margin-bottom:10px;">
-                    <div style="font-weight:700; color:#28a745; margin-bottom:6px;">📤 SIŪLO:</div>
+                    <div style="font-weight:700; color:#28a745; margin-bottom:6px;" data-i18n="html.theyOffer">📤 SIŪLO:</div>
                     <div id="offerFieldsContainer" class="trade-mini-cards"></div>
                     <div id="offerMoneyDisplay" style="font-size:13px; color:#28a745; font-weight:700; margin-top:6px;"></div>
                 </div>
@@ -1011,23 +1012,23 @@
                 <hr style="border:1px solid #c9a84c; margin:10px 0;">
                 
                 <div style="background:rgba(255,255,255,0.4); border-radius:8px; padding:8px;">
-                    <div style="font-weight:700; color:#dc3545; margin-bottom:6px;">📥 PRAŠO:</div>
+                    <div style="font-weight:700; color:#dc3545; margin-bottom:6px;" data-i18n="html.theyRequest">📥 PRAŠO:</div>
                     <div id="requestFieldsContainer" class="trade-mini-cards"></div>
                     <div id="requestMoneyDisplay" style="font-size:13px; color:#dc3545; font-weight:700; margin-top:6px;"></div>
                 </div>
             </div>
             <div style="display:flex; gap:10px; justify-content:center;">
-                <button onclick="acceptTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;">
+                <button onclick="acceptTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #28a745, #1e7e34); color:#fff;" data-i18n="html.accept">
                     ✅ PRIIMTI
                 </button>
-                <button onclick="rejectTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;">
+                <button onclick="rejectTrade()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #dc3545, #a71d2a); color:#fff;" data-i18n="html.reject">
                     ❌ ATMESTI
                 </button>
-                <button onclick="counterTradeOffer()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;">
+                <button onclick="counterTradeOffer()" class="btn-trade-option" style="flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #ffc107, #e0a800); color:#3d2b1f;" data-i18n="html.adjust">
                     🔄 KOREGUOTI
                 </button>
             </div>
-            <button onclick="closeTradeOffer()" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+            <button onclick="closeTradeOffer()" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="html.closeBack">
                 🔙 Uždaryti
             </button>
         </div>
@@ -1039,27 +1040,27 @@
             <h2 style="color:#ffc107; margin-bottom:10px;" data-i18n="game.auction.title">🔨 AUKCIONAS</h2>
             
             <div id="auctionContent" style="margin:15px 0; text-align:left; padding:15px; background:rgba(255,255,255,0.3); border-radius:10px;">
-                <p style="margin:5px 0;"><strong>Pardavėjas:</strong> <span id="auctionSeller"></span></p>
+                <p style="margin:5px 0;"><strong data-i18n="html.seller">Pardavėjas:</strong> <span id="auctionSeller"></span></p>
                 
                 <div style="margin:10px 0; display:flex; justify-content:center;">
                     <div id="auctionMiniCardContainer" style="display:flex; justify-content:center;"></div>
                 </div>
                 
-                <p style="margin:5px 0;"><strong>Kortelė:</strong> <span id="auctionFieldName"></span></p>
-                <p style="margin:5px 0;"><strong>Kortelės vertė:</strong> <span id="auctionFieldCost">€0</span></p>
+                <p style="margin:5px 0;"><strong data-i18n="html.card">Kortelė:</strong> <span id="auctionFieldName"></span></p>
+                <p style="margin:5px 0;"><strong data-i18n="html.cardValue">Kortelės vertė:</strong> <span id="auctionFieldCost">€0</span></p>
                 
                 <hr style="border:1px solid #c9a84c; margin:10px 0;">
                 
-                <p style="margin:5px 0; color:#6c757d;"><strong>🏦 Banko pradinė:</strong> <span id="auctionBankBid">€0</span></p>
-                <p style="margin:5px 0; font-size:18px;"><strong>💰 Dabartinė kaina:</strong> <span id="auctionCurrentBid" style="color:#28a745; font-weight:700;">€0</span></p>
-                <p style="margin:5px 0;"><strong>👤 Siūlo:</strong> <span id="auctionCurrentBidder">🏦 Bankas</span></p>
+                <p style="margin:5px 0; color:#6c757d;"><strong data-i18n="html.bankStart">🏦 Banko pradinė:</strong> <span id="auctionBankBid">€0</span></p>
+                <p style="margin:5px 0; font-size:18px;"><strong data-i18n="html.currentPrice">💰 Dabartinė kaina:</strong> <span id="auctionCurrentBid" style="color:#28a745; font-weight:700;">€0</span></p>
+                <p style="margin:5px 0;"><strong data-i18n="html.bidder">👤 Siūlo:</strong> <span id="auctionCurrentBidder" data-i18n="html.bank">🏦 Bankas</span></p>
                 
                 <hr style="border:1px solid #c9a84c; margin:10px 0;">
                 
-                <p style="margin:5px 0; text-align:center; font-size:16px;"><strong>⏱️ Liko laiko:</strong> <span id="auctionTimer" style="color:#dc3545; font-weight:700;">60</span> s</p>
+                <p style="margin:5px 0; text-align:center; font-size:16px;"><strong data-i18n="html.timeLeft">⏱️ Liko laiko:</strong> <span id="auctionTimer" style="color:#dc3545; font-weight:700;">60</span> s</p>
             </div>
             
-            <div id="auctionSellerNotice" style="display:none; padding:12px; background:rgba(255,193,7,0.2); border-radius:8px; margin:10px 0; border:2px solid #ffc107;">
+            <div id="auctionSellerNotice" style="display:none; padding:12px; background:rgba(255,193,7,0.2); border-radius:8px; margin:10px 0; border:2px solid #ffc107;" data-i18n-html="html.sellerNotice">
                 📢 <strong>Tu esi pardavėjas!</strong><br>
                 <span style="font-size:13px;">Stebėk aukcioną. Kiti žaidėjai siūlo kainas.</span>
             </div>
@@ -1072,14 +1073,14 @@
                 </div>
                 
                 <div style="display:flex; gap:8px;">
-                    <input type="number" id="auctionBidInput" placeholder="Įvesk savo sumą (€)" style="flex:1; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; font-weight:600;">
-                    <button onclick="placeBid()" class="btn-trade-option" style="padding:10px 20px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;">
+                    <input type="number" id="auctionBidInput" placeholder="Įvesk savo sumą (€)" data-i18n-placeholder="html.enterAmount" style="flex:1; padding:10px; border-radius:8px; border:2px solid #c9a84c; font-size:14px; font-weight:600;">
+                    <button onclick="placeBid()" class="btn-trade-option" style="padding:10px 20px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #17a2b8, #138496); color:#fff;" data-i18n="html.bid">
                         💰 Siūlyti
                     </button>
                 </div>
             </div>
             
-            <button onclick="closeAuction()" id="auctionCloseBtn" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+            <button onclick="closeAuction()" id="auctionCloseBtn" style="width:100%; padding:10px; margin-top:10px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="html.closeBack">
                 🔙 Uždaryti
             </button>
         </div>
@@ -1091,7 +1092,7 @@
             <h2 style="color:#dc3545; margin-bottom:15px;" data-i18n="game.demolish.title">🏚️ GRIAUTI NAMUS</h2>
 <p style="color:#6c757d; font-size:13px; margin-bottom:10px;" data-i18n-html="game.demolish.text">Pasirink kortelę, iš kurios nori nugriauti vieną namą.<br>Grąžinama 75 % statybos sumos.</p>
             <div id="demolishProperties" style="margin:10px 0; text-align:left; max-height:300px; overflow-y:auto;"></div>
-            <button onclick="closeDemolish()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+            <button onclick="closeDemolish()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="html.close">
                 ❌ Uždaryti
             </button>
         </div>
@@ -1104,7 +1105,7 @@
 <p style="color:#6c757d; font-size:13px; margin-bottom:15px;" data-i18n="game.voteKick.text">Pasirink žaidėją, kurį nori pašalinti nuo stalo.</p>
             <div id="voteKickPlayers" style="margin:10px 0; text-align:left;"></div>
             <div id="voteKickStatus" style="margin:15px 0; padding:10px; background:rgba(255,255,255,0.3); border-radius:8px; font-size:14px; color:#3d2b1f;"></div>
-            <button onclick="closeVoteKick()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;">
+            <button onclick="closeVoteKick()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(145deg, #6c757d, #495057); color:#fff;" data-i18n="html.close">
                 ❌ Uždaryti
             </button>
         </div>
@@ -1224,11 +1225,11 @@
             <!-- 🆕 MANO PRANEŠIMAI -->
             <div id="myFeedbackSection" style="margin-top:20px; border-top:2px solid #c9a84c; padding-top:15px;">
                 <h3 style="color:#1a6b3c; margin-bottom:10px; font-size:16px; display:flex; align-items:center; gap:8px;">
-                    📬 Mano pranešimai
+                    <span data-i18n="html.myReports">📬 Mano pranešimai</span>
                     <span id="myFeedbackCount" style="font-size:13px; color:#6c757d; font-weight:400;"></span>
                 </h3>
                 <div id="myFeedbackContent" style="max-height:300px; overflow-y:auto;">
-                    <p style="color:#6c757d; text-align:center; font-size:13px;">⏳ Kraunama...</p>
+                    <p style="color:#6c757d; text-align:center; font-size:13px;" data-i18n="html.loading">⏳ Kraunama...</p>
                 </div>
             </div>
             
@@ -1237,31 +1238,7 @@
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
 <script src="i18n.js"></script>
-<!-- 🆕 Cell messages pagal kalbą (SINCHRONINIS įkėlimas) -->
-<script>
-    (function() {
-        var lang = 'lt';
-        try {
-            lang = localStorage.getItem('bancrupt_lang') || 'lt';
-        } catch (e) {
-            console.warn('⚠️ Nepavyko nuskaityti kalbos:', e);
-        }
-        
-        var src = 'cellMessages.js';
-        if (lang === 'en') {
-            src = 'cellMessages-en.js';
-            console.log('🇬🇧 Loading cellMessages-en.js');
-        } else if (lang === 'ru') {
-            src = 'cellMessages-ru.js';
-            console.log('🇷🇺 Loading cellMessages-ru.js');
-        } else {
-            console.log('🇱🇹 Loading cellMessages.js');
-        }
-        
-        // SINCHRONINIS įkėlimas per document.write
-        document.write('<script src="' + src + '"><\/script>');
-    })();
-</script>
+<!-- 🌐 Langelių pranešimai dabar lang/*.json failuose (cellMessages*.js nebereikalingi) -->
 <script src="audioManager.js"></script>
 <script src="script.js"></script>
     <script>
@@ -1392,7 +1369,7 @@
             errorEl.textContent = '';
             
             if (!username || !email) {
-                errorEl.textContent = '❌ Įvesk vardą ir el. paštą';
+                errorEl.textContent = tf('cli.auth.enterNameEmail');
                 return;
             }
             
@@ -1409,7 +1386,7 @@
                 const data = await response.json();
                 
                 if (data.error) {
-                    errorEl.textContent = '❌ ' + data.error;
+                    errorEl.textContent = '❌ ' + trSrv(data.error);
                     btn.disabled = false;
                     btn.textContent = '➡️ Toliau';
                     return;
@@ -1423,7 +1400,7 @@
                 // Rodyti 2 etapą
                 document.getElementById('forgotStep1').style.display = 'none';
                 document.getElementById('forgotStep2').style.display = 'block';
-                document.getElementById('forgotQuestionText').textContent = data.question;
+                document.getElementById('forgotQuestionText').textContent = trQuestion(data.question);
                 
                 btn.disabled = false;
                 btn.textContent = '➡️ Toliau';
@@ -1432,7 +1409,7 @@
                 
             } catch (err) {
                 console.error('❌ Klaida:', err);
-                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                errorEl.textContent = tf('cli.auth.serverRetry');
                 btn.disabled = false;
                 btn.textContent = '➡️ Toliau';
             }
@@ -1446,7 +1423,7 @@
             errorEl.textContent = '';
             
             if (!answer) {
-                errorEl.textContent = '❌ Įvesk atsakymą';
+                errorEl.textContent = tf('cli.auth.enterAnswer');
                 return;
             }
             
@@ -1467,7 +1444,7 @@
                 const data = await response.json();
                 
                 if (data.error) {
-                    errorEl.textContent = '❌ ' + data.error;
+                    errorEl.textContent = '❌ ' + trSrv(data.error);
                     btn.disabled = false;
                     btn.textContent = '➡️ Toliau';
                     return;
@@ -1487,7 +1464,7 @@
                 
             } catch (err) {
                 console.error('❌ Klaida:', err);
-                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                errorEl.textContent = tf('cli.auth.serverRetry');
                 btn.disabled = false;
                 btn.textContent = '➡️ Toliau';
             }
@@ -1502,22 +1479,22 @@
             errorEl.textContent = '';
             
             if (!newPassword || !newPasswordConfirm) {
-                errorEl.textContent = '❌ Įvesk naują slaptažodį';
+                errorEl.textContent = tf('cli.auth.enterNewPass');
                 return;
             }
             
             if (newPassword !== newPasswordConfirm) {
-                errorEl.textContent = '❌ Slaptažodžiai nesutampa';
+                errorEl.textContent = tf('cli.auth.passMismatch');
                 return;
             }
             
             if (newPassword.length < 6) {
-                errorEl.textContent = '❌ Slaptažodis turi būti bent 6 simbolių';
+                errorEl.textContent = tf('cli.auth.passMin');
                 return;
             }
             
             btn.disabled = true;
-            btn.textContent = '⏳ Keičiama...';
+            btn.textContent = tf('cli.auth.changing');
             
             try {
                 const response = await fetch('/api/auth/forgot-password/reset', {
@@ -1534,14 +1511,14 @@
                 const data = await response.json();
                 
                 if (data.error) {
-                    errorEl.textContent = '❌ ' + data.error;
+                    errorEl.textContent = '❌ ' + trSrv(data.error);
                     btn.disabled = false;
-                    btn.textContent = '✅ Pakeisti slaptažodį';
+                    btn.textContent = tf('cli.auth.changePassBtn');
                     return;
                 }
                 
                 // Sėkmė!
-                alert(`✅ Slaptažodis pakeistas!\n\nDabar gali prisijungti su nauju slaptažodžiu.`);
+                alert(tf('cli.auth.resetDone'));
                 
                 // Grįžti į prisijungimą
                 goToLogin();
@@ -1551,15 +1528,15 @@
                 if (loginUsername) loginUsername.value = forgotPasswordData.username;
                 
                 btn.disabled = false;
-                btn.textContent = '✅ Pakeisti slaptažodį';
+                btn.textContent = tf('cli.auth.changePassBtn');
                 
                 console.log('✅ Slaptažodis pakeistas');
                 
             } catch (err) {
                 console.error('❌ Klaida:', err);
-                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                errorEl.textContent = tf('cli.auth.serverRetry');
                 btn.disabled = false;
-                btn.textContent = '✅ Pakeisti slaptažodį';
+                btn.textContent = tf('cli.auth.changePassBtn');
             }
         }
 
@@ -1594,27 +1571,27 @@
     errorEl.textContent = '';
     
     if (!username || !email || !password || !passwordConfirm) {
-        errorEl.textContent = '❌ Užpildyk visus laukus';
+        errorEl.textContent = tf('cli.auth.fillAll');
         return;
     }
     
     if (password !== passwordConfirm) {
-        errorEl.textContent = '❌ Slaptažodžiai nesutampa';
+        errorEl.textContent = tf('cli.auth.passMismatch');
         return;
     }
     
     if (password.length < 6) {
-        errorEl.textContent = '❌ Slaptažodis turi būti bent 6 simbolių';
+        errorEl.textContent = tf('cli.auth.passMin');
         return;
     }
     
     if (!securityQuestion) {
-        errorEl.textContent = '❌ Pasirink saugumo klausimą';
+        errorEl.textContent = tf('cli.auth.pickQuestion');
         return;
     }
     
     if (!securityAnswer || securityAnswer.length < 2) {
-        errorEl.textContent = '❌ Įvesk atsakymą į saugumo klausimą';
+        errorEl.textContent = tf('cli.auth.enterSecAnswer');
         return;
     }
     
@@ -1637,7 +1614,7 @@
                 const data = await response.json();
                 
                 if (data.error) {
-                    errorEl.textContent = '❌ ' + data.error;
+                    errorEl.textContent = '❌ ' + trSrv(data.error);
                     btn.disabled = false;
                     btn.textContent = '✅ Registruotis';
                     return;
@@ -1653,12 +1630,12 @@
                 currentUser = data;
                 updateLandingUI();
                 
-                alert(`✅ Sveikas, ${data.username}!\n\nTavo paskyra sukurta. Dabar gali žaisti ir rinkti statistiką.`);
+                alert(tf('cli.auth.welcomeNew', { name: data.username }));
                 goToMenu();
                 
             } catch (err) {
                 console.error('❌ Registracijos klaida:', err);
-                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                errorEl.textContent = tf('cli.auth.serverRetry');
                 btn.disabled = false;
                 btn.textContent = '✅ Registruotis';
             }
@@ -1673,7 +1650,7 @@
             errorEl.textContent = '';
             
             if (!username || !password) {
-                errorEl.textContent = '❌ Įvesk vardą ir slaptažodį';
+                errorEl.textContent = tf('cli.auth.enterNamePass');
                 return;
             }
             
@@ -1690,7 +1667,7 @@
                 const data = await response.json();
                 
                 if (data.error) {
-                    errorEl.textContent = '❌ ' + data.error;
+                    errorEl.textContent = '❌ ' + trSrv(data.error);
                     btn.disabled = false;
                     btn.textContent = '✅ Prisijungti';
                     return;
@@ -1706,12 +1683,12 @@
                 currentUser = data;
                 updateLandingUI();
                 
-                alert(`✅ Sveikas sugrįžęs, ${data.username}!`);
+                alert(tf('cli.auth.welcomeBack', { name: data.username }));
                 goToMenu();
                 
             } catch (err) {
                 console.error('❌ Prisijungimo klaida:', err);
-                errorEl.textContent = '❌ Serverio klaida. Bandyk dar kartą.';
+                errorEl.textContent = tf('cli.auth.serverRetry');
                 btn.disabled = false;
                 btn.textContent = '✅ Prisijungti';
             }
@@ -1811,7 +1788,7 @@
             updateLandingUI();
             goToLanding();
             
-            alert('👋 Sėkmingai atsijungei!');
+            alert(tf('cli.auth.loggedOut'));
         }
 
         // ============================================
@@ -1964,29 +1941,29 @@ async function changePassword() {
     errorEl.textContent = '';
     
     if (!currentPassword || !newPassword || !newPasswordConfirm) {
-        errorEl.textContent = '❌ Užpildyk visus laukus';
+        errorEl.textContent = tf('cli.auth.fillAll');
         return;
     }
     
     if (newPassword !== newPasswordConfirm) {
-        errorEl.textContent = '❌ Nauji slaptažodžiai nesutampa';
+        errorEl.textContent = tf('cli.auth.newPassMismatch');
         return;
     }
     
     if (newPassword.length < 6) {
-        errorEl.textContent = '❌ Naujas slaptažodis turi būti bent 6 simbolių';
+        errorEl.textContent = tf('cli.auth.newPassMin');
         return;
     }
     
     if (currentPassword === newPassword) {
-        errorEl.textContent = '❌ Naujas slaptažodis negali būti toks pat';
+        errorEl.textContent = tf('cli.auth.newPassSame');
         return;
     }
     
     try {
         const token = localStorage.getItem('bancrupt_token');
         if (!token) {
-            errorEl.textContent = '❌ Nesi prisijungęs';
+            errorEl.textContent = tf('cli.auth.notLogged');
             return;
         }
         
@@ -2002,11 +1979,11 @@ async function changePassword() {
         const data = await response.json();
         
         if (data.error) {
-            errorEl.textContent = '❌ ' + data.error;
+            errorEl.textContent = '❌ ' + trSrv(data.error);
             return;
         }
         
-        alert('✅ Slaptažodis sėkmingai pakeistas!');
+        alert(tf('cli.auth.passChangedOk'));
         
         // Išvalyti laukus
         document.getElementById('currentPassword').value = '';
@@ -2073,7 +2050,7 @@ async function changePassword() {
                     nameInput.disabled = true;
                     nameInput.style.opacity = '0.7';
                     nameInput.style.cursor = 'not-allowed';
-                    nameInput.title = '🔒 Prisijungęs kaip ' + user.username;
+                    nameInput.title = tf('cli.auth.loggedAs', { name: user.username });
                 } catch (e) {
                     console.warn('⚠️ Nepavyko perskaityti user:', e);
                 }
@@ -2101,7 +2078,7 @@ async function changePassword() {
                     nameInput.disabled = true;
                     nameInput.style.opacity = '0.7';
                     nameInput.style.cursor = 'not-allowed';
-                    nameInput.title = '🔒 Prisijungęs kaip ' + user.username;
+                    nameInput.title = tf('cli.auth.loggedAs', { name: user.username });
                 } catch (e) {
                     console.warn('⚠️ Nepavyko perskaityti user:', e);
                 }
@@ -2119,7 +2096,7 @@ async function changePassword() {
             console.log('🌐 Vieši stalai');
             
             if (typeof isConnected === 'undefined' || !isConnected) {
-                alert('⏳ Jungiamasi prie serverio... Palauk kelias sekundes ir bandyk dar kartą.');
+                alert(tf('cli.auth.connecting'));
                 return;
             }
             

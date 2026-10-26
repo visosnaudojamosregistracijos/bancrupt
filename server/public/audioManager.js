@@ -25,9 +25,59 @@ class AudioManager {
         gameover: 5, bankrupt: 5, notification: 5, error: 5
     };
     
+    // 🎲 Garsų variantai iš sounds/sounds.json: kiekvienam garsui – keli failai, grojamas atsitiktinis
+    this.variants = {};      // { tax: [Audio, Audio, ...] }
+    this.lastVariant = {};   // kad tas pats variantas nesikartotų du kartus iš eilės
+    this.audioCache = {};    // vienas Audio objektas vienam failui (pasikartojantys keliai – neįkeliami du kartus)
+
     this.loadSounds();
     this.loadSoundLevels();
+    this.loadVariants();
 }
+
+    // 🎲 Nuskaityti sounds/sounds.json (jei failo nėra – lieka po vieną garsą, kaip anksčiau)
+    loadVariants() {
+        if (typeof fetch !== 'function') return;
+        fetch('sounds/sounds.json', { cache: 'no-cache' })
+            .then(r => r.ok ? r.json() : null)
+            .then(list => {
+                if (!list || typeof list !== 'object') return;
+                let count = 0;
+                for (const [name, files] of Object.entries(list)) {
+                    if (name.startsWith('_') || name === 'background' || !Array.isArray(files)) continue;   // muzika – atskirai
+                    const clean = files.filter(f => typeof f === 'string' && f.trim()).map(f => 'sounds/' + f.trim().replace(/^\/?sounds\//, ''));
+                    if (!clean.length) continue;
+                    this.variants[name] = clean.map(p => this.getAudio(p, name));
+                    this.sounds[name] = this.variants[name][0];   // suderinamumui su senu kodu
+                    count++;
+                }
+                console.log(`🎲 Garsų variantai įkelti: ${count} garsų`);
+            })
+            .catch(() => { /* sounds.json nėra – naudojami įprasti garsai */ });
+    }
+
+    getAudio(path, name) {
+        if (!this.audioCache[path]) {
+            const audio = new Audio(path);
+            audio.volume = name === 'background' ? this.musicVolume : this.sfxVolume;
+            audio.preload = 'auto';
+            this.audioCache[path] = audio;
+        }
+        return this.audioCache[path];
+    }
+
+    // 🎲 Parinkti garsą: jei yra keli skirtingi variantai – atsitiktinis, nesikartojantis iš eilės
+    pick(soundName) {
+        const list = this.variants[soundName];
+        if (!list || !list.length) return this.sounds[soundName];
+        if (list.length === 1) return list[0];
+        const distinct = [...new Set(list)];
+        if (distinct.length === 1) return distinct[0];
+        let i, guard = 0;
+        do { i = Math.floor(Math.random() * distinct.length); } while (distinct[i] === this.lastVariant[soundName] && ++guard < 10);
+        this.lastVariant[soundName] = distinct[i];
+        return distinct[i];
+    }
     
     // 🆕 Įkelti garso lygius iš localStorage
     loadSoundLevels() {
@@ -135,11 +185,15 @@ class AudioManager {
     console.log('📁 Atnaujinami garso failai iš DB:', files.length);
     
     files.forEach(f => {
+        // 🎲 Jei garsui sounds.json nurodyti keli skirtingi variantai – jie turi pirmenybę
+        const v = this.variants[f.sound_name];
+        if (v && new Set(v).size > 1) return;
         const audio = new Audio(f.file_path);
         audio.volume = f.sound_name === 'background' ? this.musicVolume : this.sfxVolume;
         audio.preload = 'auto';
         
         this.sounds[f.sound_name] = audio;
+        if (v) this.variants[f.sound_name] = [audio];
         
         // 🆕 IŠIMTA – nespaminti konsolės
         // console.log(`  ✅ ${f.sound_name}: ${f.file_path}`);
@@ -152,7 +206,7 @@ class AudioManager {
     play(soundName) {
         if (!this.isEnabled) return;
         
-        const sound = this.sounds[soundName];
+        const sound = this.pick(soundName);
         if (!sound) {
             console.warn('⚠️ Garso nėra:', soundName);
             return;
@@ -213,7 +267,7 @@ playLoop(soundName) {
     playOverlap(soundName) {
         if (!this.isEnabled) return;
         
-        const original = this.sounds[soundName];
+        const original = this.pick(soundName);
         if (!original) return;
         
         // 🆕 Patikrinti garso lygį
@@ -250,6 +304,9 @@ setMusicVolume(volume) {
             if (name !== 'background') {
                 sound.volume = this.sfxVolume;
             }
+        }
+        for (const [name, list] of Object.entries(this.variants)) {
+            if (name !== 'background') list.forEach(a => { a.volume = this.sfxVolume; });
         }
     }
 

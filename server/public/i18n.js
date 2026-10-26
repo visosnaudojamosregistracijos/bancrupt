@@ -2,23 +2,55 @@
 // i18n.js – KALBŲ SISTEMA
 // ============================================
 
-let currentLang = 'lt';  // 🔒 VISADA LT
-let translations = {};
+const SUPPORTED_LANGS = ['lt', 'en', 'ru', 'de', 'es', 'fr'];
+let currentLang = (() => {
+    try { const l = localStorage.getItem('bancrupt_lang'); return SUPPORTED_LANGS.includes(l) ? l : 'lt'; }
+    catch (e) { return 'lt'; }
+})();
+let translations = {};   // pasirinkta kalba
+let ltRef = {};          // lietuviški šablonai (serverio tekstams atpažinti)
+
+// Kalba įkeliama iškart (sinchroniškai), kad pirmi užrašai jau būtų teisinga kalba
+function loadLangSync(lang) {
+    if (window.__LANGS && window.__LANGS[lang]) return window.__LANGS[lang];   // peržiūra
+    try {
+        const x = new XMLHttpRequest();
+        x.open('GET', '/lang/' + lang + '.json', false);
+        x.send(null);
+        if (x.status === 200) return JSON.parse(x.responseText);
+    } catch (e) { /* įkels vėliau per fetch */ }
+    return null;
+}
+ltRef = loadLangSync('lt') || {};
+translations = currentLang === 'lt' ? ltRef : (loadLangSync(currentLang) || ltRef);
 
 // ============================================
 // ĮKELTI KALBĄ
 // ============================================
+async function fetchLang(lang) {
+    const response = await fetch(`/lang/${lang}.json`);
+    if (!response.ok) throw new Error('Nepavyko įkelti kalbos ' + lang);
+    return response.json();
+}
+
 async function loadLanguage(lang) {
-    lang = 'lt';  // 🔒 VISADA LT
-    
+    if (!SUPPORTED_LANGS.includes(lang)) lang = 'lt';
     try {
-        const response = await fetch(`/lang/${lang}.json`);
-        if (!response.ok) throw new Error('Nepavyko įkelti kalbos');
-        translations = await response.json();
+        const data = await fetchLang(lang);
+        if (lang === 'lt') ltRef = data;
+        else if (!ltRef || !Object.keys(ltRef).length) {
+            try { ltRef = await fetchLang('lt'); } catch (e) { ltRef = {}; }
+        }
+        const prevDict = translations, prevLang = currentLang;
+        translations = data;
         currentLang = lang;
-        localStorage.setItem('bancrupt_lang', lang);
-        // console.log(`🌐 Kalba įkelta: ${lang}`);
+        try { localStorage.setItem('bancrupt_lang', lang); } catch (e) {}
+        try { document.documentElement.lang = lang; } catch (e) {}
+        srvMatchers = null;
+        srvCache.clear();
         updateAllTexts();
+        if (prevLang !== lang) { try { retranslateDom(prevDict); } catch (e) { console.warn('retranslateDom:', e); } }
+        startSrvObserver();
         return true;
     } catch (err) {
         console.error('❌ Kalbos klaida:', err);
@@ -30,7 +62,214 @@ async function loadLanguage(lang) {
 // GAUTI VERTIMĄ
 // ============================================
 function t(key) {
-    return translations[key] || key;
+    const v = translations[key];
+    if (typeof v === 'string') return v;
+    const l = ltRef[key];
+    return typeof l === 'string' ? l : key;
+}
+
+// Lietuviškas langelio pavadinimas (iš serverio/lentos) → pasirinkta kalba
+let cellNameMap = null, cellNameMapSrc = null;
+function trCellName(v) {
+    if (!v || currentLang === 'lt') return v;
+    if (!cellNameMap || cellNameMapSrc !== ltRef) {
+        cellNameMap = new Map(); cellNameMapSrc = ltRef;
+        for (const [k, tpl] of Object.entries(ltRef || {})) {
+            if (typeof tpl === 'string' && /^cell\.\d+\.name$/.test(k)) cellNameMap.set(tpl.trim(), k);
+        }
+    }
+    const key = cellNameMap.get(v.trim());
+    return key ? t(key) : v;
+}
+
+// Vertimas su duomenimis: tf('cli.kodas_nukopijuotas', { gameId: 'ABC' })
+function tf(key, data) {
+    let text = t(key);
+    if (data) {
+        for (const k of Object.keys(data)) {
+            let v = data[k];
+            if (currentLang !== 'lt' && typeof v === 'string') v = trCellName(v);   // langelio pavadinimas – pasirinkta kalba
+            text = text.split('{' + k + '}').join(v === undefined || v === null ? '' : String(v));
+        }
+    }
+    return text;
+}
+
+// ============================================
+// 🌐 SERVERIO TEKSTŲ VERTIMAS
+// Serveris rašo lietuviškai pagal lt.json šablonus (srv.*, bot.*). Naršyklė atpažįsta
+// šabloną ir parodo tą patį tekstą pasirinkta kalba.
+// ============================================
+let srvMatchers = null;
+const srvCache = new Map();
+function buildSrvMatchers() {
+    const exact = new Map(), patterns = [], cellNames = new Map();
+    for (const [key, tpl] of Object.entries(ltRef || {})) {
+        if (typeof tpl === 'string' && /^cell\.\d+\.name$/.test(key)) cellNames.set(tpl.trim(), key);   // langelių pavadinimai
+        if (typeof tpl !== 'string' || !(key.startsWith('srv.') || key.startsWith('bot.'))) continue;
+        if (!/\{\w+\}/.test(tpl)) { exact.set(tpl, key); continue; }
+        const names = [];
+        const re = tpl.split(/(\{\w+\})/).map(part => {
+            const m = part.match(/^\{(\w+)\}$/);
+            if (m) { names.push(m[1]); return '([\\s\\S]*?)'; }
+            return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }).join('');
+        patterns.push({ key, names, re: new RegExp('^' + re + '$'), lit: tpl.replace(/\{\w+\}/g, '').length });
+    }
+    patterns.sort((a, b) => b.lit - a.lit);   // konkretesni šablonai – pirmiau
+    srvMatchers = { exact, patterns, names: cellNames };
+}
+function trSrv(text, depth) {
+    if (currentLang === 'lt' || typeof text !== 'string' || text.length < 2 || text.length > 1500) return text;
+    if (srvCache.has(text)) return srvCache.get(text);
+    if (!srvMatchers) buildSrvMatchers();
+    let out = text;
+    const trimmed = text.trim();
+    const lead = text.slice(0, text.indexOf(trimmed)), tail = text.slice(text.indexOf(trimmed) + trimmed.length);
+    const exactKey = srvMatchers.exact.get(trimmed);
+    if (exactKey) out = lead + t(exactKey) + tail;
+    else {
+        for (const p of srvMatchers.patterns) {
+            const m = trimmed.match(p.re);
+            if (!m) continue;
+            const data = {};
+            p.names.forEach((n, i) => {
+                const v = m[i + 1], nk = srvMatchers.names.get(v.trim());
+                data[n] = nk ? t(nk) : ((depth || 0) < 2 ? trSrv(v, (depth || 0) + 1) : v);
+            });
+            out = lead + tf(p.key, data) + tail;
+            break;
+        }
+    }
+    if (srvCache.size > 3000) srvCache.clear();
+    srvCache.set(text, out);
+    return out;
+}
+
+// Saugumo klausimas DB saugomas lietuviškai – parodyti pasirinkta kalba (register.q1–q10)
+function trQuestion(q) {
+    if (!q || currentLang === 'lt') return q;
+    for (let i = 1; i <= 10; i++) {
+        if (ltRef && ltRef['register.q' + i] === q) return t('register.q' + i);
+    }
+    return q;
+}
+
+// ============================================
+// 🌐 PERJUNGUS KALBĄ – jau ekrane esantys tekstai (pranešimai, žurnalas, užrašai)
+// atpažįstami pagal ankstesnės kalbos šablonus ir perrašomi nauja kalba
+// ============================================
+function retranslateDom(fromDict) {
+    if (!fromDict || fromDict === translations || !document.body) return;
+    const exact = new Map(), patterns = [];
+    for (const [key, tpl] of Object.entries(fromDict)) {
+        if (typeof tpl !== 'string' || key.startsWith('_comment') || tpl.length < 2) continue;
+        const target = translations[key];
+        if (typeof target !== 'string' || target === tpl) continue;
+        if (!/\{\w+\}/.test(tpl)) { if (!exact.has(tpl.trim())) exact.set(tpl.trim(), key); continue; }
+        const chunks = tpl.split(/\{\w+\}/).map(c => c.trim()).filter(Boolean);
+        const longest = chunks.sort((x, y) => y.length - x.length)[0] || '';
+        if (longest.length < 3) continue;   // per bendras šablonas – praleisti
+        const names = [];
+        const re = tpl.split(/(\{\w+\})/).map(part => {
+            const m = part.match(/^\{(\w+)\}$/);
+            if (m) { names.push(m[1]); return '([\\s\\S]*?)'; }
+            return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }).join('');
+        patterns.push({ key, names, longest, re: new RegExp('^' + re.trim() + '$'), lit: tpl.replace(/\{\w+\}/g, '').length });
+    }
+    patterns.sort((x, y) => y.lit - x.lit);
+    const conv = (text) => {
+        const trimmed = text.trim();
+        if (!trimmed) return text;
+        const lead = text.slice(0, text.indexOf(trimmed)), tail = text.slice(text.indexOf(trimmed) + trimmed.length);
+        const k = exact.get(trimmed);
+        if (k) return lead + t(k) + tail;
+        for (const p of patterns) {
+            if (!trimmed.includes(p.longest)) continue;
+            const m = trimmed.match(p.re);
+            if (!m) continue;
+            const data = {};
+            p.names.forEach((n, i) => { const v = m[i + 1], kk = exact.get(v.trim()); data[n] = kk ? t(kk) : v; });
+            return lead + tf(p.key, data) + tail;
+        }
+        // Sudėtiniai užrašai („Statybų taisyklė: 2. Atsistojus…“) – verčiam dalimis
+        const parts = trimmed.split(/(: |\. )/);
+        if (parts.length > 2) {
+            let changed = false, ok = true;
+            const outParts = parts.map(seg => {
+                if (seg === ': ' || seg === '. ' || /^[\d\s🏗️👉#]*$/u.test(seg)) return seg;
+                const m = seg.match(/^(\S+\s)?(.+)$/u);
+                const kk = exact.get(seg.trim()) || (m && exact.get(m[2].trim()));
+                if (kk) { changed = true; return (exact.get(seg.trim()) ? '' : (m[1] || '')) + t(kk); }
+                ok = false; return seg;
+            });
+            if (changed && ok) return lead + outParts.join('') + tail;
+        }
+        return text;
+    };
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => (n.parentNode && /^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT|INPUT)$/.test(n.parentNode.nodeName))
+            ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+    const nodes = [];
+    while (w.nextNode()) nodes.push(w.currentNode);
+    for (const n of nodes) {
+        const v = n.nodeValue;
+        if (!v || v.length < 2 || v.length > 1500 || !/[A-Za-zĄ-žА-я]/.test(v)) continue;
+        const out = conv(v);
+        if (out !== v) n.nodeValue = out;
+    }
+    // užrašai mygtukų/laukų title ir placeholder atributuose
+    document.querySelectorAll('[title],[placeholder]').forEach(el => {
+        ['title', 'placeholder'].forEach(a => {
+            const v = el.getAttribute(a);
+            if (v && v.length > 1 && v.length < 300) { const o = conv(v); if (o !== v) el.setAttribute(a, o); }
+        });
+    });
+}
+
+// Iššokantys langai rodomi pasirinkta kalba
+(function () {
+    const _alert = window.alert, _confirm = window.confirm;
+    window.alert = function (msg) { return _alert.call(window, trSrv(String(msg ?? ''))); };
+    window.confirm = function (msg) { return _confirm.call(window, trSrv(String(msg ?? ''))); };
+})();
+
+// Ekrane atsiradę serverio tekstai (žurnalas, pranešimai, chat) – verčiami automatiškai
+let srvObserver = null;
+function translateNodeTree(root) {
+    if (!root) return;
+    if (root.nodeType === 3) {
+        const v = root.nodeValue;
+        const par = root.parentNode;
+        if (par && /^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(par.nodeName)) return;
+        if (v && v.length > 2 && v.length < 1500 && /[A-Za-zĄ-ž]/.test(v)) {
+            const tr = trSrv(v);
+            if (tr !== v) root.nodeValue = tr;
+        }
+        return;
+    }
+    if (root.nodeType !== 1 || root.tagName === 'SCRIPT' || root.tagName === 'STYLE' || root.tagName === 'INPUT' || root.tagName === 'TEXTAREA') return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => (n.parentNode && /^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(n.parentNode.nodeName))
+            ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+    const nodes = [];
+    while (w.nextNode()) nodes.push(w.currentNode);
+    nodes.forEach(n => translateNodeTree(n));
+}
+function startSrvObserver() {
+    if (currentLang === 'lt') { if (srvObserver) { srvObserver.disconnect(); srvObserver = null; } return; }
+    if (srvObserver || !document.body || typeof MutationObserver === 'undefined') { if (document.body) translateNodeTree(document.body); return; }
+    srvObserver = new MutationObserver(muts => {
+        for (const m of muts) {
+            if (m.type === 'characterData') translateNodeTree(m.target);
+            else m.addedNodes.forEach(n => translateNodeTree(n));
+        }
+    });
+    srvObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+    translateNodeTree(document.body);
 }
 
 // ============================================
@@ -74,12 +313,14 @@ async function changeLanguage(lang) {
         // 🆕 Atnaujinti visus tekstus po kalbos pakeitimo
         setTimeout(() => {
             updateAllTexts();
-            console.log('🔄 updateAllTexts() po kalbos pakeitimo');
             
-            // 🆕 Atnaujinti lentą pagal naują kalbą
+            // 🆕 Atnaujinti lentą ir sąsają pagal naują kalbą
             if (typeof gameState !== 'undefined' && gameState && typeof updateBoard === 'function') {
                 updateBoard(gameState);
-                console.log('🔄 updateBoard() po kalbos pakeitimo');
+                if (typeof updateUI === 'function') { try { updateUI(gameState); } catch (e) {} }
+            }
+            if (typeof waitingRoomState !== 'undefined' && waitingRoomState && typeof updateWaitingRoom === 'function') {
+                try { updateWaitingRoom(waitingRoomState); } catch (e) {}
             }
         }, 100);
     }
@@ -89,6 +330,7 @@ async function changeLanguage(lang) {
 // ATNAUJINTI KALBOS MYGTUKUS
 // ============================================
 function updateLangButtons() {
+    document.querySelectorAll('.lang-select').forEach(sel => { if (sel.value !== currentLang) sel.value = currentLang; });
     document.querySelectorAll('.lang-btn').forEach(btn => {
         if (btn.dataset.lang === currentLang) {
             btn.classList.add('active');
