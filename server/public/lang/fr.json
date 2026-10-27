@@ -1809,5 +1809,10 @@
     "tour.help": "❓ Rouvre ce guide à tout moment avec ce bouton. Bonne chance !",
     "tour.next": "Suivant ▶",
     "tour.skip": "Passer",
-    "tour.done": "Compris !"
+    "tour.done": "Compris !",
+    "cookie.text": "🍪 Nous utilisons des cookies Google Analytics pour voir combien de personnes jouent et comment améliorer le jeu. Aucune publicité.",
+    "cookie.yes": "J’accepte",
+    "cookie.no": "Je refuse",
+    "game.leftPanel.cookies": "🍪 Cookies",
+    "tip.cookies": "Réglages des cookies : autoriser ou bloquer les statistiques Google Analytics."
 }

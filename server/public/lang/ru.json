@@ -1854,5 +1854,10 @@
     "tour.help": "❓ Этот гид можно открыть снова этой кнопкой. Удачи!",
     "tour.next": "Далее ▶",
     "tour.skip": "Пропустить",
-    "tour.done": "Понятно!"
+    "tour.done": "Понятно!",
+    "cookie.text": "🍪 Мы используем cookie Google Analytics, чтобы видеть, сколько людей играет и как улучшить игру. Без рекламы.",
+    "cookie.yes": "Согласен",
+    "cookie.no": "Не согласен",
+    "game.leftPanel.cookies": "🍪 Cookie",
+    "tip.cookies": "Настройки cookie: разрешить или запретить статистику Google Analytics."
 }

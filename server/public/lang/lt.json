@@ -1856,5 +1856,10 @@
     "tour.help": "❓ Šį gidą bet kada vėl atidarysi šiuo mygtuku. Sėkmės!",
     "tour.next": "Toliau ▶",
     "tour.skip": "Praleisti",
-    "tour.done": "Supratau!"
+    "tour.done": "Supratau!",
+    "cookie.text": "🍪 Naudojame „Google Analytics“ slapukus, kad matytume, kiek žmonių žaidžia ir kaip pagerinti žaidimą. Jokių reklamų.",
+    "cookie.yes": "Sutinku",
+    "cookie.no": "Nesutinku",
+    "game.leftPanel.cookies": "🍪 Slapukai",
+    "tip.cookies": "Slapukų nustatymai: leisti arba neleisti „Google Analytics“ statistikos."
 }

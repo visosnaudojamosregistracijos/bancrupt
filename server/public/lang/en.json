@@ -1854,5 +1854,10 @@
     "tour.help": "❓ Open this guide again any time with this button. Good luck!",
     "tour.next": "Next ▶",
     "tour.skip": "Skip",
-    "tour.done": "Got it!"
+    "tour.done": "Got it!",
+    "cookie.text": "🍪 We use Google Analytics cookies to see how many people play and how to improve the game. No ads.",
+    "cookie.yes": "Accept",
+    "cookie.no": "Decline",
+    "game.leftPanel.cookies": "🍪 Cookies",
+    "tip.cookies": "Cookie settings: allow or block Google Analytics statistics."
 }

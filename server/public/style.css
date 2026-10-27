@@ -7234,3 +7234,20 @@ body.cmp #uiTip { font-size: 12px; max-width: 220px; }
 /* ⏱️ Laikmatis – apačioje virš „Bankrotuoju“, kad neslankiotų mygtukų */
 #leftPanel .lp-bottom { margin-top: auto; display: flex; flex-direction: column; gap: 8px; width: 100%; flex: 0 0 auto; }
 #leftPanel .lp-bottom .lp-danger { margin-top: 0; }
+
+/* 🍪 Slapukų sutikimo juosta */
+#cookieBanner {
+    position: fixed; left: 50%; bottom: 16px; z-index: 100005; width: min(640px, calc(100vw - 24px)); box-sizing: border-box;
+    display: none; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px;
+    background: linear-gradient(160deg, rgba(24,52,34,0.98), rgba(10,26,17,0.98)); border: 2px solid #ffd700; color: #fff7dc;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6); font: 600 13.5px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    transform: translateX(-50%);
+}
+#cookieBanner.show { display: flex; animation: cbIn .3s ease; }
+@keyframes cbIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+#cookieBanner .cb-text { flex: 1; }
+#cookieBanner .cb-btns { display: flex; gap: 8px; flex-shrink: 0; }
+#cookieBanner button { border-radius: 9px; padding: 8px 14px; font: inherit; font-weight: 800; cursor: pointer; }
+#cookieBanner .cb-no { background: transparent; color: #e6f2ea; border: 1px solid rgba(255,255,255,0.45); }
+#cookieBanner .cb-yes { background: linear-gradient(180deg, #ffe066, #f2b705); color: #1a1a1a; border: none; box-shadow: 0 3px 0 #a07800; }
+@media (max-width: 560px) { #cookieBanner { flex-direction: column; align-items: stretch; text-align: center; } #cookieBanner .cb-btns { justify-content: center; } }

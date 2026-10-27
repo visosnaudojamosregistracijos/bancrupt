@@ -124,6 +124,7 @@ function initSocket() {
 
     socket.on('gameCreated', (data) => {
         clearCell5Queue();
+        gaEvent('game_create');
         console.log('✅ Žaidimas sukurtas:', data);
         gameId = data.gameId;
         playerId = data.playerId;
@@ -152,6 +153,7 @@ function initSocket() {
 
     socket.on('joinedGame', (data) => {
         clearCell5Queue();
+        gaEvent('game_join');
         console.log('✅ Prisijungta prie žaidimo:', data);
         playerId = data.playerId;
         myPlayer = data.player;
@@ -475,6 +477,7 @@ socket.on('soundFilesUpdated', (files) => {
 
     socket.on('gameStarted', (data) => {
         console.log('🎮 Žaidimas pradėtas:', data);
+        try { const ps = (gameState && gameState.players) || []; gaEvent('game_start', { players: ps.length, bots: ps.filter(p => p.isBot).length }); } catch (e) {}
         
         playGameStartSound();
         
@@ -1117,6 +1120,7 @@ socket.on('buyConfirmed', (data) => {
 
     socket.on('bankruptConfirmed', (data) => {
         console.log('💀 GAUTAS BANKROTO PATVIRTINIMAS:', data);
+        if (data && data.playerId === playerId) gaEvent('player_bankrupt', { reason: data.reason || 'manual' });
         playBankruptSound();
         const msg = tf('cli.j_bankrupt', { playerName: data.playerName });
         addNotification(msg);
@@ -1471,6 +1475,7 @@ socket.on('buyConfirmed', (data) => {
 
     socket.on('gameFinished', (data) => {
         console.log('🏆 Žaidimas baigtas:', data);
+        gaEvent('game_finish', { won: !!(myPlayer && data && data.winner === myPlayer.name) });
         
         localStorage.removeItem('bancrupt_gameId');
         localStorage.removeItem('bancrupt_playerToken');
@@ -7563,6 +7568,81 @@ function maybeAutoTour(state) {
     setTimeout(() => { if (!tourUi.active) startTour(false); }, 1800);
 }
 
+
+// ============================================================
+// 📊 GOOGLE ANALYTICS (GA4) + 🍪 SLAPUKŲ SUTIKIMAS (BDAR)
+// GA įkeliamas TIK žmogui paspaudus „Sutinku“. Tik tikrame domene (ne peržiūroje).
+// ============================================================
+const GA_ID = 'G-BJJQVWVSC0';
+const GA_CONSENT_KEY = 'bancrupt_consent';
+const gaUi = { loaded: false };
+function gaConsent() { try { return localStorage.getItem(GA_CONSENT_KEY); } catch (e) { return null; } }
+function gaAllowedHost() {
+    const h = (location.hostname || '').toLowerCase();
+    return /(^|\.)bankrotuoju\.lt$/.test(h) || /(^|\.)bankro\.lt$/.test(h);
+}
+function gaLoad() {
+    if (gaUi.loaded || !gaAllowedHost()) return;
+    gaUi.loaded = true;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', GA_ID, { anonymize_ip: true });
+    let lang = 'lt';
+    try { lang = localStorage.getItem('bancrupt_lang') || 'lt'; } catch (e) {}
+    let token = null;
+    try { token = localStorage.getItem('bancrupt_token'); } catch (e) {}
+    window.gtag('set', 'user_properties', { game_lang: lang, user_type: token ? 'registered' : 'guest' });
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(s);
+}
+// Įvykis (siunčiamas tik jei sutikta ir GA įkeltas)
+function gaEvent(name, params) {
+    try { if (gaUi.loaded && typeof window.gtag === 'function') window.gtag('event', name, params || {}); } catch (e) {}
+}
+function gaSetConsent(yes) {
+    try { localStorage.setItem(GA_CONSENT_KEY, yes ? 'yes' : 'no'); } catch (e) {}
+    const b = document.getElementById('cookieBanner');
+    if (b) b.classList.remove('show');
+    if (yes) gaLoad();
+    else if (gaUi.loaded) {
+        // atšaukus sutikimą – išjungiam rinkimą ir ištrinam GA slapukus
+        try { window['ga-disable-' + GA_ID] = true; } catch (e) {}
+        document.cookie.split(';').forEach(c => {
+            const n = c.split('=')[0].trim();
+            if (/^_ga/.test(n)) {
+                const host = location.hostname, base = host.split('.').slice(-2).join('.');
+                [host, '.' + base, ''].forEach(d => { document.cookie = n + '=; Max-Age=0; path=/' + (d ? '; domain=' + d : ''); });
+            }
+        });
+    }
+}
+function showCookieBanner() {
+    let b = document.getElementById('cookieBanner');
+    if (!b) {
+        b = document.createElement('div');
+        b.id = 'cookieBanner';
+        b.setAttribute('role', 'dialog');
+        b.innerHTML = '<div class="cb-text"></div><div class="cb-btns"><button type="button" class="cb-no"></button><button type="button" class="cb-yes"></button></div>';
+        document.body.appendChild(b);
+        b.querySelector('.cb-yes').onclick = () => gaSetConsent(true);
+        b.querySelector('.cb-no').onclick = () => gaSetConsent(false);
+    }
+    b.querySelector('.cb-text').textContent = tt('cookie.text', '🍪 Naudojame „Google Analytics“ slapukus, kad matytume, kiek žmonių žaidžia ir kaip pagerinti žaidimą. Jokių reklamų.');
+    b.querySelector('.cb-yes').textContent = tt('cookie.yes', 'Sutinku');
+    b.querySelector('.cb-no').textContent = tt('cookie.no', 'Nesutinku');
+    b.classList.add('show');
+}
+(function initConsent() {
+    const go = () => {
+        const c = gaConsent();
+        if (c === 'yes') gaLoad();
+        else if (c !== 'no') setTimeout(showCookieBanner, 1200);
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();
 
 // 🚕 TAKSI: langelio pasirinkimas lentoje
 const taxiUi = { open: false, target: null, cost: 100, forbidden: [16, 26, 42], timer: null, deadline: 0 };

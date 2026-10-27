@@ -1809,5 +1809,10 @@
     "tour.help": "❓ Mit diesem Knopf öffnest du diese Anleitung jederzeit wieder. Viel Glück!",
     "tour.next": "Weiter ▶",
     "tour.skip": "Überspringen",
-    "tour.done": "Verstanden!"
+    "tour.done": "Verstanden!",
+    "cookie.text": "🍪 Wir verwenden Google-Analytics-Cookies, um zu sehen, wie viele Leute spielen und wie wir das Spiel verbessern können. Keine Werbung.",
+    "cookie.yes": "Zustimmen",
+    "cookie.no": "Ablehnen",
+    "game.leftPanel.cookies": "🍪 Cookies",
+    "tip.cookies": "Cookie-Einstellungen: Google-Analytics-Statistik erlauben oder blockieren."
 }
