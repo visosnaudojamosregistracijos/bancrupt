@@ -1850,7 +1850,7 @@
     "tour.me": "👤 Your money, position on the board and property are here.",
     "tour.trade": "🏪 Trading: swap properties and money with other players or sell to the bank.",
     "tour.info": "ℹ️ Turn it on and hover over a cell to see its price, rent and owner.",
-    "tour.settings": "⚙️ Language, music, sound, theme and board width are here.",
+    "tour.settings": "⚙️ View (2D/3D), camera, language, music, sound, theme and board width are here.",
     "tour.help": "❓ Open this guide again any time with this button. Good luck!",
     "tour.next": "Next ▶",
     "tour.skip": "Skip",
@@ -1859,5 +1859,13 @@
     "cookie.yes": "Accept",
     "cookie.no": "Decline",
     "game.leftPanel.cookies": "🍪 Cookies",
-    "tip.cookies": "Cookie settings: allow or block Google Analytics statistics."
+    "tip.cookies": "Cookie settings: allow or block Google Analytics statistics.",
+    "game.leftPanel.view": "🧊 View",
+    "game.leftPanel.help": "❓ Guide",
+    "game.leftPanel.feedback": "🐛 Bug / Idea",
+    "tip.view": "Board view: 2D – flat, 3D – tilted, 3D+ – rotate with mouse or finger.",
+    "tip.camera": "Camera: follow everyone’s moves, only yours, or none.",
+    "tip.feedback": "Report a bug or suggest an idea – we read everything.",
+    "game.timerMine": "⏱️ Your turn – {t} left",
+    "game.winner.feedback": "💬 Enjoyed it? Got an idea? Write to us"
 }

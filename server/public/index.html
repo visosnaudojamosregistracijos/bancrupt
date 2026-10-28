@@ -349,12 +349,7 @@
     <span data-i18n="game.header.turn">🎯 Eina:</span> <span id="turnDisplayName">---</span>
     <span id="headerTurnTimer" style="margin-left:10px; color:#ffd700; font-weight:700; display:none;">⏱️ ---</span>
 </span>
-    <span id="headerHelpWrap">
-    <button id="helpTourBtn" type="button" onclick="startTour(true)" data-tip="tip.help" aria-label="?">❓</button>
-    <button id="feedbackBtn" onclick="openFeedback()" title="Pranešti apie klaidą / Pasiūlyti idėją" data-i18n-title="html.feedbackTitle">
-        🐛 <span class="btn-text" data-i18n="game.header.bugReport">Klaida / Pasiūlymas</span>
-    </button>
-    </span>
+
 </div>
 
 
@@ -385,6 +380,7 @@
 <button onclick="openVoteKick()" id="voteKickBtn" data-tip="tip.vote" class="left-btn vote-kick-btn" data-i18n="game.leftPanel.voteKick">
     🗳️ Balsuoti
 </button>
+<button type="button" id="helpTourBtn" class="left-btn lp-help" onclick="startTour(true)" data-tip="tip.help"><span data-i18n="game.leftPanel.help">❓ Gidas</span></button>
 <button onclick="leaveGame()" id="leaveBtn" data-tip="tip.leave" class="left-btn leave-btn" data-i18n="game.leftPanel.leave" style="display:none;">
     🚪 Išeiti į meniu
 </button>
@@ -396,6 +392,9 @@
     <span data-i18n="game.leftPanel.settings">⚙️ Nustatymai</span><span class="lp-caret" aria-hidden="true">▾</span>
 </button>
 <div id="lpSettingsBody" class="lp-settings-body">
+<div class="lp-slot-row"><span class="lp-slot-lbl" data-i18n="game.leftPanel.view">🧊 Vaizdas</span><div id="lpViewSlot" class="lp-slot" data-tip="tip.view"></div></div>
+<div id="lpCamSlot" class="lp-slot" data-tip="tip.camera"></div>
+<div id="lpRotateSlot" class="lp-slot"></div>
                     <div id="gameLangSwitcher" style="display: flex; gap: 3px; width: 100%; justify-content: center;">
                         <label class="lang-select-wrap small" data-tip="tip.lang">🌐 <select class="lang-select" onchange="changeLanguage(this.value)" aria-label="Language"><option value="lt">🇱🇹 LT</option><option value="en">🇬🇧 EN</option><option value="ru">RU</option><option value="de">🇩🇪 DE</option><option value="es">🇪🇸 ES</option><option value="fr">🇫🇷 FR</option></select></label>
                     </div>
@@ -457,6 +456,7 @@
     <div id="turnTimer" style="color: #fff; font-size: 20px; font-weight: 900; text-shadow: 0 0 10px rgba(255,215,0,0.5);">---</div>
     <div id="turnTimerPlayer" style="color: #d4b896; font-size: 9px; margin-top: 2px;">---</div>
 </div>
+<button type="button" id="feedbackBtn" class="left-btn lp-feedback" onclick="openFeedback()" data-tip="tip.feedback"><span data-i18n="game.leftPanel.feedback">🐛 Klaida / Idėja</span></button>
 <div class="left-bankrupt-wrap lp-danger">
     <button onclick="bankrupt()" id="bankruptBtn" class="left-btn btn-bankrupt left-bankrupt" data-i18n="game.bankruptButton" data-tip="tip.bankrupt">💀 Bankrotuoju</button>
 </div>
@@ -569,6 +569,7 @@
                                         <div style="margin-bottom: 8px;">
                                             <span data-i18n="game.turnNow">🎯 Dabar eina:</span><br>
                                             <span id="turnIndicatorName" style="font-size: 28px; color: #1a6b3c;">---</span>
+                                            <div id="turnTimerCenter" class="ttc" aria-live="off"><span class="ttc-time"></span><span class="ttc-bar"><i></i></span></div>
                                         </div>
                                         <div style="font-size: 22px; color: #6c757d; border-top: 1px dashed rgba(61,43,31,0.2); padding-top: 8px;">
                                             <span data-i18n="game.turnNext">⏭️ Kitas:</span><br>
@@ -1129,6 +1130,7 @@
         <button onclick="closeWinnerModal()" style="padding:18px 50px; font-size:20px; font-weight:700; background:linear-gradient(145deg, #ffd700, #f0c000); color:#1a3b1a; border:none; border-radius:14px; cursor:pointer; transition:all 0.3s; box-shadow: 0 8px 30px rgba(255,215,0,0.5);" data-i18n="game.winner.playAgain">
             🎮 ŽAISTI VĖL
         </button>
+        <div style="margin-top:22px;"><button type="button" onclick="closeWinnerModal(); openFeedback();" style="background:none; border:none; color:#d4b896; font-size:15px; text-decoration:underline; cursor:pointer;" data-i18n="game.winner.feedback">💬 Patiko? Turi idėją? Parašyk mums</button></div>
     </div>
 </div>
 

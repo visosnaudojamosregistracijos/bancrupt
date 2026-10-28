@@ -1852,7 +1852,7 @@
     "tour.me": "👤 Čia tavo pinigai, vieta lentoje ir turtas.",
     "tour.trade": "🏪 Prekyba: mainykis sklypais ir pinigais su kitais žaidėjais arba parduok bankui.",
     "tour.info": "ℹ️ Įjunk – ir užvedus pelę ant langelio matysi jo kainą, nuomą ir savininką.",
-    "tour.settings": "⚙️ Čia kalba, muzika, garsas, tema ir lentos plotis.",
+    "tour.settings": "⚙️ Čia vaizdas (2D/3D), kamera, kalba, muzika, garsas, tema ir lentos plotis.",
     "tour.help": "❓ Šį gidą bet kada vėl atidarysi šiuo mygtuku. Sėkmės!",
     "tour.next": "Toliau ▶",
     "tour.skip": "Praleisti",
@@ -1861,5 +1861,13 @@
     "cookie.yes": "Sutinku",
     "cookie.no": "Nesutinku",
     "game.leftPanel.cookies": "🍪 Slapukai",
-    "tip.cookies": "Slapukų nustatymai: leisti arba neleisti „Google Analytics“ statistikos."
+    "tip.cookies": "Slapukų nustatymai: leisti arba neleisti „Google Analytics“ statistikos.",
+    "game.leftPanel.view": "🧊 Vaizdas",
+    "game.leftPanel.help": "❓ Gidas",
+    "game.leftPanel.feedback": "🐛 Klaida / Idėja",
+    "tip.view": "Lentos vaizdas: 2D – plokščias, 3D – pakreiptas, 3D+ – sukiojamas pele ar pirštu.",
+    "tip.camera": "Kamera: sekti visų ėjimus, tik tavo ėjimą arba nesekti.",
+    "tip.feedback": "Pranešk apie klaidą arba pasiūlyk idėją – perskaitome viską.",
+    "game.timerMine": "⏱️ Tavo eilė – liko {t}",
+    "game.winner.feedback": "💬 Patiko? Turi idėją? Parašyk mums"
 }

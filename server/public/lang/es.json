@@ -1805,7 +1805,7 @@
     "tour.me": "👤 Aquí están tu dinero, tu posición y tus propiedades.",
     "tour.trade": "🏪 Comercio: intercambia propiedades y dinero con otros jugadores o vende al banco.",
     "tour.info": "ℹ️ Actívalo y, al pasar el ratón por una casilla, verás su precio, alquiler y dueño.",
-    "tour.settings": "⚙️ Aquí están el idioma, la música, el sonido, el tema y el ancho del tablero.",
+    "tour.settings": "⚙️ Aquí están la vista (2D/3D), la cámara, el idioma, la música, el sonido, el tema y el ancho del tablero.",
     "tour.help": "❓ Abre esta guía cuando quieras con este botón. ¡Suerte!",
     "tour.next": "Siguiente ▶",
     "tour.skip": "Omitir",
@@ -1814,5 +1814,13 @@
     "cookie.yes": "Acepto",
     "cookie.no": "No acepto",
     "game.leftPanel.cookies": "🍪 Cookies",
-    "tip.cookies": "Ajustes de cookies: permitir o bloquear las estadísticas de Google Analytics."
+    "tip.cookies": "Ajustes de cookies: permitir o bloquear las estadísticas de Google Analytics.",
+    "game.leftPanel.view": "🧊 Vista",
+    "game.leftPanel.help": "❓ Guía",
+    "game.leftPanel.feedback": "🐛 Error / Idea",
+    "tip.view": "Vista del tablero: 2D – plano, 3D – inclinado, 3D+ – gíralo con el ratón o el dedo.",
+    "tip.camera": "Cámara: seguir las jugadas de todos, solo la tuya o ninguna.",
+    "tip.feedback": "Informa de un error o propón una idea – lo leemos todo.",
+    "game.timerMine": "⏱️ Tu turno – quedan {t}",
+    "game.winner.feedback": "💬 ¿Te gustó? ¿Tienes una idea? Escríbenos"
 }

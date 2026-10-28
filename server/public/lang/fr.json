@@ -1805,7 +1805,7 @@
     "tour.me": "👤 Ici : ton argent, ta position et tes biens.",
     "tour.trade": "🏪 Échanges : échange terrains et argent avec les autres joueurs ou vends à la banque.",
     "tour.info": "ℹ️ Active-le et survole une case pour voir son prix, son loyer et son propriétaire.",
-    "tour.settings": "⚙️ Ici : langue, musique, son, thème et largeur du plateau.",
+    "tour.settings": "⚙️ Ici : vue (2D/3D), caméra, langue, musique, son, thème et largeur du plateau.",
     "tour.help": "❓ Rouvre ce guide à tout moment avec ce bouton. Bonne chance !",
     "tour.next": "Suivant ▶",
     "tour.skip": "Passer",
@@ -1814,5 +1814,13 @@
     "cookie.yes": "J’accepte",
     "cookie.no": "Je refuse",
     "game.leftPanel.cookies": "🍪 Cookies",
-    "tip.cookies": "Réglages des cookies : autoriser ou bloquer les statistiques Google Analytics."
+    "tip.cookies": "Réglages des cookies : autoriser ou bloquer les statistiques Google Analytics.",
+    "game.leftPanel.view": "🧊 Vue",
+    "game.leftPanel.help": "❓ Guide",
+    "game.leftPanel.feedback": "🐛 Bug / Idée",
+    "tip.view": "Vue du plateau : 2D – à plat, 3D – incliné, 3D+ – à faire pivoter à la souris ou au doigt.",
+    "tip.camera": "Caméra : suivre les coups de tous, seulement les tiens, ou aucun.",
+    "tip.feedback": "Signale un bug ou propose une idée – nous lisons tout.",
+    "game.timerMine": "⏱️ À toi – il reste {t}",
+    "game.winner.feedback": "💬 Ça t’a plu ? Une idée ? Écris-nous"
 }

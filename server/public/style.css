@@ -7251,3 +7251,62 @@ body.cmp #uiTip { font-size: 12px; max-width: 220px; }
 #cookieBanner .cb-no { background: transparent; color: #e6f2ea; border: 1px solid rgba(255,255,255,0.45); }
 #cookieBanner .cb-yes { background: linear-gradient(180deg, #ffe066, #f2b705); color: #1a1a1a; border: none; box-shadow: 0 3px 0 #a07800; }
 @media (max-width: 560px) { #cookieBanner { flex-direction: column; align-items: stretch; text-align: center; } #cookieBanner .cb-btns { justify-content: center; } }
+
+/* ============================================================
+   🧹 BE VIRŠUTINĖS JUOSTOS: viskas – kairėje panelėje, laikmatis – 5 langelyje
+   ============================================================ */
+#gameHeader { display: none !important; }
+#leftPanel #turnTimerBox { display: none !important; }
+/* Vaizdas / kamera / pasukimas nustatymuose */
+#leftPanel .lp-slot-row { display: flex; flex-direction: column; gap: 3px; }
+#leftPanel .lp-slot-lbl { font-size: 10.5px; color: var(--gold); opacity: .85; padding-left: 2px; }
+#leftPanel .lp-slot { width: 100%; }
+#leftPanel .lp-slot:empty { display: none; }
+#leftPanel #boardViewSwitch { display: flex; width: 100%; margin: 0; }
+#leftPanel #boardViewSwitch button { flex: 1 1 0; min-width: 0; padding: 5px 0; font-size: 11px; }
+body.board-3dp #leftPanel #boardViewSwitch .bv-reset { flex: 0 0 24px; }
+#leftPanel #cameraSwitch { display: flex; flex-direction: column; width: 100%; }
+#leftPanel #cameraSwitch .cam-btn { width: 100%; justify-content: center; padding: 7px 2px; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#leftPanel #cameraSwitch .cam-lbl { display: inline !important; }
+#leftPanel #cameraSwitch .cam-menu { position: static; margin-top: 4px; width: 100%; min-width: 0; box-shadow: none; }
+#leftPanel #cameraSwitch .cam-item { white-space: normal; font-size: 11px; line-height: 1.25; text-align: left; }
+#leftPanel #rotateBtn { width: 100%; }
+#leftPanel #rotateBtn .rb-txt { display: inline !important; }
+/* ❓ Gidas ir 🐛 Klaida – kaip kiti panelės mygtukai */
+#leftPanel #helpTourBtn, #leftPanel #feedbackBtn {
+    width: 100%; padding: 7px 6px; margin: 0; font-size: 11.5px; border-radius: 8px; border: 2px solid var(--gold);
+    background: var(--green-deep); color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: none;
+}
+#leftPanel #helpTourBtn:hover, #leftPanel #feedbackBtn:hover { background: var(--gold); color: var(--green-deep); }
+#leftPanel #feedbackBtn { border-color: rgba(255,215,0,0.55); background: rgba(0,0,0,0.25); }
+body.cmp #leftPanel #helpTourBtn, body.cmp #leftPanel #feedbackBtn { font-size: 11px !important; padding: 7px 4px !important; }
+/* Siaura panelė (planšetė be kompaktiško režimo) */
+@media (max-width: 992px) {
+    body:not(.cmp) #leftPanel #boardViewSwitch button { font-size: 9px; }
+    body:not(.cmp) #leftPanel .lp-slot-lbl { font-size: 9px; }
+    body:not(.cmp) #leftPanel #cameraSwitch .cam-lbl { display: none !important; }
+}
+/* 📱 Telefone ◀ mygtukas – aiškiau matomas meniu */
+body.cmp #leftPanelToggle { width: 28px !important; height: 58px !important; flex-direction: column; gap: 1px; font-size: 12px !important; opacity: 0.95 !important;
+    box-shadow: 3px 0 10px rgba(0,0,0,0.45); }
+body.cmp #leftPanelToggle::before { content: '⚙️'; font-size: 13px; line-height: 1; }
+/* Lenta – be viršutinės juostos daugiau vietos */
+
+
+/* ⏱️ Laikmatis 5 langelyje */
+.ttc { display: none; flex-direction: column; align-items: center; gap: 4px; margin-top: 6px; }
+.ttc.show { display: flex; }
+.ttc-time { font-size: 0.72em; font-weight: 900; color: #1a6b3c; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.ttc-bar { display: block; width: 78%; max-width: 260px; height: 6px; border-radius: 6px; background: rgba(61,43,31,0.15); overflow: hidden; }
+.ttc-bar i { display: block; height: 100%; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #2ecc71, #f1c40f); transition: width .5s linear, background .3s; }
+.ttc.warn .ttc-time { color: #d62828; animation: ttcPulse .9s ease-in-out infinite; }
+.ttc.warn .ttc-bar i { background: linear-gradient(90deg, #ff4d4d, #d62828); }
+.ttc.paused .ttc-bar { display: none; }
+.ttc.paused .ttc-time { color: #2f7fbf; font-size: 0.55em; }
+@keyframes ttcPulse { 50% { transform: scale(1.08); } }
+body.dark-mode .ttc-time { color: #7CFC00; }
+body.dark-mode .ttc-bar { background: rgba(255,255,255,0.15); }
+body.theme-neon .ttc-time { color: #00ffd0; }
+/* ◀ mygtukas kompiuteryje nebeuždengia panelės mygtukų – stovi panelės krašte */
+body:not(.cmp) #gameBody:has(#leftPanel:not(.hidden)) #leftPanelToggle { left: var(--lp-right, 136px); width: 18px; height: 52px; font-size: 12px; border-radius: 0 10px 10px 0; opacity: .85; }
+body:not(.cmp) #gameBody:has(#leftPanel:not(.hidden)) #leftPanelToggle:hover { opacity: 1; }

@@ -1805,7 +1805,7 @@
     "tour.me": "👤 Hier sind dein Geld, deine Position und dein Besitz.",
     "tour.trade": "🏪 Handel: tausche Grundstücke und Geld mit anderen Spielern oder verkaufe an die Bank.",
     "tour.info": "ℹ️ Einschalten – dann siehst du beim Überfahren eines Feldes Preis, Miete und Besitzer.",
-    "tour.settings": "⚙️ Hier sind Sprache, Musik, Ton, Design und Brettbreite.",
+    "tour.settings": "⚙️ Hier sind Ansicht (2D/3D), Kamera, Sprache, Musik, Ton, Design und Brettbreite.",
     "tour.help": "❓ Mit diesem Knopf öffnest du diese Anleitung jederzeit wieder. Viel Glück!",
     "tour.next": "Weiter ▶",
     "tour.skip": "Überspringen",
@@ -1814,5 +1814,13 @@
     "cookie.yes": "Zustimmen",
     "cookie.no": "Ablehnen",
     "game.leftPanel.cookies": "🍪 Cookies",
-    "tip.cookies": "Cookie-Einstellungen: Google-Analytics-Statistik erlauben oder blockieren."
+    "tip.cookies": "Cookie-Einstellungen: Google-Analytics-Statistik erlauben oder blockieren.",
+    "game.leftPanel.view": "🧊 Ansicht",
+    "game.leftPanel.help": "❓ Anleitung",
+    "game.leftPanel.feedback": "🐛 Fehler / Idee",
+    "tip.view": "Brettansicht: 2D – flach, 3D – geneigt, 3D+ – mit Maus oder Finger drehbar.",
+    "tip.camera": "Kamera: allen Zügen folgen, nur deinem oder gar nicht.",
+    "tip.feedback": "Melde einen Fehler oder schlage eine Idee vor – wir lesen alles.",
+    "game.timerMine": "⏱️ Du bist dran – noch {t}",
+    "game.winner.feedback": "💬 Gefallen? Eine Idee? Schreib uns"
 }

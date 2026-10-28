@@ -3664,6 +3664,15 @@ setTimeout(autoFitInfoFont, 200);
 // ============================================
 // 🆕 KAIRĖS PANELĖS PASLĖPIMAS / PARODYMAS
 // ============================================
+// ◀ mygtukas – prie dešinio panelės krašto (kompiuteryje)
+function placeLeftPanelToggle() {
+    const panel = document.getElementById('leftPanel');
+    if (!panel || document.body.classList.contains('cmp')) return;
+    const r = panel.getBoundingClientRect();
+    if (r.width) document.documentElement.style.setProperty('--lp-right', Math.round(r.right) + 'px');
+}
+window.addEventListener('resize', () => setTimeout(placeLeftPanelToggle, 50));
+setInterval(placeLeftPanelToggle, 1500);
 function toggleLeftPanel() {
     const panel = document.getElementById('leftPanel');
     const btn = document.getElementById('leftPanelToggle');
@@ -3870,9 +3879,13 @@ function applyBoardView() {
         sw.title = tt('game.boardView', 'Stalo vaizdas');
         sw.querySelectorAll('button[data-v]').forEach(b => b.onclick = () => setBoardView(b.dataset.v));
         sw.querySelector('.bv-reset').onclick = () => { orbitReset(true); if (typeof playClickSound === 'function') playClickSound(); };
-        const idEl = document.getElementById('gameIdDisplay');
-        if (idEl && idEl.nextSibling) header.insertBefore(sw, idEl.nextSibling);
-        else header.appendChild(sw);
+        const slot = document.getElementById('lpViewSlot');   // ⚙️ Nustatymuose (kairėje panelėje)
+        if (slot) slot.appendChild(sw);
+        else {
+            const idEl = document.getElementById('gameIdDisplay');
+            if (idEl && idEl.nextSibling) header.insertBefore(sw, idEl.nextSibling);
+            else header.appendChild(sw);
+        }
     }
     sw.querySelectorAll('button[data-v]').forEach(b => b.classList.toggle('active', b.dataset.v === view));
     renderCameraButton();
@@ -4096,8 +4109,9 @@ function updateRotateUi() {
         btn.id = 'rotateBtn';
         btn.type = 'button';
         btn.onclick = toggleForceLandscape;
-        const fb = document.getElementById('headerHelpWrap') || document.getElementById('feedbackBtn');
-        header.insertBefore(btn, (fb && fb.parentNode === header) ? fb : null);
+        btn.className = 'left-btn';
+        const slot = document.getElementById('lpRotateSlot');
+        if (slot) slot.appendChild(btn); else header.appendChild(btn);
     }
     const on = forceLandPref();
     // Rodom tik kai telefonas stačiai (arba pasukimas įjungtas – kad būtų kaip grąžinti)
@@ -7825,9 +7839,13 @@ function renderCameraButton() {
         wrap = document.createElement('span');
         wrap.id = 'cameraSwitch';
         wrap.innerHTML = '<button type="button" class="cam-btn"></button><div class="cam-menu"></div>';
-        const anchor = document.getElementById('boardViewSwitch');
-        if (anchor && anchor.nextSibling) header.insertBefore(wrap, anchor.nextSibling);
-        else header.appendChild(wrap);
+        const slot = document.getElementById('lpCamSlot');   // ⚙️ Nustatymuose (kairėje panelėje)
+        if (slot) slot.appendChild(wrap);
+        else {
+            const anchor = document.getElementById('boardViewSwitch');
+            if (anchor && anchor.nextSibling) header.insertBefore(wrap, anchor.nextSibling);
+            else header.appendChild(wrap);
+        }
         const btn = wrap.querySelector('.cam-btn');
         btn.onclick = (e) => { e.stopPropagation(); wrap.classList.toggle('open'); playClickSound(); };
         document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) wrap.classList.remove('open'); });
@@ -12031,6 +12049,37 @@ async function submitFeedback() {
 }
 
 // ============================================
+// ⏱️ LAIKMATIS 5 LANGELYJE – po „Dabar eina“ vardu, su trumpėjančia juostele
+// ============================================
+const ttcUi = { end: 0, total: 0 };
+function updateCenterTimer() {
+    const box = document.getElementById('turnTimerCenter');
+    if (!box) return;
+    const timeEl = box.querySelector('.ttc-time'), bar = box.querySelector('.ttc-bar i');
+    const now = Date.now();
+    let mode = null, end = 0;
+    if (gameState?.turnTimerPaused) mode = 'paused';
+    else if (gameState?.turnTimerActive && gameState?.turnTimerEndTime && gameState.turnTimerEndTime > now) { mode = 'turn'; end = gameState.turnTimerEndTime; }
+    // pirkimo metu jis turi savo laikmatį – čia slepiam
+    if (gameState?.buyTimeoutActive && gameState?.buyTimeoutEndTime && gameState.buyTimeoutEndTime > now) mode = null;
+    if (!mode) { box.classList.remove('show', 'warn', 'paused'); ttcUi.end = 0; return; }
+    box.classList.add('show');
+    box.classList.toggle('paused', mode === 'paused');
+    if (mode === 'paused') {
+        timeEl.textContent = '⏸️ ' + tt('game.timerPaused', 'laikas sustabdytas');
+        box.classList.remove('warn');
+        return;
+    }
+    if (Math.abs(end - ttcUi.end) > 1500) { ttcUi.end = end; ttcUi.total = Math.max(1000, end - now); }   // naujas ėjimas
+    const left = Math.max(0, end - now), secs = Math.ceil(left / 1000);
+    const mine = gameState && gameState.currentTurn === playerId;
+    const t = Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
+    timeEl.textContent = mine ? tt('game.timerMine', '⏱️ Tavo eilė – liko {t}').replace('{t}', t) : '⏱️ ' + t;
+    bar.style.width = Math.max(0, Math.min(100, left / ttcUi.total * 100)) + '%';
+    box.classList.toggle('warn', secs <= 10);
+}
+
+// ============================================
 // 🆕 TURN TIMER + BUY TIMER
 // ============================================
 setInterval(() => {
@@ -12060,6 +12109,7 @@ setInterval(() => {
         headerTimer.style.display = txt ? '' : 'none';
     }
     
+    updateCenterTimer();
     if (!turnTimerBox || !turnTimerEl) return;
     
     // 🆕 1. PIRKIMO LAIKAS (prioritetas)
