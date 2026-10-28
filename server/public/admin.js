@@ -677,19 +677,32 @@ async function loadStats() {
 // 🆕 LANKYTOJŲ STATISTIKA   ← PRIDĖTA ČIA
 async function loadVisitors() {
     try {
-        const res = await fetch('/api/admin/stats/visitors', {
+        const res = await fetch('/api/admin/stats/visitors?days=30', {
             headers: { 'Authorization': 'Bearer ' + token }
         });
-        
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        
         const data = await res.json();
-        
-        const todayEl = document.getElementById('visitorsToday');
-        const yesterdayEl = document.getElementById('visitorsYesterday');
-        
-        if (todayEl) todayEl.textContent = data.today || 0;
-        if (yesterdayEl) yesterdayEl.textContent = data.yesterday || 0;
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = (v === undefined || v === null) ? 0 : v; };
+        set('visitorsToday', data.today);
+        set('visitorsYesterday', data.yesterday);
+        set('visitors7', data.last7 ? data.last7.visitors : 0);
+        set('visitors30', data.lastN ? data.lastN.visitors : 0);
+        set('visitorsReg', data.todayRow ? data.todayRow.registered : 0);
+        set('gamesToday', data.todayRow ? data.todayRow.games_started : 0);
+        // 📈 Stulpelinė diagrama: 30 dienų
+        const chart = document.getElementById('visitorsChart');
+        if (chart && Array.isArray(data.series)) {
+            const max = Math.max(1, ...data.series.map(r => r.visitors || 0));
+            chart.innerHTML = data.series.map(r => {
+                const v = r.visitors || 0, g = r.games_started || 0;
+                const hv = Math.round(v / max * 100), hg = Math.round(Math.min(g, max) / max * 100);
+                const d = String(r.day).slice(5);
+                return '<div title="' + r.day + ': ' + v + ' lankytojų, ' + g + ' žaidimų" style="flex:1; height:100%; display:flex; align-items:flex-end; gap:1px; min-width:0;">' +
+                    '<div style="flex:2; height:' + Math.max(hv, v ? 2 : 0) + '%; background:#28a745; border-radius:2px 2px 0 0;"></div>' +
+                    '<div style="flex:1; height:' + Math.max(hg, g ? 2 : 0) + '%; background:#ff9f43; border-radius:2px 2px 0 0;"></div>' +
+                    '</div>';
+            }).join('');
+        }
     } catch (err) {
         console.error('❌ Lankytojų klaida:', err);
     }

@@ -7571,7 +7571,8 @@ function maybeAutoTour(state) {
 
 // ============================================================
 // 📊 GOOGLE ANALYTICS (GA4) + 🍪 SLAPUKŲ SUTIKIMAS (BDAR)
-// GA įkeliamas TIK žmogui paspaudus „Sutinku“. Tik tikrame domene (ne peržiūroje).
+// Be sutikimo – Consent Mode (be slapukų, anoniminiai signalai); paspaudus „Sutinku“ – pilna statistika.
+// Tik tikrame domene (ne peržiūroje).
 // ============================================================
 const GA_ID = 'G-BJJQVWVSC0';
 const GA_CONSENT_KEY = 'bancrupt_consent';
@@ -7581,11 +7582,21 @@ function gaAllowedHost() {
     const h = (location.hostname || '').toLowerCase();
     return /(^|\.)bankrotuoju\.lt$/.test(h) || /(^|\.)bankro\.lt$/.test(h);
 }
-function gaLoad() {
-    if (gaUi.loaded || !gaAllowedHost()) return;
+function gaLoad(granted) {
+    if (!gaAllowedHost()) return;
+    if (gaUi.loaded) {
+        if (granted) window.gtag('consent', 'update', { analytics_storage: 'granted' });
+        return;
+    }
     gaUi.loaded = true;
     window.dataLayer = window.dataLayer || [];
     window.gtag = function () { window.dataLayer.push(arguments); };
+    // 🛡️ Google „Consent Mode“: be sutikimo – jokių slapukų, tik anoniminiai signalai,
+    // iš kurių Google apskaičiuoja apytikrį visų lankytojų skaičių. Reklama visada išjungta.
+    window.gtag('consent', 'default', {
+        analytics_storage: granted ? 'granted' : 'denied',
+        ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied'
+    });
     window.gtag('js', new Date());
     window.gtag('config', GA_ID, { anonymize_ip: true });
     let lang = 'lt';
@@ -7606,10 +7617,10 @@ function gaSetConsent(yes) {
     try { localStorage.setItem(GA_CONSENT_KEY, yes ? 'yes' : 'no'); } catch (e) {}
     const b = document.getElementById('cookieBanner');
     if (b) b.classList.remove('show');
-    if (yes) gaLoad();
+    if (yes) gaLoad(true);
     else if (gaUi.loaded) {
+        try { window.gtag('consent', 'update', { analytics_storage: 'denied' }); } catch (e) {}
         // atšaukus sutikimą – išjungiam rinkimą ir ištrinam GA slapukus
-        try { window['ga-disable-' + GA_ID] = true; } catch (e) {}
         document.cookie.split(';').forEach(c => {
             const n = c.split('=')[0].trim();
             if (/^_ga/.test(n)) {
@@ -7638,8 +7649,8 @@ function showCookieBanner() {
 (function initConsent() {
     const go = () => {
         const c = gaConsent();
-        if (c === 'yes') gaLoad();
-        else if (c !== 'no') setTimeout(showCookieBanner, 1200);
+        gaLoad(c === 'yes');                   // visada įkeliam (be sutikimo – be slapukų)
+        if (c !== 'yes' && c !== 'no') setTimeout(showCookieBanner, 1200);
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
 })();

@@ -401,6 +401,20 @@ router.get('/stats', requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/admin/stats/visitors?days=30 – lankytojai be slapukų (visitStats.js)
+router.get('/stats/visitors', requireAdmin, async (req, res) => {
+    try {
+        const visitStats = require('../visitStats');
+        const data = await visitStats.getSummary(req.query.days || 30);
+        if (!data) return res.json({ today: { visitors: 0 }, yesterday: { visitors: 0 }, series: [] });
+        // senas formatas (today / yesterday skaičiai) + naujas detalus
+        res.json(Object.assign({}, data, { today: data.today.visitors, yesterday: data.yesterday.visitors, todayRow: data.today, yesterdayRow: data.yesterday }));
+    } catch (err) {
+        console.error('admin/stats/visitors klaida:', err);
+        res.status(500).json({ error: 'Serverio klaida' });
+    }
+});
+
 // GET /api/admin/stats/summary
 router.get('/stats/summary', requireAdmin, async (req, res) => {
     try {

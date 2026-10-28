@@ -476,18 +476,23 @@
             Paskutinis atnaujinimas: <span id="stats-updated">-</span>
         </p>
 
-<!-- 🆕 LANKYTOJAI -->
+<!-- 📊 LANKYTOJAI (be slapukų – skaičiuojami visi tikri lankytojai) -->
         <div style="background:#1a1a2e; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #444;">
-            <h3 style="color:#ffd700; margin-bottom:12px;">📊 Lankytojai</h3>
-            <div style="display:flex; gap:20px;">
-                <div>
-                    <div style="color:#aaa; font-size:12px; margin-bottom:4px;">ŠIANDIEN</div>
-                    <strong id="visitorsToday" style="color:#28a745; font-size:24px;">-</strong>
-                </div>
-                <div>
-                    <div style="color:#aaa; font-size:12px; margin-bottom:4px;">VAKAR</div>
-                    <strong id="visitorsYesterday" style="color:#17a2b8; font-size:24px;">-</strong>
-                </div>
+            <h3 style="color:#ffd700; margin:0 0 4px;">📊 Lankytojai</h3>
+            <div style="color:#888; font-size:12px; margin-bottom:12px;">Unikalūs žmonės per dieną, kurių naršyklė atidarė žaidimą (botai ir nuorodų peržiūros neskaičiuojami). Be slapukų – skaičiuojami visi, ne tik paspaudę „Sutinku“.</div>
+            <div style="display:flex; gap:22px; flex-wrap:wrap;">
+                <div><div style="color:#aaa; font-size:12px; margin-bottom:4px;">ŠIANDIEN</div><strong id="visitorsToday" style="color:#28a745; font-size:26px;">-</strong></div>
+                <div><div style="color:#aaa; font-size:12px; margin-bottom:4px;">VAKAR</div><strong id="visitorsYesterday" style="color:#17a2b8; font-size:26px;">-</strong></div>
+                <div><div style="color:#aaa; font-size:12px; margin-bottom:4px;">7 DIENOS</div><strong id="visitors7" style="color:#ffd700; font-size:26px;">-</strong></div>
+                <div><div style="color:#aaa; font-size:12px; margin-bottom:4px;">30 DIENŲ</div><strong id="visitors30" style="color:#ffd700; font-size:26px;">-</strong></div>
+                <div><div style="color:#aaa; font-size:12px; margin-bottom:4px;">ŠIANDIEN REGISTR.</div><strong id="visitorsReg" style="color:#c39bff; font-size:26px;">-</strong></div>
+                <div><div style="color:#aaa; font-size:12px; margin-bottom:4px;">ŽAIDIMŲ ŠIANDIEN</div><strong id="gamesToday" style="color:#ff9f43; font-size:26px;">-</strong></div>
+            </div>
+            <div id="visitorsChart" style="display:flex; align-items:flex-end; gap:3px; height:120px; margin-top:16px; padding-top:6px; border-top:1px solid #333;"></div>
+            <div style="display:flex; gap:14px; margin-top:6px; font-size:11px; color:#aaa;">
+                <span><i style="display:inline-block;width:10px;height:10px;background:#28a745;border-radius:2px;"></i> lankytojai</span>
+                <span><i style="display:inline-block;width:10px;height:10px;background:#ff9f43;border-radius:2px;"></i> pradėti žaidimai</span>
+                <span style="margin-left:auto;">Paskutinės 30 dienų</span>
             </div>
         </div>
 
