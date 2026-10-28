@@ -1560,8 +1560,16 @@ if (currentPlayer.money < 0) {
     // ✅ Apsauga nuo isRolling užstrigimo po auto-roll
     const rolledPlayerId = currentPlayer.id;
     const rolledPlayerName = currentPlayer.name;
-    setTimeout(() => {
-        if (this.isRolling && this.currentTurn === rolledPlayerId) {
+    const rolledSeq = this.rollSeq;
+    const watchdog = (late) => {
+        if (this.rollSeq !== rolledSeq) return;   // jau kitas metimas (pvz. dublis) – šis tikrinimas nebegalioja
+        if (!(this.isRolling && this.currentTurn === rolledPlayerId)) return;
+        // Langelis dar laukia apdorojimo (serveris jį apdoros po 6 s) – tai ne užstrigimas, palaukiam
+        if (!late && this.pendingFieldPlayerId === rolledPlayerId) {
+            setTimeout(() => watchdog(true), 6000);
+            return;
+        }
+        {
             console.warn(`⚠️ isRolling užstrigo po auto-roll (${rolledPlayerName}) – atblokuojam`);
             this.isRolling = false;
 
@@ -1575,7 +1583,8 @@ if (currentPlayer.money < 0) {
                 this.emitFunction('gameState', this.getGameState());
             }
         }
-    }, 3000);
+    };
+    setTimeout(() => watchdog(false), 3000);
 }
 
     botSleep(ms) {
@@ -2037,6 +2046,7 @@ if (currentPlayer.money < 0) {
         this.landingPos = null;
 
         this.isRolling = true;
+        this.rollSeq = (this.rollSeq || 0) + 1;   // kiekvienas metimas turi savo numerį (AFK apsaugai)
         this.currentPlayerId = playerId;
         this.lastActivity = Date.now();
 
