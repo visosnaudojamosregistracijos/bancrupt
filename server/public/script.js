@@ -1182,7 +1182,7 @@ socket.on('buyConfirmed', (data) => {
         
         // 🆕 Garsai pagal lauką
         if (fieldId === 2) { playSoundForPlayer(cellLandSound(2, 'dujos', data.playerId, result), data.playerId); fxGas2(2); }
-        else if (fieldId === 4) playSoundForPlayer('ratas_atsistojo', data.playerId);
+        else if (fieldId === 4) playSoundForPlayer('ratas_atsistojo', data.playerId, true);
         else if (fieldId === 5) playSoundForPlayer('tax', data.playerId);    // VMI – garsas pagal langelį (veikia visomis kalbomis)
         else if (fieldId === 14) playSoundForPlayer('siuksles', data.playerId);
         else if (fieldId === 28) playSoundForPlayer('elektra', data.playerId);
@@ -7967,7 +7967,6 @@ function wheelMusicStart(pid) {
     wheelMusicStop(true);
     try {
         if (!audioManager || !audioManager.isEnabled) return;
-        if (soundMode !== 'all' && pid !== playerId) return;          // „tik mano garsai“ – kitų rato muzikos negirdim
         const lvl = audioManager.getSoundLevel('ratas_muzika');
         if (lvl <= 0) return;
         const src = audioManager.pick('ratas_muzika');
@@ -8103,7 +8102,7 @@ function spinWheelUi(index, jitter, spinMs, pid) {
     if (wheelUi.anim) { try { wheelUi.anim.cancel(); } catch (e) {} }
     wheelUi.anim = rot.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${to}deg)` }],
         { duration: dur, easing: 'cubic-bezier(.12,.6,.12,1)', fill: 'forwards' });
-    playSoundForPlayer('ratas_suka', pid);
+    playSoundForPlayer('ratas_suka', pid, true);   // 🎡 rato garsus girdi visi prie stalo
     // „tik-tik“ kiekvieną kartą, kai pro rodyklę praslenka sektoriaus kraštas
     const seg = 360 / wheelUi.sectors.length;
     let lastSeg = null, lastTick = 0;
@@ -8116,7 +8115,7 @@ function spinWheelUi(index, jitter, spinMs, pid) {
         const now = performance.now();
         if (lastSeg !== null && sIdx !== lastSeg && now - lastTick > 55) {
             lastTick = now;
-            if (soundMode === 'all' || pid === playerId) { try { audioManager.playOverlap('ratas_tiksi'); } catch (e) {} }
+            try { audioManager.playOverlap('ratas_tiksi'); } catch (e) {}
         }
         lastSeg = sIdx;
         wheelUi.raf = requestAnimationFrame(loop);
@@ -8147,7 +8146,7 @@ function showWheelResult(d) {
     else if (s.type === 'taxi') kind = 'taxi';
     res.className = 'wh-res show ' + kind;
     box.querySelector('.wh-left').textContent = '';
-    if (kind !== 'jail') playSoundForPlayer(WHEEL_RESULT_SOUND[kind], d.playerId);   // kalėjimui garsus groja policijos mašinėlė
+    if (kind !== 'jail') playSoundForPlayer(WHEEL_RESULT_SOUND[kind], d.playerId, true);   // kalėjimui garsus groja policijos mašinėlė
     // Kalėjimas – figūrėlė nueina į kalėjimą
     if (s.type === 'jail' && d.from !== d.to) {
         window.animatingPlayers = window.animatingPlayers || [];
