@@ -68,6 +68,9 @@ class AudioManager {
 
     // 🎲 Parinkti garsą: jei yra keli skirtingi variantai – atsitiktinis, nesikartojantis iš eilės
     pick(soundName) {
+        // 🌐 Stalas sukurtas ne lietuviškai – jei sounds.json yra „<garsas>_kitos“, naudojamas jis
+        const tl = (typeof window !== 'undefined') ? window.__tableLang : null;
+        if (tl && tl !== 'lt' && this.variants[soundName + '_kitos'] && this.variants[soundName + '_kitos'].length) soundName = soundName + '_kitos';
         const list = this.variants[soundName];
         if (!list || !list.length) return this.sounds[soundName];
         if (list.length === 1) return list[0];

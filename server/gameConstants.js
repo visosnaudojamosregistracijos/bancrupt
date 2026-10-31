@@ -86,6 +86,29 @@ module.exports = {
     TAXI_TIMEOUT: 30000,
     TAXI_FORBIDDEN: [16, 26, 42],
 
+    // 🎡 LAIMĖS RATAS (4 langelis): visi sektoriai vienodai tikėtini
+    WHEEL_FIELD_ID: 4,
+    WHEEL_TIMEOUT: 30000,          // tiek laukiama, kol žaidėjas pats užsuks (po to suka automatiškai)
+    WHEEL_SPIN_MIN_MS: 3000,
+    WHEEL_SPIN_MAX_MS: 5000,
+    WHEEL_SECTORS: [
+        { type: 'money', amount: 50 },
+        { type: 'money', amount: -50 },
+        { type: 'money', amount: 100 },
+        { type: 'jail' },
+        { type: 'money', amount: 150 },
+        { type: 'money', amount: -100 },
+        { type: 'taxi' },
+        { type: 'money', amount: 200 },
+        { type: 'collect', amount: 25 },     // gauni po €25 iš kiekvieno žaidėjo
+        { type: 'money', amount: -150 },
+        { type: 'money', amount: 300 },
+        { type: 'nothing' },
+        { type: 'money', amount: -200 },
+        { type: 'pay_each', amount: 25 },    // moki po €25 kiekvienam žaidėjui
+        { type: 'money', amount: 500 }
+    ],
+
     // 🏗️ Statybų langas po sustojimo (kiekvienas pastatytas namas laiką atnaujina)
     BUILD_WINDOW_MS: 15000,
     TURN_MAX_MS: 180000,          // ⏱️ ėjimo laikmatis po veiksmų atsinaujina, bet ne ilgiau nei 3 min

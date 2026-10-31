@@ -10,7 +10,7 @@ const boardData = [
     { id: 1, name: 'Telšiai', type: 'property', color: '#ffd700', cost: 80, icon: '' },
     { id: 2, name: 'DUJOS', type: 'service1', color: null, cost: 150, icon: '🔥' },
     { id: 3, name: 'Plungė', type: 'property', color: '#ffd700', cost: 90, icon: '' },
-    { id: 4, name: 'HORNY RP', type: 'special', color: null, cost: 0, icon: '💋' },
+    { id: 4, name: 'LAIMĖS RATAS', type: 'special', color: null, cost: 0, icon: '🎡' },
     { id: 5, name: 'VMI', type: 'tax', color: '#dc3545', cost: 0, icon: '💰' },
     { id: 6, name: 'Kėdainiai', type: 'property', color: '#4a90d9', cost: 120, icon: '' },
     { id: 7, name: 'Ariogala', type: 'property', color: '#4a90d9', cost: 130, icon: '' },

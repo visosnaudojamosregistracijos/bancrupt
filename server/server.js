@@ -475,7 +475,7 @@ function startBotLoop(gameId) {
         }
 
         // 🚕 Laukiama taksi sprendimo / 🏗️ vyksta statybų laikas – botas nemeta
-        if (currentGame.waitingForTaxi || currentGame.waitingForBuild) {
+        if (currentGame.waitingForTaxi || currentGame.waitingForBuild || currentGame.waitingForWheel) {
             return;
         }
 
@@ -721,7 +721,7 @@ io.on('connection', (socket) => {
         'rollDice', 'buyProperty', 'cancelBuy', 'payJailFine', 'canBuildHouse', 'buildHouse',
         'demolishHouse', 'sellToBank', 'startAuction', 'bidAuction', 'proposeTrade',
         'respondToTrade', 'counterTrade', 'chatMessage', 'startVoteKick', 'voteKick', 'imBack',
-        'taxiRide', 'taxiDecline', 'finishBuild'
+        'taxiRide', 'taxiDecline', 'finishBuild', 'wheelSpin'
     ]);
     // ⏱️ Veiksmai savo eilėje atnaujina ėjimo laikmatį (iki 3 min); aukcionas / mainai jį sustabdo
     const TURN_ACTION_EVENTS = new Set([
@@ -786,6 +786,8 @@ io.on('connection', (socket) => {
         const game = new Game();
         game.setGameId(gameId);
         game.setPublic(isPublic);
+        // 🌐 Stalo kalba – kuria kalba stalą sukūrė (pagal ją parenkami kai kurie garsai)
+        game.lang = ['lt', 'en', 'ru', 'de', 'es', 'fr'].includes(data && data.lang) ? data.lang : 'lt';
         
         game.createdAt = Date.now();
         game.lastActivity = Date.now();
@@ -2158,6 +2160,15 @@ socket.on('movementFinished', () => {
         if (result.error) socket.emit('error', result.error);
     });
 
+    // 🎡 Laimės rato sukimas
+    socket.on('wheelSpin', () => {
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game) return;
+        const result = game.spinWheel(socket.playerId, false);
+        if (result && result.error) socket.emit('error', result.error);
+    });
+
     // 🧪 Taksi testas (tik su BANCRUPT_TEST=1)
     socket.on('debugTaxi', () => {
         if (!socket.gameId || socket.playerId === undefined) return;
@@ -2174,7 +2185,7 @@ socket.on('movementFinished', () => {
         const game = games.get(socket.gameId);
         if (!game) return;
         const fieldId = data && parseInt(data.fieldId, 10);
-        if (![2, 5, 8, 11, 13, 14, 19, 24, 28, 32, 37, 42, 44, 46, 48, 50].includes(fieldId)) return socket.emit('error', L('srv.game.neteisingas_langelis'));
+        if (![2, 4, 5, 8, 11, 13, 14, 19, 24, 28, 32, 37, 42, 44, 46, 48, 50].includes(fieldId)) return socket.emit('error', L('srv.game.neteisingas_langelis'));
         const result = game.debugToField(socket.playerId, fieldId);
         if (result.error) socket.emit('error', result.error);
         else io.to(socket.gameId).emit('gameState', game.getGameState());

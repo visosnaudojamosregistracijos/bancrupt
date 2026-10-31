@@ -42,7 +42,7 @@ async function loadBoardCache() {
             const ov = overrideMap.get(cell.id);
             if (!ov) return { ...cell };
             // 🚕 TAKSI langelis: senas „Parkingo“ įrašas DB neturi pakeisti jo tipo, pavadinimo ir paveikslėlio
-            if (cell.id === C.TAXI_FIELD_ID) {
+            if (cell.id === C.TAXI_FIELD_ID || cell.id === C.WHEEL_FIELD_ID) {
                 if (ov.type || ov.icon || ov.name) {
                     console.log(`🚕 Langelis ${cell.id}: DB pakeitimas (${ov.name || ''} ${ov.type || ''}) ignoruojamas – tai TAKSI`);
                 }
@@ -107,6 +107,8 @@ class Game {
         this.builtThisTurn = {};
         this.waitingForTaxi = null;   // 🚕 { playerId, deadline }
         this.taxiTimer = null;
+        this.waitingForWheel = null;  // 🎡 { playerId, deadline, spinning, index, ... }
+        this.wheelTimer = null;
         this.waitingForBuild = null;  // 🏗️ { playerId, deadline }
         this.buildWindowTimer = null;
         this.lastActivity = Date.now();
@@ -1031,7 +1033,7 @@ class Game {
     // ============================================
     canAdjustTurnTimer() {
         if (!this.gameStarted || this.gameFinished) return false;
-        if (this.isRolling || this.waitingForBuy || this.waitingForTaxi || this.waitingForBuild ||
+        if (this.isRolling || this.waitingForBuy || this.waitingForTaxi || this.waitingForBuild || this.waitingForWheel ||
             this.pendingFieldPlayerId !== null && this.pendingFieldPlayerId !== undefined) return false;
         const p = this.getPlayerById(this.currentTurn);
         if (!p || p.isBot || p.bankrupt || p.left || p.kicked || !p.isActive) return false;
@@ -1197,8 +1199,11 @@ class Game {
         if (this.taxiTimer) { clearTimeout(this.taxiTimer); this.taxiTimer = null; }
     }
 
-    offerTaxi(player) {
-        if (!player || player.money < C.TAXI_COST) return false;
+    offerTaxi(player, opts = {}) {
+        const free = !!opts.free;   // 🎡 iš laimės rato – nemokamas
+        const cost = free ? 0 : C.TAXI_COST;
+        const forbidden = free ? [...C.TAXI_FORBIDDEN, C.WHEEL_FIELD_ID] : C.TAXI_FORBIDDEN;
+        if (!player || player.money < cost) return false;
         this.isRolling = false;
         this.clearTurnTimer();
         let dur = C.TAXI_TIMEOUT;
@@ -1206,7 +1211,7 @@ class Game {
         else if (!player.isBot && typeof this.getAfkLevel === 'function' && this.getAfkLevel(player) > 0) {
             dur = this.getBuyDurationFor(player);
         }
-        this.waitingForTaxi = { playerId: player.id, deadline: Date.now() + dur, cost: C.TAXI_COST };
+        this.waitingForTaxi = { playerId: player.id, deadline: Date.now() + dur, cost, forbidden };
         this.clearTaxiTimer();
         this.taxiTimer = setTimeout(() => {
             this.taxiTimer = null;
@@ -1219,9 +1224,9 @@ class Game {
             this.emitFunction('taxiOffer', {
                 playerId: player.id,
                 playerName: player.name,
-                cost: C.TAXI_COST,
+                cost,
                 durationMs: dur,
-                forbidden: C.TAXI_FORBIDDEN
+                forbidden
             });
         }
         if (player.isBot) {
@@ -1240,7 +1245,7 @@ class Game {
         if (!(typeof process !== 'undefined' && process.env && process.env.BANCRUPT_TEST === '1')) return { error: L('srv.game.testavimas_isjungtas') };
         const player = this.getPlayerById(playerId);
         if (!player || this.currentTurn !== playerId) return { error: L('srv.game.ne_tavo_eile') };
-        if (this.isRolling || this.waitingForBuy || this.pendingFieldPlayerId || this.waitingForTaxi || this.waitingForBuild) {
+        if (this.isRolling || this.waitingForBuy || this.pendingFieldPlayerId || this.waitingForTaxi || this.waitingForBuild || this.waitingForWheel) {
             return { error: L('srv.game.palauk_kol_baigsis_veiksmas') };
         }
         if (player.inJail) return { error: L('srv.game.esi_kalejime') };
@@ -1266,12 +1271,13 @@ class Game {
         }
         const to = parseInt(target, 10);
         if (!Number.isInteger(to) || to < 0 || to >= this.board.length) return { error: L('srv.game.neteisingas_langelis') };
-        if (C.TAXI_FORBIDDEN.includes(to)) return { error: L('srv.game.si_langeli_taksi_nevaziuoja') };
-        if (player.money < C.TAXI_COST) return { error: L('srv.game.neuztenka_pinigu_taksi_reikia', { TAXI_COST: C.TAXI_COST }) };
+        const cost = Number.isFinite(this.waitingForTaxi.cost) ? this.waitingForTaxi.cost : C.TAXI_COST;
+        if ((this.waitingForTaxi.forbidden || C.TAXI_FORBIDDEN).includes(to)) return { error: L('srv.game.si_langeli_taksi_nevaziuoja') };
+        if (player.money < cost) return { error: L('srv.game.neuztenka_pinigu_taksi_reikia', { TAXI_COST: cost }) };
 
         this.clearTaxiTimer();
         this.waitingForTaxi = null;
-        player.money -= C.TAXI_COST;
+        player.money -= cost;
 
         const from = player.position;
         const len = this.board.length;
@@ -1284,15 +1290,15 @@ class Game {
         }
         player.position = to;
         this.lastActivity = Date.now();
-        this.addMessageKey('game.taxiRide', { player: player.name, field: this.board[to].name, cost: C.TAXI_COST });
-        this.turnHistory.push({ player: player.name, action: 'taxi', from, to, cost: C.TAXI_COST, timestamp: new Date().toISOString() });
+        this.addMessageKey(cost > 0 ? 'game.taxiRide' : 'game.taxiRideFree', { player: player.name, field: this.board[to].name, cost });
+        this.turnHistory.push({ player: player.name, action: 'taxi', from, to, cost, timestamp: new Date().toISOString() });
 
         this.isRolling = false;
         this.pendingFieldPlayerId = playerId;
         const rideMs = 1600 + steps * 70;
         if (this.emitFunction) {
             this.emitFunction('taxiRide', {
-                playerId, playerName: player.name, from, to, steps, cost: C.TAXI_COST,
+                playerId, playerName: player.name, from, to, steps, cost,
                 passedStart, fieldName: this.board[to].name
             });
             this.emitFunction('gameState', this.getGameState());
@@ -1365,10 +1371,12 @@ class Game {
         const len = this.board.length;
         const owned = new Set();
         this.players.forEach(p => { if (!p.bankrupt && !p.kicked) p.properties.forEach(id => owned.add(id)); });
-        const budget = bot.money - C.TAXI_COST - 150;
+        const tcost = Number.isFinite(this.waitingForTaxi.cost) ? this.waitingForTaxi.cost : C.TAXI_COST;
+        const tforb = this.waitingForTaxi.forbidden || C.TAXI_FORBIDDEN;
+        const budget = bot.money - tcost - 150;
         let best = null, bestScore = -1;
         this.board.forEach(f => {
-            if (C.TAXI_FORBIDDEN.includes(f.id) || owned.has(f.id) || !f.cost || f.cost > budget) return;
+            if (tforb.includes(f.id) || owned.has(f.id) || !f.cost || f.cost > budget) return;
             if (!['property', 'service1', 'service2', 'service3'].includes(f.type)) return;
             let score = 1;
             if (f.color && C.COLOR_GROUPS[f.color]) {
@@ -1385,6 +1393,116 @@ class Game {
         }
     }
 
+    // ============================================
+    // 🎡 LAIMĖS RATAS (4 langelis)
+    // ============================================
+    clearWheelTimer() {
+        if (this.wheelTimer) { clearTimeout(this.wheelTimer); this.wheelTimer = null; }
+    }
+
+    offerWheel(player) {
+        this.isRolling = false;
+        this.clearTurnTimer();
+        let dur = C.WHEEL_TIMEOUT;
+        if (player.disconnected) dur = 3000;
+        else if (!player.isBot && typeof this.getAfkLevel === 'function' && this.getAfkLevel(player) > 0) {
+            dur = Math.min(dur, this.getBuyDurationFor(player));
+        }
+        this.waitingForWheel = { playerId: player.id, deadline: Date.now() + dur, spinning: false, index: null, spinMs: 0, spinStart: 0, jitter: 0, from: player.position };
+        this.clearWheelTimer();
+        this.wheelTimer = setTimeout(() => {
+            this.wheelTimer = null;
+            if (this.waitingForWheel && this.waitingForWheel.playerId === player.id && !this.waitingForWheel.spinning) {
+                console.log(`🎡 ${player.name}: laikas baigėsi – ratas sukamas automatiškai`);
+                this.spinWheel(player.id, true);
+            }
+        }, dur);
+        if (this.emitFunction) {
+            this.emitFunction('wheelOffer', { playerId: player.id, playerName: player.name, durationMs: dur, sectors: C.WHEEL_SECTORS });
+        }
+        if (player.isBot) setTimeout(() => this.spinWheel(player.id, false), 1500);
+        return true;
+    }
+
+    spinWheel(playerId, auto = false) {
+        const w = this.waitingForWheel;
+        if (!w || w.playerId !== playerId || this.currentTurn !== playerId) return { error: L('srv.game.ratas_tau_nelaukia') };
+        if (w.spinning) return { error: L('srv.game.ratas_jau_sukasi') };
+        const player = this.getPlayerById(playerId);
+        if (!player) return { error: L('srv.game.zaidejas_nerastas') };
+        this.clearWheelTimer();
+        const n = C.WHEEL_SECTORS.length;
+        w.index = Math.floor(Math.random() * n);            // visi sektoriai vienodai tikėtini
+        w.spinMs = C.WHEEL_SPIN_MIN_MS + Math.floor(Math.random() * (C.WHEEL_SPIN_MAX_MS - C.WHEEL_SPIN_MIN_MS + 1));
+        w.jitter = Math.round((Math.random() * 0.7 - 0.35) * 100) / 100;   // kur sektoriaus viduje sustos rodyklė
+        w.spinning = true;
+        w.spinStart = Date.now();
+        this.lastActivity = Date.now();
+        if (this.emitFunction) {
+            this.emitFunction('wheelSpin', { playerId, playerName: player.name, index: w.index, spinMs: w.spinMs, jitter: w.jitter, auto: !!auto });
+            this.emitFunction('gameState', this.getGameState());
+        }
+        this.wheelTimer = setTimeout(() => { this.wheelTimer = null; this.applyWheel(playerId); }, w.spinMs + 700);
+        return { success: true };
+    }
+
+    applyWheel(playerId) {
+        const w = this.waitingForWheel;
+        if (!w || w.playerId !== playerId || !w.spinning) return;
+        this.waitingForWheel = null;
+        this.clearWheelTimer();
+        const player = this.getPlayerById(playerId);
+        if (!player || player.bankrupt || player.left || player.kicked) return;
+        const s = C.WHEEL_SECTORS[w.index] || { type: 'nothing' };
+        const others = this.players.filter(p => p.id !== playerId && !p.bankrupt && !p.left && !p.kicked);
+        let key = 'game.wheelNothing';
+        const data = { player: player.name, amount: Math.abs(s.amount || 0), total: 0 };
+        const from = player.position;
+
+        if (s.type === 'money') {
+            player.money += s.amount;
+            key = s.amount >= 0 ? 'game.wheelWin' : 'game.wheelLose';
+        } else if (s.type === 'collect') {
+            others.forEach(o => { o.money -= s.amount; player.money += s.amount; data.total += s.amount; this.checkDebtor(o.id); });
+            key = 'game.wheelCollect';
+        } else if (s.type === 'pay_each') {
+            others.forEach(o => { o.money += s.amount; player.money -= s.amount; data.total += s.amount; this.checkDebtor(o.id); });
+            key = 'game.wheelPayEach';
+        } else if (s.type === 'jail') {
+            player.position = 16;
+            player.inJail = true;
+            player.jailTurns = 0;
+            player.consecutiveDoubles = 0;
+            this.doubleRoll = false;
+            key = 'game.wheelJail';
+        } else if (s.type === 'taxi') {
+            key = 'game.wheelTaxi';
+        }
+        this.checkDebtor(player.id);
+
+        this.addMessageKey(key, data);
+        this.turnHistory.push({ player: player.name, action: 'wheel', sector: s.type, amount: s.amount || 0, timestamp: new Date().toISOString() });
+        if (this.emitFunction) {
+            this.emitFunction('wheelResult', { playerId, playerName: player.name, index: w.index, sector: s, key, data, from, to: player.position });
+            this.emitFunction('message', { key, data });
+        }
+
+        if (s.type === 'jail') {
+            this.endTurn();
+        } else if (s.type === 'taxi' && this.offerTaxi(player, { free: true })) {
+            // nemokamas taksi – toliau tęsia taksi pasirinkimas
+        } else if (this.openBuildWindow(player)) {
+            // statybų langas pats tęs ėjimą
+        } else if (this.doubleRoll && !player.inJail && this.currentTurn === playerId) {
+            this.isRolling = false;
+            this.startTurnTimer();
+            this.addMessageKey('game.doubleRollAgain', { player: player.name });
+        } else if (this.currentTurn === playerId) {
+            this.endTurn();
+        }
+        if (this.emitFunction) this.emitFunction('gameState', this.getGameState());
+    }
+
     // 🛡️ Atsarginė apsauga: jei žmogaus eilė, niekas nevyksta, o laikmatis neveikia – paleidžiam
     // (kad žaidimas niekada neužstrigtų be galo)
     ensureTurnTimer() {
@@ -1394,7 +1512,7 @@ class Game {
             this.updateTurnTimerAfterAction(null, false);
             return;
         }
-        if (this.turnTimer || this.isRolling || this.waitingForBuy || this.pendingFieldPlayerId || this.waitingForTaxi || this.waitingForBuild) return;
+        if (this.turnTimer || this.isRolling || this.waitingForBuy || this.pendingFieldPlayerId || this.waitingForTaxi || this.waitingForBuild || this.waitingForWheel) return;
         const p = this.getPlayerById(this.currentTurn);
         if (!p || p.isBot || p.bankrupt || p.left || p.kicked || !p.isActive) return;
         if (!this._idleSince) { this._idleSince = Date.now(); return; }
@@ -1422,7 +1540,7 @@ class Game {
     if (this.isRolling) return;
     // 🛡️ Dar laukiama pirkimo / taksi / statybų sprendimo arba langelis neapdorotas – metimas ne dabar
     // (tas langas pats tęs žaidimą; AFK ėjimas neskaičiuojamas)
-    if (this.waitingForBuy || this.waitingForTaxi || this.waitingForBuild ||
+    if (this.waitingForBuy || this.waitingForTaxi || this.waitingForBuild || this.waitingForWheel ||
         this.pendingFieldPlayerId === currentPlayer.id) {
         console.log(`⏭️ Auto-roll praleistas (${currentPlayer.name}): laukiama sprendimo / langelio apdorojimo`);
         return;
@@ -1574,7 +1692,7 @@ if (currentPlayer.money < 0) {
             this.isRolling = false;
 
             // Laikmatį paleidžiam tik jei nieko nelaukiama – kitaip jį paleis langelio apdorojimas / pirkimo langas
-            if (!this.waitingForBuy && !this.waitingForTaxi && !this.waitingForBuild &&
+            if (!this.waitingForBuy && !this.waitingForTaxi && !this.waitingForBuild && !this.waitingForWheel &&
                 this.pendingFieldPlayerId !== rolledPlayerId) {
                 this.startTurnTimer();
             }
@@ -1961,6 +2079,7 @@ if (currentPlayer.money < 0) {
         if (this.isRolling) return { error: L('srv.game.palaukite_kauliukai_metami') };
         if (this.waitingForBuy) return { error: L('srv.game.pirmiausia_nusipirk_sklypa') };
         if (this.waitingForTaxi) return { error: L('srv.game.pirmiausia_nuspresk_del_taksi') };
+        if (this.waitingForWheel) return { error: L('srv.game.pirmiausia_suk_rata') };
         if (this.waitingForBuild) return { error: L('srv.game.pirmiausia_baik_statybas') };
 
         const player = this.getPlayerById(playerId);
@@ -2067,6 +2186,7 @@ if (currentPlayer.money < 0) {
         }
 
         if (player.consecutiveDoubles >= 3) {
+            const fromPosition = player.position;   // iš čia policija paima (kliento animacijai)
             player.consecutiveDoubles = 0;
             player.position = 16;
             player.inJail = true;
@@ -2087,6 +2207,7 @@ if (currentPlayer.money < 0) {
                 inJail: true,
                 double: true,
                 goToJail: true,
+                fromPosition,
                 messageKey: 'game.threeDoubles',
                 messageData: { player: player.name }
             };
@@ -2252,6 +2373,23 @@ this.addMessageKey('game.paidJailFine', {
                 };
             }
             this.addMessageKey('game.taxiNoMoney', { player: player.name, cost: C.TAXI_COST });
+        }
+
+        // 🎡 LAIMĖS RATAS: ėjimas nesibaigia, kol ratas nesustos
+        if (result.action === 'wheel') {
+            this.turnHistory.push({ player: player.name, field: currentField.name, action: 'wheel', timestamp: new Date().toISOString() });
+            this.offerWheel(player);
+            return {
+                success: true,
+                playerId: playerId,
+                playerName: player.name,
+                field: currentField,
+                result: result,
+                wheelOffer: true,
+                canBuy: false,
+                messageKey: result.messageKey,
+                messageData: result.messageData
+            };
         }
 
         if (result.action === 'can_buy') {
@@ -2558,17 +2696,9 @@ this.addMessageKey('game.paidJailFine', {
                 break;
 
             case 'chance':
-    if (field.id === 4) {
-        player.money += 200;
-        
-        // 🆕 PRIDĖTI: išvalyti isDebtor, jei nebe minusе
-        if (player.money >= 0 && player.isDebtor) {
-            player.isDebtor = false;
-            console.log(`✅ ${player.name}: isDebtor → false po HORNY RP (chance) (money: €${player.money})`);
-        }
-        
-        result.action = 'special';
-        result.messageKey = 'game.hornyRP';
+    if (field.id === C.WHEEL_FIELD_ID) {
+        result.action = 'wheel';
+        result.messageKey = 'game.wheelLanded';
         result.messageData = { player: player.name };
     } else {
         this.handleChance(player);
@@ -2600,18 +2730,11 @@ this.addMessageKey('game.paidJailFine', {
                     if (player.money < 0) {
                         this.checkDebtor(player.id);
                     }
-                } else if (field.id === 4) {
-    player.money += 200;
-    
-    // 🆕 PRIDĖTI: išvalyti isDebtor, jei nebe minusе
-    if (player.money >= 0 && player.isDebtor) {
-        player.isDebtor = false;
-        console.log(`✅ ${player.name}: isDebtor → false po HORNY RP (money: €${player.money})`);
-    }
-    
-    result.action = 'special';
-    result.messageKey = 'game.hornyRP2';
-    result.messageData = { player: player.name };
+                } else if (field.id === C.WHEEL_FIELD_ID) {
+                    // 🎡 LAIMĖS RATAS – rezultatą nulems ratas (processField → offerWheel)
+                    result.action = 'wheel';
+                    result.messageKey = 'game.wheelLanded';
+                    result.messageData = { player: player.name };
 } else {
                     const random = Math.random();
                     if (random < 0.3) {
@@ -2976,6 +3099,10 @@ this.addMessageKey('game.paidJailFine', {
             this.clearTaxiTimer();
             this.waitingForTaxi = null;
         }
+        if (this.waitingForWheel && this.waitingForWheel.playerId === playerId) {
+            this.clearWheelTimer();
+            this.waitingForWheel = null;
+        }
         if (this.waitingForBuild && this.waitingForBuild.playerId === playerId) {
             this.clearBuildWindowTimer();
             this.waitingForBuild = null;
@@ -3287,11 +3414,18 @@ this.addMessageKey('game.paidJailFine', {
             board: this.board,
             currentTurn: this.currentTurn,
             gameStarted: this.gameStarted,
+            lang: this.lang || 'lt',
             buildRule: this.buildRule,
             builtThisTurn: this.builtThisTurn || {},
             landingPos: this.landingPos || null,
             taxiOffer: this.waitingForTaxi ? { playerId: this.waitingForTaxi.playerId, cost: this.waitingForTaxi.cost,
+                forbidden: this.waitingForTaxi.forbidden || C.TAXI_FORBIDDEN,
                 msLeft: Math.max(0, this.waitingForTaxi.deadline - Date.now()) } : null,
+            wheel: this.waitingForWheel ? { playerId: this.waitingForWheel.playerId, spinning: !!this.waitingForWheel.spinning,
+                index: this.waitingForWheel.spinning ? this.waitingForWheel.index : null,
+                jitter: this.waitingForWheel.jitter || 0, spinMs: this.waitingForWheel.spinMs || 0,
+                spinLeftMs: this.waitingForWheel.spinning ? Math.max(0, this.waitingForWheel.spinStart + this.waitingForWheel.spinMs - Date.now()) : 0,
+                msLeft: Math.max(0, this.waitingForWheel.deadline - Date.now()) } : null,
             // 🧪 Testavimo režimas (tik kai serveryje BANCRUPT_TEST=1) – rodo „Taksi testas“ mygtuką
             testMode: typeof process !== 'undefined' && process.env && process.env.BANCRUPT_TEST === '1',
             buildWindow: this.waitingForBuild ? { playerId: this.waitingForBuild.playerId,

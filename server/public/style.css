@@ -7310,3 +7310,104 @@ body.theme-neon .ttc-time { color: #00ffd0; }
 /* ◀ mygtukas kompiuteryje nebeuždengia panelės mygtukų – stovi panelės krašte */
 body:not(.cmp) #gameBody:has(#leftPanel:not(.hidden)) #leftPanelToggle { left: var(--lp-right, 136px); width: 18px; height: 52px; font-size: 12px; border-radius: 0 10px 10px 0; opacity: .85; }
 body:not(.cmp) #gameBody:has(#leftPanel:not(.hidden)) #leftPanelToggle:hover { opacity: 1; }
+
+/* ============================================================
+   🎡 LAIMĖS RATAS (4 langelis) – cirko stilius
+   ============================================================ */
+#wheelBox {
+    --wh: 320px;
+    display: none;
+    position: fixed;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%) scale(.6);
+    opacity: 0;
+    z-index: 99960;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 30px 18px 14px;
+    border-radius: 20px;
+    background:
+        radial-gradient(ellipse at 50% 40%, rgba(255,214,102,.18), transparent 60%),
+        repeating-linear-gradient(90deg, #7a0d12 0 26px, #5a080c 26px 52px);
+    border: 3px solid #ffc94a;
+    box-shadow: 0 25px 60px rgba(0,0,0,.65), 0 0 0 5px rgba(90,8,12,.85), 0 0 45px rgba(255,201,74,.35), inset 0 0 50px rgba(0,0,0,.55);
+    color: #fff;
+    text-align: center;
+    pointer-events: auto;
+    overflow: hidden;
+    max-width: calc(100vw - 16px);
+}
+/* Palapinės „užuolaida“ viršuje – raudoni ir kreminiai lankeliai */
+#wheelBox::before {
+    content: '';
+    position: absolute; left: 0; right: 0; top: 0; height: 22px;
+    background: repeating-linear-gradient(90deg, #e53935 0 26px, #fff3d6 26px 52px);
+    -webkit-mask: radial-gradient(circle at 13px 0, #000 13px, transparent 13.5px) 0 0 / 26px 22px repeat-x, linear-gradient(#000, #000) 0 0 / 100% 9px no-repeat;
+            mask: radial-gradient(circle at 13px 0, #000 13px, transparent 13.5px) 0 0 / 26px 22px repeat-x, linear-gradient(#000, #000) 0 0 / 100% 9px no-repeat;
+    filter: drop-shadow(0 3px 2px rgba(0,0,0,.45));
+}
+#wheelBox.show { display: flex; animation: whIn .45s cubic-bezier(.2,1.4,.4,1) forwards; }
+@keyframes whIn { from { transform: translate(-50%, -50%) scale(.6) rotate(-4deg); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+#wheelBox .wh-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 900; font-size: clamp(15px, calc(var(--wh) * .068), 22px); letter-spacing: 2px; line-height: 1.1; white-space: nowrap;
+    background: linear-gradient(180deg, #fffbe0 0%, #ffd54f 45%, #e0a000 55%, #fff1a8 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 0 #4a0505) drop-shadow(0 0 10px rgba(255,213,79,.45));
+}
+#wheelBox .wh-sub { font-size: 13px; font-weight: 800; color: #fff3d6; min-height: 16px; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+#wheelBox .wh-wrap { position: relative; width: var(--wh); height: var(--wh); max-width: calc(100vw - 52px); max-height: calc(100vw - 52px); margin-top: calc(var(--wh) * .07); }
+#wheelBox .wh-wrap::after { content: ''; position: absolute; inset: 4%; border-radius: 50%; box-shadow: 0 14px 30px rgba(0,0,0,.6); z-index: -1; }
+#wheelBox .wh-rot { position: absolute; inset: 0; will-change: transform; }
+#wheelBox .wh-svg { width: 100%; height: 100%; display: block; }
+#wheelBox .wh-ptr {
+    position: absolute; left: 50%; top: -6%; z-index: 3;
+    width: 15%; transform: translateX(-50%); transform-origin: 50% 30%;
+    filter: drop-shadow(0 4px 3px rgba(0,0,0,.55));
+}
+#wheelBox .wh-ptr svg { display: block; width: 100%; height: auto; }
+#wheelBox.spinning .wh-ptr { animation: whPtr .11s ease-in-out infinite alternate; }
+@keyframes whPtr { from { transform: translateX(-50%) rotate(-8deg); } to { transform: translateX(-50%) rotate(8deg); } }
+/* Lemputės: pakaitomis mirksi, sukantis – greitai „bėga“ */
+#wheelBox .wh-bulb, .wh-cell-icon .wh-bulb { fill: #fff6c2; }
+#wheelBox .wh-bulb { filter: drop-shadow(0 0 3px #ffeb3b); animation: whBulb 1.1s steps(1) infinite; }
+#wheelBox .wh-bulb.b { animation-delay: -.55s; }
+#wheelBox.spinning .wh-bulb { animation-duration: .22s; }
+#wheelBox.spinning .wh-bulb.b { animation-delay: -.11s; }
+#wheelBox.done .wh-bulb { animation-duration: .35s; }
+@keyframes whBulb { 0% { fill: #fffde7; filter: drop-shadow(0 0 4px #ffeb3b) drop-shadow(0 0 7px #ffc107); } 50% { fill: #8d6e3a; filter: none; } }
+#wheelBox .wh-spin {
+    position: absolute; left: 50%; top: 50%; z-index: 4;
+    width: 23%; height: 23%; transform: translate(-50%, -50%);
+    border-radius: 50%; border: 3px solid #fff3b0;
+    background: radial-gradient(circle at 38% 30%, #ff8a80 0%, #e53935 45%, #8e0000 100%);
+    color: #fffbe0; font-family: Georgia, serif; font-weight: 900; font-size: calc(var(--wh) * .047); letter-spacing: .5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+    box-shadow: 0 0 0 4px #b07800, 0 6px 12px rgba(0,0,0,.55), inset 0 -4px 8px rgba(0,0,0,.35), inset 0 3px 6px rgba(255,255,255,.35);
+    cursor: pointer; padding: 0; min-width: 0;
+    transition: transform .15s;
+}
+#wheelBox.mine .wh-spin:not(:disabled):hover { transform: translate(-50%, -50%) scale(1.06); }
+#wheelBox.mine .wh-spin:not(:disabled) { animation: whPulse 1.1s ease-in-out infinite; }
+@keyframes whPulse { 0%,100% { box-shadow: 0 0 0 4px #b07800, 0 6px 12px rgba(0,0,0,.55), 0 0 0 4px rgba(255,213,79,.0); } 50% { box-shadow: 0 0 0 4px #b07800, 0 6px 12px rgba(0,0,0,.55), 0 0 0 16px rgba(255,213,79,0), 0 0 22px 6px rgba(255,213,79,.55); } }
+#wheelBox .wh-spin:disabled { cursor: default; }
+/* Kai sukti negalima – mygtukas nematomas, matosi auksinė stebulė su žvaigžde */
+#wheelBox:not(.mine) .wh-spin, #wheelBox .wh-spin:disabled { background: transparent; border-color: transparent; box-shadow: none; color: transparent; text-shadow: none; animation: none; }
+#wheelBox .wh-sec.win { animation: whWin .3s ease-in-out 8 alternate; }
+@keyframes whWin { from { filter: brightness(1); } to { filter: brightness(1.7) saturate(1.3); } }
+#wheelBox .wh-res { font-size: 15px; font-weight: 900; max-width: calc(var(--wh) + 20px); opacity: 0; transform: scale(.7); transition: all .3s cubic-bezier(.2,1.5,.4,1); }
+#wheelBox .wh-res.show { opacity: 1; transform: scale(1); padding: 7px 14px; border-radius: 12px; border: 2px solid rgba(255,201,74,.7); background: rgba(20,4,6,.75); }
+#wheelBox .wh-res.win { color: #b9f6ca; }
+#wheelBox .wh-res.lose { color: #ffab91; }
+#wheelBox .wh-res.jail { color: #e0e0e0; }
+#wheelBox .wh-res.taxi { color: #fff176; }
+#wheelBox .wh-left { font-size: 12px; font-weight: 800; color: #fff3d6; opacity: .9; min-height: 14px; }
+/* Langelio paveikslėlis – lėtai besisukantis cirko ratas su rodykle */
+.wh-cell-icon { position: relative; display: block; width: 1em; height: 1em; }
+.wh-cell-icon .wh-cell-svg { width: 1em; height: 1em; animation: whCellSpin 10s linear infinite; }
+.wh-cell-icon .wh-cell-ptr { position: absolute; left: 50%; top: -.1em; width: .17em; transform: translateX(-50%); filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.wh-cell-icon .wh-cell-ptr svg { display: block; width: 100%; height: auto; }
+@keyframes whCellSpin { to { transform: rotate(360deg); } }
+.cell-cost.wh-cell-tag { color: #d50000 !important; font-weight: 900; letter-spacing: .5px; }
+@media (prefers-reduced-motion: reduce) { .wh-cell-icon .wh-cell-svg, #wheelBox .wh-bulb { animation: none; } }

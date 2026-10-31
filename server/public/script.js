@@ -537,12 +537,16 @@ socket.on('soundFilesUpdated', (files) => {
             showSmallNotice(tt('taxi.othersPick', '🚕 {player} renkasi, kur važiuoti taksi').replace('{player}', d.playerName));
         }
     });
+    // 🎡 LAIMĖS RATAS
+    socket.on('wheelOffer', (d) => { openWheel(d.playerId, d.playerName, d.durationMs, d.sectors); });
+    socket.on('wheelSpin', (d) => { spinWheelUi(d.index, d.jitter, d.spinMs, d.playerId); });
+    socket.on('wheelResult', (d) => { showWheelResult(d); });
     socket.on('taxiClosed', (d) => {
         if (d.playerId === playerId) closeTaxiPicker();
     });
     socket.on('taxiRide', async (d) => {
         if (d.playerId === playerId) closeTaxiPicker();
-        addJournal(tt('game.taxiRide', '🚕 {player} važiuoja taksi į {field} (€{cost})')
+        addJournal((d.cost > 0 ? tt('game.taxiRide', '🚕 {player} važiuoja taksi į {field} (€{cost})') : tt('game.taxiRideFree', '🚕 {player} nemokamai važiuoja taksi į {field}'))
             .replace('{player}', d.playerName).replace('{field}', (typeof trCellName === 'function' ? trCellName(d.fieldName) : d.fieldName)).replace('{cost}', d.cost));
         window.animatingPlayers = window.animatingPlayers || [];
         if (!window.animatingPlayers.includes(d.playerId)) window.animatingPlayers.push(d.playerId);
@@ -705,7 +709,7 @@ function applyBoardSettings(s) {
             playerId: data.playerId
         });
         
-        playNotificationSound();
+        if (!CELL_SOUNDS[data.fieldId]) playNotificationSound();
     }
 });
 
@@ -737,6 +741,13 @@ function applyBoardSettings(s) {
         window.animatingPlayers.push(data.player.id);
     }
     
+    // 🚓 3 dubliai iš eilės – atvažiuoja policija ir nuveža į kalėjimą
+    if (data.goToJail && Number.isInteger(data.fromPosition)) {
+        await Promise.race([diceLanded, new Promise(r => setTimeout(r, 700))]);
+        playPoliceVanEffect(data.player.id, data.fromPosition);
+        return;
+    }
+
     if (data.oldPosition !== undefined && data.newPosition !== undefined) {
         isAnimating = true;
         // 🎲 Figūrėlė pajuda, kai kauliukai beveik nusileido (bet ne ilgiau nei 0,7 s)
@@ -926,7 +937,6 @@ function applyBoardSettings(s) {
         try {
             if (msg.key === 'game.passedStart' || msg.key === 'game.landedOnStart') fxStart3(0, msg.data && msg.data.bonus);
             else if (msg.key === 'game.leftJail' || msg.key === 'game.paidJailFine') fxJail3(16, 'out');
-            else if (msg.key === 'game.threeDoubles') fxJail3(16, 'in');
         } catch (e) { console.warn('Efekto klaida', e); }
         return;
     }
@@ -1042,8 +1052,8 @@ socket.on('chatMessage', (data) => {
 
 socket.on('buyConfirmed', (data) => {
         console.log('✅ Pirkimas patvirtintas:', data);
-        playSoundForPlayer('buy', data.playerId);
-        playSoundForPlayer('nope', data.playerId);
+        { const cs = cellSoundByName(data.fieldName); playSoundForPlayer(cs ? cs.bought : 'buy', data.playerId);
+          if (!cs) playSoundForPlayer('nope', data.playerId); }
 
         if (data.playerId !== undefined) {
             incrementBought(data.playerId);
@@ -1073,7 +1083,7 @@ socket.on('buyConfirmed', (data) => {
 
     socket.on('buyCancelled', (data) => {
     console.log('❌ Pirkimas atšauktas:', data);
-    playMoveSound();
+    { const cs = cellSoundByName(data.fieldName); if (cs) playSoundForPlayer(cs.declined, data.playerId); else playMoveSound(); }
     
     let msg;
     if (data.playerId === playerId) {
@@ -1148,12 +1158,13 @@ socket.on('buyConfirmed', (data) => {
     const result = data.result || {};
         
         // 🆕 Garsai pagal lauką
-        if (fieldId === 2) { playSoundForPlayer('dujos', data.playerId); fxGas2(2); }
+        if (fieldId === 2) { playSoundForPlayer(cellLandSound(2, 'dujos', data.playerId, result), data.playerId); fxGas2(2); }
+        else if (fieldId === 4) playSoundForPlayer('ratas_atsistojo', data.playerId);
         else if (fieldId === 5) playSoundForPlayer('tax', data.playerId);    // VMI – garsas pagal langelį (veikia visomis kalbomis)
         else if (fieldId === 14) playSoundForPlayer('siuksles', data.playerId);
         else if (fieldId === 28) playSoundForPlayer('elektra', data.playerId);
         else if (fieldId === 44) playSoundForPlayer('vanduo', data.playerId);
-        else if (fieldId === 8) { playSoundForPlayer('air-port', data.playerId); fxAir2(8); }
+        else if (fieldId === 8) { playSoundForPlayer(cellLandSound(8, 'air-port', data.playerId, result), data.playerId); fxAir2(8); }
         else if (fieldId === 19) { playSoundForPlayer('train', data.playerId); fxVehicle3(19); }
         else if (fieldId === 37) { playSoundForPlayer('port', data.playerId); fxVehicle3(37); }
         else if (fieldId === 46) { playSoundForPlayer('bus', data.playerId); fxVehicle3(46); }
@@ -1165,8 +1176,8 @@ socket.on('buyConfirmed', (data) => {
         else if (fieldId === 48) playSoundForPlayer('papludimys', data.playerId);
         else if (fieldId === 50) playSoundForPlayer('birthday', data.playerId, true);
         else if (fieldId === 42) {
-            playSoundForPlayer('jail_in', data.playerId, true);
-            if (result.action === 'go_to_jail' || data.inJail) playPoliceVanEffect(data.playerId);
+            if (result.action === 'go_to_jail' || data.inJail) playPoliceVanEffect(data.playerId, 42);   // garsai – mašinėlėje
+            else playSoundForPlayer('jail_in', data.playerId, true);
         }
         else if (fieldId === 16) playSoundForPlayer('jail', data.playerId);
         if (fieldId === 0 && typeof fxStart3 === 'function') {   // 🏁 sustojo ant START
@@ -1196,8 +1207,8 @@ socket.on('buyConfirmed', (data) => {
                 // 🎉 TU gauni nuomą
                 playSoundForPlayer('rent-received', playerId);
                 // console.log('💰 Nuomos gavimo garsas:', playerId);
-            } else if (isMe) {
-                // 💸 TU moki nuomą
+            } else if (isMe && !CELL_SOUNDS[rentFieldId]) {
+                // 💸 TU moki nuomą (langeliai su savo garsų rinkiniu groja savo garsą)
                 playSoundForPlayer('pay1', playerId);
                 // console.log('💸 Nuomos mokėjimo garsas:', playerId);
             }
@@ -1214,6 +1225,8 @@ socket.on('buyConfirmed', (data) => {
         const isMeField = data.playerId === playerId;
         let popupHandled = false;
         
+        if (result.action === 'wheel') popupHandled = true;   // 🎡 ratas pats parodo, kas vyksta
+
         // 🏠 Laisvas sklypas: kiti mato „⏳ svarsto pirkti“ kortelę, pirkėjas – savo pasirinkimą
         if (result.action === 'can_buy') {
             popupHandled = true;
@@ -2834,6 +2847,28 @@ function saveSoundSettings() {
     }
 }
 
+// 🔊 LANGELIŲ GARSŲ RINKINIAI – kiekvienai situacijai savas garsas (failai keičiami sounds/sounds.json)
+//   free – atsistojai, langelis niekieno      offer – pasirodė „Pirkti / Atsisakyti“
+//   bought – nusipirkai                       declined – atsisakei (arba baigėsi laikas)
+//   mine – atsistojai ant SAVO langelio       other – atsistojai ant KITO žaidėjo langelio
+const CELL_SOUNDS = {
+    2: { free: 'dujos_laisvas', offer: 'dujos_pasiulymas', bought: 'dujos_pirkta', declined: 'dujos_atsisakyta', mine: 'dujos_savo', other: 'dujos_svetimas' },
+    8: { free: 'oro_laisvas', offer: 'oro_pasiulymas', bought: 'oro_pirkta', declined: 'oro_atsisakyta', mine: 'oro_savo', other: 'oro_svetimas' }
+};
+function cellSoundByName(fieldName) {
+    if (!fieldName || !gameState || !gameState.board) return null;
+    const f = gameState.board.find(x => x.name === fieldName);
+    return f ? CELL_SOUNDS[f.id] || null : null;
+}
+// Kurį garsą groti atsistojus ant langelio
+function cellLandSound(fieldId, fallback, landerId, result) {
+    const cs = CELL_SOUNDS[fieldId];
+    if (!cs) return fallback;
+    const owner = gameState && gameState.players ? gameState.players.find(p => (p.properties || []).includes(fieldId) && !p.bankrupt && !p.left && !p.kicked) : null;
+    if (result && result.action === 'pay_rent') return cs.other;
+    if (!owner) return cs.free;
+    return owner.id === landerId ? cs.mine : cs.other;
+}
 function playSoundForPlayer(soundName, soundPlayerId = null, isPublicSound = false) {
     if (isPublicSound) {
         audioManager.play(soundName);
@@ -3460,7 +3495,8 @@ function createGame() {
         name: name,
         color: selectedCreateColor,
         isPublic: isPublic,
-        userId: userId
+        userId: userId,
+        lang: (typeof currentLang !== 'undefined' ? currentLang : 'lt')   // 🌐 stalo kalba
     });
 }
 
@@ -5460,27 +5496,40 @@ FX_SVG.police = '<svg viewBox="0 0 100 58" xmlns="http://www.w3.org/2000/svg">' 
     '<circle cx="22" cy="45" r="8" fill="#222"/><circle cx="22" cy="45" r="3.4" fill="#bbb"/>' +
     '<circle cx="76" cy="45" r="8" fill="#222"/><circle cx="76" cy="45" r="3.4" fill="#bbb"/></svg>';
 
-function playPoliceVanEffect(pid) {
+// fromId – langelis, iš kurio paimama figūrėlė (42, po 3 dublių – bet kur, laimės ratas – 4)
+// 🔊 Garsai: paimant – „kalejimas_paima“ (keliauk-i-kaleima.mp3), atvežus – „jail_in“
+function playPoliceVanEffect(pid, fromId = 42) {
+    const fallback = () => {
+        window.animatingPlayers = (window.animatingPlayers || []).filter(id => id !== pid);
+        try { playSoundForPlayer('jail_in', pid, true); } catch (e) {}
+        try { fxJail3(16, 'in'); } catch (e) {}
+        if (gameState) { try { updateBoard(gameState); } catch (e) {} try { updateUI(gameState); } catch (e) {} }
+    };
+    fromId = parseInt(fromId, 10);
+    if (!Number.isInteger(fromId)) fromId = 42;
     const board = document.getElementById('board');
-    const from = document.getElementById('cell-42'), jail = document.getElementById('cell-16');
-    if (!board || !from || !jail) return;
+    const from = document.getElementById(`cell-${fromId}`), jail = document.getElementById('cell-16');
+    if (!board || !from || !jail || fromId === 16) return fallback();
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce || typeof Element.prototype.animate !== 'function') return;
-    if (board.querySelector('.pv-fx')) return;
+    if (reduce || typeof Element.prototype.animate !== 'function') return fallback();
+    if (board.querySelector('.pv-fx')) return fallback();
     const player = gameState && gameState.players ? gameState.players.find(p => p.id === pid) : null;
 
-    // Maršrutas atgal: 42 → 41 → … → 27 → 26 → 25 → … → 17 → 16
+    // Maršrutas trumpiausiu keliu iki KALĖJIMO (16):
+    // 0–15 ir 43–51 – pirmyn (viršutine eile / kairiu kraštu), kitur – atgal (apatine eile / dešiniu kraštu)
+    const N = (gameState && gameState.board && gameState.board.length) || 52;
+    const forward = (fromId >= 0 && fromId < 16) || fromId >= 43;
     const pts = [];
-    for (let id = 42; id >= 16; id--) {
+    for (let k = 0, id = fromId; k <= N; k++) {
         const el = document.getElementById(`cell-${id}`);
         if (el) pts.push(fxBoardPoint(el, board));
+        if (id === 16) break;
+        id = forward ? (id + 1) % N : (id - 1 + N) % N;
     }
-    if (pts.length < 2) return;
+    if (pts.length < 2) return fallback();
     const p0 = pts[0];
     const cellS = Math.min(from.offsetWidth, from.offsetHeight) || 68;
     const vw = Math.max(64, Math.min(115, cellS * 1.05));
-    // Atvažiavimas iš kairės (už lentos krašto) iki 42
-    const startPt = { x: p0.x - vw * 1.6, y: p0.y };
 
     const wrap = document.createElement('div');
     wrap.className = 'fx-layer pv-fx';
@@ -5511,16 +5560,21 @@ function playPoliceVanEffect(pid) {
         return Math.abs(d) < 45 ? 0 : (d < 0 ? -90 : 90);      // į dešinę – 0°, aukštyn – -90°
     };
     const tr = (pt, a, s = 1) => `translate(${pt.x.toFixed(1)}px, ${pt.y.toFixed(1)}px) rotate(${a}deg) scale(${s})`;
+    // Atvažiuoja iš priešingos pusės, nei paskui važiuos (už lentos krašto)
+    const a0 = ang(pts[0], pts[1]);
+    const back = a0 === 0 ? { x: -1, y: 0 } : (a0 === -90 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+    const startPt = { x: p0.x + back.x * vw * 1.6, y: p0.y + back.y * vw * 1.6 };
+    const nearPt = { x: p0.x + back.x * vw * 1.2, y: p0.y + back.y * vw * 1.2 };
     // Maršruto ilgiai – pagal juos paskirstomas važiavimo laikas
     let total = 0; const seg = [0];
     for (let i = 1; i < pts.length; i++) { total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); seg.push(total); }
     const kf = [
-        { transform: tr(startPt, 0), opacity: 0, offset: 0 },
-        { transform: tr({ x: startPt.x + vw * 0.4, y: startPt.y }, 0), opacity: 1, offset: o1 * 0.25 },
-        { transform: tr(p0, 0), offset: o1, easing: 'ease-out' },
-        { transform: tr(p0, 0), offset: o2 }
+        { transform: tr(startPt, a0), opacity: 0, offset: 0 },
+        { transform: tr(nearPt, a0), opacity: 1, offset: o1 * 0.25 },
+        { transform: tr(p0, a0), offset: o1, easing: 'ease-out' },
+        { transform: tr(p0, a0), offset: o2 }
     ];
-    let lastA = 0;
+    let lastA = a0;
     for (let i = 1; i < pts.length; i++) {
         const a = ang(pts[i - 1], pts[i]);
         const off = o2 + (o3 - o2) * (seg[i] / total);
@@ -5552,7 +5606,11 @@ function playPoliceVanEffect(pid) {
 
     // Švyturėliai mirksi važiuojant
     van.classList.add('siren');
-    setTimeout(() => { try { fxJail3(16, 'in'); } catch (e) {} }, tArrive + tLoad + tDrive - 200);
+    try { playSoundForPlayer('kalejimas_paima', pid, true); } catch (e) {}
+    setTimeout(() => {
+        try { playSoundForPlayer('jail_in', pid, true); } catch (e) {}
+        try { fxJail3(16, 'in'); } catch (e) {}
+    }, tArrive + tLoad + tDrive - 200);
     setTimeout(() => {
         wrap.remove();
         window.animatingPlayers = (window.animatingPlayers || []).filter(id => id !== pid);
@@ -7673,7 +7731,7 @@ function showCookieBanner() {
 const taxiUi = { open: false, target: null, cost: 100, forbidden: [16, 26, 42], timer: null, deadline: 0 };
 function openTaxiPicker(cost, durationMs, forbidden) {
     if (typeof cell5DismissMyTurn === 'function') cell5DismissMyTurn();   // „Tavo eilė – mesk“ čia netinka
-    taxiUi.cost = cost || 100;
+    taxiUi.cost = (cost === 0) ? 0 : (cost || 100);
     taxiUi.forbidden = Array.isArray(forbidden) ? forbidden : [16, 26, 42];
     taxiUi.target = null;
     taxiUi.deadline = Date.now() + (durationMs || 30000);
@@ -7727,7 +7785,7 @@ function openTaxiPicker(cost, durationMs, forbidden) {
         };
     }
     panel.querySelectorAll('button').forEach(b => b.disabled = false);
-    panel.querySelector('.tx-title').textContent = tt('taxi.title', '🚕 TAKSI') + ' – €' + taxiUi.cost;
+    panel.querySelector('.tx-title').textContent = tt('taxi.title', '🚕 TAKSI') + ' – ' + (taxiUi.cost > 0 ? '€' + taxiUi.cost : tt('taxi.free', 'NEMOKAMAI'));
     panel.querySelector('.tx-stay').textContent = tt('taxi.stay', 'Likti čia');
     panel.querySelector('.tx-go').textContent = tt('taxi.go', '🚕 Važiuoti');
     panel.querySelector('.tx-num-lbl').textContent = tt('taxi.orNumber', 'arba įvesk langelio numerį:');
@@ -7770,7 +7828,8 @@ function renderTaxiChoice() {
     const nameKey = `cell.${taxiUi.target}.name`;
     const tr = t(nameKey);
     const name = (tr && tr !== nameKey) ? tr : (f ? f.name : taxiUi.target);
-    text.textContent = tt('taxi.to', 'Važiuoti į {field} už €{cost}?').replace('{field}', name).replace('{cost}', taxiUi.cost);
+    text.textContent = taxiUi.cost > 0 ? tt('taxi.to', 'Važiuoti į {field} už €{cost}?').replace('{field}', name).replace('{cost}', taxiUi.cost)
+        : tt('taxi.toFree', 'Važiuoti į {field} nemokamai?').replace('{field}', name);
     const from = myPlayer ? myPlayer.position : 26;
     if (taxiUi.target === 0) extra.textContent = '🏁 ' + tt('taxi.landStart', 'Sustosi ant START: +€300');
     else if (taxiUi.target < from) extra.textContent = '🏁 ' + tt('taxi.passStart', 'Pravažiuosi START: +€200');
@@ -7787,6 +7846,322 @@ function closeTaxiPicker() {
     document.querySelectorAll('#board .cell.taxi-target, #board .cell.taxi-forbidden, #board .cell.taxi-selected')
         .forEach(c => c.classList.remove('taxi-target', 'taxi-forbidden', 'taxi-selected'));
 }
+// ============================================================
+// 🎡 LAIMĖS RATAS (4 langelis) – ratas lentos viduryje, mato visi, suka tik atsistojęs žaidėjas
+// ============================================================
+const WHEEL_DEFAULT_SECTORS = [
+    { type: 'money', amount: 50 }, { type: 'money', amount: -50 }, { type: 'money', amount: 100 }, { type: 'jail' },
+    { type: 'money', amount: 150 }, { type: 'money', amount: -100 }, { type: 'taxi' }, { type: 'money', amount: 200 },
+    { type: 'collect', amount: 25 }, { type: 'money', amount: -150 }, { type: 'money', amount: 300 }, { type: 'nothing' },
+    { type: 'money', amount: -200 }, { type: 'pay_each', amount: 25 }, { type: 'money', amount: 500 }
+];
+const wheelUi = { open: false, playerId: null, sectors: WHEEL_DEFAULT_SECTORS, deadline: 0, timer: null, spinning: false,
+    rot: 0, anim: null, raf: null, hideTimer: null, resultShown: false };
+
+// 🎪 Cirko stiliaus ratas: raudona / kreminė / mėlyna juostos, auksinis kraštas su mirksinčiomis lemputėmis
+const WHEEL_CIRCUS = [
+    { fill: 'url(#whRed)', text: '#fff8e1', stroke: '#5c0a0a' },
+    { fill: 'url(#whCream)', text: '#9b1111', stroke: '#7a5a1a' },
+    { fill: 'url(#whBlue)', text: '#fff8e1', stroke: '#0a1a4a' }
+];
+function wheelSectorStyle(s, i) {
+    const c = WHEEL_CIRCUS[i % 3];
+    let label;
+    if (s.type === 'money' && s.amount >= 500) return { fill: 'url(#whGold)', text: '#5a2d00', label: '★ €' + s.amount + ' ★', jackpot: true };
+    if (s.type === 'money' && s.amount > 0) label = '+€' + s.amount;
+    else if (s.type === 'money') label = '−€' + Math.abs(s.amount);
+    else if (s.type === 'jail') label = '⛓️ ' + tt('wheel.s.jail', 'KALĖJ.');
+    else if (s.type === 'taxi') label = '🚕 ' + tt('wheel.s.taxi', 'TAKSI');
+    else if (s.type === 'collect') label = '👥 +€' + s.amount;
+    else if (s.type === 'pay_each') label = '👥 −€' + s.amount;
+    else label = '😅 ' + tt('wheel.s.nothing', 'NIEKO');
+    return { fill: c.fill, text: c.text, label };
+}
+// Ratas kaip SVG (withText=false – mažas paveikslėlis langeliui)
+function wheelSvg(sectors, withText, cls) {
+    const n = sectors.length, seg = 360 / n, R = 138;
+    const pt = (a, r) => { const rad = (a - 90) * Math.PI / 180; return [(r * Math.cos(rad)).toFixed(2), (r * Math.sin(rad)).toFixed(2)]; };
+    let paths = '', texts = '', bulbs = '', studs = '';
+    sectors.forEach((s, i) => {
+        const st = wheelSectorStyle(s, i);
+        const a0 = i * seg - seg / 2, a1 = i * seg + seg / 2;
+        const [x0, y0] = pt(a0, R), [x1, y1] = pt(a1, R);
+        paths += `<path class="wh-sec" data-i="${i}" d="M0 0 L${x0} ${y0} A${R} ${R} 0 0 1 ${x1} ${y1} Z" fill="${st.fill}"/>`;
+        // auksinės skiriamosios linijos
+        const [lx, ly] = pt(a0, R);
+        studs += `<line x1="0" y1="0" x2="${lx}" y2="${ly}" stroke="url(#whGoldLine)" stroke-width="3"/>`;
+        const [sx, sy] = pt(a0, R - 9);
+        studs += `<circle cx="${sx}" cy="${sy}" r="3.6" fill="url(#whStud)" stroke="#6b4300" stroke-width=".8"/>`;
+        if (withText) {
+            texts += `<text transform="rotate(${i * seg}) translate(0 -${R * 0.62}) rotate(90)" text-anchor="middle" dominant-baseline="central" fill="${st.text}" font-size="${st.jackpot ? 15 : 17}" font-weight="900" font-family="'Trebuchet MS', Arial, sans-serif" letter-spacing=".5" paint-order="stroke" stroke="${st.text === '#fff8e1' ? 'rgba(0,0,0,.35)' : 'rgba(255,255,255,.4)'}" stroke-width="2">${st.label}</text>`;
+        }
+    });
+    // lemputės aplink kraštą (dvi grupės mirksi pakaitomis)
+    const NB = 30;
+    for (let k = 0; k < NB; k++) {
+        const [bx, by] = pt(k * 360 / NB, R + 13);
+        bulbs += `<circle class="wh-bulb ${k % 2 ? 'b' : 'a'}" cx="${bx}" cy="${by}" r="${withText ? 4.6 : 6}"/>`;
+    }
+    const star = (r1, r2) => { let d = ''; for (let k = 0; k < 10; k++) { const r = k % 2 ? r2 : r1; const [x, y] = pt(k * 36, r); d += (k ? 'L' : 'M') + x + ' ' + y; } return d + 'Z'; };
+    return `<svg class="${cls || ''}" viewBox="-165 -165 330 330" xmlns="http://www.w3.org/2000/svg"><defs>
+        <radialGradient id="whRed" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="scale(${R})"><stop offset=".15" stop-color="#ff5252"/><stop offset=".75" stop-color="#d50000"/><stop offset="1" stop-color="#8e0000"/></radialGradient>
+        <radialGradient id="whCream" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="scale(${R})"><stop offset=".15" stop-color="#ffffff"/><stop offset=".75" stop-color="#fff3d6"/><stop offset="1" stop-color="#e8cf9a"/></radialGradient>
+        <radialGradient id="whBlue" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="scale(${R})"><stop offset=".15" stop-color="#448aff"/><stop offset=".75" stop-color="#1a47b8"/><stop offset="1" stop-color="#0b2470"/></radialGradient>
+        <linearGradient id="whGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffde7"/><stop offset=".35" stop-color="#ffd54f"/><stop offset=".7" stop-color="#ffb300"/><stop offset="1" stop-color="#e65100"/></linearGradient>
+        <linearGradient id="whGoldLine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff59d"/><stop offset="1" stop-color="#c79100"/></linearGradient>
+        <linearGradient id="whRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".3" stop-color="#e0a800"/><stop offset=".55" stop-color="#fff0a0"/><stop offset=".8" stop-color="#b07800"/><stop offset="1" stop-color="#ffe082"/></linearGradient>
+        <radialGradient id="whStud" cx=".35" cy=".35" r=".7"><stop offset="0" stop-color="#fffde7"/><stop offset="1" stop-color="#c79100"/></radialGradient>
+        <radialGradient id="whHub" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#fffde7"/><stop offset=".45" stop-color="#ffca28"/><stop offset="1" stop-color="#8d5a00"/></radialGradient>
+        <radialGradient id="whGloss" cx=".35" cy=".25" r=".7"><stop offset="0" stop-color="rgba(255,255,255,.38)"/><stop offset=".55" stop-color="rgba(255,255,255,.05)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></radialGradient>
+        <radialGradient id="whShade" cx=".5" cy=".5" r=".5"><stop offset=".8" stop-color="rgba(0,0,0,0)"/><stop offset="1" stop-color="rgba(0,0,0,.35)"/></radialGradient></defs>
+        <circle r="163" fill="#3a0606"/>
+        <circle r="160" fill="url(#whRim)"/>
+        <circle r="${R + 13}" fill="#7a0d0d" stroke="#4a0505" stroke-width="2"/>
+        ${bulbs}
+        <circle r="${R + 3}" fill="url(#whRim)"/>
+        ${paths}${studs}
+        <circle r="${R}" fill="url(#whShade)"/>
+        ${texts}
+        <circle r="${R}" fill="url(#whGloss)" pointer-events="none"/>
+        <circle r="${withText ? 36 : 40}" fill="#5a3500"/>
+        <circle r="${withText ? 33 : 37}" fill="url(#whHub)" stroke="#fff3b0" stroke-width="2"/>
+        <path d="${star(withText ? 24 : 28, withText ? 10 : 12)}" fill="#d50000" stroke="#fff3b0" stroke-width="1.5"/></svg>`;
+}
+// Auksinė rodyklė su raudonu brangakmeniu
+const WHEEL_POINTER_SVG = `<svg viewBox="0 0 60 78" xmlns="http://www.w3.org/2000/svg"><defs>
+    <linearGradient id="whPtrG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b07800"/><stop offset=".45" stop-color="#fff3b0"/><stop offset=".6" stop-color="#ffca28"/><stop offset="1" stop-color="#8d5a00"/></linearGradient>
+    <radialGradient id="whGem" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#ffcdd2"/><stop offset=".4" stop-color="#ff1744"/><stop offset="1" stop-color="#7f0000"/></radialGradient></defs>
+    <path d="M30 76 L8 30 A24 24 0 1 1 52 30 Z" fill="url(#whPtrG)" stroke="#5a3500" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="30" cy="24" r="11" fill="url(#whGem)" stroke="#5a3500" stroke-width="2"/>
+    <circle cx="26" cy="20" r="3" fill="rgba(255,255,255,.8)"/></svg>`;
+// Mažas rato paveikslėlis 4 langeliui (su rodykle)
+const WHEEL_CELL_ICON = `<span class="wh-cell-icon">${wheelSvg(WHEEL_DEFAULT_SECTORS, false, 'fx3-cell-svg wh-cell-svg')}<i class="wh-cell-ptr">${WHEEL_POINTER_SVG}</i></span>`;
+
+// 🎵 Rato muzika: groja nuo rato pasirodymo, kol ratas sustoja (baigusi – pradeda iš naujo)
+function wheelMusicStart(pid) {
+    wheelMusicStop(true);
+    try {
+        if (!audioManager || !audioManager.isEnabled) return;
+        if (soundMode !== 'all' && pid !== playerId) return;          // „tik mano garsai“ – kitų rato muzikos negirdim
+        const lvl = audioManager.getSoundLevel('ratas_muzika');
+        if (lvl <= 0) return;
+        const src = audioManager.pick('ratas_muzika');
+        if (!src) return;
+        const a = src.cloneNode();
+        a.loop = true;
+        a.volume = Math.max(0, Math.min(1, audioManager.sfxVolume * (lvl / 10)));
+        const p = a.play(); if (p && p.catch) p.catch(() => {});
+        wheelUi.music = a;
+    } catch (e) {}
+}
+function wheelMusicStop(now) {
+    const a = wheelUi.music;
+    wheelUi.music = null;
+    if (!a) return;
+    if (now) { try { a.pause(); } catch (e) {} return; }
+    // švelniai nutyla per ~0,5 s
+    const v0 = a.volume, t0 = performance.now();
+    const step = () => {
+        const k = Math.min(1, (performance.now() - t0) / 500);
+        try { a.volume = v0 * (1 - k); } catch (e) {}
+        if (k < 1) requestAnimationFrame(step); else { try { a.pause(); } catch (e) {} }
+    };
+    requestAnimationFrame(step);
+}
+
+function wheelBoxEl() {
+    let box = document.getElementById('wheelBox');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'wheelBox';
+        box.innerHTML = `
+            <div class="wh-title"></div>
+            <div class="wh-sub"></div>
+            <div class="wh-wrap">
+                <div class="wh-ptr">${WHEEL_POINTER_SVG}</div>
+                <div class="wh-rot"></div>
+                <button type="button" class="wh-spin"></button>
+            </div>
+            <div class="wh-res"></div>
+            <div class="wh-left"></div>`;
+        document.body.appendChild(box);
+        box.querySelector('.wh-spin').onclick = () => {
+            if (!wheelUi.open || wheelUi.spinning || wheelUi.playerId !== playerId) return;
+            box.querySelector('.wh-spin').disabled = true;
+            if (typeof playClickSound === 'function') playClickSound();
+            socket.emit('wheelSpin');
+        };
+        window.addEventListener('resize', () => { if (wheelUi.open) wheelPlace(); });
+    }
+    return box;
+}
+function wheelPlace() {
+    const box = document.getElementById('wheelBox');
+    const board = document.getElementById('board');
+    if (!box || !board) return;
+    const r = board.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const size = Math.round(Math.max(200, Math.min(400, Math.min(r.width, r.height) * 0.5, vw - 40, vh - 200)));
+    box.style.setProperty('--wh', size + 'px');
+    const cx = Math.min(vw - 10, Math.max(10, r.left + r.width / 2));
+    const cy = Math.min(vh - 10, Math.max(10, r.top + r.height / 2));
+    box.style.left = cx + 'px';
+    box.style.top = cy + 'px';
+}
+function wheelPlayerName(pid) {
+    const p = gameState && gameState.players ? gameState.players.find(x => x.id === pid) : null;
+    return p ? p.name : '';
+}
+function openWheel(pid, pname, durationMs, sectors) {
+    clearTimeout(wheelUi.hideTimer);
+    if (wheelUi.anim) { try { wheelUi.anim.cancel(); } catch (e) {} wheelUi.anim = null; }
+    cancelAnimationFrame(wheelUi.raf);
+    if (typeof cell5DismissMyTurn === 'function' && pid === playerId) cell5DismissMyTurn();
+    const box = wheelBoxEl();
+    const wasSame = wheelUi.open && wheelUi.playerId === pid && wheelUi.music;
+    wheelUi.open = true;
+    wheelUi.playerId = pid;
+    if (!wasSame) wheelMusicStart(pid);
+    wheelUi.spinning = false;
+    wheelUi.resultShown = false;
+    wheelUi.sectors = Array.isArray(sectors) && sectors.length ? sectors : WHEEL_DEFAULT_SECTORS;
+    wheelUi.deadline = Date.now() + (durationMs || 30000);
+    wheelUi.rot = 0;
+    const rot = box.querySelector('.wh-rot');
+    rot.innerHTML = wheelSvg(wheelUi.sectors, true, 'wh-svg');
+    rot.style.transform = 'rotate(0deg)';
+    const mine = pid === playerId;
+    box.classList.toggle('mine', mine);
+    box.classList.remove('spinning', 'done');
+    box.querySelector('.wh-title').textContent = '★ ' + tt('wheel.title', 'LAIMĖS RATAS') + ' ★';
+    box.querySelector('.wh-sub').textContent = mine ? tt('wheel.youSpin', 'Tavo eilė – suk ratą!')
+        : tt('wheel.othersSpin', '{player} suka laimės ratą').replace('{player}', pname || wheelPlayerName(pid));
+    const btn = box.querySelector('.wh-spin');
+    btn.textContent = mine ? tt('wheel.spin', 'SUKTI') : '🎡';
+    btn.disabled = !mine;
+    box.querySelector('.wh-res').textContent = '';
+    box.querySelector('.wh-res').className = 'wh-res';
+    wheelPlace();
+    box.classList.add('show');
+    clearInterval(wheelUi.timer);
+    const tick = () => {
+        const left = Math.max(0, Math.ceil((wheelUi.deadline - Date.now()) / 1000));
+        const el = box.querySelector('.wh-left');
+        if (wheelUi.spinning || wheelUi.resultShown) { el.textContent = ''; return; }
+        el.textContent = '⏱️ ' + (mine ? tt('wheel.autoIn', 'Pats užsisuks po {s} s') : tt('wheel.left', 'Liko {s} s')).replace('{s}', left);
+    };
+    tick();
+    wheelUi.timer = setInterval(tick, 500);
+}
+function wheelTargetAngle(index, jitter, minTurns) {
+    const n = wheelUi.sectors.length, seg = 360 / n;
+    const want = ((360 - (index * seg + (jitter || 0) * seg)) % 360 + 360) % 360;   // kad sektorius būtų ties rodykle (viršuje)
+    const cur = ((wheelUi.rot % 360) + 360) % 360;
+    let delta = want - cur; if (delta < 0) delta += 360;
+    return wheelUi.rot + minTurns * 360 + delta;
+}
+function spinWheelUi(index, jitter, spinMs, pid) {
+    if (!wheelUi.open || wheelUi.playerId !== pid) openWheel(pid, null, 0, wheelUi.sectors);
+    const box = wheelBoxEl();
+    const rot = box.querySelector('.wh-rot');
+    wheelUi.spinning = true;
+    box.classList.add('spinning');
+    box.querySelector('.wh-spin').disabled = true;
+    box.querySelector('.wh-left').textContent = '';
+    box.querySelector('.wh-sub').textContent = pid === playerId ? tt('wheel.spinning', 'Sukasi… 🤞')
+        : tt('wheel.othersSpinning', '{player} suka…').replace('{player}', wheelPlayerName(pid));
+    const dur = Math.max(400, spinMs || 4000);
+    const turns = Math.max(1, Math.round(dur / 700));
+    const from = wheelUi.rot;
+    const to = wheelTargetAngle(index, jitter, turns);
+    wheelUi.rot = to;
+    if (wheelUi.anim) { try { wheelUi.anim.cancel(); } catch (e) {} }
+    wheelUi.anim = rot.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${to}deg)` }],
+        { duration: dur, easing: 'cubic-bezier(.12,.6,.12,1)', fill: 'forwards' });
+    playSoundForPlayer('ratas_suka', pid);
+    // „tik-tik“ kiekvieną kartą, kai pro rodyklę praslenka sektoriaus kraštas
+    const seg = 360 / wheelUi.sectors.length;
+    let lastSeg = null, lastTick = 0;
+    const loop = () => {
+        if (!wheelUi.anim || !wheelUi.spinning) return;
+        const m = getComputedStyle(rot).transform;
+        let ang = 0;
+        if (m && m !== 'none') { const v = m.match(/matrix\(([^)]+)\)/); if (v) { const p = v[1].split(',').map(Number); ang = Math.atan2(p[1], p[0]) * 180 / Math.PI; } }
+        const sIdx = Math.floor((((ang + seg / 2) % 360) + 360) % 360 / seg);
+        const now = performance.now();
+        if (lastSeg !== null && sIdx !== lastSeg && now - lastTick > 55) {
+            lastTick = now;
+            if (soundMode === 'all' || pid === playerId) { try { audioManager.playOverlap('ratas_tiksi'); } catch (e) {} }
+        }
+        lastSeg = sIdx;
+        wheelUi.raf = requestAnimationFrame(loop);
+    };
+    cancelAnimationFrame(wheelUi.raf);
+    wheelUi.raf = requestAnimationFrame(loop);
+    wheelUi.anim.onfinish = () => { cancelAnimationFrame(wheelUi.raf); wheelMusicStop(); };   // ratas sustojo – muzika nutyla
+}
+const WHEEL_RESULT_SOUND = { win: 'ratas_laimejo', lose: 'ratas_pralaimejo', taxi: 'ratas_taksi', nothing: 'ratas_nieko' };
+function showWheelResult(d) {
+    const box = wheelBoxEl();
+    if (!wheelUi.open) { openWheel(d.playerId, d.playerName, 0, wheelUi.sectors); }
+    if (wheelUi.anim && wheelUi.anim.playState === 'running') { try { wheelUi.anim.finish(); } catch (e) {} }
+    wheelUi.spinning = false;
+    wheelUi.resultShown = true;
+    wheelMusicStop();
+    box.classList.remove('spinning');
+    box.classList.add('done');
+    box.querySelectorAll('.wh-sec').forEach(p => p.classList.toggle('win', +p.dataset.i === d.index));
+    const s = d.sector || {};
+    const text = getTranslatedMessage(d.key, d.data || {});
+    const res = box.querySelector('.wh-res');
+    box.querySelector('.wh-sub').textContent = d.playerName || wheelPlayerName(d.playerId);
+    res.textContent = text;
+    let kind = 'nothing';
+    if (s.type === 'money' || s.type === 'collect' || s.type === 'pay_each') kind = (s.type === 'collect' || (s.type === 'money' && s.amount > 0)) ? 'win' : 'lose';
+    else if (s.type === 'jail') kind = 'jail';
+    else if (s.type === 'taxi') kind = 'taxi';
+    res.className = 'wh-res show ' + kind;
+    box.querySelector('.wh-left').textContent = '';
+    if (kind !== 'jail') playSoundForPlayer(WHEEL_RESULT_SOUND[kind], d.playerId);   // kalėjimui garsus groja policijos mašinėlė
+    // Kalėjimas – figūrėlė nueina į kalėjimą
+    if (s.type === 'jail' && d.from !== d.to) {
+        window.animatingPlayers = window.animatingPlayers || [];
+        if (!window.animatingPlayers.includes(d.playerId)) window.animatingPlayers.push(d.playerId);
+        setTimeout(() => {
+            closeWheel();
+            playPoliceVanEffect(d.playerId, d.from);   // 🚓 policija nuveža (garsai – mašinėlėje)
+        }, 1600);
+        return;
+    }
+    clearTimeout(wheelUi.hideTimer);
+    wheelUi.hideTimer = setTimeout(closeWheel, s.type === 'taxi' ? 1600 : 2800);
+}
+function closeWheel() {
+    wheelMusicStop(true);
+    clearTimeout(wheelUi.hideTimer);
+    clearInterval(wheelUi.timer);
+    cancelAnimationFrame(wheelUi.raf);
+    wheelUi.open = false;
+    wheelUi.spinning = false;
+    wheelUi.resultShown = false;
+    wheelUi.playerId = null;
+    const box = document.getElementById('wheelBox');
+    if (box) box.classList.remove('show', 'spinning', 'done', 'mine');
+}
+// Po persikrovimo / prisijungimo iš naujo – ratas atkuriamas iš būsenos
+function syncWheelFromState(state) {
+    const w = state && state.wheel;
+    if (w) {
+        if (!wheelUi.open || wheelUi.playerId !== w.playerId) {
+            openWheel(w.playerId, null, w.msLeft, wheelUi.sectors);
+            if (w.spinning && w.index !== null && w.index !== undefined) spinWheelUi(w.index, w.jitter, Math.max(400, w.spinLeftMs || 0), w.playerId);
+        }
+    } else if (wheelUi.open && !wheelUi.resultShown && !wheelUi.spinning) {
+        closeWheel();
+    }
+}
+FX3_CELL_ICONS[4] = WHEEL_CELL_ICON;
+
 // Paspaudimas ant langelio taksi pasirinkimo metu
 document.addEventListener('click', (e) => {
     if (!taxiUi.open) return;
@@ -8137,6 +8512,11 @@ function showPlayerDot(playerId, position) {
 
 function showBuyChoice(data) {
     const choice = document.getElementById('buyChoice');
+    // 🔔 Langeliai su savo garsų rinkiniu – atskiras pasiūlymo garsas (truputį vėliau, kad nesutaptų su atsistojimo garsu)
+    if (CELL_SOUNDS[data.fieldId] && choice && choice.style.display !== 'flex') {
+        const snd = CELL_SOUNDS[data.fieldId].offer;
+        setTimeout(() => { if (choice.style.display === 'flex') playSoundForPlayer(snd, data.playerId); }, 900);
+    }
     document.getElementById('choiceFieldName').textContent = data.fieldName || 'Sklypas';
     document.getElementById('choiceFieldCost').textContent = '€' + (data.fieldCost || 0);
     
@@ -8149,7 +8529,7 @@ function showBuyChoice(data) {
     
     choice.style.display = 'flex';
     choice.classList.add('show');
-    playNotificationSound();
+    if (!CELL_SOUNDS[data.fieldId]) playNotificationSound();
 }
 
 function hideBuyChoice(force = false) {
@@ -9160,7 +9540,7 @@ function refreshBuildButton() {
     const me = myPlayer;
     const moving = (typeof isAnimating !== 'undefined' && isAnimating) ||
         (window.animatingPlayers && window.animatingPlayers.includes(playerId)) ||
-        (gs && (gs.isRolling || gs.pendingFieldPlayerId === playerId || gs.taxiOffer || gs.waitingForBuy));
+        (gs && (gs.isRolling || gs.pendingFieldPlayerId === playerId || gs.taxiOffer || gs.wheel || gs.waitingForBuy));
     const windowOpen = (typeof buildWin !== 'undefined' && buildWin.open) ||
         !!(gs && gs.buildWindow && gs.buildWindow.playerId === playerId);
     const out = !me || me.bankrupt || me.left || me.kicked || me.isDebtor;
@@ -9474,10 +9854,12 @@ function updateUI(state) {
     }
     // 🚕 Taksi pasirinkimas (pvz., po persikrovimo)
     if (state.taxiOffer && state.taxiOffer.playerId === playerId) {
-        if (!taxiUi.open) openTaxiPicker(state.taxiOffer.cost, state.taxiOffer.msLeft, null);
+        if (!taxiUi.open) openTaxiPicker(state.taxiOffer.cost, state.taxiOffer.msLeft, state.taxiOffer.forbidden || null);
     } else if (taxiUi.open) {
         closeTaxiPicker();
     }
+    syncWheelFromState(state);   // 🎡
+    window.__tableLang = state.lang || 'lt';   // 🌐 stalo kalba (garsų parinkimui)
     const rcb = document.getElementById('rulesCurrentBuildRule');
     if (rcb && state.buildRule) rcb.textContent = tf('cli.build_rule_this_table', { v: tt('game.buildRuleThisTable', 'Šiame stale'), buildRule: state.buildRule, v2: buildRuleLabel(state.buildRule) });
     
@@ -9687,7 +10069,7 @@ if (rollBtn) {
     const blockedByAction = rollBtn.dataset.blockedByAction === 'true';
     
     // Kol laukiama pirkimo / taksi / statybų sprendimo – mesti negalima
-    const waitingDecision = !!(state.waitingForBuy || state.taxiOffer || state.buildWindow);
+    const waitingDecision = !!(state.waitingForBuy || state.taxiOffer || state.buildWindow || state.wheel);
     if (blockedByAction) {
         rollBtn.disabled = true;
     } else {
@@ -9925,8 +10307,8 @@ function updateBoard(state) {
         html += `<span class="cell-name">${cellName}</span>`;
 
         // 🆕 PIRMIAUSIA specialūs langeliai (su fiksuotu tekstu)
-        if (field.id === 4) {          // HORNY RP
-            html += `<span class="cell-cost" style="color:#28a745; font-weight:900;">€200</span>`;
+        if (field.id === 4) {          // 🎡 LAIMĖS RATAS
+            html += `<span class="cell-cost wh-cell-tag">${tt('wheel.cellTag', 'SUK!')}</span>`;
         } else if (field.id === 5) {   // VMI
             html += `<span class="cell-cost" style="color:#dc3545; font-weight:900;">€100</span>`;
         } else if (field.id === 13) {  // Ligoninė
@@ -10811,7 +11193,7 @@ function handleTurnPopup(state) {
         if (!p) return;
         // Kol laukėm animacijos, eilė galėjo pasikeisti arba jau mesta
         if (gameState && gameState.currentTurn !== p.id) return;
-        if (p.id === playerId && (window.__rolledThisTurn || (gameState && (gameState.taxiOffer || gameState.buildWindow || gameState.isRolling || gameState.pendingFieldPlayerId === playerId)))) return;
+        if (p.id === playerId && (window.__rolledThisTurn || (gameState && (gameState.taxiOffer || gameState.wheel || gameState.buildWindow || gameState.isRolling || gameState.pendingFieldPlayerId === playerId)))) return;
         if (p.id === playerId) {
             cell5Enqueue({
                 type: 'turn-mine',
