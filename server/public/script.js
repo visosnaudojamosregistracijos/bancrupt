@@ -4,6 +4,9 @@
 
 let socket;
 let playerId = null;
+// 👁 Stebėjimo režimas (tik administratoriui): /?watch=STALO_KODAS
+const WATCH_GAME_ID = (() => { try { const v = new URLSearchParams(window.location.search).get('watch'); return v ? String(v).trim().toUpperCase().slice(0, 12) : null; } catch (e) { return null; } })();
+window.__spectator = false;
 let gameId = null;
 let gameState = null;
 let myPlayer = null;
@@ -91,6 +94,8 @@ function initSocket() {
         playStartSound();
         
         setTimeout(() => {
+            // 👁 Stebėjimas – savo žaidimo neatkuriam, jungiamės kaip stebėtojas
+            if (WATCH_GAME_ID) { socket.emit('spectateGame', { gameId: WATCH_GAME_ID }); return; }
             const savedGameId = localStorage.getItem('bancrupt_gameId');
             const savedToken = localStorage.getItem('bancrupt_playerToken');
             
@@ -200,6 +205,24 @@ function initSocket() {
         showLobbyMessage(tf('cli.grizai_zaidima'), '#28a745');
         playStartSound();
         enterGame();
+    });
+
+    // 👁 Stebėjimas
+    socket.on('spectating', (d) => {
+        const first = !window.__spectator;
+        window.__spectator = true;
+        gameId = d.gameId;
+        playerId = null;
+        myPlayer = null;
+        document.body.classList.add('spectator');
+        if (first) {
+            enterGame();
+            showSpectatorBar(d.gameId);
+        }
+    });
+    socket.on('spectateFailed', (msg) => {
+        alert('👁 ' + (msg || 'Stebėti nepavyko'));
+        window.location.href = '/';
     });
 
     socket.on('reconnectFailed', (msg) => {
@@ -3563,7 +3586,8 @@ function enterGame() {
     }
     
     clearChat();  // 🆕 IŠVALYTI CHAT PRIEŠ ĮEINANT
-    loadJournalFromStorage();
+    if (window.__spectator) { const j = document.getElementById('journal'); if (j) j.innerHTML = ''; journalCount = 0; }
+    else loadJournalFromStorage();
 
     const savedSoundMode = localStorage.getItem('bancrupt_soundMode') || 'my';
 soundMode = savedSoundMode;
@@ -7632,6 +7656,7 @@ function endTour() {
 document.addEventListener('keydown', (e) => { if (tourUi.active && e.key === 'Escape') endTour(); });
 // Automatiškai – vieną kartą, kai pirmą kartą prasideda žaidimas
 function maybeAutoTour(state) {
+    if (window.__spectator) return;
     if (tourUi.autoTried || !state || !state.gameStarted) return;
     tourUi.autoTried = true;
     let done = null;
@@ -9924,9 +9949,10 @@ function updateUI(state) {
         turnDisplayLeft.textContent = currentPlayer.name;
     }
     
-    const me = state.players.find(p => p.id === playerId);
+    // 👁 Stebint – „AŠ“ skydelyje rodomas tas, kieno dabar eilė
+    const me = window.__spectator ? state.players.find(p => p.id === state.currentTurn) : state.players.find(p => p.id === playerId);
     if (me) {
-        myPlayer = me;
+        if (!window.__spectator) myPlayer = me;
         const housesInfo = me.houses ? Object.values(me.houses).reduce((a, b) => a + b, 0) : 0;
         
         let miniCardsHtml = '';
@@ -10836,7 +10862,7 @@ function addJournal(msg) {
     container.appendChild(item);
     container.scrollTop = container.scrollHeight;
     
-    try {
+    if (!window.__spectator) try {   // 👁 stebint – savo žurnalo nepildom
         const history = JSON.parse(localStorage.getItem('bancrupt_journal') || '[]');
         history.push({ num: journalCount, text: msg, time: time });
         localStorage.setItem('bancrupt_journal', JSON.stringify(history));
@@ -12554,3 +12580,19 @@ setInterval(() => {
 }, 500);
 
 console.log('✅ Feedback funkcijos užkrautos!');
+
+// ============================================================
+// 👁 STEBĖJIMO REŽIMAS – juosta viršuje (žaidėjams nerodoma)
+// ============================================================
+function showSpectatorBar(gid) {
+    let bar = document.getElementById('spectatorBar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'spectatorBar';
+        bar.innerHTML = '<span class="sp-eye">👁</span><span class="sp-text"></span><button type="button" class="sp-exit"></button>';
+        document.body.appendChild(bar);
+        bar.querySelector('.sp-exit').onclick = () => { window.location.href = '/admin.html'; };
+    }
+    bar.querySelector('.sp-text').textContent = tt('spectate.banner', 'Stebėjimo režimas – stalas {id}. Matai viską, bet nieko negali keisti.').replace('{id}', gid);
+    bar.querySelector('.sp-exit').textContent = tt('spectate.exit', '✖ Baigti stebėti');
+}

@@ -1893,5 +1893,8 @@
     "srv.game.ratas_tau_nelaukia": "Колесо сейчас тебя не ждёт",
     "srv.game.ratas_jau_sukasi": "Колесо уже крутится!",
     "srv.game.pirmiausia_suk_rata": "Сначала крути колесо фортуны!",
-    "wheel.spinning": "Крутится… 🤞"
+    "wheel.spinning": "Крутится… 🤞",
+    "spectate.banner": "Режим наблюдения – стол {id}. Видишь всё, но ничего не можешь менять.",
+    "spectate.exit": "✖ Прекратить",
+    "srv.server.tik_administratorius": "Наблюдать может только администратор"
 }

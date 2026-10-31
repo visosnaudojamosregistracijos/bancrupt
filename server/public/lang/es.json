@@ -1848,5 +1848,8 @@
     "srv.game.ratas_tau_nelaukia": "La ruleta no te espera ahora",
     "srv.game.ratas_jau_sukasi": "¡La ruleta ya está girando!",
     "srv.game.pirmiausia_suk_rata": "¡Primero gira la ruleta de la suerte!",
-    "wheel.spinning": "Girando… 🤞"
+    "wheel.spinning": "Girando… 🤞",
+    "spectate.banner": "Modo espectador – mesa {id}. Lo ves todo, pero no puedes cambiar nada.",
+    "spectate.exit": "✖ Dejar de mirar",
+    "srv.server.tik_administratorius": "Solo un administrador puede observar"
 }

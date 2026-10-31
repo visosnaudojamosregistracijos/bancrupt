@@ -652,7 +652,7 @@ async function loadStats() {
         tbody.innerHTML = '';
         
         if (!data.gameList || data.gameList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">Nėra aktyvių žaidimų</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">Nėra aktyvių žaidimų</td></tr>';
             return;
         }
         
@@ -665,6 +665,7 @@ async function loadStats() {
                 <td>${g.host}</td>
                 <td>${g.currentPlayer || '-'}</td>
                 <td>${(g.money || 0).toLocaleString('lt-LT')} €</td>
+                <td>${g.started ? `<a href="/?watch=${encodeURIComponent(g.gameId)}" target="_blank" rel="noopener" title="Stebėti stalą (žaidėjai to nemato)" style="display:inline-block; padding:4px 10px; border-radius:999px; background:#4fc3f7; color:#0b1a2a; font-weight:800; text-decoration:none;">👁 Stebėti</a>` : '<span style="color:#888;">–</span>'}</td>
             `;
             tbody.appendChild(row);
         });

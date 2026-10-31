@@ -1848,5 +1848,8 @@
     "srv.game.ratas_tau_nelaukia": "Das Glücksrad wartet gerade nicht auf dich",
     "srv.game.ratas_jau_sukasi": "Das Rad dreht sich schon!",
     "srv.game.pirmiausia_suk_rata": "Dreh zuerst das Glücksrad!",
-    "wheel.spinning": "Dreht sich… 🤞"
+    "wheel.spinning": "Dreht sich… 🤞",
+    "spectate.banner": "Zuschauermodus – Tisch {id}. Du siehst alles, kannst aber nichts ändern.",
+    "spectate.exit": "✖ Beenden",
+    "srv.server.tik_administratorius": "Nur ein Administrator kann zuschauen"
 }

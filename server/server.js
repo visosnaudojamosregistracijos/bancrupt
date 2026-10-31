@@ -675,6 +675,7 @@ io.use((socket, next) => {
     
     socket.userId = decoded.userId;
     socket.isGuest = false;
+    socket.isAdmin = decoded.is_admin === true;   // 👁 stebėjimui (tik administratorius)
     
     console.log(`✅ Prisijungęs vartotojas: userId=${socket.userId}`);
     next();
@@ -1104,6 +1105,28 @@ io.on('connection', (socket) => {
             console.error('❌ boardSettings klaida:', err);
         }
     }); 
+
+    // ============================================
+    // 👁 STEBĖJIMAS (tik administratorius): mato stalą gyvai, bet nieko negali daryti.
+    // Nėra socket.gameId / socket.playerId – todėl visi žaidimo veiksmai jam atmetami.
+    // Žaidėjams stebėtojas nerodomas.
+    // ============================================
+    socket.on('spectateGame', async (data) => {
+        if (!socket.isAdmin) { socket.emit('spectateFailed', L('srv.server.tik_administratorius')); return; }
+        const gid = String((data && data.gameId) || '').toUpperCase();
+        const game = games.get(gid);
+        if (!game) { socket.emit('spectateFailed', L('srv.server.zaidimas_nerastas')); return; }
+        if (socket.spectating && socket.spectating !== gid) socket.leave(socket.spectating);
+        socket.spectating = gid;
+        socket.join(gid);
+        console.log(`👁 Administratorius (userId ${socket.userId}) stebi stalą ${gid}`);
+        socket.emit('spectating', { gameId: gid, started: !!game.gameStarted });
+        socket.emit('gameState', game.getGameState());
+        try { socket.emit('centerCells', await db.getCenterCells()); } catch (err) {}
+        try { socket.emit('soundSettings', await db.getSoundSettings()); } catch (err) {}
+        try { socket.emit('soundFiles', await db.getSoundFiles()); } catch (err) {}
+        try { socket.emit('boardSettings', await db.getBoardSettings()); } catch (err) {}
+    });
 
     socket.on('rollDice', async () => {
         if (!await checkSocketRateLimit(socket, 'rollDice')) return;

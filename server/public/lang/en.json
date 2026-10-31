@@ -1893,5 +1893,8 @@
     "srv.game.ratas_tau_nelaukia": "The wheel is not waiting for you now",
     "srv.game.ratas_jau_sukasi": "The wheel is already spinning!",
     "srv.game.pirmiausia_suk_rata": "Spin the wheel of fortune first!",
-    "wheel.spinning": "Spinning… 🤞"
+    "wheel.spinning": "Spinning… 🤞",
+    "spectate.banner": "Spectator mode – table {id}. You see everything but can't change anything.",
+    "spectate.exit": "✖ Stop watching",
+    "srv.server.tik_administratorius": "Only an administrator can watch"
 }

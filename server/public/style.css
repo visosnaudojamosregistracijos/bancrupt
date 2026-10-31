@@ -7411,3 +7411,25 @@ body:not(.cmp) #gameBody:has(#leftPanel:not(.hidden)) #leftPanelToggle:hover { o
 @keyframes whCellSpin { to { transform: rotate(360deg); } }
 .cell-cost.wh-cell-tag { color: #d50000 !important; font-weight: 900; letter-spacing: .5px; }
 @media (prefers-reduced-motion: reduce) { .wh-cell-icon .wh-cell-svg, #wheelBox .wh-bulb { animation: none; } }
+
+/* ============================================================
+   👁 STEBĖJIMO REŽIMAS (administratorius) – veiksmų mygtukai paslėpti
+   ============================================================ */
+body.spectator #rollBtn, body.spectator #tradeBtn, body.spectator .chat-input,
+body.spectator #voteKickBtn, body.spectator #leaveBtn, body.spectator #bankruptBtn,
+body.spectator #feedbackBtn, body.spectator #buyChoice, body.spectator #taxiPanel,
+body.spectator #buildWindowPanel, body.spectator #diceTestRow, body.spectator #fxPreviewRow,
+body.spectator #afkBanner { display: none !important; }
+#spectatorBar {
+    position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 99990;
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px 7px 14px; border-radius: 999px;
+    background: rgba(15, 18, 30, .92); border: 2px solid #4fc3f7; color: #e1f5fe;
+    font-size: 13px; font-weight: 700; box-shadow: 0 6px 18px rgba(0,0,0,.45);
+    max-width: calc(100vw - 16px);
+}
+#spectatorBar .sp-eye { font-size: 18px; animation: spBlink 3s ease-in-out infinite; }
+@keyframes spBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.15); } }
+#spectatorBar .sp-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#spectatorBar .sp-exit { flex-shrink: 0; border: none; border-radius: 999px; padding: 5px 12px; background: #4fc3f7; color: #0b1a2a; font-weight: 800; cursor: pointer; }
+@media (max-width: 600px) { #spectatorBar { font-size: 11px; top: 4px; } }

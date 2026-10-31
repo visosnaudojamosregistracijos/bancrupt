@@ -1895,5 +1895,8 @@
     "srv.game.ratas_tau_nelaukia": "Laimės ratas tau dabar nelaukia",
     "srv.game.ratas_jau_sukasi": "Ratas jau sukasi!",
     "srv.game.pirmiausia_suk_rata": "Pirmiausia suk laimės ratą!",
-    "wheel.spinning": "Sukasi… 🤞"
+    "wheel.spinning": "Sukasi… 🤞",
+    "spectate.banner": "Stebėjimo režimas – stalas {id}. Matai viską, bet nieko negali keisti.",
+    "spectate.exit": "✖ Baigti stebėti",
+    "srv.server.tik_administratorius": "Stebėti gali tik administratorius"
 }

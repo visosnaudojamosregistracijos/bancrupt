@@ -1848,5 +1848,8 @@
     "srv.game.ratas_tau_nelaukia": "La roue ne t'attend pas en ce moment",
     "srv.game.ratas_jau_sukasi": "La roue tourne déjà !",
     "srv.game.pirmiausia_suk_rata": "Fais d'abord tourner la roue de la fortune !",
-    "wheel.spinning": "Ça tourne… 🤞"
+    "wheel.spinning": "Ça tourne… 🤞",
+    "spectate.banner": "Mode spectateur – table {id}. Tu vois tout mais ne peux rien changer.",
+    "spectate.exit": "✖ Arrêter",
+    "srv.server.tik_administratorius": "Seul un administrateur peut observer"
 }
