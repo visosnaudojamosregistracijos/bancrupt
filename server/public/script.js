@@ -12591,7 +12591,10 @@ function showSpectatorBar(gid) {
         bar.id = 'spectatorBar';
         bar.innerHTML = '<span class="sp-eye">👁</span><span class="sp-text"></span><button type="button" class="sp-exit"></button>';
         document.body.appendChild(bar);
-        bar.querySelector('.sp-exit').onclick = () => { window.location.href = '/admin.html'; };
+        bar.querySelector('.sp-exit').onclick = () => {
+            if (typeof window.__spectatorExit === 'function') return window.__spectatorExit();   // peržiūroje – kitaip
+            window.location.href = '/admin.html';
+        };
     }
     bar.querySelector('.sp-text').textContent = tt('spectate.banner', 'Stebėjimo režimas – stalas {id}. Matai viską, bet nieko negali keisti.').replace('{id}', gid);
     bar.querySelector('.sp-exit').textContent = tt('spectate.exit', '✖ Baigti stebėti');

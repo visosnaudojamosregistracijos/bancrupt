@@ -22,7 +22,7 @@
     "port": ["port.mp3", "port.mp3", "port.mp3", "port.mp3", "port.mp3"],
     "bus": ["bus.mp3", "bus.mp3", "bus.mp3", "bus.mp3", "bus.mp3"],
     "latras": ["latras.mp3", "baras2.mp3", "baras3.mp3", "baras4.mp3", "baras5.mp3"],
-    "pirtis": ["pirtis.mp3", "pirtis.mp3", "pirtis.mp3", "pirtis.mp3", "pirtis.mp3"],
+    "pirtis": ["pirtis1.mp3"],
     "birthday": ["birthday1.mp3"],
     "birthday_kitos": ["birthday.mp3"],
     "auction": ["auction.mp3", "auction.mp3", "auction.mp3", "auction.mp3", "auction.mp3"],
