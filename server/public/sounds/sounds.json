@@ -44,7 +44,7 @@
     "roll": ["roll.mp3", "roll.mp3", "roll.mp3", "roll.mp3", "roll.mp3"],
     "trade": ["trade.mp3", "trade.mp3", "trade.mp3", "trade.mp3", "trade.mp3"],
     "win": ["win.mp3", "win.mp3", "win.mp3", "win.mp3", "win.mp3"],
-    "tax": ["tax.mp3", "tax.mp3", "tax.mp3", "tax.mp3", "tax.mp3"],
+    "tax": ["tax.mp3", "tax1.mp3"],
     "chance": ["chance.mp3", "chance.mp3", "chance.mp3", "chance.mp3", "chance.mp3"],
     "special": ["special.mp3", "special.mp3", "special.mp3", "special.mp3", "special.mp3"],
     "notification": ["notification.mp3", "notification.mp3", "notification.mp3", "notification.mp3", "notification.mp3"],
