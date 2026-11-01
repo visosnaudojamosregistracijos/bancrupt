@@ -1199,7 +1199,12 @@ socket.on('buyConfirmed', (data) => {
         else if (fieldId === 46) { playSoundForPlayer('bus', data.playerId); fxVehicle3(46); }
         else if (fieldId === 13) playSoundForPlayer('hospital', data.playerId);
         else if (fieldId === 21) playSoundForPlayer('latras', data.playerId, true);
-        else if (fieldId === 32) playSoundForPlayer('pirtis', data.playerId);
+        else if (fieldId === 32) {
+            // 🧖 PIRTIS: niekieno – garsą girdi tik atsistojęs; turi savininką – visi prie stalo
+            const pOwner = gameState && gameState.players ? gameState.players.find(p => (p.properties || []).includes(32) && !p.bankrupt && !p.left && !p.kicked) : null;
+            if (pOwner || result.action === 'pay_rent') playSoundForPlayer('pirtis_uzimta', data.playerId, true);
+            else if (data.playerId === playerId) playSoundForPlayer('pirtis', data.playerId, true);
+        }
         else if (fieldId === 11) playSoundForPlayer('spa', data.playerId);
         else if (fieldId === 24) playSoundForPlayer('baseinas', data.playerId);
         else if (fieldId === 48) playSoundForPlayer('papludimys', data.playerId);
@@ -1236,7 +1241,7 @@ socket.on('buyConfirmed', (data) => {
                 // 🎉 TU gauni nuomą
                 playSoundForPlayer('rent-received', playerId);
                 // console.log('💰 Nuomos gavimo garsas:', playerId);
-            } else if (isMe && !CELL_SOUNDS[rentFieldId]) {
+            } else if (isMe && !CELL_SOUNDS[rentFieldId] && rentFieldId !== 32) {
                 // 💸 TU moki nuomą (langeliai su savo garsų rinkiniu groja savo garsą)
                 playSoundForPlayer('pay1', playerId);
                 // console.log('💸 Nuomos mokėjimo garsas:', playerId);
