@@ -46,11 +46,31 @@ function requireAdmin(req, res, next) {
 router.get('/users', requireAdmin, async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT id, username, emoji, is_admin, created_at FROM users ORDER BY id'
+            'SELECT id, username, emoji, is_admin, can_test_dice, created_at FROM users ORDER BY id'
         );
         res.json(result.rows);
     } catch (err) {
         console.error('admin/users klaida:', err);
+        res.status(500).json({ error: 'DB klaida' });
+    }
+});
+
+// POST /api/admin/test-dice – 🧪 leisti / uždrausti vartotojui išmesti pasirinktą skaičių
+router.post('/test-dice', requireAdmin, async (req, res) => {
+    const userId = parseInt(req.body && req.body.userId, 10);
+    const enabled = !!(req.body && req.body.enabled);
+    if (!Number.isInteger(userId)) return res.status(400).json({ error: 'Trūksta userId' });
+    try {
+        await pool.query('UPDATE users SET can_test_dice = $1 WHERE id = $2', [enabled, userId]);
+        // Prisijungusiam vartotojui pranešam iškart (be persijungimo)
+        if (io) {
+            io.sockets.sockets.forEach(s => {
+                if (s.userId === userId) { s.canTestDice = enabled; s.emit('testerInfo', { canTestDice: enabled }); }
+            });
+        }
+        res.json({ success: true, enabled });
+    } catch (err) {
+        console.error('admin/test-dice klaida:', err);
         res.status(500).json({ error: 'DB klaida' });
     }
 });

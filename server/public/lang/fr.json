@@ -1851,5 +1851,10 @@
     "wheel.spinning": "Ça tourne… 🤞",
     "spectate.banner": "Mode spectateur – table {id}. Tu vois tout mais ne peux rien changer.",
     "spectate.exit": "✖ Arrêter",
-    "srv.server.tik_administratorius": "Seul un administrateur peut observer"
+    "srv.server.tik_administratorius": "Seul un administrateur peut observer",
+    "game.testRoll": "🧪 {player} a utilisé un lancer de test ({d1}+{d2})",
+    "tester.title": "Lancer de test : saisis 2–12 ou p. ex. 2+2",
+    "tester.roll": "Lancer",
+    "tester.notTurn": "Ce n'est pas ton tour",
+    "srv.server.nera_leidimo": "Pas d'autorisation"
 }

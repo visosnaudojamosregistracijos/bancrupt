@@ -207,6 +207,12 @@ function initSocket() {
         enterGame();
     });
 
+    // 🧪 Testuotojas (administratoriaus leidimas) – gali išmesti pasirinktą skaičių
+    socket.on('testerInfo', (d) => {
+        window.__canTestDice = !!(d && d.canTestDice);
+        ensureTesterDiceRow();
+    });
+
     // 👁 Stebėjimas
     socket.on('spectating', (d) => {
         const first = !window.__spectator;
@@ -12653,3 +12659,43 @@ function showSpectatorBar(gid) {
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
+
+// ============================================================
+// 🧪 TESTUOTOJO KAULIUKAI – tik žaidėjui, kuriam administratorius suteikė leidimą.
+// Įrašai skaičių (pvz. 4 arba 2+2) ir spaudi „Mesti“. Visi prie stalo žurnale mato, kad metimas testinis.
+// ============================================================
+function ensureTesterDiceRow() {
+    let row = document.getElementById('testerDiceRow');
+    if (!window.__canTestDice || window.__spectator) { if (row) row.remove(); return; }
+    const rb = document.getElementById('rollBtn');
+    if (!rb || !rb.parentNode) return;
+    if (row) return;
+    row = document.createElement('div');
+    row.id = 'testerDiceRow';
+    row.innerHTML = '<span class="td-lbl" title="' + escapeHtml(tt('tester.title', 'Testinis metimas: įrašyk 2–12 arba pvz. 2+2')) + '">🧪</span>' +
+        '<input type="text" class="td-in" inputmode="numeric" maxlength="5" placeholder="2–12">' +
+        '<button type="button" class="td-go"></button><span class="td-info"></span>';
+    rb.parentNode.insertBefore(row, rb.nextSibling);
+    row.querySelector('.td-go').textContent = tt('tester.roll', 'Mesti');
+    const go = () => {
+        const info = row.querySelector('.td-info');
+        const v = (row.querySelector('.td-in').value || '').trim();
+        let a, b;
+        const m = v.match(/^(\d)\s*[+ ,]\s*(\d)$/);
+        if (m) { a = +m[1]; b = +m[2]; }
+        else {
+            const t = parseInt(v, 10);
+            if (!(t >= 2 && t <= 12)) { info.textContent = '2–12'; return; }
+            a = Math.min(6, t - 1); b = t - a;          // be dublio (2 ir 12 – visada dubliai)
+        }
+        if (a < 1 || a > 6 || b < 1 || b > 6) { info.textContent = '1–6'; return; }
+        if (!gameState || gameState.currentTurn !== playerId) { info.textContent = tt('tester.notTurn', 'Ne tavo eilė'); return; }
+        info.textContent = a + '+' + b;
+        socket.emit('setTestDice', { d1: a, d2: b });
+        rollDice();
+    };
+    row.querySelector('.td-go').onclick = go;
+    row.querySelector('.td-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+}
+// Žaidimo lenta perpiešiama – eilutę atkuriam
+setInterval(() => { if (window.__canTestDice && !document.getElementById('testerDiceRow')) ensureTesterDiceRow(); }, 1500);

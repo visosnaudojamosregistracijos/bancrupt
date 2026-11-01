@@ -1851,5 +1851,10 @@
     "wheel.spinning": "Dreht sich… 🤞",
     "spectate.banner": "Zuschauermodus – Tisch {id}. Du siehst alles, kannst aber nichts ändern.",
     "spectate.exit": "✖ Beenden",
-    "srv.server.tik_administratorius": "Nur ein Administrator kann zuschauen"
+    "srv.server.tik_administratorius": "Nur ein Administrator kann zuschauen",
+    "game.testRoll": "🧪 {player} hat einen Testwurf benutzt ({d1}+{d2})",
+    "tester.title": "Testwurf: 2–12 oder z. B. 2+2 eingeben",
+    "tester.roll": "Würfeln",
+    "tester.notTurn": "Du bist nicht dran",
+    "srv.server.nera_leidimo": "Keine Berechtigung"
 }

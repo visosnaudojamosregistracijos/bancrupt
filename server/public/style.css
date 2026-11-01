@@ -7440,3 +7440,11 @@ body.cmp #turnIndicatorName, body.cmp #turnIndicatorNext {
     display: inline-block; max-width: 100%; vertical-align: bottom;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal;
 }
+
+/* 🧪 Testuotojo kauliukai (tik su administratoriaus leidimu) */
+#testerDiceRow { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 5px; width: 100%; }
+#testerDiceRow .td-lbl { font-size: 14px; }
+#testerDiceRow .td-in { width: 58px; height: 24px; font-size: 13px; text-align: center; border-radius: 6px; border: 1px solid #8d6e3a; background: #fff; color: #222; padding: 0 3px; }
+#testerDiceRow .td-go { height: 24px; padding: 0 10px; border-radius: 6px; border: 1px solid #b07800; background: linear-gradient(#fff3b0, #ffca28); color: #4a2c00; font-weight: 800; cursor: pointer; }
+#testerDiceRow .td-info { font-size: 11px; opacity: .8; min-width: 24px; }
+body.spectator #testerDiceRow { display: none !important; }

@@ -98,7 +98,7 @@ async function loadUsers() {
     } catch (err) {
         showMsg('Klaida: ' + err.message, false);
         document.getElementById('usersTable').innerHTML =
-            '<tr><td colspan="5" style="text-align:center;color:red;">❌ Klaida: ' + err.message + '</td></tr>';
+            '<tr><td colspan="6" style="text-align:center;color:red;">❌ Klaida: ' + err.message + '</td></tr>';
     }
 }
 
@@ -107,7 +107,7 @@ function renderUsers(users) {
     tbody.innerHTML = '';
 
     if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nėra vartotojų</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nėra vartotojų</td></tr>';
         return;
     }
 
@@ -119,9 +119,32 @@ function renderUsers(users) {
             <td class="emoji-cell">${escapeHtml(u.emoji || '—')}</td>
             <td><input type="text" id="emoji-${Number(u.id)}" value="${escapeHtml(u.emoji || '')}" maxlength="4" style="width:60px;text-align:center;"></td>
             <td><button onclick="saveEmoji(${u.id})">💾 Išsaugoti</button></td>
+            <td><label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Leisti išmesti pasirinktą skaičių (testavimui)">
+                <input type="checkbox" ${u.can_test_dice ? 'checked' : ''} onchange="setTestDice(${Number(u.id)}, this.checked, this)">
+                <span>${u.can_test_dice ? '✅ Leista' : '—'}</span></label></td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+// 🧪 Leisti / uždrausti vartotojui išmesti pasirinktą skaičių
+async function setTestDice(userId, enabled, el) {
+    try {
+        const res = await fetch('/api/admin/test-dice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ userId, enabled })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'HTTP ' + res.status);
+        }
+        showMsg(enabled ? '🧪 Leista išmesti pasirinktą skaičių' : '🧪 Leidimas atimtas', true);
+        loadUsers();
+    } catch (err) {
+        if (el) el.checked = !enabled;
+        showMsg('Klaida: ' + err.message, false);
+    }
 }
 
 async function saveEmoji(userId) {

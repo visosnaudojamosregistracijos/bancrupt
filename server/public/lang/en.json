@@ -1896,5 +1896,10 @@
     "wheel.spinning": "Spinning… 🤞",
     "spectate.banner": "Spectator mode – table {id}. You see everything but can't change anything.",
     "spectate.exit": "✖ Stop watching",
-    "srv.server.tik_administratorius": "Only an administrator can watch"
+    "srv.server.tik_administratorius": "Only an administrator can watch",
+    "game.testRoll": "🧪 {player} used a test roll ({d1}+{d2})",
+    "tester.title": "Test roll: enter 2–12 or e.g. 2+2",
+    "tester.roll": "Roll",
+    "tester.notTurn": "Not your turn",
+    "srv.server.nera_leidimo": "No permission"
 }

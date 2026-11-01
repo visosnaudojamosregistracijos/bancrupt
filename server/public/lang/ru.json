@@ -1896,5 +1896,10 @@
     "wheel.spinning": "Крутится… 🤞",
     "spectate.banner": "Режим наблюдения – стол {id}. Видишь всё, но ничего не можешь менять.",
     "spectate.exit": "✖ Прекратить",
-    "srv.server.tik_administratorius": "Наблюдать может только администратор"
+    "srv.server.tik_administratorius": "Наблюдать может только администратор",
+    "game.testRoll": "🧪 {player} использовал тестовый бросок ({d1}+{d2})",
+    "tester.title": "Тестовый бросок: введи 2–12 или напр. 2+2",
+    "tester.roll": "Бросить",
+    "tester.notTurn": "Не твой ход",
+    "srv.server.nera_leidimo": "Нет разрешения"
 }

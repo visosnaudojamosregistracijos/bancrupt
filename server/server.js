@@ -692,6 +692,15 @@ io.on('connection', (socket) => {
     socket.clientIp = getClientIp(socket);
     visitStats.trackSocket(socket, socket.clientIp);   // 📊 tikras lankytojas (naršyklė)
 
+    // 🧪 Testuotojas (leidimą įjungia administratorius) – gali išmesti pasirinktą skaičių
+    socket.canTestDice = false;
+    if (!socket.isGuest && socket.userId && typeof db.getUserCanTestDice === 'function') {
+        db.getUserCanTestDice(socket.userId).then(ok => {
+            socket.canTestDice = ok;
+            if (ok) socket.emit('testerInfo', { canTestDice: true });
+        }).catch(() => {});
+    }
+
     // 🛡️ Visi įvykiai apsaugoti: blogi duomenys (F12) nebegali „nuversti“ serverio,
     // o stalo kodas visada paverčiamas trumpu tekstu
     const originalOn = socket.on.bind(socket);
@@ -1126,6 +1135,17 @@ io.on('connection', (socket) => {
         try { socket.emit('soundSettings', await db.getSoundSettings()); } catch (err) {}
         try { socket.emit('soundFiles', await db.getSoundFiles()); } catch (err) {}
         try { socket.emit('boardSettings', await db.getBoardSettings()); } catch (err) {}
+    });
+
+    // 🧪 Testinis metimas: kitas šio žaidėjo metimas bus nurodytas skaičius (tik su leidimu)
+    socket.on('setTestDice', (data) => {
+        if (!socket.canTestDice) { socket.emit('error', L('srv.server.nera_leidimo')); return; }
+        if (!socket.gameId || socket.playerId === undefined) return;
+        const game = games.get(socket.gameId);
+        if (!game || game.currentTurn !== socket.playerId) return;
+        const d1 = parseInt(data && data.d1, 10), d2 = parseInt(data && data.d2, 10);
+        if (!(d1 >= 1 && d1 <= 6 && d2 >= 1 && d2 <= 6)) return;
+        game.testDice = { playerId: socket.playerId, dice: [d1, d2] };
     });
 
     socket.on('rollDice', async () => {

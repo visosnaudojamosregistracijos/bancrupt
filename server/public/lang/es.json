@@ -1851,5 +1851,10 @@
     "wheel.spinning": "Girando… 🤞",
     "spectate.banner": "Modo espectador – mesa {id}. Lo ves todo, pero no puedes cambiar nada.",
     "spectate.exit": "✖ Dejar de mirar",
-    "srv.server.tik_administratorius": "Solo un administrador puede observar"
+    "srv.server.tik_administratorius": "Solo un administrador puede observar",
+    "game.testRoll": "🧪 {player} usó una tirada de prueba ({d1}+{d2})",
+    "tester.title": "Tirada de prueba: escribe 2–12 o p. ej. 2+2",
+    "tester.roll": "Tirar",
+    "tester.notTurn": "No es tu turno",
+    "srv.server.nera_leidimo": "Sin permiso"
 }

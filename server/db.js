@@ -52,6 +52,8 @@ async function initDatabase() {
             ADD COLUMN IF NOT EXISTS security_question TEXT,
             ADD COLUMN IF NOT EXISTS security_answer_hash TEXT
         `);
+        // 🧪 Testuotojo leidimas: išmesti pasirinktą skaičių (įjungia administratorius)
+        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS can_test_dice BOOLEAN DEFAULT false`);
 
         // Statistikos lentelė
         await pool.query(`
@@ -337,6 +339,14 @@ async function initDatabase() {
 // PAGALBINĖS FUNKCIJOS
 // ============================================
 const dbHelpers = {
+    // 🧪 Ar vartotojui leista išmesti pasirinktą skaičių (testavimui)
+    async getUserCanTestDice(userId) {
+        if (!userId) return false;
+        try {
+            const r = await pool.query('SELECT can_test_dice FROM users WHERE id = $1', [userId]);
+            return !!(r.rows[0] && r.rows[0].can_test_dice === true);
+        } catch (e) { return false; }
+    },
     // Vartotojai
     async findUserByUsername(username) {
         const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);

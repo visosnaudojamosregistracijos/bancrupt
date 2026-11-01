@@ -2169,8 +2169,15 @@ if (currentPlayer.money < 0) {
         this.currentPlayerId = playerId;
         this.lastActivity = Date.now();
 
-        const dice1 = Math.floor(Math.random() * 6) + 1;
-        const dice2 = Math.floor(Math.random() * 6) + 1;
+        let dice1 = Math.floor(Math.random() * 6) + 1;
+        let dice2 = Math.floor(Math.random() * 6) + 1;
+        // 🧪 Testinis metimas (žaidėjas su administratoriaus leidimu) – visi prie stalo tai mato žurnale
+        if (this.testDice && this.testDice.playerId === playerId) {
+            [dice1, dice2] = this.testDice.dice;
+            this.testDice = null;
+            this.addMessageKey('game.testRoll', { player: player.name, d1: dice1, d2: dice2 });
+            if (this.emitFunction) this.emitFunction('message', { key: 'game.testRoll', data: { player: player.name, d1: dice1, d2: dice2 } });
+        }
         const total = dice1 + dice2;
         this.diceValues = [dice1, dice2];
         this.doubleRoll = (dice1 === dice2);
