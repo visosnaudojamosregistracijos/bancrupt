@@ -7433,3 +7433,10 @@ body.spectator #afkBanner { display: none !important; }
 #spectatorBar .sp-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #spectatorBar .sp-exit { flex-shrink: 0; border: none; border-radius: 999px; padding: 5px 12px; background: #4fc3f7; color: #0b1a2a; font-weight: 800; cursor: pointer; }
 @media (max-width: 600px) { #spectatorBar { font-size: 11px; top: 4px; } }
+
+/* 🎯 5 langelis: ilgas vardas neužima dviejų eilučių – nukerpamas su „…“ */
+#center-5 #turnIndicatorName, #center-5 #turnIndicatorNext,
+body.cmp #turnIndicatorName, body.cmp #turnIndicatorNext {
+    display: inline-block; max-width: 100%; vertical-align: bottom;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal;
+}

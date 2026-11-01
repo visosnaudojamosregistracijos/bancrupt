@@ -8015,22 +8015,34 @@ function wheelBoxEl() {
             if (typeof playClickSound === 'function') playClickSound();
             socket.emit('wheelSpin');
         };
-        window.addEventListener('resize', () => { if (wheelUi.open) wheelPlace(); });
+        const re = () => { if (wheelUi.open) { wheelPlace(); requestAnimationFrame(wheelPlace); } };
+        window.addEventListener('resize', re);
+        window.addEventListener('orientationchange', () => setTimeout(re, 300));
+        document.addEventListener('fullscreenchange', re);
+        document.addEventListener('visibilitychange', re);
     }
     return box;
 }
 function wheelPlace() {
     const box = document.getElementById('wheelBox');
+    if (!box) return;
     const board = document.getElementById('board');
-    if (!box || !board) return;
-    const r = board.getBoundingClientRect();
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const size = Math.round(Math.max(200, Math.min(400, Math.min(r.width, r.height) * 0.5, vw - 40, vh - 200)));
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    let r = board ? board.getBoundingClientRect() : null;
+    // Jei lenta dar nematoma / nepasiekiama (0 dydžio, už ekrano) – ratą dedam į ekrano vidurį
+    const boardOk = r && r.width > 120 && r.height > 120 && r.right > 40 && r.bottom > 40 && r.left < vw - 40 && r.top < vh - 40;
+    if (!boardOk) r = { left: 0, top: 0, width: vw, height: vh, right: vw, bottom: vh };
+    const size = Math.round(Math.max(170, Math.min(400, Math.min(r.width, r.height) * 0.5, vw - 48, vh - 190)));
     box.style.setProperty('--wh', size + 'px');
-    const cx = Math.min(vw - 10, Math.max(10, r.left + r.width / 2));
-    const cy = Math.min(vh - 10, Math.max(10, r.top + r.height / 2));
-    box.style.left = cx + 'px';
-    box.style.top = cy + 'px';
+    // Visas langas turi tilpti ekrane: centras ribojamas pagal paties lango dydį
+    const bw = box.offsetWidth || size + 40, bh = box.offsetHeight || size + 150;
+    const half = (v, b) => Math.min(v / 2, b / 2 + 6);
+    let cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    cx = Math.min(vw - half(vw, bw), Math.max(half(vw, bw), cx));
+    cy = Math.min(vh - half(vh, bh), Math.max(half(vh, bh), cy));
+    box.style.left = Math.round(cx) + 'px';
+    box.style.top = Math.round(cy) + 'px';
 }
 function wheelPlayerName(pid) {
     const p = gameState && gameState.players ? gameState.players.find(x => x.id === pid) : null;
@@ -8065,10 +8077,12 @@ function openWheel(pid, pname, durationMs, sectors) {
     btn.disabled = !mine;
     box.querySelector('.wh-res').textContent = '';
     box.querySelector('.wh-res').className = 'wh-res';
-    wheelPlace();
     box.classList.add('show');
+    wheelPlace();
+    requestAnimationFrame(wheelPlace);   // kai jau išsidėstė – patikslinam pagal tikrą dydį
     clearInterval(wheelUi.timer);
     const tick = () => {
+        wheelPlace();   // jei langas buvo padidintas / sumažintas ar lenta persikėlė – ratas visada per vidurį
         const left = Math.max(0, Math.ceil((wheelUi.deadline - Date.now()) / 1000));
         const el = box.querySelector('.wh-left');
         if (wheelUi.spinning || wheelUi.resultShown) { el.textContent = ''; return; }
@@ -12598,3 +12612,44 @@ function showSpectatorBar(gid) {
     bar.querySelector('.sp-text').textContent = tt('spectate.banner', 'Stebėjimo režimas – stalas {id}. Matai viską, bet nieko negali keisti.').replace('{id}', gid);
     bar.querySelector('.sp-exit').textContent = tt('spectate.exit', '✖ Baigti stebėti');
 }
+
+// ============================================================
+// 🎯 5 langelis („Dabar eina / Kitas“): tekstas visada telpa
+// Jei langelis žemas (planšetė, naršyklės juostos, padidintas sistemos šriftas, ilgas vardas) –
+// turinys proporcingai sumažinamas, kad „Kitas“ visada matytųsi.
+// ============================================================
+(function initTurnIndicatorFit() {
+    let raf = 0;
+    function fit() {
+        raf = 0;
+        const ti = document.getElementById('turnIndicator');
+        if (!ti || !ti.offsetParent) return;
+        const kids = [...ti.children].filter(k => k.offsetParent !== null);
+        if (!kids.length) return;
+        kids.forEach(k => { k.style.zoom = ''; });
+        const cs = getComputedStyle(ti);
+        const avail = ti.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0) - 2;
+        const need = kids.reduce((s, k) => s + k.offsetHeight, 0) + (kids.length - 1) * 2;
+        if (avail > 30 && need > avail) {
+            const z = Math.max(0.45, Math.min(1, (avail / need) * 0.97));
+            kids.forEach(k => { k.style.zoom = z.toFixed(3); });
+        }
+    }
+    function schedule() { if (!raf) raf = requestAnimationFrame(fit); }
+    window.fitTurnIndicator = schedule;
+    function start() {
+        const ti = document.getElementById('turnIndicator');
+        if (!ti) return;
+        if (typeof ResizeObserver === 'function') new ResizeObserver(schedule).observe(ti);
+        if (typeof MutationObserver === 'function') {
+            new MutationObserver(recs => {
+                // savo „zoom“ pakeitimų nepaisom (kitaip būtų begalinis ciklas)
+                if (recs.some(r => r.type !== 'attributes' || r.target.id === 'turnTimerCenter')) schedule();
+            }).observe(ti, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+        }
+        window.addEventListener('resize', schedule);
+        window.addEventListener('orientationchange', () => setTimeout(schedule, 300));
+        schedule();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
