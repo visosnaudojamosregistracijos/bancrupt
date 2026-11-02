@@ -579,9 +579,14 @@ socket.on('soundFilesUpdated', (files) => {
             .replace('{player}', d.playerName).replace('{field}', (typeof trCellName === 'function' ? trCellName(d.fieldName) : d.fieldName)).replace('{cost}', d.cost));
         window.animatingPlayers = window.animatingPlayers || [];
         if (!window.animatingPlayers.includes(d.playerId)) window.animatingPlayers.push(d.playerId);
+        // 🔊 Taksi garsai (girdi visi): variklis važiuojant, atvykus – stabdžiai ir durelės, tada susimokama (kasa)
+        const engine = sfxStart('taksi_vaziuoja');
         try {
             await animateMovement(d.playerId, d.from, d.to, null, { stepMs: 75, taxi: true });
         } finally {
+            sfxFadeStop(engine, 350);
+            playSoundForPlayer('taksi_atvyko', d.playerId, true);
+            if (d.cost > 0) setTimeout(() => playSoundForPlayer('taksi_kasa', d.playerId, true), 700);   // nemokamam taksi (iš rato) – be kasos
             window.animatingPlayers = window.animatingPlayers.filter(id => id !== d.playerId);
             if (gameState) updateUI(gameState);
         }
@@ -1191,7 +1196,11 @@ socket.on('buyConfirmed', (data) => {
         else if (fieldId === 4) playSoundForPlayer('ratas_atsistojo', data.playerId, true);
         else if (fieldId === 5) playSoundForPlayer('tax', data.playerId);    // VMI – garsas pagal langelį (veikia visomis kalbomis)
         else if (fieldId === 14) playSoundForPlayer('siuksles', data.playerId);
-        else if (fieldId === 28) playSoundForPlayer('elektra', data.playerId);
+        else if (fieldId === 28) {
+            // ⚡ ELEKTRA: niekieno – „elektra“, turi savininką – „elektra_uzimta“
+            const eOwner = gameState && gameState.players ? gameState.players.find(p => (p.properties || []).includes(28) && !p.bankrupt && !p.left && !p.kicked) : null;
+            playSoundForPlayer(eOwner ? 'elektra_uzimta' : 'elektra', data.playerId);
+        }
         else if (fieldId === 44) playSoundForPlayer('vanduo', data.playerId);
         else if (fieldId === 8) { playSoundForPlayer(cellLandSound(8, 'air-port', data.playerId, result), data.playerId); fxAir2(8); }
         else if (fieldId === 19) { playSoundForPlayer('train', data.playerId); fxVehicle3(19); }
@@ -1205,9 +1214,17 @@ socket.on('buyConfirmed', (data) => {
             if (pOwner || result.action === 'pay_rent') playSoundForPlayer('pirtis_uzimta', data.playerId, true);
             else if (data.playerId === playerId) playSoundForPlayer('pirtis', data.playerId, true);
         }
-        else if (fieldId === 11) playSoundForPlayer('spa', data.playerId);
+        else if (fieldId === 11) {
+            // 🛀 SPA: niekieno arba savo – „spa“; kito žaidėjo – „spa_uzimta“ (LT stale spa1–spa5 atsitiktinai, kitomis kalbomis – spa)
+            const sOwner = gameState && gameState.players ? gameState.players.find(p => (p.properties || []).includes(11) && !p.bankrupt && !p.left && !p.kicked) : null;
+            playSoundForPlayer(sOwner && sOwner.id !== data.playerId ? 'spa_uzimta' : 'spa', data.playerId);
+        }
         else if (fieldId === 24) playSoundForPlayer('baseinas', data.playerId);
-        else if (fieldId === 48) playSoundForPlayer('papludimys', data.playerId);
+        else if (fieldId === 48) {
+            // 🏖️ PAPLŪDIMYS: niekieno – „papludimys_laisvas“, turi savininką – „papludimys“
+            const bOwner = gameState && gameState.players ? gameState.players.find(p => (p.properties || []).includes(48) && !p.bankrupt && !p.left && !p.kicked) : null;
+            playSoundForPlayer(bOwner ? 'papludimys' : 'papludimys_laisvas', data.playerId);
+        }
         else if (fieldId === 50) playSoundForPlayer('birthday', data.playerId, true);
         else if (fieldId === 42) {
             if (result.action === 'go_to_jail' || data.inJail) playPoliceVanEffect(data.playerId, 42);   // garsai – mašinėlėje
@@ -5768,6 +5785,9 @@ function playAmbulanceRide(pid, fromPos, toPos) {
                 setTimeout(() => c.classList.remove('highlight-yellow'), i === steps ? 900 : stepMs + 60);
             }, tArrive + tLoad + (tDrive * i / steps) - stepMs * 0.5);
         }
+        // 🚑 Greitosios garsas (girdi visi): groja visą kelionę, atvežus švelniai nutyla
+        const siren = sfxStart('greitoji', true);
+        setTimeout(() => sfxFadeStop(siren, 500), tArrive + tLoad + tDrive);
         // Figūrėlė išlipo – žaidimas tęsiasi, greitoji dar nuvažiuoja
         setTimeout(() => { try { fx2EcgAt(toPos); } catch (e) {} }, tArrive + tLoad + tDrive);
         setTimeout(() => resolve(), tArrive + tLoad + tDrive + tUnload);
@@ -7359,7 +7379,17 @@ function fxTaxi3(fieldId) {
 // ============================================================
 // 🏁 STARTAS #0 – plevėsuojanti finišo vėliava, šviesos spinduliai, „+€200“, monetų fontanas
 // ============================================================
+// 🏁 START garsai: sustojus – „start_sustojo“ (+€300), pravažiavus – „start_praejo“ (+€200)
+const startSnd = { at: {} };
+function playStartCellSound(bonus) {
+    const key = (Number(bonus) >= 300) ? 'start_sustojo' : 'start_praejo';
+    const now = Date.now();
+    if (now - (startSnd.at[key] || 0) < 2500) return;   // tas pats įvykis ateina keliais keliais – grojam vieną kartą
+    startSnd.at[key] = now;
+    playSoundForPlayer(key, null, true);
+}
 function fxStart3(fieldId, bonus) {
+    try { playStartCellSound(bonus); } catch (e) {}
     const c = fxPrep(fieldId, false);
     if (!c) return;
     const T = 4400;
@@ -7766,6 +7796,7 @@ function showCookieBanner() {
 // 🚕 TAKSI: langelio pasirinkimas lentoje
 const taxiUi = { open: false, target: null, cost: 100, forbidden: [16, 26, 42], timer: null, deadline: 0 };
 function openTaxiPicker(cost, durationMs, forbidden) {
+    const wasOpen = taxiUi.open;   // jau atidarytam (pvz. po būsenos atnaujinimo) signalo nekartojam
     if (typeof cell5DismissMyTurn === 'function') cell5DismissMyTurn();   // „Tavo eilė – mesk“ čia netinka
     taxiUi.cost = (cost === 0) ? 0 : (cost || 100);
     taxiUi.forbidden = Array.isArray(forbidden) ? forbidden : [16, 26, 42];
@@ -7846,7 +7877,11 @@ function openTaxiPicker(cost, durationMs, forbidden) {
     };
     tick();
     taxiUi.timer = setInterval(tick, 500);
-    if (typeof playNotificationSound === 'function') playNotificationSound();
+    // 🚕 „pyp-pyp“ – taksi laukia (vieną kartą: pasivėlavusi sena būsena gali langą trumpam uždaryti ir atidaryti)
+    if (!wasOpen && Date.now() - (taxiUi.signalAt || 0) > 4000) {
+        taxiUi.signalAt = Date.now();
+        playSoundForPlayer('taksi_siulymas', playerId, true);
+    }
 }
 function renderTaxiChoice() {
     const panel = document.getElementById('taxiPanel');
@@ -7973,6 +8008,32 @@ const WHEEL_POINTER_SVG = `<svg viewBox="0 0 60 78" xmlns="http://www.w3.org/200
 // Mažas rato paveikslėlis 4 langeliui (su rodykle)
 const WHEEL_CELL_ICON = `<span class="wh-cell-icon">${wheelSvg(WHEEL_DEFAULT_SECTORS, false, 'fx3-cell-svg wh-cell-svg')}<i class="wh-cell-ptr">${WHEEL_POINTER_SVG}</i></span>`;
 
+// 🔊 Sustabdomas garsas (pvz. taksi variklis): paleidžiam ir vėliau švelniai nutildom
+function sfxStart(name, loop) {
+    try {
+        if (!audioManager || !audioManager.isEnabled) return null;
+        const lvl = audioManager.getSoundLevel(name);
+        if (lvl <= 0) return null;
+        const src = audioManager.pick(name);
+        if (!src) return null;
+        const a = src.cloneNode();
+        a.loop = !!loop;
+        a.volume = Math.max(0, Math.min(1, audioManager.sfxVolume * (lvl / 10)));
+        const p = a.play(); if (p && p.catch) p.catch(() => {});
+        return a;
+    } catch (e) { return null; }
+}
+function sfxFadeStop(a, ms) {
+    if (!a) return;
+    const v0 = a.volume, t0 = performance.now(), dur = ms || 400;
+    const step = () => {
+        const k = Math.min(1, (performance.now() - t0) / dur);
+        try { a.volume = v0 * (1 - k); } catch (e) {}
+        if (k < 1) requestAnimationFrame(step); else { try { a.pause(); } catch (e) {} }
+    };
+    requestAnimationFrame(step);
+}
+
 // 🎵 Rato muzika: groja nuo rato pasirodymo, kol ratas sustoja (baigusi – pradeda iš naujo)
 function wheelMusicStart(pid) {
     wheelMusicStop(true);
@@ -8067,6 +8128,7 @@ function openWheel(pid, pname, durationMs, sectors) {
     const box = wheelBoxEl();
     const wasSame = wheelUi.open && wheelUi.playerId === pid && wheelUi.music;
     wheelUi.open = true;
+    wheelUi.openedAt = Date.now();
     wheelUi.playerId = pid;
     if (!wasSame) wheelMusicStart(pid);
     wheelUi.spinning = false;
@@ -8205,7 +8267,8 @@ function syncWheelFromState(state) {
             openWheel(w.playerId, null, w.msLeft, wheelUi.sectors);
             if (w.spinning && w.index !== null && w.index !== undefined) spinWheelUi(w.index, w.jitter, Math.max(400, w.spinLeftMs || 0), w.playerId);
         }
-    } else if (wheelUi.open && !wheelUi.resultShown && !wheelUi.spinning) {
+    } else if (wheelUi.open && !wheelUi.resultShown && !wheelUi.spinning && Date.now() - (wheelUi.openedAt || 0) > 2500) {
+        // (ką tik atsidaręs ratas neuždaromas dėl pavėlavusios senos būsenos – kitaip muzika prasidėtų du kartus)
         closeWheel();
     }
 }
@@ -10040,6 +10103,7 @@ function updateUI(state) {
         document.getElementById('myInfo').innerHTML = `
     <div class="myinfo-name-row" style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center;">
         <div class="player-color" style="background:${me.color}; width:20px; height:20px; border-radius:50%; border:2px solid #3d2b1f; flex-shrink:0;"></div>
+        <span class="myinfo-piece" aria-hidden="true">${pieceSvg(me.piece || 'pawn', me.color)}</span>
         <div class="player-name">${me.name}</div>
         <span class="myinfo-demolish-slot"></span>
     </div>
@@ -11447,8 +11511,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    const savedMode = localStorage.getItem('boardMode') || 'adaptive';
-    setMode(savedMode);
+    // 📐 Lentos pločio mygtukas nuimtas – lenta visada prisitaiko automatiškai
+    try { localStorage.removeItem('boardMode'); } catch (e) {}
+    { const b = document.getElementById('board'); if (b) { b.classList.remove('fixed'); b.classList.add('adaptive'); } }
+    if (typeof autoFitInfoFont === 'function') setTimeout(autoFitInfoFont, 300);
     
     initSocket();
     

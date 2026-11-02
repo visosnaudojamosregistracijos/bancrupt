@@ -465,6 +465,43 @@ class Game {
         return true;
     }
 
+    // 💸 Išeiti iš minuso: pirma griaunami namai (laikantis tolygumo taisyklės – nuo sklypų,
+    // kuriuose daugiausia namų), tada parduodami sklypai be namų (nuo pigiausio).
+    // Kartojama, kol pinigai ≥ 0 arba nebėra ką griauti / parduoti.
+    liquidateDebt(player, isBailiff = false) {
+        const out = { demolished: 0, sold: 0 };
+        if (!player) return out;
+        let guard = 0;
+        while (player.money < 0 && guard++ < 300) {
+            // Namai: kandidatai – kur daugiausia namų (tada pigiausias sklypas)
+            const withHouses = Object.keys(player.houses || {})
+                .map(Number)
+                .filter(id => (player.houses[id] || 0) > 0)
+                .sort((x, y) => (player.houses[y] - player.houses[x]) ||
+                    (((this.board[x] || {}).cost || 0) - ((this.board[y] || {}).cost || 0)));
+            let done = false;
+            for (const id of withHouses) {
+                const r = this.demolishHouse(player.id, id, isBailiff);
+                if (r && !r.error) { out.demolished++; done = true; break; }
+            }
+            if (done) continue;
+            // Sklypai be namų: nuo pigiausio
+            const sellable = player.properties
+                .filter(id => !(player.houses && player.houses[id] > 0))
+                .map(id => this.board.find(f => f.id === id))
+                .filter(f => f)
+                .sort((x, y) => (x.cost || 0) - (y.cost || 0));
+            for (const f of sellable) {
+                const r = this.sellToBank(player.id, [f.id], isBailiff);
+                if (r && !r.error) { out.sold++; done = true; break; }
+            }
+            if (!done) break;   // nebėra ką griauti ar parduoti
+        }
+        if (player.money >= 0 && player.isDebtor) player.isDebtor = false;
+        console.log(`💸 ${player.name}: nugriauta ${out.demolished}, parduota ${out.sold} → €${player.money}`);
+        return out;
+    }
+
     botHandleDebt(bot) {
         if (!bot || bot.money >= 0) return { action: 'none' };
 
@@ -861,47 +898,18 @@ class Game {
         }
 
         if (bot.money < 0) {
-            console.log(`🤖 ${bot.name}: skolingas €${Math.abs(bot.money)}`);
-
-            const housesToDemolish = Object.keys(bot.houses)
-                .filter(id => bot.houses[id] > 0)
-                .map(id => parseInt(id));
-
-            if (housesToDemolish.length > 0) {
-                housesToDemolish.sort((a, b) => (bot.houses[a] || 0) - (bot.houses[b] || 0));
-
-                const fieldId = housesToDemolish[0];
-                const field = this.board.find(f => f.id === fieldId);
-
-                console.log(`🤖 ${bot.name}: bando griauti namą ant ${field ? field.name : fieldId}`);
-
-                const result = this.demolishHouse(bot.id, fieldId);
-                console.log(`🤖 ${bot.name} nugriovė namą:`, result);
+            console.log(`🤖 ${bot.name}: skolingas €${Math.abs(bot.money)} – griauna namus / parduoda turtą`);
+            // 🏚️ Griauna namus ir parduoda sklypus tol, kol išeina iš minuso (ne po vieną per ėjimą)
+            const liq = this.liquidateDebt(bot, false);
+            if (liq.demolished || liq.sold) {
+                if (this.emitFunction) this.emitFunction('gameState', this.getGameState());
                 await this.botSleep(1500);
-
-                if (bot.money >= 0) {
-                    return { action: 'demolished', message: L('srv.game.nugriove_nama', { bot: bot.name }) };
-                }
-
-                console.log(`🤖 ${bot.name}: vis dar minuse (€${bot.money}), tęsia...`);
             }
-
-            const sellable = bot.properties
-                .filter(id => !bot.houses[id] || bot.houses[id] === 0)
-                .map(id => this.board.find(f => f.id === id))
-                .filter(f => f)
-                .sort((a, b) => a.cost - b.cost);
-
-            if (sellable.length > 0) {
-                console.log(`🤖 ${bot.name}: bando parduoti ${sellable[0].name}`);
-
-                const result = this.sellToBank(bot.id, [sellable[0].id], false);
-                console.log(`🤖 ${bot.name} pardavė sklypą:`, result);
-                await this.botSleep(1500);
-
-                if (bot.money >= 0) {
-                    return { action: 'sold', message: L('srv.game.pardave_turta', { bot: bot.name }) };
-                }
+            if (bot.money >= 0) {
+                if (bot.isDebtor) bot.isDebtor = false;
+                return liq.sold
+                    ? { action: 'sold', message: L('srv.game.pardave_turta', { bot: bot.name }) }
+                    : { action: 'demolished', message: L('srv.game.nugriove_nama', { bot: bot.name }) };
             }
 
             console.log(`🤖 ${bot.name}: NEGALI IŠEITI IŠ MINUSO – bankrutuoja!`);
@@ -1560,70 +1568,9 @@ class Game {
     if (currentPlayer.isDebtor && currentPlayer.money < 0) {
         console.log(`🤖 AFK + isDebtor: ${currentPlayer.name} (€${currentPlayer.money}) – auto-parduodam turtą`);
         
-        // ============================================
-        // 1. PIRMA – nugriauti namus (nuo pigiausio sklypo)
-        // ============================================
-        let housesToDemolish = [];
-        for (const fieldId in currentPlayer.houses) {
-            const count = currentPlayer.houses[fieldId];
-            if (count > 0) {
-                const field = this.board.find(f => f.id === parseInt(fieldId));
-                if (field) {
-                    housesToDemolish.push({
-                        fieldId: parseInt(fieldId),
-                        field: field,
-                        houses: count,
-                        cost: field.cost
-                    });
-                }
-            }
-        }
-        
-        // Rikiuoti pagal sklypo kainą (pigiausias pirmas)
-        housesToDemolish.sort((a, b) => a.cost - b.cost);
-        
-        // Griauti po vieną namą, kol išeis iš minuso
-        for (const item of housesToDemolish) {
-    while (currentPlayer.houses[item.fieldId] > 0 && currentPlayer.money < 0) {
-        const result = this.demolishHouse(currentPlayer.id, item.fieldId, true); 
-                
-                if (result.error) {
-                    console.log(`⚠️ ${currentPlayer.name}: griovimo klaida:`, result.error);
-                    break;
-                }
-                
-                console.log(`🏚️ ${currentPlayer.name} auto-nugriovė namą ant ${item.field.name} už €${result.refund} → €${currentPlayer.money}`);
-                
-                if (currentPlayer.money >= 0) break;
-            }
-            
-            if (currentPlayer.money >= 0) break;
-        }
-        
-        // ============================================
-// 2. TADA – parduoti sklypus be namų (nuo pigiausio)
-// ============================================
-if (currentPlayer.money < 0) {
-    const sellable = currentPlayer.properties
-        .filter(id => !currentPlayer.houses[id] || currentPlayer.houses[id] === 0)
-        .map(id => this.board.find(f => f.id === id))
-        .filter(f => f)
-        .sort((a, b) => a.cost - b.cost);
-    
-    for (const field of sellable) {
-        if (currentPlayer.money >= 0) break;
-        
-        const result = this.sellToBank(currentPlayer.id, [field.id], true);  // ← true = antstoliai
-        
-        if (result.error) {
-            console.log(`⚠️ ${currentPlayer.name}: pardavimo klaida:`, result.error);
-            break;
-        }
-        
-        console.log(`💰 ${currentPlayer.name} auto-pardavė ${field.name} už €${result.totalPrice} → €${currentPlayer.money}`);
-    }
-}
-        
+        // 1–2. Griauti namus ir parduoti sklypus (antstoliai), kol išeis iš minuso
+        this.liquidateDebt(currentPlayer, true);
+
         // ============================================
         // 3. PATIKRINTI – ar pavyko išeiti iš minuso
         // ============================================

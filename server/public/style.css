@@ -7448,3 +7448,7 @@ body.cmp #turnIndicatorName, body.cmp #turnIndicatorNext {
 #testerDiceRow .td-go { height: 24px; padding: 0 10px; border-radius: 6px; border: 1px solid #b07800; background: linear-gradient(#fff3b0, #ffca28); color: #4a2c00; font-weight: 800; cursor: pointer; }
 #testerDiceRow .td-info { font-size: 11px; opacity: .8; min-width: 24px; }
 body.spectator #testerDiceRow { display: none !important; }
+
+/* 🎯 „AŠ“ skydelis: žaidėjo figūrėlė tarp spalvos ir vardo */
+#myInfo .myinfo-piece { display: inline-flex; align-items: center; justify-content: center; width: max(26px, 2.8em); height: max(26px, 2.8em); flex-shrink: 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+#myInfo .myinfo-piece svg { width: 150%; height: 150%; margin: -25%; display: block; flex-shrink: 0; }
