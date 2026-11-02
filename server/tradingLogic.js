@@ -127,6 +127,11 @@ class TradingLogic {
             const field = this.game.board.find(f => f.id === fieldId);
             return { error: L('srv.trade.negali_parduoti_turi_namu', { v: field ? field.name : L('srv.word.cardGen') }) };
         }
+        // 🏠 Gatvėje yra namų – jos sklypų parduoti bankui negalima (pirma nugriauk namus)
+        if (this.hasHousesInGroup(playerId, fieldId)) {
+            const field = this.game.board.find(f => f.id === fieldId);
+            return { error: L('srv.trade.negali_parduoti_grupeje_namu', { v: field ? field.name : L('srv.word.cardGen') }) };
+        }
         
         const price = this.getBankBuybackPrice(fieldId);
         totalPrice += price;

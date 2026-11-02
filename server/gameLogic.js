@@ -944,6 +944,23 @@ class Game {
 
         await this.botSleep(500);
 
+        // 🏗️ Prieš metimą – stato pagal tas pačias taisykles kaip žmogus (paprastas mygtukas)
+        let preBuilt = 0;
+        for (let guard = 0; guard < 12; guard++) {
+            if (this.currentTurn !== botId || this.waitingForBuild || this.isRolling) break;
+            const pick = bot.properties.find(id =>
+                this.buildingLogic.canBuildHouse(botId, id).can && this.botShouldBuildHouse(bot, id));
+            if (pick === undefined) break;
+            const r = this.buildHouse(botId, pick);
+            if (!r || r.error) break;
+            preBuilt++;
+            if (this.emitFunction) {
+                this.emitFunction('gameState', this.getGameState());
+                if (r.message) this.emitFunction('message', r.message);
+            }
+        }
+        if (preBuilt) await this.botSleep(1200);
+
         console.log(`🤖 ${bot.name}: meta kauliukus`);
         const rollResult = this.rollDice(botId, null);
 
@@ -1110,6 +1127,13 @@ class Game {
         return p.properties.some(id => this.buildingLogic.canBuildHouse(playerId, id).can);
     }
 
+    // Ar statyti trukdo tik pinigų trūkumas?
+    buildBlockedByMoney(playerId) {
+        const p = this.getPlayerById(playerId);
+        if (!p || !p.properties || p.properties.length === 0) return false;
+        return p.properties.some(id => this.buildingLogic.canBuildHouse(playerId, id).noMoney);
+    }
+
     clearBuildWindowTimer() {
         if (this.buildWindowTimer) { clearTimeout(this.buildWindowTimer); this.buildWindowTimer = null; }
     }
@@ -1138,13 +1162,19 @@ class Game {
     openBuildWindow(player, opts = {}) {
         if (!player || player.bankrupt || player.inJail || player.left || player.kicked) return false;
         if (this.currentTurn !== player.id) return false;
-        // 🎲 Po dublio lango nėra – žaidėjas dar mes, statyti gali įprastu mygtuku (ėjimo laiko užtenka)
-        if (this.doubleRoll) return false;
         if ((this.buildRule || 2) === 1) {
             const bought = opts.boughtFieldId;
             if (bought === undefined || bought === null) return false;
             if (!this.buildingLogic.hasFullGroup(player.id, bought)) return false;
         }
+        // 💸 Statyti būtų galima, bet trūksta pinigų – raudonas pranešimas žurnale
+        if (!this.canBuildAnything(player.id) && this.buildBlockedByMoney(player.id)) {
+            this.addMessageKey('game.buildNoMoneyPlayer', { player: player.name });
+            if (this.emitFunction) this.emitFunction('message', { key: 'game.buildNoMoneyPlayer', data: { player: player.name } });
+            return false;
+        }
+        // 🎲 Po dublio lango nėra – žaidėjas dar mes, statyti gali paprastu mygtuku
+        if (this.doubleRoll) return false;
         // AFK ar atsijungęs – statybų lango nėra, kad žaidimas nestovėtų
         if (!player.isBot && (player.disconnected || (player.afkAutoMoves || 0) > 0)) return false;
         this.isRolling = false;
@@ -2110,6 +2140,7 @@ class Game {
         this.turnPausedAt = null;
         this.builtThisTurn = {};   // 🏗️ nauja vieta – nauja statybų galimybė
         this.landingPos = null;
+        player.buildLock = null;   // 🔒 pajudėjo iš vietos – statybų užraktas nebegalioja
 
         this.isRolling = true;
         this.rollSeq = (this.rollSeq || 0) + 1;   // kiekvienas metimas turi savo numerį (AFK apsaugai)
@@ -2327,6 +2358,9 @@ this.addMessageKey('game.paidJailFine', {
                 };
             }
             this.addMessageKey('game.taxiNoMoney', { player: player.name, cost: C.TAXI_COST });
+            // 📢 kad žurnale būtų aiškiai parašyta, kodėl taksi nepasiūlytas
+            result.messageKey = 'game.taxiNoMoney';
+            result.messageData = { player: player.name, cost: C.TAXI_COST };
         }
 
         // 🎡 LAIMĖS RATAS: ėjimas nesibaigia, kol ratas nesustos
@@ -2846,12 +2880,6 @@ this.addMessageKey('game.paidJailFine', {
         });
     }
 
-    // 🏗️ 2 ir 3 taisyklės: ką tik užbaigus gatvę statyti dar negalima – tik kitą kartą atsistojus ant jos
-    if ((this.buildRule || 2) !== 1 && this.buildingLogic.hasFullGroup(player.id, field.id) &&
-        this.landingPos && this.landingPos.playerId === player.id) {
-        this.landingPos = null;
-    }
-
     // 🏗️ Nusipirkus – jei dabar galima statyti, duodama 15 s statyboms
     if (!wasPendingPurchase && this.openBuildWindow(player, { boughtFieldId: field.id })) {
         return {
@@ -3194,7 +3222,8 @@ this.addMessageKey('game.paidJailFine', {
     endTurn() {
         const activePlayers = this.getActivePlayers();
         this.builtThisTurn = {};
-        this.landingPos = null;   // stovint vietoje kitą ėjimą statyti (2 ir 3 taisyklės) nebegalima
+        this.landingPos = null;
+        this.turnSeq = (this.turnSeq || 0) + 1;   // 🔒 ėjimų skaitiklis (statybų užraktui)
         this.turnPausedAt = null;
 
         // ✅ PATAISYTA: Išvalyti pendingPurchase visiems, kurių eilė praėjo
@@ -3372,6 +3401,7 @@ this.addMessageKey('game.paidJailFine', {
             buildRule: this.buildRule,
             builtThisTurn: this.builtThisTurn || {},
             landingPos: this.landingPos || null,
+            turnSeq: this.turnSeq || 0,
             taxiOffer: this.waitingForTaxi ? { playerId: this.waitingForTaxi.playerId, cost: this.waitingForTaxi.cost,
                 forbidden: this.waitingForTaxi.forbidden || C.TAXI_FORBIDDEN,
                 msLeft: Math.max(0, this.waitingForTaxi.deadline - Date.now()) } : null,

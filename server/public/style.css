@@ -4668,12 +4668,12 @@ body.theme-neon .dice.d3 {
     align-items: center;
     justify-content: center;
     border-radius: 16%;
-    background: radial-gradient(circle at 32% 28%, #ffffff 0%, #f7f5f0 45%, #e4ddd0 100%);
-    border: 1px solid rgba(150, 128, 95, 0.45);
+    background: radial-gradient(circle at 32% 28%, #ffffff 0%, #fdfdfd 50%, #eef0f2 100%);
+    border: 1px solid rgba(160, 165, 172, 0.45);
     box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.7),
-        inset -3px -4px 8px rgba(120, 100, 70, 0.22),
-        inset 3px 3px 6px rgba(255, 255, 255, 0.9);
+        inset 0 0 0 1px rgba(255, 255, 255, 0.9),
+        inset -3px -4px 8px rgba(110, 120, 135, 0.14),
+        inset 3px 3px 6px rgba(255, 255, 255, 1);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
@@ -4681,7 +4681,7 @@ body.theme-neon .dice.d3 {
 .d3-in {
     position: absolute;
     inset: 0;
-    background: #ddd4c4;
+    background: #e6e8eb;
     border-radius: 4%;
 }
 .d3-in.d3-f1 { transform: rotateY(0deg)    translateZ(calc(var(--d3-half, 30px) - 1.5px)); }
@@ -6860,13 +6860,13 @@ body.cmp #buildWindowPanel.in-cell5 .bw-left { font-size: 11px; }
 
 /* 🏪 Prekybos langas: „Patvirtinti / Grįžti“ visada matomi apačioje, ✕ kampe */
 #tradingModal .trading-box { position: relative; }
-#tradingModal .trade-x {
+#tradingModal .trade-x, #settingsModal .trade-x {
     position: absolute; top: 10px; right: 12px;
     width: 34px; height: 34px; border-radius: 50%;
     border: 2px solid #c9a84c; background: rgba(255, 255, 255, 0.85);
     color: #3d2b1f; font-size: 16px; font-weight: 900; line-height: 1; cursor: pointer; z-index: 3;
 }
-#tradingModal .trade-x:hover { background: #fff; }
+#tradingModal .trade-x:hover, #settingsModal .trade-x:hover { background: #fff; }
 #tradingModal .trade-actions {
     position: sticky;
     bottom: -30px;
@@ -7452,3 +7452,163 @@ body.spectator #testerDiceRow { display: none !important; }
 /* 🎯 „AŠ“ skydelis: žaidėjo figūrėlė tarp spalvos ir vardo */
 #myInfo .myinfo-piece { display: inline-flex; align-items: center; justify-content: center; width: max(26px, 2.8em); height: max(26px, 2.8em); flex-shrink: 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
 #myInfo .myinfo-piece svg { width: 150%; height: 150%; margin: -25%; display: block; flex-shrink: 0; }
+
+/* ============================================================
+   🏗️ STATYBOS EFEKTAS (namas / viešbutis)
+   ============================================================ */
+.cell-cost span.new-house, .cell-houses span.new-house { display: inline-block; animation: houseDrop .75s cubic-bezier(.3,1.4,.5,1) both; transform-origin: 50% 100%; }
+.cell-cost span.new-hotel, .cell-houses span.new-hotel { display: inline-block; animation: hotelRise .95s cubic-bezier(.3,1.5,.5,1) both; transform-origin: 50% 100%; }
+@keyframes houseDrop {
+    0%   { transform: translateY(-120%) scale(.5); opacity: 0; }
+    45%  { transform: translateY(0) scale(1.35, .8); opacity: 1; }
+    65%  { transform: translateY(-18%) scale(.92, 1.12); }
+    82%  { transform: translateY(0) scale(1.08, .94); }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes hotelRise {
+    0%   { transform: scale(0) rotate(-25deg); opacity: 0; filter: brightness(2); }
+    55%  { transform: scale(1.6) rotate(6deg); opacity: 1; filter: brightness(1.6) drop-shadow(0 0 6px #ffd54f); }
+    80%  { transform: scale(.92) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0); filter: none; }
+}
+.cell.build-flash { animation: buildFlash 1s ease-out; }
+.cell.build-flash-hotel { animation: buildFlashHotel 1.1s ease-out; }
+@keyframes buildFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(255,213,79,0), inset 0 0 0 0 rgba(255,213,79,0); }
+    25%  { box-shadow: 0 0 18px 4px rgba(255,213,79,.9), inset 0 0 14px rgba(255,236,150,.8); }
+    100% { box-shadow: 0 0 0 0 rgba(255,213,79,0), inset 0 0 0 0 rgba(255,213,79,0); }
+}
+@keyframes buildFlashHotel {
+    0%   { box-shadow: 0 0 0 0 rgba(255,193,7,0); filter: none; }
+    25%  { box-shadow: 0 0 28px 8px rgba(255,193,7,.95), inset 0 0 20px rgba(255,236,150,.9); filter: brightness(1.15); }
+    100% { box-shadow: 0 0 0 0 rgba(255,193,7,0); filter: none; }
+}
+.bfx { position: absolute; width: 0; height: 0; z-index: 60; pointer-events: none; }
+.bfx-dust { position: absolute; left: 0; top: calc(var(--s) * .28); width: calc(var(--s) * .22); height: calc(var(--s) * .22); margin: calc(var(--s) * -.11);
+    border-radius: 50%; background: radial-gradient(circle at 40% 40%, rgba(235,222,200,.95), rgba(180,160,130,.6) 60%, rgba(160,140,110,0) 72%);
+    opacity: 0; animation: bfxDust .95s ease-out var(--d) forwards; }
+@keyframes bfxDust {
+    0%   { transform: translate(0,0) scale(.4); opacity: 0; }
+    15%  { opacity: .95; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(1.5); opacity: 0; }
+}
+.bfx-spark { position: absolute; left: 0; top: 0; transform: translate(-50%,-50%); font-size: calc(var(--s) * .22); line-height: 1; color: #ffd54f;
+    text-shadow: 0 0 6px #fff59d, 0 0 10px #ffb300; opacity: 0; animation: bfxSpark .9s ease-out var(--d) forwards; font-style: normal; }
+.bfx-spark.star { font-size: calc(var(--s) * .26); color: #ffca28; }
+@keyframes bfxSpark {
+    0%   { transform: translate(-50%,-50%) scale(.3) rotate(0); opacity: 0; }
+    20%  { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(160deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .cell-cost span.new-house, .cell-cost span.new-hotel { animation: none; } }
+
+/* ============================================================
+   🏗️ STATYBOS 5 LANGELYJE (kranas nuleidžia namą)
+   ============================================================ */
+#cellActionInfo.cell5-build .cell-action-box { width: 94%; max-width: 320px; text-align: center; padding: 6px 8px !important; }
+.b5-title { font-weight: 900; font-size: 14px; color: #3d2b1f; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; }
+.b5-title .cell5-chip { font-size: 12px; padding: 1px 7px; }
+.b5-scene { width: 100%; max-height: 120px; display: block; border-radius: 10px; box-shadow: inset 0 0 0 2px rgba(61,43,31,.25); }
+.b5-scene .b5-house { opacity: 1; }
+.b5-scene .b5-new { animation: b5Drop 1.5s cubic-bezier(.35,0,.3,1) both; }
+@keyframes b5Drop {
+    0%   { transform: translateY(-64px); }
+    55%  { transform: translateY(0); }
+    68%  { transform: translateY(-5px) scale(1.04, .96); }
+    80%  { transform: translateY(0); }
+    100% { transform: translateY(0); }
+}
+.b5-scene .b5-hook { transform: translateX(var(--hx)); animation: b5Hook 1.6s ease-in-out both; }
+@keyframes b5Hook {
+    0%   { transform: translateX(var(--hx)) translateY(-6px); }
+    60%  { transform: translateX(var(--hx)) translateY(34px); }
+    100% { transform: translateX(var(--hx)) translateY(-14px); }
+}
+.b5-scene .b5-dust circle { opacity: 0; transform-box: fill-box; transform-origin: center; animation: b5Dust .9s ease-out .9s both; }
+.b5-scene .b5-dust circle:nth-child(1) { --dx: -16px; } .b5-scene .b5-dust circle:nth-child(2) { --dx: -10px; } .b5-scene .b5-dust circle:nth-child(3) { --dx: -4px; }
+.b5-scene .b5-dust circle:nth-child(4) { --dx: 4px; } .b5-scene .b5-dust circle:nth-child(5) { --dx: 10px; } .b5-scene .b5-dust circle:nth-child(6) { --dx: 16px; }
+@keyframes b5Dust { 0% { opacity: 0; transform: translate(0,0) scale(.3); } 25% { opacity: .9; } 100% { opacity: 0; transform: translate(var(--dx), -8px) scale(1.6); } }
+.b5-scene .b5-star { opacity: 0; transform-box: fill-box; transform-origin: center; animation: b5Star 1.2s ease-out calc(1s + var(--i) * 60ms) both; }
+@keyframes b5Star { 0% { opacity: 0; transform: scale(.2) rotate(0); } 40% { opacity: 1; transform: scale(1.4) rotate(90deg); } 100% { opacity: 0; transform: scale(.8) rotate(200deg); } }
+.b5-scene.hotel .b5-hotel { filter: drop-shadow(0 0 0 rgba(255,193,7,0)); animation: b5Drop 1.5s cubic-bezier(.35,0,.3,1) both, b5Glow 1.2s ease-out 1.1s both; }
+@keyframes b5Glow { 0% { filter: drop-shadow(0 0 0 rgba(255,193,7,0)); } 40% { filter: drop-shadow(0 0 8px rgba(255,193,7,1)); } 100% { filter: drop-shadow(0 0 2px rgba(255,193,7,.4)); } }
+.b5-info { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px; font-size: 12px; font-weight: 800; color: #3d2b1f; flex-wrap: wrap; }
+.b5-field { padding: 1px 8px 1px 6px; border-left: 6px solid var(--fc); border-radius: 4px; background: rgba(255,255,255,.55); }
+.b5-cost { color: #c62828; }
+.b5-bar { height: 5px; margin-top: 5px; border-radius: 3px; background: rgba(61,43,31,.15); overflow: hidden; }
+.b5-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffb300, #43a047); animation: b5Bar 1.6s ease-out both; }
+@keyframes b5Bar { to { width: 100%; } }
+body.cmp .b5-title { font-size: 11px; } body.cmp .b5-info { font-size: 10px; } body.cmp .b5-scene { max-height: 80px; }
+@media (prefers-reduced-motion: reduce) { .b5-scene *, .b5-bar i { animation: none !important; } .b5-bar i { width: 100%; } }
+
+/* 🎮 Statybų langas VALDYMO langelyje (po „Mesti“): mygtukai + šalia tiksintis laikmatis */
+#buildWindowPanel.in-ctrl {
+    position: static; transform: none; z-index: auto;
+    width: 100%; max-width: none; box-sizing: border-box;
+    margin-top: 4px; padding: 6px 8px; gap: 6px;
+    border-radius: 12px; border-width: 2px;
+    box-shadow: 0 3px 10px rgba(0,0,0,.35), 0 0 12px rgba(255,215,0,.3);
+    animation: bwInCtrl .3s cubic-bezier(.2,1.4,.4,1);
+}
+@keyframes bwInCtrl { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+#buildWindowPanel.in-ctrl .bw-icon, #buildWindowPanel.in-ctrl .bw-title { display: none; }
+#buildWindowPanel.in-ctrl .bw-body { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+#buildWindowPanel.in-ctrl .bw-btns { order: 1; justify-content: center; gap: 6px; flex-wrap: nowrap; }
+#buildWindowPanel.in-ctrl .bw-btns button { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#buildWindowPanel.in-ctrl .bw-timer { order: 2; display: flex; align-items: center; gap: 6px; }
+#buildWindowPanel.in-ctrl .bw-bar { flex: 1; margin: 0; height: 5px; }
+#buildWindowPanel.in-ctrl .bw-left { font-size: 12px; white-space: nowrap; }
+body.bw-open #rollBtn { display: none !important; }
+body.cmp #buildWindowPanel.in-ctrl { padding: 4px 5px; gap: 3px; }
+body.cmp #buildWindowPanel.in-ctrl .bw-btns button { padding: 4px 5px; font-size: 10px; white-space: normal; line-height: 1.15; }
+body.cmp #buildWindowPanel.in-ctrl .bw-left { font-size: 10px; }
+
+/* 💸 Pinigų trūkumo pranešimai žurnale – raudonai */
+.journal-item.no-money .jtext { color: #c0161c !important; font-weight: 700; }
+body.dark-mode .journal-item.no-money .jtext,
+body.theme-neon .journal-item.no-money .jtext { color: #ff6b6b !important; }
+
+/* 💰 Tavo pinigai prekybos lange */
+.trade-my-money { display: inline-block; margin: 0 auto 12px; padding: 5px 14px; border-radius: 20px;
+    background: rgba(26,107,60,.12); border: 1px solid rgba(26,107,60,.35); color: #1a6b3c; font-size: 15px; font-weight: 600; }
+.trade-my-money b { font-size: 17px; }
+.trade-my-money.neg { background: rgba(192,22,28,.1); border-color: rgba(192,22,28,.4); color: #c0161c; }
+.trade-my-money:empty { display: none; }
+
+/* ⚙️ Nustatymų mygtukas VALDYMO langelyje ir nustatymų langas */
+#center-2 { position: relative; }
+.ctrl-settings-btn { position: absolute; top: 2px; right: 4px; z-index: 5; width: 34px; height: 34px; padding: 0;
+    border: none; border-radius: 50%; background: transparent; cursor: pointer;
+    font-size: 26px; line-height: 34px; filter: grayscale(1) brightness(0); transition: transform .3s, opacity .2s; opacity: .85; }
+.ctrl-settings-btn:hover { transform: rotate(60deg); opacity: 1; }
+body.dark-mode .ctrl-settings-btn, body.theme-neon .ctrl-settings-btn { filter: grayscale(1) brightness(0) invert(1); }
+body.cmp .ctrl-settings-btn { width: 24px; height: 24px; font-size: 18px; line-height: 24px; top: 0; right: 2px; }
+#settingsModal { display: none; position: fixed; inset: 0; z-index: 100050; background: rgba(0,0,0,.75);
+    justify-content: center; align-items: center; padding: 12px; box-sizing: border-box; }
+#settingsModal .st-box { position: relative; width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; box-sizing: border-box;
+    background: linear-gradient(145deg, #f5f0e8, #e8d5b5); border: 3px solid #c9a84c; border-radius: 20px; padding: 22px 20px 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.8); color: #3d2b1f; animation: bwInCtrl .25s ease-out; }
+#settingsModal h2 { margin: 0 0 12px; text-align: center; color: #1a6b3c; font-size: 22px; }
+#settingsModal .st-sec { background: rgba(255,255,255,.45); border: 1px solid rgba(201,168,76,.5); border-radius: 14px; padding: 8px 12px 6px; margin-bottom: 10px; }
+#settingsModal .st-sec h3 { margin: 0 0 4px; font-size: 15px; color: #6b4a1f; }
+#settingsModal .st-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px dashed rgba(61,43,31,.15); }
+#settingsModal .st-row:first-of-type { border-top: none; }
+#settingsModal .st-lbl { font-size: 14px; font-weight: 600; flex: 0 0 auto; }
+#settingsModal .st-lbl small { display: block; font-size: 11px; font-weight: 400; color: #8a7560; }
+#settingsModal .st-ctl { display: flex; align-items: center; gap: 6px; justify-content: flex-end; flex: 1 1 auto; min-width: 0; }
+#settingsModal .st-seg { display: inline-flex; border: 1px solid #c9a84c; border-radius: 10px; overflow: hidden; background: #fff8ec; }
+#settingsModal .st-seg button { border: none; background: transparent; padding: 7px 10px; font-size: 13px; font-weight: 600; color: #6b4a1f; cursor: pointer; white-space: nowrap; }
+#settingsModal .st-seg button + button { border-left: 1px solid rgba(201,168,76,.6); }
+#settingsModal .st-seg button.on { background: linear-gradient(145deg, #28a745, #1e7e34); color: #fff; }
+#settingsModal .st-slider { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 240px; }
+#settingsModal .st-slider input { flex: 1; accent-color: #1e7e34; cursor: pointer; }
+#settingsModal .st-slider span { min-width: 28px; text-align: right; font-weight: 700; font-size: 13px; }
+#settingsModal .st-btn, #settingsModal .st-mini, #settingsModal .st-select { border: 1px solid #c9a84c; border-radius: 10px; background: #fff8ec;
+    padding: 7px 12px; font-size: 13px; font-weight: 600; color: #3d2b1f; cursor: pointer; }
+#settingsModal .st-mini { padding: 6px 10px; }
+@media (max-width: 480px) {
+    #settingsModal .st-box { padding: 18px 10px 10px; }
+    #settingsModal .st-row { flex-wrap: wrap; }
+    #settingsModal .st-ctl { justify-content: flex-start; }
+    #settingsModal .st-seg button { padding: 7px 8px; font-size: 12px; }
+}

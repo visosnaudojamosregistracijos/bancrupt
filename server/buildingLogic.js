@@ -99,10 +99,11 @@ class BuildingLogic {
         const rule = this.game.buildRule || 2;
         const built = this.game.builtThisTurn || {};
         const standField = this.getField(player.position);
-        // 2 ir 3 taisyklės: statyti galima tik tą ėjimą, kai ką tik atsistojai (ne stovint nuo praėjusio ėjimo)
+        // 2 ir 3 taisyklės: statyti galima stovint ant savo gatvės sklypo, kol nepajudėjai iš vietos.
+        // Jei toje vietoje jau statei ankstesnį ėjimą – antrą kartą nebegalima (kol nepajudėsi).
         if (rule !== 1) {
-            const lp = this.game.landingPos;
-            if (!lp || lp.playerId !== playerId || lp.pos !== player.position) {
+            const lock = player.buildLock;
+            if (lock && lock.pos === player.position && lock.turnSeq !== (this.game.turnSeq || 0)) {
                 return { can: false, reason: L('srv.build.statyti_galima_tik_ta_ejima') };
             }
         }
@@ -157,7 +158,7 @@ class BuildingLogic {
         if (allHave4) {
             const buildCost = this.getHotelCost(fieldId);
             if (player.money < buildCost) {
-                return { can: false, reason: L('srv.build.nepakanka_pinigu_viesbuciui_reikia', { buildCost }) };
+                return { can: false, noMoney: true, reason: L('srv.build.nepakanka_pinigu_viesbuciui_reikia', { buildCost }) };
             }
             return { can: true, cost: buildCost, isHotel: true };
         }
@@ -182,7 +183,7 @@ class BuildingLogic {
 
         const buildCost = this.getBuildCost(fieldId);
         if (player.money < buildCost) {
-            return { can: false, reason: L('srv.build.nepakanka_pinigu_reikia', { buildCost }) };
+            return { can: false, noMoney: true, reason: L('srv.build.nepakanka_pinigu_reikia', { buildCost }) };
         }
 
         return { can: true, cost: buildCost, isHotel: false };
@@ -212,6 +213,8 @@ class BuildingLogic {
         if (!player.houses) player.houses = {};
         if (!this.game.builtThisTurn) this.game.builtThisTurn = {};
         this.game.builtThisTurn[fieldId] = (this.game.builtThisTurn[fieldId] || 0) + 1;
+        // 🔒 2 ir 3 taisyklės: šioje vietoje jau statyta – kitą ėjimą (nepajudėjus) antrą kartą nebegalima
+        player.buildLock = { pos: player.position, turnSeq: this.game.turnSeq || 0 };
 
         if (isHotel) {
             player.houses[fieldId] = 5;

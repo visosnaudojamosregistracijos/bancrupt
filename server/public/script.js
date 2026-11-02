@@ -1489,6 +1489,7 @@ socket.on('buyConfirmed', (data) => {
         
         window.newHouseAnimations = window.newHouseAnimations || {};
         window.newHouseAnimations[data.fieldId] = true;
+        try { fxBuild(data.fieldId, !!data.isHotel); } catch (e) {}   // 🏗️ statybų efektas
         
         const isMe = data.playerId === playerId;
         
@@ -1505,10 +1506,8 @@ socket.on('buyConfirmed', (data) => {
         };
         
         const msg = getCellMessage(data.fieldId, msgKey, msgData);
-        if (msg) {
-            showCellAction(msg, 'visit');
-            addJournal(msg);
-        }
+        if (msg) addJournal(msg);
+        try { showBuildPopup(data); } catch (e) { if (msg) showCellAction(msg, 'visit'); }   // 🏗️ statybų scena 5 langelyje
         
         updateUI(gameState);
     });
@@ -3291,8 +3290,8 @@ function renderMiniCardForTrade(field, options = {}) {
                 <div class="mini-card-info">€${field.cost}</div>
                 ${houseIcon ? `<div class="mini-card-houses">${houseIcon}</div>` : ''}
             </div>
-            ${showCheckbox ? `<input type="checkbox" ${selected ? 'checked' : ''} style="position:absolute; top:2px; right:2px; width:14px; height:14px; z-index:10;">` : ''}
-            ${showRadio ? `<input type="radio" ${selected ? 'checked' : ''} style="position:absolute; top:2px; right:2px; width:14px; height:14px; z-index:10;">` : ''}
+            ${showCheckbox ? `<input type="checkbox" tabindex="-1" ${selected ? 'checked' : ''} style="position:absolute; top:2px; right:2px; width:14px; height:14px; z-index:10; pointer-events:none;">` : ''}
+            ${showRadio ? `<input type="radio" tabindex="-1" ${selected ? 'checked' : ''} style="position:absolute; top:2px; right:2px; width:14px; height:14px; z-index:10; pointer-events:none;">` : ''}
         </div>
     `;
 }
@@ -4424,9 +4423,16 @@ function buildDice3D(el) {
             DICE_PIP_POS.map(pos => `<span class="dice-dot dot-${pos}${DICE_FACE_PIPS[v].includes(pos) ? ' visible' : ''}"></span>`).join('') +
             '</div></div>').join('') + '</div></div>';
     }
-    // Kubo pusė pagal tikrą dydį (keičiasi skirtinguose ekranuose)
-    const half = (el.offsetWidth || 60) / 2;
-    el.style.setProperty('--d3-half', half + 'px');
+    // Kubo pusė pagal tikrą dydį (keičiasi skirtinguose ekranuose).
+    // Dydis gali pasikeisti ir vėliau (išdėstymas, langas, mastelis) – tada sienelės atsiskirtų kaip plokštės,
+    // todėl stebim dydį ir pusę perskaičiuojam kaskart.
+    const setHalf = () => { if (el.offsetWidth) el.style.setProperty('--d3-half', (el.offsetWidth / 2) + 'px'); };
+    if (el.offsetWidth) setHalf();
+    else if (!el.style.getPropertyValue('--d3-half')) el.style.setProperty('--d3-half', '30px');
+    if (!el.__d3Obs && window.ResizeObserver) {
+        el.__d3Obs = new ResizeObserver(setHalf);
+        el.__d3Obs.observe(el);
+    }
     return el.querySelector('.d3-cube');
 }
 
@@ -4602,10 +4608,15 @@ function openBuildWindowPanel(ms, rollAgain) {
                     <button type="button" class="bw-end"></button>
                 </div>
             </div>`;
-        // 📢 Rodom 5 langelyje (pranešimuose), kaip pirkimo kortelę
-        const host = document.getElementById('center-5');
-        (host || document.body).appendChild(p);
-        if (host) p.classList.add('in-cell5');
+        // 🎮 Rodom VALDYMO langelyje (po „Mesti“) – mygtukas ir šalia tiksintis laikmatis;
+        // 5 langelis lieka laisvas pranešimams ir statybų scenai
+        const rb = document.getElementById('rollBtn');
+        if (rb && rb.parentNode) { rb.parentNode.insertBefore(p, rb.nextSibling); p.classList.add('in-ctrl'); }
+        else {
+            const host = document.getElementById('center-5');
+            (host || document.body).appendChild(p);
+            if (host) p.classList.add('in-cell5');
+        }
         p.querySelector('.bw-build').onclick = () => buildHouse();
         p.querySelector('.bw-end').onclick = () => {
             p.querySelectorAll('button').forEach(b => b.disabled = true);
@@ -4622,6 +4633,7 @@ function openBuildWindowPanel(ms, rollAgain) {
         : tt('build.endTurn', '✅ Baigti ėjimą');
     p.classList.toggle('roll-again', buildWin.rollAgain);
     p.style.display = 'flex';
+    document.body.classList.add('bw-open');
     const bar = p.querySelector('.bw-bar span');
     const total = ms || 15000;
     bar.style.transition = 'none';
@@ -4647,6 +4659,7 @@ function closeBuildWindowPanel() {
     clearInterval(buildWin.timer);
     const p = document.getElementById('buildWindowPanel');
     if (p) p.style.display = 'none';
+    document.body.classList.remove('bw-open');
     const picker = document.getElementById('buildPicker');
     if (picker) picker.style.display = 'none';
     refreshBuildButton();
@@ -4730,6 +4743,44 @@ function playGasEffect(fieldId) {
 }
 
 // ✈️ ORO UOSTO EFEKTAS – langelio lėktuvas pavažiuoja kilimo taku, pakyla ir išskrenda virš lentos
+// 🏗️ STATYBOS: langelis sušvyti, nusileidžia namelis (CSS), sukyla dulkių debesėliai ir kibirkštėlės.
+// Viešbučiui – auksinių žvaigždučių fejerverkas. Efektas dedamas ant lentos (ne į langelį), kad jo
+// nenutrauktų langelio perpiešimas.
+function fxBuild(fieldId, isHotel) {
+    const board = document.getElementById('board');
+    const cell = document.getElementById(`cell-${fieldId}`);
+    if (!board || !cell) return;
+    cell.classList.remove('build-flash', 'build-flash-hotel');
+    void cell.offsetWidth;
+    cell.classList.add(isHotel ? 'build-flash-hotel' : 'build-flash');
+    setTimeout(() => cell.classList.remove('build-flash', 'build-flash-hotel'), 1100);
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    const p = fxBoardPoint(cell, board);
+    const s = Math.max(40, Math.min(cell.offsetWidth, cell.offsetHeight));
+    const wrap = document.createElement('div');
+    wrap.className = 'bfx';
+    wrap.style.left = p.x + 'px';
+    wrap.style.top = p.y + 'px';
+    wrap.style.setProperty('--s', s + 'px');
+    let html = '';
+    const N = isHotel ? 12 : 7;
+    for (let i = 0; i < N; i++) {           // dulkės (apačioje, į šonus)
+        const a = (Math.PI * (0.15 + 0.7 * i / (N - 1)));
+        const dx = Math.cos(a) * s * 0.55, dy = -Math.sin(a) * s * 0.18 + s * 0.12;
+        html += `<i class="bfx-dust" style="--dx:${dx.toFixed(1)}px;--dy:${dy.toFixed(1)}px;--d:${(i * 25)}ms"></i>`;
+    }
+    const K = isHotel ? 14 : 6;
+    for (let i = 0; i < K; i++) {           // kibirkštėlės / žvaigždutės (į viršų ir aplink)
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * (isHotel ? Math.PI * 1.6 : Math.PI * 0.9);
+        const r = s * (isHotel ? 0.55 + Math.random() * 0.45 : 0.4 + Math.random() * 0.3);
+        html += `<b class="bfx-spark${isHotel ? ' star' : ''}" style="--dx:${(Math.cos(a) * r).toFixed(1)}px;--dy:${(Math.sin(a) * r).toFixed(1)}px;--d:${(120 + i * 30)}ms">${isHotel ? '★' : '✦'}</b>`;
+    }
+    wrap.innerHTML = html;
+    board.appendChild(wrap);
+    setTimeout(() => wrap.remove(), isHotel ? 1700 : 1300);
+}
+
 function fxBoardPoint(el, board) {
     // Elemento centras lentos koordinatėmis (veikia ir 3D, nes skaičiuojama pagal offset grandinę)
     let x = el.offsetWidth / 2, y = el.offsetHeight / 2, e = el;
@@ -8774,7 +8825,20 @@ function openTrading() {
     updateAuctionableProperties();
     updateTradePlayers();
     updateTradeFields();
+    refreshTradeMoney();
     playClickSound();
+}
+
+// 💰 Tavo pinigai prekybos lange
+function refreshTradeMoney(st) {
+    const el = document.getElementById('tradeMyMoney');
+    if (!el) return;
+    const gs = st || gameState;
+    const me = (gs && gs.players && gs.players.find(p => p.id === playerId)) || (gameState && gameState.players && gameState.players.find(p => p.id === playerId)) || myPlayer;
+    if (!me) { el.textContent = ''; return; }
+    const m = Number(me.money) || 0;
+    el.innerHTML = `${escapeHtml(tt('game.trading.yourMoney', '💰 Tavo pinigai:'))} <b>${m < 0 ? '-' : ''}€${Math.abs(m).toLocaleString('lt-LT')}</b>`;
+    el.classList.toggle('neg', m < 0);
 }
 
 function closeTrading() {
@@ -8845,7 +8909,7 @@ function updateSellableProperties() {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
-        if (houses > 0) return;
+        if (houses > 0 || tradeGroupHasHouses(player, fieldId)) return;   // 🏠 gatvėje yra namų – sklypo parduoti negalima
         
         const checked = selectedSellFields.includes(fieldId);
         
@@ -8869,6 +8933,15 @@ function updateSellableProperties() {
     setTimeout(initTradeMiniCardTooltips, 50);
 }
 
+// 🏠 Ar žaidėjo gatvėje (tos pačios spalvos grupėje) yra bent vienas namas
+function tradeGroupHasHouses(pl, fieldId) {
+    if (!pl || !gameState || !gameState.board) return false;
+    const f = gameState.board.find(x => x.id === fieldId);
+    if (!f || !f.color) return false;
+    const g = getGroupByColor(f.color) || [];
+    return g.some(id => pl.houses && (pl.houses[id] || 0) > 0);
+}
+
 function toggleSellField(fieldId) {
     const index = selectedSellFields.indexOf(fieldId);
     if (index > -1) {
@@ -8876,6 +8949,7 @@ function toggleSellField(fieldId) {
     } else {
         selectedSellFields.push(fieldId);
     }
+    updateSellableProperties();   // ✅ kortelė ir varnelė pasižymi kartu
     playClickSound();
 }
 
@@ -8920,7 +8994,7 @@ function updateAuctionableProperties() {
         const field = gameState.board.find(f => f.id === fieldId);
         if (!field) return;
         const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
-        if (houses > 0) return;
+        if (houses > 0 || tradeGroupHasHouses(player, fieldId)) return;   // 🏠 gatvėje yra namų – sklypo parduoti negalima
         
         const checked = (selectedAuctionField === fieldId);
         
@@ -9103,7 +9177,7 @@ function updateOfferFields() {
             if (!field) return;
             
             const houses = myPlayer?.houses?.[fieldId] || 0;
-            if (houses > 0) return;
+            if (houses > 0 || tradeGroupHasHouses(myPlayer, fieldId)) return;   // 🏠 gatvėje yra namų – sklypo parduoti negalima
             
             const checked = selectedOfferFields.includes(fieldId);
             
@@ -9131,7 +9205,7 @@ function updateOfferFields() {
             const field = gameState.board.find(f => f.id === fieldId);
             if (!field) return;
             const houses = player.houses && player.houses[fieldId] ? player.houses[fieldId] : 0;
-            if (houses > 0) return;
+            if (houses > 0 || tradeGroupHasHouses(player, fieldId)) return;   // 🏠 gatvėje yra namų – sklypo parduoti negalima
             
             const checked = selectedOfferFields.includes(fieldId);
             
@@ -9235,7 +9309,7 @@ function updateRequestFields() {
                 if (!field) return;
                 
                 const houses = target.houses?.[fieldId] || 0;
-                if (houses > 0) return;
+                if (houses > 0 || tradeGroupHasHouses(target, fieldId)) return;   // 🏠 gatvėje yra namų – sklypo parduoti negalima
                 
                 const checked = selectedRequestFields.includes(fieldId);
                 
@@ -9280,7 +9354,7 @@ function updateRequestFields() {
             const field = gameState.board.find(f => f.id === fieldId);
             if (!field) return;
             const houses = target.houses && target.houses[fieldId] ? target.houses[fieldId] : 0;
-            if (houses > 0) return;
+            if (houses > 0 || tradeGroupHasHouses(target, fieldId)) return;   // 🏠 gatvėje yra namų – sklypo parduoti negalima
             
             const checked = selectedRequestFields.includes(fieldId);
             
@@ -9686,9 +9760,9 @@ function getBuildableFields() {
     };
     let candidates = [];
     const stand = board[myPlayer.position];
-    // 2 ir 3 taisyklės – tik tą ėjimą, kai ką tik atsistojai
-    const lp = gameState.landingPos;
-    if (rule !== 1 && (!lp || lp.playerId !== playerId || lp.pos !== myPlayer.position)) return [];
+    // 2 ir 3 taisyklės – stovint ant savo gatvės, kol nepajudėjai; jei šioje vietoje jau statei ankstesnį ėjimą – nebegalima
+    const lock = myPlayer.buildLock;
+    if (rule !== 1 && lock && lock.pos === myPlayer.position && lock.turnSeq !== (gameState.turnSeq || 0)) return [];
     if (rule === 1) {
         candidates = props.map(id => board[id]).filter(f => f && f.type === 'property' && f.color && isFullGroup(f.color));
     } else if (rule === 2) {
@@ -9954,6 +10028,7 @@ function toggleMode() {
 function updateUI(state) {
     if (!state) return;
     updateTaxiTestButton();
+    { const tm = document.getElementById('tradingModal'); if (tm && tm.style.display === 'flex') refreshTradeMoney(state); }
     maybeAutoTour(state);
     // 🏗️ Statybų langas (sinchronizuojam laiką su serveriu)
     if (state.buildWindow && state.buildWindow.playerId === playerId) {
@@ -10483,12 +10558,18 @@ function updateBoard(state) {
         // }
         
          // 🆕 PERPIEŠTI TIK JEI PASIKĖITĖ
-        if (oldHTML !== html) {
+        // ⚡ Lyginam su tuo, ką PATYS paskutinį kartą sugeneravom (naršyklė SVG piešinius užrašo kitaip,
+        // todėl lyginant su innerHTML langeliai su piešiniais būdavo perpiešiami kas kartą be reikalo)
+        const changed = cell.__lastHtml !== undefined
+            ? (cell.__lastHtml !== html || !cell.querySelector(':scope > .cell-top-bar'))
+            : (oldHTML !== html);
+        if (changed) {
             // 🚶 Einanti figūrėlė neturi dingti, kai langelis persipiešia
             const walkerHolder = cell.querySelector(':scope > .walker-holder');
             cell.innerHTML = html;
             if (walkerHolder) cell.appendChild(walkerHolder);
         }
+        cell.__lastHtml = html;
         
         // 🆕 FIGŪRĖLIŲ ATNAUJINIMAS (ATSKIRAI nuo langelio turinio)
         updatePlayersOnCell(cell, playersHere);
@@ -10923,6 +11004,34 @@ let journalCount = 0;
 let lastJournalMessage = '';
 let lastJournalTime = 0;
 
+// 💸 Pinigų trūkumo pranešimai žurnale rodomi raudonai
+const NO_MONEY_KEYS = ['game.notEnoughMoney', 'game.taxiNoMoney', 'game.buildNoMoney', 'game.buildNoMoneyPlayer',
+    'cli.neuztenka_pinigu_pirkti', 'cli.neuztenka_pinigu_pirkti_2', 'cli.neturi_pakankamai_pinigu_reikia_50',
+    'srv.game.nepakanka_pinigu', 'srv.game.nepakanka_pinigu_reikia', 'srv.game.neuztenka_pinigu_taksi_reikia',
+    'srv.build.nepakanka_pinigu_reikia', 'srv.build.nepakanka_pinigu_viesbuciui_reikia',
+    'srv.trade.nepakanka_pinigu', 'srv.trade.nepakanka_pinigu_bid_ui', 'srv.trade.neturi_tiek_pinigu',
+    'srv.trade.neturi_tiek_pinigu_turi', 'srv.trade.neturi_tiek_pinigu_turi_2', 'srv.trade.nebeturi_tiek_pinigu',
+    'srv.trade.neturi_tiek_pinigu_turi_3'];
+let noMoneyRx = null, noMoneyRxLang = null;
+function isNoMoneyText(msg) {
+    const lang = (typeof currentLang !== 'undefined' && currentLang) || document.documentElement.lang || '';
+    if (!noMoneyRx || noMoneyRxLang !== lang) {
+        noMoneyRxLang = lang;
+        noMoneyRx = [];
+        NO_MONEY_KEYS.forEach(k => {
+            const tpl = tt(k, '');
+            if (!tpl) return;
+            const parts = String(tpl).split(/\{[^}]+\}/).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            if (parts.join('').trim().length < 6) return;
+            try { noMoneyRx.push(new RegExp(parts.join('[\\s\\S]*?'), 'i')); } catch (e) {}
+        });
+    }
+    const list = noMoneyRx;
+    if (!list.length) noMoneyRx = null;   // vertimai dar neužkrauti – bandysim vėliau
+    const txt = String(msg || '').replace(/<[^>]*>/g, '');
+    return list.some(rx => rx.test(txt));
+}
+
 function addJournal(msg) {
     const container = document.getElementById('journal');
     if (!container) return;
@@ -10940,7 +11049,7 @@ function addJournal(msg) {
     const time = new Date().toLocaleTimeString();
     
     const item = document.createElement('div');
-    item.className = 'journal-item';
+    item.className = 'journal-item' + (isNoMoneyText(msg) ? ' no-money' : '');
     item.innerHTML = `
         <span class="jnum">#${journalCount}</span>
         <span class="jtext">${msg}</span>
@@ -10980,7 +11089,7 @@ function loadJournalFromStorage() {
         
         history.forEach(item => {
             const div = document.createElement('div');
-            div.className = 'journal-item';
+            div.className = 'journal-item' + (isNoMoneyText(item.text) ? ' no-money' : '');
             div.innerHTML = `
                 <span class="jnum">#${item.num}</span>
                 <span class="jtext">${item.text}</span>
@@ -11206,7 +11315,8 @@ function cell5Render(item) {
     };
     const st = styles[item.type] || styles.info;
 
-    box.classList.remove('cell5-turn', 'cell5-turn-mine', 'cell5-small', 'cell5-rent');
+    box.classList.remove('cell5-turn', 'cell5-turn-mine', 'cell5-small', 'cell5-rent', 'cell5-build');
+    if (item.type === 'build') box.classList.add('cell5-build');
     if (item.type === 'turn') box.classList.add('cell5-turn');
     if (item.type === 'turn-mine') box.classList.add('cell5-turn-mine');
     if (item.type === 'small') box.classList.add('cell5-small');
@@ -12770,3 +12880,205 @@ function ensureTesterDiceRow() {
 }
 // Žaidimo lenta perpiešiama – eilutę atkuriam
 setInterval(() => { if (window.__canTestDice && !document.getElementById('testerDiceRow')) ensureTesterDiceRow(); }, 1500);
+
+// ============================================================
+// 🏗️ STATYBOS 5 LANGELYJE: kranas nuleidžia namą (viešbutis – auksinis), statytojas ir kiti mato, kas vyksta
+// ============================================================
+function build5HouseSvg(x, y, w, isNew, idx) {
+    const h = w * 0.82;
+    return `<g transform="translate(${x} ${y})"><g class="b5-house${isNew ? ' b5-new' : ''}" style="--i:${idx}">
+        <rect x="${-w / 2}" y="${-h * 0.62}" width="${w}" height="${h * 0.62}" fill="#fff3e0" stroke="#6d4c41" stroke-width="1.5"/>
+        <path d="M${-w / 2 - 3} ${-h * 0.6} L0 ${-h} L${w / 2 + 3} ${-h * 0.6} Z" fill="#e53935" stroke="#8e0000" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="${-w * 0.12}" y="${-h * 0.32}" width="${w * 0.24}" height="${h * 0.32}" fill="#8d6e63"/>
+        <rect x="${-w * 0.4}" y="${-h * 0.5}" width="${w * 0.18}" height="${w * 0.16}" fill="#90caf9" stroke="#5d4037" stroke-width=".8"/>
+        <rect x="${w * 0.22}" y="${-h * 0.5}" width="${w * 0.18}" height="${w * 0.16}" fill="#90caf9" stroke="#5d4037" stroke-width=".8"/>
+    </g></g>`;
+}
+function build5HotelSvg(x, y) {
+    return `<g transform="translate(${x} ${y})"><g class="b5-house b5-new b5-hotel" style="--i:0">
+        <rect x="-26" y="-62" width="52" height="62" rx="3" fill="url(#b5gold)" stroke="#8d5a00" stroke-width="2"/>
+        <rect x="-30" y="-68" width="60" height="9" rx="3" fill="#c62828" stroke="#7f0000" stroke-width="1.5"/>
+        ${[0, 1, 2].map(r => [0, 1, 2].map(c => `<rect x="${-20 + c * 15}" y="${-54 + r * 14}" width="10" height="9" fill="#bbdefb" stroke="#8d5a00" stroke-width=".8"/>`).join('')).join('')}
+        <rect x="-7" y="-16" width="14" height="16" fill="#6d4c41"/>
+        <text x="0" y="-61" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Arial">HOTEL</text>
+    </g></g>`;
+}
+function build5Scene(count, isHotel, color) {
+    const ground = safeColor(color, '#4a90d9');
+    let houses = '';
+    if (isHotel) houses = build5HotelSvg(130, 96);
+    else {
+        const n = Math.max(1, Math.min(4, count || 1));
+        for (let i = 0; i < n; i++) houses += build5HouseSvg(92 + i * 30, 96, 24, i === n - 1, i);
+    }
+    const sparks = isHotel ? [...Array(8)].map((_, i) => `<text class="b5-star" style="--i:${i}" x="${100 + Math.cos(i * 0.8) * 52}" y="${46 + Math.sin(i * 0.8) * 26}" font-size="11" fill="#ffca28">★</text>`).join('') : '';
+    return `<svg class="b5-scene${isHotel ? ' hotel' : ''}" viewBox="0 0 200 112" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+        <linearGradient id="b5sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe3ff"/><stop offset="1" stop-color="#eaf6ff"/></linearGradient>
+        <linearGradient id="b5gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff59d"/><stop offset=".5" stop-color="#ffc107"/><stop offset="1" stop-color="#ff8f00"/></linearGradient></defs>
+        <rect width="200" height="112" rx="10" fill="url(#b5sky)"/>
+        <ellipse cx="160" cy="18" rx="16" ry="6" fill="#fff" opacity=".85"/><ellipse cx="40" cy="26" rx="12" ry="4.5" fill="#fff" opacity=".7"/>
+        <rect y="96" width="200" height="16" fill="#8d6e63"/><rect y="96" width="200" height="5" fill="${ground}"/>
+        <!-- kranas -->
+        <g class="b5-crane">
+            <rect x="22" y="14" width="8" height="82" fill="#ffb300" stroke="#7a5200" stroke-width="1"/>
+            ${[0, 1, 2, 3, 4, 5, 6].map(i => `<path d="M22 ${20 + i * 11} L30 ${26 + i * 11} M30 ${20 + i * 11} L22 ${26 + i * 11}" stroke="#7a5200" stroke-width=".9"/>`).join('')}
+            <rect x="12" y="10" width="${isHotel ? 128 : 150}" height="6" fill="#ffb300" stroke="#7a5200" stroke-width="1"/>
+            <rect x="8" y="16" width="14" height="8" fill="#616161"/>
+            <rect x="24" y="4" width="10" height="7" rx="1" fill="#1e88e5" stroke="#0d47a1" stroke-width=".8"/>
+        </g>
+        <g class="b5-hook" style="--hx:${isHotel ? 130 : 92 + (Math.max(1, Math.min(4, count || 1)) - 1) * 30}px"><line x1="0" y1="16" x2="0" y2="40" stroke="#424242" stroke-width="1.2"/><path d="M-3 40 q3 6 6 0" stroke="#424242" stroke-width="1.5" fill="none"/></g>
+        ${houses}
+        <g class="b5-dust">${[...Array(6)].map((_, i) => `<circle style="--i:${i}" cx="${(isHotel ? 130 : 92 + (Math.max(1, Math.min(4, count || 1)) - 1) * 30)}" cy="95" r="5" fill="#d7ccc8"/>`).join('')}</g>
+        ${sparks}
+    </svg>`;
+}
+function showBuildPopup(data) {
+    if (!data) return;
+    const pl = cell5FindPlayer(data.playerId);
+    const mine = data.playerId === playerId;
+    const isHotel = !!data.isHotel;
+    const field = gameState && gameState.board ? gameState.board[data.fieldId] : null;
+    const nameKey = `cell.${data.fieldId}.name`;
+    const trn = t(nameKey);
+    const fname = (trn && trn !== nameKey) ? trn : (data.fieldName || (field && field.name) || '');
+    const count = isHotel ? 5 : (data.houseCount || 1);
+    const title = isHotel
+        ? (mine ? tt('build5.youHotel', '🏨 Statai VIEŠBUTĮ!') : tt('build5.otherHotel', '🏨 {player} stato VIEŠBUTĮ!'))
+        : (mine ? tt('build5.youHouse', '🏗️ Statai namą') : tt('build5.otherHouse', '🏗️ {player} stato namą'));
+    const html = `
+        <div class="b5-title">${escapeHtml(title).replace('{player}', cell5PlayerChip(pl, data.playerName))}</div>
+        ${build5Scene(count, isHotel, field && field.color)}
+        <div class="b5-info"><span class="b5-field" style="--fc:${safeColor(field && field.color, '#4a90d9')}">${escapeHtml(fname)}</span>
+            <span class="b5-count">${isHotel ? '🏨' : '🏠 ' + count + '/4'}</span>${data.cost ? `<span class="b5-cost">€${Number(data.cost) || 0}</span>` : ''}</div>
+        <div class="b5-bar"><i></i></div>`;
+    // Keli namai iš eilės – ta pati scena atnaujinama, o ne rodoma kelis kartus
+    if (cell5Current && cell5Current.type === 'build' && cell5Current.builder === data.playerId) {
+        const body = document.getElementById('cellActionBody');
+        if (body) {
+            body.innerHTML = html;
+            if (cellActionTimeout) clearTimeout(cellActionTimeout);
+            cellActionTimeout = setTimeout(() => { cellActionTimeout = null; cell5Finish(); }, 2600);
+            return;
+        }
+    }
+    cell5Enqueue({ type: 'build', html, header: '', duration: 2600, builder: data.playerId, tag: 'build:' + data.playerId,
+        dedupeKey: `build:${data.playerId}:${data.fieldId}:${count}` });
+}
+
+// ============================================
+// ⚙️ NUSTATYMŲ LANGAS (atidaromas iš VALDYMO langelio)
+// ============================================
+function stSeg(items, cur, fn) {
+    return '<div class="st-seg">' + items.map(([v, label]) =>
+        `<button type="button" class="${v === cur ? 'on' : ''}" onclick="${fn}('${v}')">${escapeHtml(label)}</button>`).join('') + '</div>';
+}
+function stRow(label, control, hint) {
+    return `<div class="st-row"><div class="st-lbl">${escapeHtml(label)}${hint ? `<small>${escapeHtml(hint)}</small>` : ''}</div><div class="st-ctl">${control}</div></div>`;
+}
+function stSlider(id, val, fn) {
+    return `<div class="st-slider"><input type="range" min="0" max="100" value="${val}" oninput="${fn}(this.value)"><span id="${id}">${val}</span></div>`;
+}
+function renderSettingsModal() {
+    const box = document.getElementById('settingsBody');
+    if (!box) return;
+    let theme = 'light';
+    try { theme = localStorage.getItem('bancrupt_theme') || 'light'; } catch (e) {}
+    let mv = 15, sv = 50;
+    try { mv = parseInt(localStorage.getItem('bancrupt_musicVolume') || 15, 10); sv = parseInt(localStorage.getItem('bancrupt_sfxVolume') || 50, 10); } catch (e) {}
+    const musicOn = !!(typeof audioManager !== 'undefined' && audioManager.isMusicEnabled);
+    const lang = (typeof currentLang !== 'undefined' && currentLang) || 'lt';
+    const langs = [['lt', '🇱🇹 Lietuvių'], ['en', '🇬🇧 English'], ['ru', 'Русский'], ['de', '🇩🇪 Deutsch'], ['es', '🇪🇸 Español'], ['fr', '🇫🇷 Français']];
+    let h = '';
+    // 🔊 Garsas
+    h += `<section class="st-sec"><h3>${escapeHtml(tt('settings.sound', '🔊 Garsas'))}</h3>`;
+    h += stRow(tt('settings.music', '🎵 Muzika'),
+        stSeg([['on', tt('settings.on', 'Įjungta')], ['off', tt('settings.off', 'Išjungta')]], musicOn ? 'on' : 'off', 'stSetMusic'));
+    h += stRow(tt('settings.musicVol', 'Muzikos garsumas'), stSlider('stMusicVal', mv, 'stMusicVol'));
+    h += stRow(tt('settings.sfx', '🔔 Žaidimo garsai'),
+        stSeg([['my', tt('settings.hearMy', 'Mano')], ['all', tt('settings.hearAll', 'Visų')], ['off', tt('settings.off', 'Išjungta')]], soundMode, 'stSetSoundMode'),
+        tt('settings.sfxHint', 'Kieno ėjimų garsus girdėti'));
+    h += stRow(tt('settings.sfxVol', 'Garsų garsumas'), stSlider('stSfxVal', sv, 'stSfxVol'));
+    h += '</section>';
+    // 🎨 Vaizdas
+    h += `<section class="st-sec"><h3>${escapeHtml(tt('settings.look', '🎨 Vaizdas'))}</h3>`;
+    h += stRow(tt('settings.theme', 'Tema'),
+        stSeg([['light', tt('html.themeLight', '☀️ Šviesus')], ['dark', tt('html.themeDark', '🌙 Tamsus')], ['neon', tt('html.themeNeon', '🌌 Neonas')]], theme, 'stSetTheme'));
+    h += stRow(tt('settings.board', 'Lentos vaizdas'),
+        stSeg([['2d', '2D'], ['3d', '3D'], ['3dp', '3D+']], getBoardView(), 'stSetView') +
+        `<button type="button" class="st-mini" onclick="stResetView()" title="${escapeHtml(tt('game.viewReset', 'Atstatyti vaizdą'))}">⟲</button>`);
+    h += stRow(tt('camera.label', 'Kamera'),
+        stSeg([['all', '🎥 ' + tt('camera.shortAll', 'Visi')], ['mine', '👤 ' + tt('camera.shortMine', 'Mano')], ['off', '🚫 ' + tt('camera.shortOff', 'Išj.')]], getCameraMode(), 'stSetCamera'),
+        tt('settings.cameraHint', 'Ar lenta seka figūrėles'));
+    if (typeof isPhoneScreen === 'function' && isPhoneScreen()) {
+        const on = forceLandPref();
+        h += stRow(tt('settings.rotate', 'Telefono padėtis'),
+            `<button type="button" class="st-btn" onclick="stRotate()">${escapeHtml(on ? tt('game.rotate.back', '↩️ Grąžinti') : tt('game.rotate.btn', '🔄 Versti gulsčiai'))}</button>`);
+    }
+    h += '</section>';
+    // 🌐 Kalba ir kita
+    h += `<section class="st-sec"><h3>${escapeHtml(tt('settings.other', '🌐 Kalba ir kita'))}</h3>`;
+    h += stRow(tt('settings.lang', 'Kalba'),
+        `<select class="st-select" onchange="stSetLang(this.value)">${langs.map(([v, l]) => `<option value="${v}"${v === lang ? ' selected' : ''}>${l}</option>`).join('')}</select>`);
+    h += stRow(tt('settings.cookies', 'Slapukai'),
+        `<button type="button" class="st-btn" onclick="closeSettingsModal(); showCookieBanner()">${escapeHtml(tt('game.leftPanel.cookies', '🍪 Slapukai'))}</button>`);
+    h += '</section>';
+    box.innerHTML = h;
+}
+function openSettingsModal() {
+    let m = document.getElementById('settingsModal');
+    if (!m) {
+        m = document.createElement('div');
+        m.id = 'settingsModal';
+        m.innerHTML = `<div class="st-box" role="dialog" aria-modal="true">
+            <button type="button" class="trade-x st-x" onclick="closeSettingsModal()">✕</button>
+            <h2 id="settingsTitle"></h2>
+            <div id="settingsBody"></div>
+        </div>`;
+        m.addEventListener('click', (e) => { if (e.target === m) closeSettingsModal(); });
+        document.body.appendChild(m);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m.style.display === 'flex') closeSettingsModal(); });
+    }
+    document.getElementById('settingsTitle').textContent = tt('settings.title', '⚙️ Nustatymai');
+    renderSettingsModal();
+    m.style.display = 'flex';
+    if (typeof playClickSound === 'function') playClickSound();
+}
+function closeSettingsModal() {
+    const m = document.getElementById('settingsModal');
+    if (m) m.style.display = 'none';
+}
+function stSetMusic(v) {
+    const on = !!(typeof audioManager !== 'undefined' && audioManager.isMusicEnabled);
+    if ((v === 'on') !== on) toggleMusicSimple();
+    renderSettingsModal();
+}
+function stMusicVol(v) {
+    changeMusicVolumeSimple(v);
+    const s = document.getElementById('musicVolumeSliderSimple'); if (s) s.value = v;
+    const l = document.getElementById('stMusicVal'); if (l) l.textContent = v;
+}
+function stSetSoundMode(m) {
+    setSoundMode(m);
+    if (typeof loadSoundButtonState === 'function') loadSoundButtonState();
+    renderSettingsModal();
+}
+function stSfxVol(v) {
+    changeSoundVolume(v);
+    const s = document.getElementById('soundVolumeSlider'); if (s) s.value = v;
+    const l = document.getElementById('stSfxVal'); if (l) l.textContent = v;
+    // Garsumas 0 išjungia garsus – parodom tai mygtukuose (be slankiklio perpiešimo)
+    document.querySelectorAll('#settingsBody .st-seg button[onclick^="stSetSoundMode"]').forEach(b =>
+        b.classList.toggle('on', b.getAttribute('onclick') === `stSetSoundMode('${soundMode}')`));
+}
+function stSetTheme(t) { setTheme(t); renderSettingsModal(); }
+function stSetView(v) { setBoardView(v); renderSettingsModal(); }
+function stResetView() { if (typeof orbitReset === 'function') orbitReset(true); if (typeof playClickSound === 'function') playClickSound(); }
+function stSetCamera(m) { setCameraMode(m); renderSettingsModal(); }
+async function stRotate() { await toggleForceLandscape(); renderSettingsModal(); }
+async function stSetLang(l) {
+    await changeLanguage(l);
+    document.querySelectorAll('#gameLangSwitcher select, .lang-select').forEach(s => { s.value = l; });
+    noMoneyRx = null;
+    const t = document.getElementById('settingsTitle'); if (t) t.textContent = tt('settings.title', '⚙️ Nustatymai');
+    renderSettingsModal();
+}
